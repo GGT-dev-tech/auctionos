@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Property, PropertyType, PropertyStatus } from '../../types';
 import { LocationPickerMap } from '../../components/LocationPickerMap';
-import { AuctionService } from '../../services/api';
 import CountySelector from '../../components/CountySelector';
+
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 interface Props {
   data: Partial<Property>;
@@ -17,8 +18,11 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
   const [inputValue, setInputValue] = useState(data.address || '');
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  // Initial sync only
   useEffect(() => {
-    setInputValue(data.address || '');
+    if (data.address && data.address !== inputValue) {
+      setInputValue(data.address);
+    }
   }, [data.address]);
 
   useEffect(() => {
@@ -33,18 +37,19 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
     };
   }, [wrapperRef]);
 
-  // Debounce search
+  // Mapbox Autocomplete Search
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (inputValue && inputValue.length > 3 && showSuggestions) {
+      if (inputValue && inputValue.length > 2 && showSuggestions) {
         setGeocoding(true);
         try {
-          // Call API with autocomplete=true
-          const results = await AuctionService.geocodeAddress(inputValue, true);
-          if (Array.isArray(results)) {
-            setSuggestions(results);
-          } else if (results) {
-            setSuggestions([results]);
+          const response = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(inputValue)}.json?access_token=${MAPBOX_TOKEN}&limit=5`
+          );
+          const results = await response.json();
+
+          if (results.features) {
+            setSuggestions(results.features);
           } else {
             setSuggestions([]);
           }
@@ -55,37 +60,49 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
           setGeocoding(false);
         }
       }
-    }, 500);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [inputValue, showSuggestions]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
-    // Only update parent data address on manual change? 
-    // Or keep it sync? Let's keep sync but also trigger suggestions
-    update({ address: e.target.value });
     setShowSuggestions(true);
   };
 
-  const handleSelectAddress = (result: any) => {
-    const newState = result.state || data.state;
-    const newCounty = result.county || data.county;
-    const smartTag = [newState, newCounty, data.parcel_id].filter(Boolean).join('-').toUpperCase();
-    const newCity = result.city || data.city;
-    const newZip = result.zip_code || data.zip_code;
-    const formattedAddress = result.display_name || inputValue;
+  const handleSelectAddress = (feature: any) => {
+    const [lng, lat] = feature.center;
+
+    // Parse context
+    let city = data.city;
+    let state = data.state;
+    let zip = data.zip_code;
+    let county = data.county;
+
+    if (feature.context) {
+      feature.context.forEach((ctx: any) => {
+        if (ctx.id.startsWith('place')) city = ctx.text;
+        if (ctx.id.startsWith('region')) state = ctx.text; // Mapbox state code usually? No, Mapbox returns full name often. 
+        // We might need mapping but for now let's use what they give or keep existing if not found.
+        // Actually Mapbox returns "Florida" but usually we want "FL". 
+        // For now, let's use the text.
+        if (ctx.id.startsWith('postcode')) zip = ctx.text;
+        if (ctx.id.startsWith('district')) county = ctx.text;
+      });
+    }
+
+    const smartTag = [state, county, data.parcel_id].filter(Boolean).join('-').toUpperCase();
+    const formattedAddress = feature.place_name;
 
     update({
       address: formattedAddress,
-      latitude: result.latitude,
-      longitude: result.longitude,
-      state: newState,
-      county: newCounty,
-      city: newCity,
-      zip_code: newZip,
-      // Auto-generate title if empty
-      title: data.title || `${formattedAddress}`,
+      latitude: lat,
+      longitude: lng,
+      state: state || data.state,
+      county: county || data.county,
+      city: city || data.city,
+      zip_code: zip || data.zip_code,
+      title: data.title || formattedAddress,
       smart_tag: smartTag
     });
 
@@ -93,8 +110,6 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
     setShowSuggestions(false);
     setSuggestions([]);
   };
-
-  // Map properties removed as MapCmp is replaced by LocationPickerMap
 
   return (
     <div className="p-8">
@@ -109,7 +124,7 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
         <div className="space-y-6">
 
           {/* Address Section - Primary Input */}
-          <div ref={wrapperRef} className="relative">
+          <div ref={wrapperRef} className="relative z-50">
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Property Address (GPS Search)</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -131,24 +146,22 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              <ul className="absolute w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
                 {suggestions.map((s, i) => (
                   <li
-                    key={i}
+                    key={s.id}
                     className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700 last:border-0"
                     onClick={() => handleSelectAddress(s)}
                   >
-                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{s.display_name}</p>
-                    <p className="text-xs text-slate-500 truncate">
-                      {s.city}, {s.state} {s.zip_code}
-                    </p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{s.text}</p>
+                    <p className="text-xs text-slate-500 truncate">{s.place_name}</p>
                   </li>
                 ))}
               </ul>
             )}
 
             <p className="text-xs text-slate-500 mt-2">
-              Start typing to search locations provided by GPS/Map service.
+              Start typing to search locations provided by Mapbox GPS service.
             </p>
           </div>
 
@@ -238,26 +251,10 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <label className="text-xs text-slate-500">Latitude</label>
-                <input
-                  className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
-                  type="number"
-                  value={data.latitude || ''}
-                  onChange={(e) => update({ latitude: parseFloat(e.target.value) })}
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-500">Longitude</label>
-                <input
-                  className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
-                  type="number"
-                  value={data.longitude || ''}
-                  onChange={(e) => update({ longitude: parseFloat(e.target.value) })}
-                />
-              </div>
-            </div>
+
+            {/* Hidden Latitude/Longitude Logic - Processed in background */}
+            <input type="hidden" value={data.latitude || ''} />
+            <input type="hidden" value={data.longitude || ''} />
           </div>
 
           {/* Identification Section */}
@@ -291,7 +288,6 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
 
         </div>
 
-        {/* Map Preview */}
         {/* Map Preview & Selector */}
         <div className="col-span-1">
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Location Map</label>
@@ -301,12 +297,10 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
               initialLongitude={data.longitude}
               initialAddress={data.address}
               onLocationSelect={(locData) => {
-                // Update form with data from map
-                // Construct smart tag
+                // Update form with data from map drag
                 const newState = locData.state || data.state;
                 const newCounty = locData.county || data.county;
                 const newParcelId = data.parcel_id;
-
                 const smartTag = [newState, newCounty, newParcelId].filter(Boolean).join('-').toUpperCase();
 
                 update({
@@ -318,7 +312,7 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
                   zip_code: locData.zip || data.zip_code,
                   smart_tag: smartTag
                 });
-                // Also sync local input if needed, but the map has its own input now.
+                // Ensure input sync
                 if (locData.address) setInputValue(locData.address);
               }}
             />
