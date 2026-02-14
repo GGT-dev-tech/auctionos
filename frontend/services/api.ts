@@ -156,7 +156,7 @@ export const AuctionService = {
         formData.append('username', email);
         formData.append('password', password);
 
-        const response = await fetch(`${API_URL}/login/access-token`, {
+        const response = await fetch(`${API_URL}/auth/login/access-token`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
