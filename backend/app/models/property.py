@@ -37,11 +37,15 @@ class Property(Base):
     smart_tag = Column(String(50), unique=True, index=True, nullable=True)
     local_id = Column(Integer, autoincrement=True, unique=True, nullable=True)
     
+    # Ownership
+    company_id = Column(Integer, ForeignKey("companies.id"), nullable=True, index=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     deleted_at = Column(DateTime, nullable=True)
 
     # Relationships
+    company = relationship("Company", back_populates="properties")
     details = relationship("PropertyDetails", uselist=False, back_populates="property", cascade="all, delete-orphan")
     media = relationship("Media", back_populates="property", cascade="all, delete-orphan")
     auction_details = relationship("AuctionDetails", uselist=False, back_populates="property", cascade="all, delete-orphan")

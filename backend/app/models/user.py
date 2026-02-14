@@ -1,5 +1,7 @@
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String, Enum
+from sqlalchemy.orm import relationship
 from app.db.base_class import Base
+from app.models.user_role import UserRole
 
 class User(Base):
     __tablename__ = "users"
@@ -9,4 +11,8 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
-    role = Column(String(50), default="viewer", nullable=False) # admin, agent, viewer
+    role = Column(Enum(UserRole), default=UserRole.AGENT, nullable=False)
+
+    # Relationships
+    owned_companies = relationship("Company", back_populates="owner")
+    companies = relationship("Company", secondary="user_company", back_populates="users")

@@ -7,3 +7,4 @@ from app.models.location import Location  # noqa
 from app.models.expense import Expense  # noqa
 from app.models.note import Note  # noqa
 from app.models.county import County  # noqa
+from app.models.company import Company  # noqa
