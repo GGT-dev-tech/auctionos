@@ -39,14 +39,29 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
 
   // Mapbox Autocomplete Search
   useEffect(() => {
+    // Basic Token Check
+    if (!MAPBOX_TOKEN) {
+      console.error("VITE_MAPBOX_TOKEN is missing! Geocoding will fail.");
+    }
+
     const timer = setTimeout(async () => {
+      // Allow search with 3+ chars
       if (inputValue && inputValue.length > 2 && showSuggestions) {
         setGeocoding(true);
+        console.log(`Searching Mapbox for: ${inputValue}`);
+
         try {
           const response = await fetch(
             `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(inputValue)}.json?access_token=${MAPBOX_TOKEN}&limit=5`
           );
+
+          if (!response.ok) {
+            console.error("Mapbox API Error:", response.status, response.statusText);
+            throw new Error("Geocoding failed");
+          }
+
           const results = await response.json();
+          console.log("Mapbox Results:", results.features?.length);
 
           if (results.features) {
             setSuggestions(results.features);
@@ -54,7 +69,7 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
             setSuggestions([]);
           }
         } catch (e) {
-          console.error(e);
+          console.error("Geocoding Exception:", e);
           setSuggestions([]);
         } finally {
           setGeocoding(false);
@@ -70,7 +85,23 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
     setShowSuggestions(true);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // If suggestions exist, pick first
+      if (suggestions.length > 0) {
+        handleSelectAddress(suggestions[0]);
+      } else {
+        // Trigger immediate search if not already searching?
+        // For now, let the effect handle it, but maybe force show?
+        setShowSuggestions(true);
+      }
+    }
+  };
+
   const handleSelectAddress = (feature: any) => {
+    if (!feature || !feature.center) return;
+
     const [lng, lat] = feature.center;
 
     // Parse context
@@ -93,6 +124,8 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
 
     const smartTag = [state, county, data.parcel_id].filter(Boolean).join('-').toUpperCase();
     const formattedAddress = feature.place_name;
+
+    console.log("Selected Address:", formattedAddress, lat, lng);
 
     update({
       address: formattedAddress,
@@ -124,7 +157,7 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
         <div className="space-y-6">
 
           {/* Address Section - Primary Input */}
-          <div ref={wrapperRef} className="relative z-50">
+          <div ref={wrapperRef} className="relative z-[1000]">
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Property Address (GPS Search)</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -135,6 +168,7 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
                 placeholder="Search address using GPS..."
                 value={inputValue}
                 onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
                 onFocus={() => setShowSuggestions(true)}
               />
               {geocoding && (
@@ -146,10 +180,10 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
 
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <ul className="absolute w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+              <ul className="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto z-[1001]">
                 {suggestions.map((s, i) => (
                   <li
-                    key={s.id}
+                    key={s.id || i}
                     className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700 last:border-0"
                     onClick={() => handleSelectAddress(s)}
                   >

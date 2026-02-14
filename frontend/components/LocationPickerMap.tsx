@@ -34,7 +34,7 @@ const MapController = ({ lat, lng }: { lat: number, lng: number }) => {
     const map = useMap();
     useEffect(() => {
         if (lat && lng) {
-            map.flyTo([lat, lng], 17); // Zoom ideal conforme requisito
+            map.flyTo([lat, lng], 17); // Quando tem coordenada exata (busca ou prop), zoom alto
         }
     }, [lat, lng, map]);
     return null;
@@ -75,25 +75,29 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     initialAddress,
     onLocationSelect
 }) => {
-    // 8. Default Center: Miami (App Context) - Used only if no prop is provided
-    const defaultCenter: [number, number] = [25.7617, -80.1918];
+    // 8. Default Center: US View (Neutral)
+    const defaultCenter: [number, number] = [37.0902, -95.7129];
+    const defaultZoom = 4;
 
     const [position, setPosition] = useState<[number, number]>(
         (initialLatitude && initialLongitude) ? [initialLatitude, initialLongitude] : defaultCenter
     );
     const [addressDisplay, setAddressDisplay] = useState(initialAddress || '');
+    const [zoom, setZoom] = useState(defaultZoom);
 
     // Sync props to state (Fly to new location when parent updates)
     useEffect(() => {
         if (initialLatitude && initialLongitude) {
             setPosition([initialLatitude, initialLongitude]);
             if (initialAddress) setAddressDisplay(initialAddress);
+            setZoom(17); // Zoom in when looking at a specific property
         }
     }, [initialLatitude, initialLongitude, initialAddress]);
 
     // 7. Reverter Geocoding (Reverse) ao arrastar
     const handleMarkerDragEnd = async (lat: number, lng: number) => {
         setPosition([lat, lng]);
+        setZoom(17);
 
         try {
             const response = await fetch(
@@ -135,7 +139,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
             <div id="map" style={{ height: '400px', width: '100%', borderRadius: '0.75rem', overflow: 'hidden', border: '1px solid #e2e8f0', position: 'relative' }}>
                 <MapContainer
                     center={position}
-                    zoom={17}
+                    zoom={zoom}
                     scrollWheelZoom={true}
                     style={{ height: '100%', width: '100%' }}
                 >
