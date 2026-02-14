@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Property, PropertyType, PropertyStatus } from '../../types';
-import { MapCmp } from '../../components/MapCmp';
+import { LocationPickerMap } from '../../components/LocationPickerMap';
 import { AuctionService } from '../../services/api';
 import CountySelector from '../../components/CountySelector';
 
@@ -94,18 +94,7 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
     setSuggestions([]);
   };
 
-  // Construct a temporary property object for display in MapCmp
-  const mapProperties = [{
-    id: 'current',
-    ...data,
-    latitude: data.latitude || 25.7617,
-    longitude: data.longitude || -80.1918,
-    title: data.title || 'New Property',
-    address: data.address || '',
-    status: data.status,
-    city: data.city || 'Miami',
-    state: data.state || 'FL'
-  } as Property];
+  // Map properties removed as MapCmp is replaced by LocationPickerMap
 
   return (
     <div className="p-8">
@@ -303,10 +292,36 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
         </div>
 
         {/* Map Preview */}
-        <div className="relative h-[500px] w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 group">
-          <MapCmp properties={mapProperties} />
-          <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold shadow-sm z-[400]">
-            {data.latitude && data.longitude ? 'Location Set' : 'No Location'}
+        {/* Map Preview & Selector */}
+        <div className="col-span-1">
+          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Location Map</label>
+          <div className="relative w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 group">
+            <LocationPickerMap
+              initialLatitude={data.latitude}
+              initialLongitude={data.longitude}
+              initialAddress={data.address}
+              onLocationSelect={(locData) => {
+                // Update form with data from map
+                // Construct smart tag
+                const newState = locData.state || data.state;
+                const newCounty = locData.county || data.county;
+                const newParcelId = data.parcel_id;
+
+                const smartTag = [newState, newCounty, newParcelId].filter(Boolean).join('-').toUpperCase();
+
+                update({
+                  latitude: locData.lat,
+                  longitude: locData.lng,
+                  address: locData.address || data.address,
+                  city: locData.city || data.city,
+                  state: newState,
+                  zip_code: locData.zip || data.zip_code,
+                  smart_tag: smartTag
+                });
+                // Also sync local input if needed, but the map has its own input now.
+                if (locData.address) setInputValue(locData.address);
+              }}
+            />
           </div>
         </div>
       </div>
