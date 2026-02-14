@@ -1,0 +1,36 @@
+# Version Control
+.git
+.gitignore
+
+# Dependencies
+node_modules
+frontend/node_modules
+backend/venv
+venv
+env
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Build Output
+frontend/dist
+frontend/build
+
+# IDE
+.vscode
+.idea
+
+# Other
+tmp
+.gemini

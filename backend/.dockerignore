@@ -1,0 +1,15 @@
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info
+venv
+env
+
+# System
+.DS_Store
+
+# Logs
+*.log
