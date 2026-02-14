@@ -68,6 +68,7 @@ class PropertyDetailsBase(BaseModel):
     zillow_url: Optional[str] = None
     gsi_url: Optional[str] = None
     gsi_data: Optional[str] = None
+    max_bid: Optional[float] = None
 
 class PropertyDetailsCreate(PropertyDetailsBase):
     pass
@@ -136,3 +137,9 @@ class Property(PropertyBase):
     auction_details: Optional[AuctionDetails] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class PropertyExport(BaseModel):
+    company_id: int
+    folder_id: Optional[str] = None
+    status: Optional[str] = "interested"
+    user_notes: Optional[str] = None

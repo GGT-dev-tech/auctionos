@@ -9,3 +9,4 @@ from app.models.note import Note  # noqa
 from app.models.county import County  # noqa
 from app.models.company import Company  # noqa
 from app.models.inventory import InventoryFolder, InventoryItem  # noqa
+from app.models.transaction import Transaction  # noqa

@@ -20,7 +20,8 @@
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.13.0",
     "react-simple-maps": "^3.0.0",
-    "react-tooltip": "^5.30.0"
+    "react-tooltip": "^5.30.0",
+    "recharts": "^3.7.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

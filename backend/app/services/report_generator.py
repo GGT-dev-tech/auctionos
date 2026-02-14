@@ -40,29 +40,65 @@ class ReportGenerator:
                 f"Flood Zone: {prop.details.flood_zone_code or 'N/A'}",
                 f"Market Value URL: {prop.details.market_value_url or 'N/A'}",
             ])
-        
-        for line in details:
-            pdf.cell(0, 10, line, 0, 1)
             
-        # Auction Details
-        if prop.auction_details:
+            # Financial Metrics
             pdf.ln(5)
             pdf.set_font('Arial', 'B', 14)
-            pdf.cell(0, 10, "Auction Information", 0, 1)
+            pdf.cell(0, 10, "Financial Analysis", 0, 1)
             pdf.set_font('Arial', '', 12)
             
-            auction_info = [
-                f"Case #: {prop.auction_details.case_number}",
-                f"Auction Date: {prop.auction_details.auction_date}",
-                f"Certificate #: {prop.auction_details.certificate_number}",
-                f"Auction Type: {prop.auction_details.auction_type}",
+            equity = (prop.details.estimated_value or 0) - (prop.price or 0)
+            fin_info = [
+                f"Estimated Market Value: ${prop.details.estimated_value:,.2f}" if prop.details.estimated_value else "Est. Market Value: N/A",
+                f"Max Bid Recommendation: ${prop.details.max_bid:,.2f}" if prop.details.max_bid else "Max Bid: N/A",
+                f"Potential Equity Spread: ${equity:,.2f}",
+                f"Annual Rental Estimate: ${prop.details.rental_value:,.2f}" if prop.details.rental_value else "Rental Estimate: N/A",
             ]
-            for line in auction_info:
+            for line in fin_info:
                 pdf.cell(0, 10, line, 0, 1)
 
+            # Property Stats
+            pdf.ln(5)
+            pdf.set_font('Arial', 'B', 12)
+            stats_text = (
+                f"Beds: {prop.details.bedrooms or 'N/A'}  |  "
+                f"Baths: {prop.details.bathrooms or 'N/A'}  |  "
+                f"Sqft: {prop.details.sqft or 'N/A'}"
+            )
+            pdf.cell(0, 10, stats_text, 0, 1)
+
+        # Location / Map Snippet
+        if prop.latitude and prop.longitude:
+            pdf.ln(5)
+            pdf.set_font('Arial', 'B', 14)
+            pdf.cell(0, 10, "Location Map", 0, 1)
+            # Use a public static map provider (OSM based)
+            # Note: Many requires keys, using a reliable structured URL placeholder
+            map_url = f"https://static-maps.yandex.ru/1.x/?l=map&z=14&pt={prop.longitude},{prop.latitude},pmwtm&size=450,300"
+            try:
+                pdf.image(map_url, w=100)
+            except Exception:
+                pdf.set_font('Arial', 'I', 10)
+                pdf.cell(0, 10, "[Map visualization not available]", 0, 1)
+
+        # Images
+        if prop.media:
+            pdf.ln(10)
+            pdf.set_font('Arial', 'B', 14)
+            pdf.cell(0, 10, "Property Images", 0, 1)
+            
+            y_start = pdf.get_y()
+            for i, media in enumerate(prop.media[:2]): # Limit to top 2 for report
+                try:
+                    # FPDF supports remote URLs in some versions, but let's be careful.
+                    # Best approach is to download first if needed, but fpdf2 supports URL.
+                    pdf.image(media.url, x=10 + (i*95), y=y_start, w=90)
+                except Exception as e:
+                    pdf.set_font('Arial', 'I', 10)
+                    pdf.cell(0, 10, f"[Image load failed: {media.url[:30]}...]", 0, 1)
+            
         # Output
-        output_dir = "/app/data/reports"
-        import os
+        output_dir = os.path.join(os.getcwd(), "data", "reports")
         os.makedirs(output_dir, exist_ok=True)
         filename = f"report_{prop.id}.pdf"
         filepath = os.path.join(output_dir, filename)

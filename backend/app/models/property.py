@@ -118,6 +118,7 @@ class PropertyDetails(Base):
     zillow_url = Column(String(500), nullable=True)
     gsi_url = Column(String(500), nullable=True)
     gsi_data = Column(Text, nullable=True) # JSON storage
+    max_bid = Column(Float, nullable=True)
     
     property = relationship("Property", back_populates="details")
 

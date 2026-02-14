@@ -1,3 +1,4 @@
+import json
 from typing import List, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session
@@ -220,6 +221,120 @@ def patch_property(
     return property
 
 from app.schemas.bulk_ops import BulkStatusUpdate
+
+from app.schemas.property import Property, PropertyCreate, PropertyUpdate, PropertyExport
+from app.db.repositories.inventory_repository import inventory_repo
+
+@router.post("/{id}/export", response_model=dict)
+def export_property_to_inventory(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: str,
+    export_in: PropertyExport,
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Export a property to a company's inventory folder.
+    """
+    # 1. Verify Property
+    property = property_repo.get(db=db, id=id)
+    if not property:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    # 2. Verify Company Access
+    user_company_ids = [c.id for c in current_user.companies]
+    if export_in.company_id not in user_company_ids:
+        raise HTTPException(status_code=403, detail="User does not have access to this company")
+    
+    # 3. Check Duplicate
+    from app.models.inventory import InventoryItem
+    existing = db.query(InventoryItem).filter(
+        InventoryItem.property_id == id,
+        InventoryItem.company_id == export_in.company_id
+    ).first()
+    
+    if existing:
+        return {"message": "Property already in company inventory", "item_id": existing.id}
+    
+    # 4. Create Inventory Item
+    from app.schemas.inventory import InventoryItemCreate
+    obj_in = InventoryItemCreate(
+        property_id=id,
+        folder_id=export_in.folder_id,
+        status=export_in.status,
+        user_notes=export_in.user_notes
+    )
+    
+    item = inventory_repo.create_item(db=db, obj_in=obj_in, company_id=export_in.company_id)
+    
+    # 5. Trigger Automated Enrichment (Background)
+    # Note: Using background tasks would be better for real production, 
+    # but for now we'll call it within the request or as a simple async call.
+    try:
+        await property_repo.enrich_property(db, property_id=id)
+    except Exception as e:
+        print(f"Background enrichment failed: {e}")
+
+    return {"message": "Property exported successfully", "item_id": item.id}
+
+@router.post("/{id}/enrich", response_model=Property)
+async def enrich_property_manually(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: str,
+    current_user: User = Depends(deps.get_current_agent),
+) -> Any:
+    """
+    Manually trigger data enrichment for a property.
+    """
+    property = await property_repo.enrich_property(db, property_id=id)
+    if not property:
+        raise HTTPException(status_code=404, detail="Property not found")
+    return property
+
+@router.post("/{id}/validate-gsi", response_model=dict)
+async def validate_property_gsi(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: str,
+    current_user: User = Depends(deps.get_current_agent),
+) -> Any:
+    """
+    Validate a property's parcel data via GSI.
+    """
+    property = property_repo.get(db=db, id=id)
+    if not property:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    from app.services.enrichment import enrichment_service
+    gsi_result = await enrichment_service.validate_gsi(property.address, property.parcel_id)
+    
+    # Store result in property details
+    if property.details:
+        property.details.gsi_data = json.dumps(gsi_result)
+        db.add(property.details)
+        db.commit()
+    
+    return gsi_result
+
+from app.services.report_generator import report_generator
+
+@router.get("/{id}/report", response_model=dict)
+def get_property_report(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: str,
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Generate and return PDF report link for a property.
+    """
+    property = property_repo.get(db=db, id=id)
+    if not property:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    report_url = report_generator.generate_property_report(property)
+    return {"report_url": report_url}
 
 @router.post("/upload-csv", response_model=dict)
 def upload_csv(

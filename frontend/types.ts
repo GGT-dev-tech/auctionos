@@ -90,6 +90,7 @@ export interface PropertyDetails {
   zillow_url?: string;
   gsi_url?: string;
   gsi_data?: string;
+  max_bid?: number;
 }
 
 export interface Media {
@@ -137,6 +138,32 @@ export interface User {
   email: string;
   role: "Admin" | "Agent";
   avatar: string;
+  companies?: Company[];
+  is_superuser?: boolean;
+}
+
+export interface Company {
+  id: number;
+  name: string;
+  balance?: number;
+}
+
+export interface Transaction {
+  id: string;
+  amount: number;
+  type: string;
+  description: string;
+  category?: string;
+  created_at: string;
+  property_id?: string;
+}
+
+export interface FinanceStats {
+  total_balance: number;
+  total_invested: number;
+  total_expenses: number;
+  available_limit: number;
+  realized_roi: number;
 }
 
 export interface AuthState {

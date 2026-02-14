@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Property, PropertyStatus } from '../types';
 import { AuctionService, API_BASE_URL } from '../services/api';
 import { PropertyDetailsModal } from '../components/PropertyDetailsModal';
+import { ExportModal } from '../components/ExportModal';
+import { PropertyCard } from '../components/PropertyCard';
 import CountySelector from '../components/CountySelector';
+import { LayoutGrid, List } from 'lucide-react';
 
 interface Location {
   fips: string;
@@ -34,6 +37,14 @@ export const Inventory: React.FC = () => {
   // Map Selector Modal
   const [showCountySelector, setShowCountySelector] = useState(false);
 
+  // Property Modal State
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Export Modal State
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [propertyToExport, setPropertyToExport] = useState<Property | null>(null);
+
   // Debounce filter text
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -47,12 +58,7 @@ export const Inventory: React.FC = () => {
     try {
       const filters: any = {};
       if (statusFilter !== 'All') filters.status = [statusFilter];
-      if (filterText) filters.city = filterText; // Using city for quick text search for now, or we need a generic search param
-      // Note: Backend 'city' filter is exact match or ilike. 
-      // If we want generic text search (title/address), we might need to update backend or just use available fields.
-      // For now, let's map 'Quick Find' to city as a proxy or just request all if empty and rely on frontend for text?
-      // "The goal is to move from client-side to server-side filtering". 
-      // Let's rely on backend specific filters. 
+      if (filterText) filters.city = filterText;
 
       if (selectedLocation) {
         filters.county = selectedLocation.name.replace(' County', '');
@@ -133,10 +139,6 @@ export const Inventory: React.FC = () => {
     }
   };
 
-  // Modal State
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   const openModal = (property: Property) => {
     setSelectedProperty(property);
     setIsModalOpen(true);
@@ -147,6 +149,29 @@ export const Inventory: React.FC = () => {
     setSelectedProperty(null);
   };
 
+  // View Mode
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+
+  const openExportModal = (property: Property) => {
+    setPropertyToExport(property);
+    setIsExportModalOpen(true);
+  };
+
+  const handleDeleteProperty = async (property: Property) => {
+    if (confirm(`Are you sure you want to delete ${property.address || property.title}?`)) {
+      const originalProps = [...properties];
+      setProperties(properties.filter(prop => prop.id !== property.id));
+
+      try {
+        await AuctionService.deleteProperty(property.id);
+      } catch (e) {
+        console.error(e);
+        alert('Failed to delete property');
+        setProperties(originalProps);
+      }
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
       <PropertyDetailsModal
@@ -154,6 +179,15 @@ export const Inventory: React.FC = () => {
         isOpen={isModalOpen}
         onClose={closeModal}
       />
+
+      {propertyToExport && (
+        <ExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          propertyId={propertyToExport.id}
+          propertyName={propertyToExport.address || propertyToExport.title}
+        />
+      )}
 
       {showCountySelector && (
         <CountySelector
@@ -292,6 +326,23 @@ export const Inventory: React.FC = () => {
               onChange={(e) => setFilterText(e.target.value)}
             />
           </div>
+
+          <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg ml-0 md:ml-2">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              title="Table View"
+            >
+              <List size={20} />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              title="Grid View"
+            >
+              <LayoutGrid size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Advanced Filters */}
@@ -317,149 +368,160 @@ export const Inventory: React.FC = () => {
         )}
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-[#1a2634] rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden min-h-[400px]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                <th className="py-4 px-4 w-[40px]">
-                  <input
-                    type="checkbox"
-                    className="rounded border-slate-300 text-primary focus:ring-primary"
-                    checked={properties.length > 0 && selectedIds.size === properties.length}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                  />
-                </th>
-                <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Property</th>
-                <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Address details</th>
-                <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Smart Tag</th>
-                <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Market Value</th>
-                <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Flood Zone</th>
-                <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {loading ? (
-                <tr><td colSpan={8} className="p-8 text-center text-slate-500">Loading properties...</td></tr>
-              ) : properties.length === 0 ? (
-                <tr><td colSpan={8} className="p-8 text-center text-slate-500">No properties found.</td></tr>
-              ) : (
-                properties.map((p) => (
-                  <tr key={p.id} className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.has(p.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
-                    <td className="py-4 px-4 align-middle">
+      {/* Content */}
+      <div className="min-h-[400px]">
+        {loading ? (
+          <div className="bg-white dark:bg-[#1a2634] rounded-xl border border-slate-200 dark:border-slate-700 p-12 text-center text-slate-500">
+            Loading properties...
+          </div>
+        ) : properties.length === 0 ? (
+          <div className="bg-white dark:bg-[#1a2634] rounded-xl border border-slate-200 dark:border-slate-700 p-12 text-center text-slate-500">
+            No properties found.
+          </div>
+        ) : viewMode === 'table' ? (
+          <div className="bg-white dark:bg-[#1a2634] rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                    <th className="py-4 px-4 w-[40px]">
                       <input
                         type="checkbox"
                         className="rounded border-slate-300 text-primary focus:ring-primary"
-                        checked={selectedIds.has(p.id)}
-                        onChange={(e) => handleSelectOne(p.id, e.target.checked)}
+                        checked={properties.length > 0 && selectedIds.size === properties.length}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
                       />
-                    </td>
-                    <td className="py-4 px-6 align-middle">
-                      <div className="h-12 w-16 rounded-md overflow-hidden bg-slate-200 relative shadow-sm">
-                        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${p.imageUrl || '/placeholder.png'}')` }}></div>
-                        {p.status === 'Draft' && (
-                          <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 p-0.5 rounded-bl-md shadow-sm" title="Draft / In Construction">
-                            <span className="material-symbols-outlined text-[10px] font-bold block">construction</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 align-middle">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-slate-900 dark:text-white">{p.address || p.title}</span>
-                        <span className="text-xs text-slate-500">{p.city}, {p.state} {p.zip_code}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 align-middle">
-                      <span className="font-mono text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-                        {p.smart_tag || '-'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 align-middle">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {p.price ? `$${p.price.toLocaleString()}` : '-'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 align-middle">
-                      {/* Real flood zone display */}
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${p.details?.flood_zone_code
-                        ? 'bg-blue-100 text-blue-800 border-blue-200'
-                        : 'bg-slate-100 text-slate-500 border-slate-200'
-                        }`}>
-                        {p.details?.flood_zone_code || '-'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 align-middle">
-                      {getStatusBadge(p.status)}
-                    </td>
-                    <td className="py-4 px-6 align-middle text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openModal(p)}
-                          className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                          title="View Details"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">visibility</span>
-                        </button>
-                        <button
-                          onClick={() => navigate(`/properties/${p.id}/edit`)}
-                          className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                          title="Edit"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">edit</span>
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (confirm('Are you sure you want to delete this property?')) {
-                              // Optimistic UI Update
-                              const originalProps = [...properties];
-                              setProperties(properties.filter(prop => prop.id !== p.id));
+                    </th>
+                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Property</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Address details</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Smart Tag</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Market Value</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Flood Zone</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                  {properties.map((p) => (
+                    <tr key={p.id} className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.has(p.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                      <td className="py-4 px-4 align-middle">
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-primary focus:ring-primary"
+                          checked={selectedIds.has(p.id)}
+                          onChange={(e) => handleSelectOne(p.id, e.target.checked)}
+                        />
+                      </td>
+                      <td className="py-4 px-6 align-middle">
+                        <div className="h-12 w-16 rounded-md overflow-hidden bg-slate-200 relative shadow-sm">
+                          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${p.imageUrl || '/placeholder.png'}')` }}></div>
+                          {p.status === 'Draft' && (
+                            <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 p-0.5 rounded-bl-md shadow-sm" title="Draft / In Construction">
+                              <span className="material-symbols-outlined text-[10px] font-bold block">construction</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 align-middle">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white">{p.address || p.title}</span>
+                          <span className="text-xs text-slate-500">{p.city}, {p.state} {p.zip_code}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 align-middle">
+                        <span className="font-mono text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
+                          {p.smart_tag || '-'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 align-middle">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          {p.price ? `$${p.price.toLocaleString()}` : '-'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 align-middle">
+                        {/* Real flood zone display */}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${p.details?.flood_zone_code
+                          ? 'bg-blue-100 text-blue-800 border-blue-200'
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                          }`}>
+                          {p.details?.flood_zone_code || '-'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 align-middle">
+                        {getStatusBadge(p.status)}
+                      </td>
+                      <td className="py-4 px-6 align-middle text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openModal(p)}
+                            className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                            title="View Details"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">visibility</span>
+                          </button>
 
+                          <button
+                            onClick={() => openExportModal(p)}
+                            className="text-slate-400 hover:text-green-600 dark:hover:text-green-400 p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors"
+                            title="Export to Inventory"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">ios_share</span>
+                          </button>
+
+                          <button
+                            onClick={() => navigate(`/properties/${p.id}/edit`)}
+                            className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                            title="Edit"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProperty(p)}
+                            className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                            title="Delete"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                          </button>
+                          <button
+                            onClick={async () => {
                               try {
-                                await AuctionService.deleteProperty(p.id);
-                                // Success - no need to do anything, state is already updated
+                                const { url } = await AuctionService.generateReport(p.id);
+                                const fullUrl = `${API_BASE_URL}${url}`;
+                                window.open(fullUrl, '_blank');
                               } catch (e) {
                                 console.error(e);
-                                alert('Failed to delete property');
-                                // Revert on failure
-                                setProperties(originalProps);
+                                alert('Failed to generate report');
                               }
-                            }
-                          }}
-                          className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-                          title="Delete"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">delete</span>
-                        </button>
-                        <button
-                          onClick={async () => {
-                            try {
-                              const { url } = await AuctionService.generateReport(p.id);
-                              // The URL is relative /static/reports/..., prepend API base if needed, 
-                              // but if it's served by same backend, we can just use the path or full URL.
-                              // Assuming backend and frontend integration:
-                              const fullUrl = `${API_BASE_URL}${url}`;
-                              window.open(fullUrl, '_blank');
-                            } catch (e) {
-                              console.error(e);
-                              alert('Failed to generate report');
-                            }
-                          }}
-                          className="text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
-                          title="Download Report"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                            }}
+                            className="text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+                            title="Download Report"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
+            {properties.map((p) => (
+              <PropertyCard
+                key={p.id}
+                property={p}
+                onView={openModal}
+                onEdit={(prop) => navigate(`/properties/${prop.id}/edit`)}
+                onExport={openExportModal}
+                onDelete={handleDeleteProperty}
+                isSelected={selectedIds.has(p.id)}
+                onSelect={handleSelectOne}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

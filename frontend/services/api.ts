@@ -321,6 +321,45 @@ export const AuctionService = {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Failed to delete note');
+    },
+
+    exportToInventory: async (propertyId: string, data: { company_id: number, folder_id?: string, status?: string, user_notes?: string }): Promise<any> => {
+        const response = await fetch(`${API_URL}/properties/${propertyId}/export`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Export failed');
+        }
+        return response.json();
+    },
+
+    enrichProperty: async (id: string): Promise<Property> => {
+        const response = await fetch(`${API_URL}/properties/${id}/enrich`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Enrichment failed');
+        return response.json();
+    },
+
+    getPropertyReport: async (id: string): Promise<{ report_url: string }> => {
+        const response = await fetch(`${API_URL}/properties/${id}/report`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch report');
+        return response.json();
+    },
+
+    validateGSI: async (id: string): Promise<any> => {
+        const response = await fetch(`${API_URL}/properties/${id}/validate-gsi`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('GSI Validation failed');
+        return response.json();
     }
 };
 
@@ -412,6 +451,101 @@ export const UserService = {
             const err = await response.json();
             throw new Error(err.detail || 'Failed to create user');
         }
+        return response.json();
+    }
+};
+
+export const InventoryService = {
+    getFolders: async (companyId?: number): Promise<any[]> => {
+        const queryParams = companyId ? `?company_id=${companyId}` : '';
+        const response = await fetch(`${API_URL}/inventory/folders${queryParams}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch folders');
+        return response.json();
+    },
+
+    createFolder: async (name: string): Promise<any> => {
+        const response = await fetch(`${API_URL}/inventory/folders`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ name })
+        });
+        if (!response.ok) throw new Error('Failed to create folder');
+        return response.json();
+    },
+
+    getItems: async (params: { folder_id?: string, status?: string } = {}): Promise<any[]> => {
+        const queryParams = new URLSearchParams();
+        if (params.folder_id) queryParams.append('folder_id', params.folder_id);
+        if (params.status) queryParams.append('status', params.status);
+
+        const response = await fetch(`${API_URL}/inventory/items?${queryParams.toString()}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch inventory items');
+        return response.json();
+    },
+
+    updateItem: async (itemId: string, data: any): Promise<any> => {
+        const response = await fetch(`${API_URL}/inventory/items/${itemId}`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to update inventory item');
+        return response.json();
+    },
+
+    deleteItem: async (itemId: string): Promise<void> => {
+        const response = await fetch(`${API_URL}/inventory/items/${itemId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to delete inventory item');
+    }
+};
+
+export interface Transaction {
+    id: string;
+    amount: number;
+    type: string;
+    description: string;
+    category?: string;
+    created_at: string;
+    property_id?: string;
+}
+
+export interface FinanceStats {
+    total_balance: number;
+    total_invested: number;
+    total_expenses: number;
+    available_limit: number;
+    realized_roi: number;
+}
+
+export const FinanceService = {
+    getStats: async (companyId: number): Promise<FinanceStats> => {
+        const response = await fetch(`${API_URL}/finance/stats?company_id=${companyId}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch stats');
+        return response.json();
+    },
+    getTransactions: async (companyId: number): Promise<Transaction[]> => {
+        const response = await fetch(`${API_URL}/finance/transactions?company_id=${companyId}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch transactions');
+        return response.json();
+    },
+    deposit: async (data: { company_id: number, amount: number, description?: string }): Promise<Transaction> => {
+        const response = await fetch(`${API_URL}/finance/deposit`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Deposit failed');
         return response.json();
     }
 };

@@ -144,10 +144,28 @@ class PropertyRepository:
             if db_obj.details:
                 for field, value in details_data.items():
                     setattr(db_obj.details, field, value)
+                
+                # Auto-calculate max_bid if estimated_value is updated
+                if "estimated_value" in details_data:
+                    est_value = details_data["estimated_value"]
+                    if est_value:
+                        percentage = 0.70
+                        if db_obj.company:
+                            percentage = db_obj.company.default_bid_percentage or 0.70
+                        db_obj.details.max_bid = est_value * percentage
             else:
                 # Create new details if they don't exist
                 new_details = PropertyDetails(property_id=db_obj.id, **details_data)
-                new_details = PropertyDetails(property_id=db_obj.id, **details_data)
+                
+                # Auto-calculate max_bid for new details if estimated_value is present
+                if "estimated_value" in details_data:
+                    est_value = details_data["estimated_value"]
+                    if est_value:
+                        percentage = 0.70
+                        if db_obj.company:
+                            percentage = db_obj.company.default_bid_percentage or 0.70
+                        new_details.max_bid = est_value * percentage
+                
                 db.add(new_details)
 
         # Handle Auction Details
@@ -187,5 +205,53 @@ class PropertyRepository:
         )
         db.commit()
         return count
+
+    async def enrich_property(self, db: Session, *, property_id: str) -> Optional[Property]:
+        """
+        Enriches a property using the EnrichmentService.
+        """
+        db_obj = self.get(db, id=property_id)
+        if not db_obj or not db_obj.details or not db_obj.details.zillow_url:
+            return db_obj
+
+        from app.services.enrichment import enrichment_service
+        enriched_data = await enrichment_service.fetch_zillow_data(db_obj.details.zillow_url)
+        
+        if enriched_data:
+            # Update Details
+            if not db_obj.details:
+                db_obj.details = PropertyDetails(property_id=db_obj.id)
+            
+            for field in ["bedrooms", "bathrooms", "sqft", "estimated_value"]:
+                if field in enriched_data and enriched_data[field]:
+                    setattr(db_obj.details, field, enriched_data[field])
+
+            # Recalculate Max Bid
+            est_value = enriched_data.get("estimated_value")
+            if est_value:
+                percentage = 0.70
+                if db_obj.company:
+                    percentage = db_obj.company.default_bid_percentage or 0.70
+                db_obj.details.max_bid = est_value * percentage
+
+            # Add Images
+            if "images" in enriched_data:
+                existing_urls = {m.url for m in db_obj.media}
+                for img_url in enriched_data["images"]:
+                    if img_url not in existing_urls:
+                        media_obj = Media(
+                            property_id=db_obj.id,
+                            media_type="image",
+                            url=img_url,
+                            is_primary=False if existing_urls else True
+                        )
+                        db.add(media_obj)
+                        existing_urls.add(img_url)
+
+            db.add(db_obj)
+            db.commit()
+            db.refresh(db_obj)
+
+        return db_obj
 
 property_repo = PropertyRepository()

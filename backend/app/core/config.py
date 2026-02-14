@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "mysql+pymysql://user:password@localhost:3306/auctionos"
     REDIS_URL: str = "redis://redis:6379"
+    ZENROWS_API_KEY: Optional[str] = None
 
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env")
 

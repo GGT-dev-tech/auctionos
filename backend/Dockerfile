@@ -40,7 +40,7 @@ RUN playwright install chromium
 COPY data/ /app/data/
 
 # Create data directory and set permissions
-RUN mkdir -p /app/data/media && chmod -R 777 /app/data
+RUN mkdir -p /app/data/media /app/data/reports && chmod -R 777 /app/data
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh

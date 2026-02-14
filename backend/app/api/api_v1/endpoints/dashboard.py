@@ -1,3 +1,4 @@
+import json
 from typing import Any, List, Optional
 from enum import Enum
 
@@ -20,6 +21,7 @@ class DashboardInit(BaseModel):
     county_stats: List[dict]
     recent_activity: List[schemas.Property]
     quick_stats: dict
+    analytics: dict
 
 @router.get("/init", response_model=DashboardInit)
 def get_dashboard_init(
@@ -78,10 +80,37 @@ def get_dashboard_init(
         "pending_count": pending_count
     }
 
+    # 6. Analytics (New)
+    from app.models.property import PropertyDetails
+    
+    # Status Distribution
+    status_counts = db.query(
+        Property.status,
+        func.count(Property.id)
+    ).group_by(Property.status).all()
+    status_dist = {s[0]: s[1] for s in status_counts}
+
+    # Potential Equity (Estimated Value - Price)
+    equity_query = query.join(PropertyDetails, isouter=True)
+    total_est_value = equity_query.with_entities(func.sum(PropertyDetails.estimated_value)).scalar() or 0.0
+    total_potential_equity = total_est_value - total_value
+
+    analytics = {
+        "status_distribution": status_dist,
+        "total_equity": total_potential_equity,
+        "total_market_value": total_est_value,
+        "spend_vs_equity": [
+            {"name": "Total Spend", "value": total_value},
+            {"name": "Potential Equity", "value": total_potential_equity}
+        ],
+        "county_breakdown": [{"range": f"{s['county']}, {s['state']}", "value": s['count']} for s in county_stats]
+    }
+
     return {
         "role": current_user.role,
         "linked_companies": current_user.companies if current_user.role != UserRole.AGENT else [],
         "county_stats": county_stats,
         "recent_activity": recent_activity,
-        "quick_stats": quick_stats
+        "quick_stats": quick_stats,
+        "analytics": analytics
     }
