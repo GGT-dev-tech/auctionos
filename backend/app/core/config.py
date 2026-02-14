@@ -22,6 +22,14 @@ class Settings(BaseSettings):
         raise ValueError(v)
 
     DATABASE_URL: str = "sqlite:///./sql_app.db"
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def fix_postgres_url(cls, v: str) -> str:
+        if v and v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql://", 1)
+        return v
+
     REDIS_URL: str = "redis://redis:6379"
     ZENROWS_API_KEY: Optional[str] = None
 
