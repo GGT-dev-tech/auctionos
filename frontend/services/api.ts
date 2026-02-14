@@ -419,6 +419,27 @@ export const CompanyService = {
         });
         if (!response.ok) throw new Error('Failed to link user');
         return response.json();
+    },
+
+    update: async (id: number, data: { name?: string, owner_id?: number }): Promise<Company> => {
+        const response = await fetch(`${API_URL}/companies/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Failed to update company');
+        }
+        return response.json();
+    },
+
+    delete: async (id: number): Promise<void> => {
+        const response = await fetch(`${API_URL}/companies/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to delete company');
     }
 };
 
@@ -452,6 +473,27 @@ export const UserService = {
             throw new Error(err.detail || 'Failed to create user');
         }
         return response.json();
+    },
+
+    update: async (id: number, data: { email?: string, password?: string, role?: UserRole, company_ids?: number[], is_active?: boolean }): Promise<User> => {
+        const response = await fetch(`${API_URL}/users/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Failed to update user');
+        }
+        return response.json();
+    },
+
+    delete: async (id: number): Promise<void> => {
+        const response = await fetch(`${API_URL}/users/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to delete user');
     }
 };
 

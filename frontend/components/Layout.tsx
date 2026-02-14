@@ -16,9 +16,10 @@ export const Layout: React.FC = () => {
     { icon: 'dashboard', label: 'Dashboard', path: '/' },
     { icon: 'real_estate_agent', label: 'Properties', path: '/inventory' },
     { icon: 'inventory_2', label: 'My Inventory', path: '/my-inventory' },
-    // { icon: 'gavel', label: 'Auctions', path: '/auctions' }, // Consolidated into Properties
+    { icon: 'gavel', label: 'Auctions', path: '/auctions' },
     { icon: 'description', label: 'Reports', path: '/reports' },
     { icon: 'monitoring', label: 'Financials', path: '/financials' },
+    { icon: 'analytics', label: 'Analysis', path: '/analysis' },
     { icon: 'settings', label: 'Settings', path: '/settings' },
   ];
 

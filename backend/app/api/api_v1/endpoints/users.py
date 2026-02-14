@@ -122,3 +122,63 @@ def read_user_me(
     Get current user.
     """
     return current_user
+
+@router.put("/{user_id}", response_model=UserSchema)
+def update_user(
+    *,
+    db: Session = Depends(deps.get_db),
+    user_id: int,
+    user_in: UserUpdate,
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Update a user. (Admin only)
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="The user with this user_id does not exist in the system",
+        )
+    
+    if user_in.email is not None:
+        user.email = user_in.email
+    if user_in.password is not None:
+        user.hashed_password = security.get_password_hash(user_in.password)
+    if user_in.role is not None:
+        user.role = user_in.role
+    if user_in.is_active is not None:
+        user.is_active = user_in.is_active
+    
+    if user_in.company_ids is not None:
+        companies = db.query(Company).filter(Company.id.in_(user_in.company_ids)).all()
+        user.companies = companies
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.delete("/{user_id}", response_model=UserSchema)
+def delete_user(
+    *,
+    db: Session = Depends(deps.get_db),
+    user_id: int,
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Delete a user. (Admin only)
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+    if user.id == current_user.id:
+        raise HTTPException(
+            status_code=400, detail="Users can not delete themselves"
+        )
+    db.delete(user)
+    db.commit()
+    return user

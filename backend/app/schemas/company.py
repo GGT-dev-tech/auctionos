@@ -11,8 +11,9 @@ class CompanyCreate(CompanyBase):
     owner_id: Optional[int] = None
 
 # Properties to receive via API on update
-class CompanyUpdate(CompanyBase):
-    pass
+class CompanyUpdate(BaseModel):
+    name: Optional[str] = None
+    owner_id: Optional[int] = None
 
 # Properties to return via API
 class Company(CompanyBase):

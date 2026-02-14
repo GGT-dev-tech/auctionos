@@ -226,7 +226,7 @@ from app.schemas.property import Property, PropertyCreate, PropertyUpdate, Prope
 from app.db.repositories.inventory_repository import inventory_repo
 
 @router.post("/{id}/export", response_model=dict)
-def export_property_to_inventory(
+async def export_property_to_inventory(
     *,
     db: Session = Depends(deps.get_db),
     id: str,

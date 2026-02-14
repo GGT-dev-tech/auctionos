@@ -37,7 +37,7 @@ const App: React.FC = () => {
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="inventory" element={<Inventory />} />
-            {/* <Route path="auctions" element={<AuctionList />} /> */}
+            <Route path="/auctions" element={<AuctionList />} />
             <Route path="financials" element={<Financials />} />
             <Route path="analysis" element={<Analysis />} />
             <Route path="reports" element={<Reports />} />

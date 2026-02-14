@@ -1,9 +1,12 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.schemas.property import PropertyCreate, PropertyDetailsCreate, AuctionDetailsCreate
 from app.db.repositories.property_repository import PropertyRepository
+from app.models.user import User
+from app.services.scraper import scraper_service
+from app.services.importer import importer_service
 import csv
 import io
 import re
@@ -232,3 +235,25 @@ async def upload_properties_csv(
         "duplicates_skipped": duplicates,
         "errors": errors[:5]
     }
+@router.post("/scrape", response_model=dict)
+async def trigger_scrape(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Trigger the background scraper for all counties.
+    """
+    background_tasks.add_task(scraper_service.run_all)
+    return {"message": "Scraping started in the background."}
+
+@router.post("/import", response_model=dict)
+async def trigger_import(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Trigger the background import from scraped CSV files.
+    """
+    background_tasks.add_task(importer_service.run_import, db)
+    return {"message": "Import started in the background."}
