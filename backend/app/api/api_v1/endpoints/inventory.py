@@ -18,14 +18,7 @@ def read_folders(
     Retrieve inventory folders.
     """
     # Logic to determine company context
-    target_company_id = company_id if company_id else current_user.company_id
-    if not target_company_id:
-         # Fallback or error if user has no company
-         # For now assume user has company_id
-         pass # TODO: Handle multi-company correctly from context
-    
-    # Use the user's primary company for now if not specified
-    cid = target_company_id or (current_user.companies[0].id if current_user.companies else None)
+    cid = company_id if company_id else (current_user.companies[0].id if current_user.companies else None)
     if not cid:
         return []
 
@@ -41,7 +34,7 @@ def create_folder(
     """
     Create new inventory folder.
     """
-    cid = current_user.company_id or (current_user.companies[0].id if current_user.companies else None)
+    cid = current_user.companies[0].id if current_user.companies else None
     if not cid:
          raise HTTPException(status_code=400, detail="User must belong to a company")
          
@@ -57,7 +50,7 @@ def read_items(
     """
     Retrieve inventory items.
     """
-    cid = current_user.company_id or (current_user.companies[0].id if current_user.companies else None)
+    cid = current_user.companies[0].id if current_user.companies else None
     if not cid:
         return []
         
@@ -73,7 +66,7 @@ def create_item(
     """
     Add property to inventory.
     """
-    cid = current_user.company_id or (current_user.companies[0].id if current_user.companies else None)
+    cid = current_user.companies[0].id if current_user.companies else None
     if not cid:
          raise HTTPException(status_code=400, detail="User must belong to a company")
          

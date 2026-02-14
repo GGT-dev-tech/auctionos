@@ -1,10 +1,9 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from app.db.repositories.base import BaseRepository
 from app.models.inventory import InventoryFolder, InventoryItem, InventoryStatus
 from app.schemas.inventory import InventoryFolderCreate, InventoryFolderUpdate, InventoryItemCreate, InventoryItemUpdate
 
-class InventoryRepository(BaseRepository[InventoryFolder, InventoryFolderCreate, InventoryFolderUpdate]):
+class InventoryRepository:
     def get_folders_by_company(self, db: Session, company_id: int) -> List[InventoryFolder]:
         return db.query(InventoryFolder).filter(InventoryFolder.company_id == company_id).all()
 
@@ -64,4 +63,4 @@ class InventoryRepository(BaseRepository[InventoryFolder, InventoryFolderCreate,
         db.commit()
         return True
 
-inventory_repo = InventoryRepository(InventoryFolder)
+inventory_repo = InventoryRepository()
