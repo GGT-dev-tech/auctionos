@@ -302,3 +302,85 @@ export const AuctionService = {
         if (!response.ok) throw new Error('Failed to delete note');
     }
 };
+
+// --- New Interfaces ---
+
+export enum UserRole {
+    ADMIN = 'admin',
+    MANAGER = 'manager',
+    AGENT = 'agent'
+}
+
+export interface Company {
+    id: number;
+    name: string;
+    owner_id?: number;
+    created_at?: string;
+    users?: User[]; // Users linked to this company
+}
+
+export interface User {
+    id: number;
+    email: string;
+    is_active: boolean;
+    is_superuser: boolean;
+    role: UserRole;
+    companies?: Company[];
+}
+
+// --- New Services ---
+
+export const CompanyService = {
+    list: async (): Promise<Company[]> => {
+        const response = await fetch(`${API_URL}/companies/`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch companies');
+        return response.json();
+    },
+
+    create: async (data: { name: string, owner_id?: number }): Promise<Company> => {
+        const response = await fetch(`${API_URL}/companies/`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Failed to create company');
+        }
+        return response.json();
+    },
+
+    linkUser: async (companyId: number, userId: number): Promise<Company> => {
+        const response = await fetch(`${API_URL}/companies/${companyId}/link-user?user_id=${userId}`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to link user');
+        return response.json();
+    }
+};
+
+export const UserService = {
+    list: async (): Promise<User[]> => {
+        const response = await fetch(`${API_URL}/users/`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch users');
+        return response.json();
+    },
+
+    create: async (data: { email: string, password: string, role: UserRole, company_ids?: number[] }): Promise<User> => {
+        const response = await fetch(`${API_URL}/users/`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Failed to create user');
+        }
+        return response.json();
+    }
+};

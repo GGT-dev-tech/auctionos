@@ -1,13 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuctionService } from '../services/api';
-
-interface User {
-    id: number;
-    email: string;
-    is_active: boolean;
-    is_superuser: boolean;
-    role: string;
-}
+import { AuctionService, User } from '../services/api';
 
 interface AuthContextType {
     user: User | null;
