@@ -111,6 +111,14 @@ class PropertyDetails(Base):
     # Legal
     legal_tags = Column(String(500), nullable=True) # JSON or comma-separated list of tags
     
+    # External Links & Descriptions
+    appraisal_desc = Column(Text, nullable=True)
+    regrid_url = Column(String(500), nullable=True)
+    fema_url = Column(String(500), nullable=True)
+    zillow_url = Column(String(500), nullable=True)
+    gsi_url = Column(String(500), nullable=True)
+    gsi_data = Column(Text, nullable=True) # JSON storage
+    
     property = relationship("Property", back_populates="details")
 
 class MediaType(str, enum.Enum):

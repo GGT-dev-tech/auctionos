@@ -10,17 +10,59 @@ class PropertyRepository:
     def get_multi(
         self, db: Session, *, skip: int = 0, limit: int = 100, 
         state: Optional[str] = None, city: Optional[str] = None,
-        county: Optional[str] = None, zip_code: Optional[str] = None
+        county: Optional[str] = None, zip_code: Optional[str] = None,
+        min_price: Optional[float] = None, max_price: Optional[float] = None,
+        status: Optional[List[str]] = None,
+        min_date: Optional[str] = None, max_date: Optional[str] = None,
+        sort_by: Optional[str] = None, sort_desc: bool = False
     ) -> List[Property]:
         query = db.query(Property)
+        
+        # Joins if needed (for date filtering)
+        if min_date or max_date or sort_by == 'auction_date':
+            query = query.join(AuctionDetails, Property.id == AuctionDetails.property_id, isouter=True)
+
         if state:
             query = query.filter(Property.state == state)
         if city:
-            query = query.filter(Property.city == city)
+            query = query.filter(Property.city.ilike(f"%{city}%"))
         if county:
             query = query.filter(Property.county.ilike(f"%{county}%"))
         if zip_code:
             query = query.filter(Property.zip_code == zip_code)
+            
+        if min_price is not None:
+             query = query.filter(Property.price >= min_price)
+        if max_price is not None:
+             query = query.filter(Property.price <= max_price)
+             
+        if status:
+             query = query.filter(Property.status.in_(status))
+             
+        if min_date:
+             query = query.filter(AuctionDetails.auction_date >= min_date)
+        if max_date:
+             query = query.filter(AuctionDetails.auction_date <= max_date)
+             
+        # Sorting
+        if sort_by:
+            if sort_by == 'price':
+                sort_col = Property.price
+            elif sort_by == 'auction_date':
+                sort_col = AuctionDetails.auction_date
+            elif sort_by == 'title':
+                sort_col = Property.title
+            else:
+                sort_col = Property.created_at # Default
+                
+            if sort_desc:
+                query = query.order_by(sort_col.desc())
+            else:
+                query = query.order_by(sort_col.asc())
+        else:
+            # Default sort by created_at desc
+            query = query.order_by(Property.created_at.desc())
+
         return query.offset(skip).limit(limit).all()
 
     def get_by_parcel_id(self, db: Session, parcel_id: str) -> Optional[Property]:

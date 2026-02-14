@@ -20,9 +20,20 @@ const getMultiPartHeaders = () => {
 };
 
 export const AuctionService = {
-    getProperties: async (): Promise<Property[]> => {
+    getProperties: async (filters: any = {}): Promise<Property[]> => {
         try {
-            const response = await fetch(`${API_URL}/properties/`, {
+            const queryParams = new URLSearchParams();
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => queryParams.append(key, v));
+                    } else {
+                        queryParams.append(key, String(value));
+                    }
+                }
+            });
+
+            const response = await fetch(`${API_URL}/properties/?${queryParams.toString()}`, {
                 headers: getHeaders()
             });
             if (!response.ok) {
@@ -33,6 +44,16 @@ export const AuctionService = {
             console.error('Error fetching properties:', error);
             throw error;
         }
+    },
+
+    bulkUpdate: async (ids: string[], action: 'update_status' | 'delete', status?: string): Promise<any> => {
+        const response = await fetch(`${API_URL}/properties/bulk-update`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ ids, action, status })
+        });
+        if (!response.ok) throw new Error('Failed to perform bulk update');
+        return response.json();
     },
 
     getProperty: async (id: string): Promise<Property> => {

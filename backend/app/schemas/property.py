@@ -61,6 +61,13 @@ class PropertyDetailsBase(BaseModel):
     estimated_value: Optional[float] = None
     rental_value: Optional[float] = None
     legal_tags: Optional[str] = None
+    
+    appraisal_desc: Optional[str] = None
+    regrid_url: Optional[str] = None
+    fema_url: Optional[str] = None
+    zillow_url: Optional[str] = None
+    gsi_url: Optional[str] = None
+    gsi_data: Optional[str] = None
 
 class PropertyDetailsCreate(PropertyDetailsBase):
     pass

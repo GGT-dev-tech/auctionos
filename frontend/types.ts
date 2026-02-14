@@ -82,6 +82,14 @@ export interface PropertyDetails {
   rental_value?: number;
   market_value_url?: string;
   legal_tags?: string; // JSON or comma-separated
+
+  // External Links & Descriptions
+  appraisal_desc?: string;
+  regrid_url?: string;
+  fema_url?: string;
+  zillow_url?: string;
+  gsi_url?: string;
+  gsi_data?: string;
 }
 
 export interface Media {

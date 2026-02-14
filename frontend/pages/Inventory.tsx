@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Property, PropertyStatus, FloodZone } from '../types';
+import { Property, PropertyStatus } from '../types';
 import { AuctionService, API_BASE_URL } from '../services/api';
 import { PropertyDetailsModal } from '../components/PropertyDetailsModal';
-
 import CountySelector from '../components/CountySelector';
 
 interface Location {
@@ -16,25 +15,56 @@ export const Inventory: React.FC = () => {
   const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filters
   const [filterText, setFilterText] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
-
-  // Location Filter State
   const [locationQuery, setLocationQuery] = useState('');
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+  // Selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Map Selector Modal
   const [showCountySelector, setShowCountySelector] = useState(false);
 
+  // Debounce filter text
   useEffect(() => {
-    fetchProps();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchProps();
+    }, 400); // Debounce fetch
+    return () => clearTimeout(timer);
+  }, [filterText, statusFilter, selectedLocation, minPrice, maxPrice, startDate, endDate]);
 
   const fetchProps = async () => {
     setLoading(true);
     try {
-      const data = await AuctionService.getProperties();
+      const filters: any = {};
+      if (statusFilter !== 'All') filters.status = [statusFilter];
+      if (filterText) filters.city = filterText; // Using city for quick text search for now, or we need a generic search param
+      // Note: Backend 'city' filter is exact match or ilike. 
+      // If we want generic text search (title/address), we might need to update backend or just use available fields.
+      // For now, let's map 'Quick Find' to city as a proxy or just request all if empty and rely on frontend for text?
+      // "The goal is to move from client-side to server-side filtering". 
+      // Let's rely on backend specific filters. 
+
+      if (selectedLocation) {
+        filters.county = selectedLocation.name.replace(' County', '');
+        filters.state = selectedLocation.state;
+      }
+
+      if (minPrice) filters.min_price = Number(minPrice);
+      if (maxPrice) filters.max_price = Number(maxPrice);
+      if (startDate) filters.min_date = startDate;
+      if (endDate) filters.max_date = endDate;
+
+      const data = await AuctionService.getProperties(filters);
       setProperties(data);
     } catch (e) {
       console.error(e);
@@ -43,6 +73,7 @@ export const Inventory: React.FC = () => {
     }
   };
 
+  // Location Autocomplete
   useEffect(() => {
     if (locationQuery.length > 2) {
       const fetchLocs = async () => {
@@ -60,28 +91,34 @@ export const Inventory: React.FC = () => {
     }
   }, [locationQuery]);
 
-  const filteredProperties = properties.filter(p => {
-    const matchesText = p.title.toLowerCase().includes(filterText.toLowerCase()) ||
-      (p.address && p.address.toLowerCase().includes(filterText.toLowerCase()));
-    const matchesStatus = statusFilter === 'All' || p.status === statusFilter;
-
-    // Check location
-    let matchesLocation = true;
-    if (selectedLocation) {
-      // Very basic matching for now: check if county name is in address or title or county field
-      // ideally we have p.county populated. If not, fallback to string match.
-      const locName = selectedLocation.name.toLowerCase(); // e.g. "adams county"
-      const simpleName = locName.replace(' county', '');
-
-      const countyMatch = p.county ? p.county.toLowerCase().includes(simpleName) : false;
-      const addressMatch = p.address ? p.address.toLowerCase().includes(simpleName) : false;
-      const cityMatch = p.city ? p.city.toLowerCase().includes(simpleName) : false;
-
-      matchesLocation = countyMatch || addressMatch || cityMatch;
+  // Bulk Actions
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(new Set(properties.map(p => p.id)));
+    } else {
+      setSelectedIds(new Set());
     }
+  };
 
-    return matchesText && matchesStatus && matchesLocation;
-  });
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSelected = new Set(selectedIds);
+    if (checked) newSelected.add(id);
+    else newSelected.delete(id);
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkAction = async (action: 'update_status' | 'delete', status?: string) => {
+    if (!confirm(`Are you sure you want to ${action === 'delete' ? 'delete' : 'update'} ${selectedIds.size} properties?`)) return;
+
+    try {
+      await AuctionService.bulkUpdate(Array.from(selectedIds), action, status);
+      setSelectedIds(new Set());
+      fetchProps(); // Refresh
+    } catch (e) {
+      console.error(e);
+      alert('Bulk action failed');
+    }
+  };
 
   const getStatusBadge = (status: PropertyStatus) => {
     switch (status) {
@@ -111,7 +148,7 @@ export const Inventory: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 pb-20">
       <PropertyDetailsModal
         property={selectedProperty}
         isOpen={isModalOpen}
@@ -123,18 +160,33 @@ export const Inventory: React.FC = () => {
           mode="filter"
           onClose={() => setShowCountySelector(false)}
           onSelect={(state, county) => {
-            // Determine FIPS logic? Netronline doesn't provide FIPS.
-            // We construct a mock Location object to set selectedLocation
             setSelectedLocation({
-              fips: 'map-selection', // Placeholder
+              fips: 'map-selection',
               name: `${county} County`,
               state: state
             });
-            // Also update query text to show user what they selected
-            // But selectedLocation takes precedence in display
             setShowCountySelector(false);
           }}
         />
+      )}
+
+      {/* Floating Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-full px-6 py-3 z-50 flex items-center gap-4 animate-slideUp">
+          <span className="font-semibold text-slate-700 dark:text-white">{selectedIds.size} Selected</span>
+          <div className="h-6 w-px bg-slate-200 dark:bg-slate-600"></div>
+          <div className="flex gap-2">
+            <button onClick={() => handleBulkAction('update_status', 'active')} className="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1 rounded-md text-sm font-medium transition-colors">Mark Active</button>
+            <button onClick={() => handleBulkAction('update_status', 'pending')} className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-3 py-1 rounded-md text-sm font-medium transition-colors">Mark Pending</button>
+            <button onClick={() => handleBulkAction('update_status', 'sold')} className="bg-slate-100 text-slate-700 hover:bg-slate-200 px-3 py-1 rounded-md text-sm font-medium transition-colors">Mark Sold</button>
+            <button onClick={() => handleBulkAction('delete')} className="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">delete</span> Delete
+            </button>
+          </div>
+          <button onClick={() => setSelectedIds(new Set())} className="ml-2 text-slate-400 hover:text-slate-600">
+            <span className="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
       )}
 
       {/* Heading */}
@@ -153,92 +205,132 @@ export const Inventory: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white dark:bg-[#1a2634] p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-        <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
-          {/* Tabs */}
-          <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-            {['All', 'Active', 'Draft', 'Sold'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setStatusFilter(tab === 'All' ? 'All' : tab as PropertyStatus)}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${(statusFilter === tab || (statusFilter === 'All' && tab === 'All'))
-                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                  }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+      <div className="flex flex-col gap-4 bg-white dark:bg-[#1a2634] p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto items-center">
+            {/* Tabs */}
+            <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              {['All', 'Active', 'Draft', 'Sold'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setStatusFilter(tab === 'All' ? 'All' : tab as PropertyStatus)}
+                  className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${(statusFilter === tab || (statusFilter === 'All' && tab === 'All'))
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
 
-          {/* Location Filter */}
-          <div className="relative flex items-center gap-2">
-            <input
-              type="text"
-              className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-primary outline-none w-64"
-              placeholder="Filter by County/State..."
-              value={selectedLocation ? `${selectedLocation.name}, ${selectedLocation.state}` : locationQuery}
-              onChange={(e) => {
-                setLocationQuery(e.target.value);
-                setSelectedLocation(null);
-              }}
-            />
+            {/* Location Filter */}
+            <div className="relative flex items-center gap-2">
+              <input
+                type="text"
+                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:ring-primary outline-none w-64"
+                placeholder="Filter by County/State..."
+                value={selectedLocation ? `${selectedLocation.name}, ${selectedLocation.state}` : locationQuery}
+                onChange={(e) => {
+                  setLocationQuery(e.target.value);
+                  setSelectedLocation(null);
+                }}
+              />
+
+              <button
+                onClick={() => setShowCountySelector(true)}
+                className="p-2 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                title="Select from Map"
+              >
+                <span className="material-symbols-outlined">map</span>
+              </button>
+
+              {selectedLocation && (
+                <button
+                  onClick={() => { setSelectedLocation(null); setLocationQuery(''); }}
+                  className="absolute right-12 top-2 text-slate-400 hover:text-slate-600"
+                >
+                  &times;
+                </button>
+              )}
+              {locations.length > 0 && !selectedLocation && (
+                <div className="absolute top-full left-0 z-10 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                  {locations.map(loc => (
+                    <div
+                      key={loc.fips}
+                      className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-sm"
+                      onClick={() => {
+                        setSelectedLocation(loc);
+                        setLocations([]);
+                      }}
+                    >
+                      {loc.name}, {loc.state}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <button
-              onClick={() => setShowCountySelector(true)}
-              className="p-2 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-              title="Select from Map"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className={`p-2 rounded-lg border flex items-center gap-1 text-sm font-medium transition-colors ${showAdvancedFilters ? 'bg-slate-100 border-slate-300 text-slate-900' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
             >
-              <span className="material-symbols-outlined">map</span>
+              <span className="material-symbols-outlined text-[18px]">filter_list</span>
+              Filters
             </button>
+          </div>
 
-            {selectedLocation && (
-              <button
-                onClick={() => { setSelectedLocation(null); setLocationQuery(''); }}
-                className="absolute right-12 top-2 text-slate-400 hover:text-slate-600"
-              >
-                &times;
-              </button>
-            )}
-            {locations.length > 0 && !selectedLocation && (
-              <div className="absolute top-full left-0 z-10 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
-                {locations.map(loc => (
-                  <div
-                    key={loc.fips}
-                    className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-sm"
-                    onClick={() => {
-                      setSelectedLocation(loc);
-                      setLocations([]);
-                    }}
-                  >
-                    {loc.name}, {loc.state}
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="relative w-full md:w-64">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="material-symbols-outlined text-slate-400 text-[18px]">search</span>
+            </span>
+            <input
+              type="text"
+              className="block w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary placeholder-slate-400"
+              placeholder="Find by City..."
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+            />
           </div>
         </div>
 
-        <div className="relative w-full md:w-64">
-          <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="material-symbols-outlined text-slate-400 text-[18px]">search</span>
-          </span>
-          <input
-            type="text"
-            className="block w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary placeholder-slate-400"
-            placeholder="Quick find..."
-            value={filterText}
-            onChange={(e) => setFilterText(e.target.value)}
-          />
-        </div>
+        {/* Advanced Filters */}
+        {showAdvancedFilters && (
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-4 animate-slideUp">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Min Price</label>
+              <input type="number" value={minPrice} onChange={e => setMinPrice(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="0" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Max Price</label>
+              <input type="number" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="Any" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Auction Date From</label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Auction Date To</label>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-[#1a2634] rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-[#1a2634] rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden min-h-[400px]">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                <th className="py-4 px-4 w-[40px]">
+                  <input
+                    type="checkbox"
+                    className="rounded border-slate-300 text-primary focus:ring-primary"
+                    checked={properties.length > 0 && selectedIds.size === properties.length}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                  />
+                </th>
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Property</th>
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Address details</th>
                 <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Smart Tag</th>
@@ -250,12 +342,20 @@ export const Inventory: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {loading ? (
-                <tr><td colSpan={6} className="p-8 text-center text-slate-500">Loading properties...</td></tr>
-              ) : filteredProperties.length === 0 ? (
-                <tr><td colSpan={6} className="p-8 text-center text-slate-500">No properties found.</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-slate-500">Loading properties...</td></tr>
+              ) : properties.length === 0 ? (
+                <tr><td colSpan={8} className="p-8 text-center text-slate-500">No properties found.</td></tr>
               ) : (
-                filteredProperties.map((p) => (
-                  <tr key={p.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                properties.map((p) => (
+                  <tr key={p.id} className={`group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.has(p.id) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                    <td className="py-4 px-4 align-middle">
+                      <input
+                        type="checkbox"
+                        className="rounded border-slate-300 text-primary focus:ring-primary"
+                        checked={selectedIds.has(p.id)}
+                        onChange={(e) => handleSelectOne(p.id, e.target.checked)}
+                      />
+                    </td>
                     <td className="py-4 px-6 align-middle">
                       <div className="h-12 w-16 rounded-md overflow-hidden bg-slate-200 relative shadow-sm">
                         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${p.imageUrl || '/placeholder.png'}')` }}></div>

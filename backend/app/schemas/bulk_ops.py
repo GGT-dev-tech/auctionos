@@ -1,7 +1,12 @@
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
-from app.schemas.property import PropertyStatus
+from enum import Enum
+
+class BulkActionType(str, Enum):
+    update_status = 'update_status'
+    delete = 'delete'
 
 class BulkStatusUpdate(BaseModel):
     ids: List[str]
-    status: PropertyStatus
+    action: BulkActionType
+    status: Optional[str] = None
