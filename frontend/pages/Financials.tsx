@@ -135,10 +135,10 @@ const Financials: React.FC = () => {
                     color="red"
                 />
                 <MetricCard
-                    label="Available Limit"
-                    value={`$${stats?.available_limit.toLocaleString()}`}
-                    icon={<TrendingUp className="text-green-500" />}
-                    color="green"
+                    label="Max Bid (%)"
+                    value={`${((stats?.default_bid_percentage || 0.70) * 100).toFixed(0)}%`}
+                    icon={<TrendingUp className="text-purple-500" />}
+                    color="purple"
                 />
             </div>
 

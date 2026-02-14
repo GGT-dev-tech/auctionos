@@ -564,6 +564,7 @@ export interface FinanceStats {
     total_expenses: number;
     available_limit: number;
     realized_roi: number;
+    default_bid_percentage: number;
 }
 
 export const FinanceService = {

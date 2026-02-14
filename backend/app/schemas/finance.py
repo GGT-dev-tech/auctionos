@@ -25,6 +25,7 @@ class FinanceStats(BaseModel):
     total_expenses: float
     available_limit: float
     realized_roi: float = 0.0
+    default_bid_percentage: float = 0.70
 
 class DepositRequest(BaseModel):
     company_id: int

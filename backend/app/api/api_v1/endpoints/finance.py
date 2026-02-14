@@ -46,7 +46,8 @@ def get_finance_stats(
         total_balance=company.balance,
         total_invested=total_invested,
         total_expenses=total_expenses,
-        available_limit=company.balance - total_invested # Simplified limit
+        available_limit=company.balance - total_invested,
+        default_bid_percentage=company.default_bid_percentage
     )
 
 @router.get("/transactions", response_model=List[TransactionSchema])

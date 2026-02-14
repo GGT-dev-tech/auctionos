@@ -21,7 +21,7 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    DATABASE_URL: str = "mysql+pymysql://user:password@localhost:3306/auctionos"
+    DATABASE_URL: str = "sqlite:///./sql_app.db"
     REDIS_URL: str = "redis://redis:6379"
     ZENROWS_API_KEY: Optional[str] = None
 
