@@ -362,6 +362,16 @@ export const CompanyService = {
     }
 };
 
+export const DashboardService = {
+    getInitData: async () => {
+        const response = await fetch(`${API_URL}/dashboard/init`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch dashboard init data');
+        return response.json();
+    }
+};
+
 export const UserService = {
     list: async (): Promise<User[]> => {
         const response = await fetch(`${API_URL}/users/`, {

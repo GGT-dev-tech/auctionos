@@ -11,6 +11,7 @@ class PropertyStatus(str, enum.Enum):
     SOLD = "sold"
     PENDING = "pending"
     INACTIVE = "inactive"
+    DRAFT = "draft"
 
 class PropertyType(str, enum.Enum):
     RESIDENTIAL = "residential"
