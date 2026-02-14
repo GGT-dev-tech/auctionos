@@ -14,6 +14,7 @@ import { Analysis } from './pages/Analysis';
 import { Settings } from './pages/Settings';
 import { Financials } from './pages/Financials';
 import { Reports } from './pages/Reports';
+import MyInventory from './pages/MyInventory';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ... existing protected route logic
@@ -41,6 +42,7 @@ const App: React.FC = () => {
             <Route path="analysis" element={<Analysis />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="my-inventory" element={<MyInventory />} />
             <Route path="properties/new" element={<PropertyWizard />} />
             <Route path="properties/:id/edit" element={<PropertyWizard />} />
             <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction</div>} />
