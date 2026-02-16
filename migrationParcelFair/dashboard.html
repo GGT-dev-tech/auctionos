@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link id="favicon" rel="icon" type="image/png" href="/favicon.ico" />
+	<title>Parcel Fair Dashboard - Parcel Fair</title>
+	<script src="/bundles/jquery?v=2u0aRenDpYxArEyILB59ETSCA2cfQkSMlxb6jbMBqf81"></script>
+
+	<link href="/Content/css?v=120ZKF_Z1-mgFBqToPamd_kQ5RRRu4L6u5pT2UWvc9Y1" rel="stylesheet"/>
+
+	<script src="/bundles/application?v=-gau4D66ghk2M9P12kqAQ6x9JwyUdiS5rOkP1rJ5AQo1"></script>
+
+	
+	
+	
+
+
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-YX1L41HKYF"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'G-YX1L41HKYF');
+	</script>
+</head>
+<body>
+<style>
+	.dropdown-section { 
+	display: block; padding: 3px 15px; font-size: 16px;
+	line-height: 1.42857143; color: #777777; white-space: nowrap;
+	background-color:#ededed;
+	}
+</style>
+	<div class="navbar navbar-inverse navbar-fixed-top hidden-print">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a href="/" class="navbar-brand">Parcel Fair</a>
+			</div>
+			<div class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+						<li><a href="/dashboard">Home</a></li>
+					<li><a href="/Home/About">About</a></li>
+					<li><a href="/Home/Contact">Contact</a></li>
+					<li class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+							Tools <span class="caret"></span>
+						</a>
+						<ul class="dropdown-menu" aria-labelledby="Tools">
+							<li class="dropdown-section">Find Parcels:</li>
+							<li><a href="/Map" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> Map Search</a></li>
+							<li><a href="/Parcel" target="_blank"><span class="glyphicon glyphicon-search"></span> List Search</a></li>
+							<li><a href="/Auction/Calendar"><span class="glyphicon glyphicon-calendar"></span> Auction Calendar</a></li>
+							<li><a href="/Inventory"><span class="glyphicon glyphicon-saved"></span> OTC Inventory Tracker</a></li>
+							<li class="dropdown-section">My Research:</li>
+							<li><a href="/Dashboard"><span class="glyphicon glyphicon-th-large"></span> My Dashboard</a></li>
+							<li><a href="/Parcel/Favorites"><span class="glyphicon glyphicon-heart"></span> My Favorites</a></li>
+							<li><a href="/Lists"><span class="glyphicon glyphicon-list"></span> My Saved Lists</a></li>
+							<li><a href="/PriceNotice"><span class="glyphicon glyphicon-tag"></span> Price Notice Organizer</a></li>
+						</ul>
+					</li>
+						<li class="dropdown">
+							<a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+								Connect<span class="caret"></span>
+							</a>
+							<ul class="dropdown-menu" aria-labelledby="Connect">
+								
+								<li><a href="/Video/ParcelFair101"><span class="glyphicon glyphicon-book"></span> Parcel Fair 101 Training</a></li>
+								<li><a href="https://www.youtube.com/c/ParcelFair" target="_blank"><span class="glyphicon glyphicon-play"></span> YouTube Community</a></li>
+									<li><a href="https://www.facebook.com/groups/parcelfair" target="_blank"><span class="glyphicon glyphicon-user"></span> Facebook Group</a></li>
+																<li><a href="/Video/OnlineMeetup"><span class="glyphicon glyphicon-play-circle"></span> Online Meetups</a></li>
+									<li><a href="/Manage"><span class="glyphicon glyphicon-wrench"></span> Account Support</a></li>
+							</ul>
+						</li>
+					</ul>
+				<form action="/Account/LogOff" class="navbar-right" id="logoutForm" method="post"><input name="__RequestVerificationToken" type="hidden" value="T0ywvU-AegEnuW_Z0Qe6A5qQzuNvtsfoXvBaRXDCc5HSX4h_8QiNkbcVWBajwDssEISk2hdSTyofM9mN3dlPem7U5oo6X7eeHBJKgi64L-jAL4ZNbw0h1223JH5QI7qCma-QxCLsp9Vnka8gusIbVg2" />		<ul class="nav navbar-nav navbar-right">
+			<li>
+				<a href="/Manage" title="Manage">gustavot.gomes7@gmail.com</a>
+			</li>
+			<li>
+				<div style="margin:8px;">
+					<a href="javascript:document.getElementById('logoutForm').submit()" class="btn btn-warning">Log off</a>
+				</div>
+			</li>
+		</ul>
+</form>
+			</div>
+		</div>
+	</div>
+		<div class="container body-content">
+			
+			
+
+
+<style>
+	.panel-body { padding-left: 0px !important; padding-right: 0px !important; }
+	table tr { max-width: 100% !important; }
+</style>
+
+
+		<div class="row">
+			<a href="https://events.teams.microsoft.com/event/10ef46b6-40ec-41c9-ae58-b4c4f23f8ceb@aa9ce485-e856-429e-9866-47c6a27e90b2" class="btn-anchor" target="_blank">
+				<h5 class="alert alert-success text-center txt-lg clickable">
+					<span class="glyphicon glyphicon-calendar"></span>
+					<span class="bold">
+						Getting Started with Parcel Fair? Don't miss our next Parcel Fair 101 Online Training on 3/3/2026!
+					</span>
+					<br><span class="txt-sm">click for registration details</span>
+				</h5>
+			</a>
+		</div>
+
+
+
+<div class="modal fade" id="auctionDetailsModal" tabindex="-1" role="dialog" aria-labelledby="Auction Details" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-body txt-lg">
+				<div class="row">
+					<div class="col-md-12">
+						<h3 id="auctionDetailsName" class="text-primary"></h3>
+						<div>
+							<span id="auctionDetailsNotes"></span>
+							<span id="auctionAddToCalendar" class="pull-right"></span>
+						</div>
+						<div id="auctionDetailsParcelCount"></div>
+						<div id="auctionDetailsWhen"></div>
+						<div id="auctionDetailsWhere"></div>
+						<div id="auctionDetailsParcelCount"></div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<div class="text-center">
+					<a href="#" id="auctionDetailsRegisterButton" target="_blank" rel="noreferrer" class="btn btn-sm btn-primary"><span class="glyphicon glyphicon-pencil"></span> Register for Auction</a>
+					&nbsp;
+					<a href="#" id="auctionDetailsInfoButton" target="_blank" rel="noreferrer" class="btn btn-sm btn-warning"><span class="glyphicon glyphicon-info-sign"></span> Auction Source</a>
+					&nbsp;
+					<a href="#" id="auctionDetailsListButton" target="_blank" rel="noreferrer" class="btn btn-sm btn-success"><span class="glyphicon glyphicon-list-alt"></span> Advertised List</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	function openAuctionDetails(inventoryId) {
+		$("#auctionDetailsModal").modal("show");
+		$("#auctionDetailsName #auctionDetailsNotes #auctionDetailsWhen #auctionDetailsWhere #auctionDetailsParcelCount #auctionAddToCalendar").fadeOut(0);
+		$("#auctionDetailsRegisterButton").fadeOut(0);
+		$("#auctionDetailsInfoButton").fadeOut(0);
+		$("#auctionDetailsListButton").fadeOut(0);
+
+		$.ajax({
+			url: '/Auction/Details?auctionId=' + inventoryId,
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'GET',
+			success: function (auction) {
+				var activeParcels = auction.ActiveParcelCount;
+				if (activeParcels == 0) activeParcels = null;
+
+				var addToCalendarButton = '<button onclick="sendCalendarInvite(' + inventoryId + ')" class="btn btn-sm btn-info"><span class="glyphicon glyphicon-calendar"></span> Add to Calendar</button>';
+
+				if (auction.AuctionDate == null) addToCalendarButton = '';
+
+				$("#auctionDetailsName").html(auction.Name);
+				$("#auctionDetailsNotes").html("<label>" + coalesce(auction.AuctionNotes, "") + "</label>");
+				$("#auctionDetailsWhen").html("<label>When:</label> <span>" + coalesce(formatDate(auction.AuctionDate), "N/A") + " " + coalesce(auction.AuctionTime, "") + "</span>");
+				$("#auctionDetailsWhere").html("<label>Where:</label> <span>" + coalesce(auction.AuctionLocation, "TBD") + "</span>");
+				$("#auctionDetailsParcelCount").html("<label>Active Parcels:</label> <span>" + coalesce(formatNumber(activeParcels), "N/A") + "</span>");
+				if (auction.RegisterUrl) $("#auctionDetailsRegisterButton").attr("href", auction.RegisterUrl).fadeIn(1000);
+				if (auction.PurchaseInfoUrl) $("#auctionDetailsInfoButton").attr("href", auction.PurchaseInfoUrl).fadeIn(1000);
+				if (auction.ListUrl) $("#auctionDetailsListButton").attr("href", auction.ListUrl).fadeIn(1000);
+				$("#auctionAddToCalendar").html(addToCalendarButton);
+			}
+		});
+	}
+	function sendCalendarInvite(inventoryId) {
+		openAuctionCalendarInviteModal(inventoryId);
+		$('#auctionDetailsModal').modal('hide');
+	}
+</script>
+
+<div class="row" style="padding-top:5px;">
+	<h2 class="col-md-6 text-primary">Welcome to Parcel Fair!</h2>
+	
+	<h2 class="col-md-6 text-right">
+		<a href="../Map/Index" class="btn btn-sm btn-success" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> Map Search</a>
+		<a href="../Parcel/" class="btn btn-sm btn-primary" target="_blank"><span class="glyphicon glyphicon-search"></span> List Search</a>
+		<a href="../Auction/Calendar" class="btn btn-sm btn-curiosity" target="_blank"><span class="glyphicon glyphicon-calendar"></span> Auction Calendar</a>
+		
+	</h2>
+</div>
+<br />
+<div class="row text-center">
+	<div class="col-md-4">
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				<h2 class="panel-title txt-lg">My Favorites</h2>
+			</div>
+			<div class="panel-body">
+				<div class="row">
+					<div class="col-md-4">
+						<h2 class="countUp text-success">0</h2>
+						Total<br />Favorites
+					</div>
+					<div class="col-md-4">
+						<h2 class="countUp text-success">0</h2>
+						Deeds &amp;<br />Foreclosures
+					</div>
+					<div class="col-md-4">
+						<h2 class="countUp text-success">0</h2>
+						Tax<br />Liens
+					</div>
+				</div>
+				<br />
+				<a href="../Parcel/Favorites" target="_blank" class="btn btn-sm btn-success">View My Favorites</a>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-4">
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				<h2 class="panel-title txt-lg">My Saved Lists</h2>
+			</div>
+			<div class="panel-body">
+				<div class="row">
+					<div class="col-md-4">
+						<h2 class="countUp text-success">0</h2>
+						Saved<br />Lists
+					</div>
+					<div class="col-md-4">
+						<h2 class="countUp text-success">0</h2>
+						Deeds &amp;<br />Foreclosures
+					</div>
+					<div class="col-md-4">
+						<h2 class="countUp text-success">0</h2>
+						Tax<br />Liens
+					</div>
+				</div>
+				<br />
+				<a href="../Lists" target="_blank" class="btn btn-sm btn-success">View My Saved Lists</a>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-4">
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				<h2 class="panel-title txt-lg">My Price Notices</h2>
+			</div>
+			<div class="panel-body">
+				<div class="row">
+					<div class="col-md-4">
+						<h2 class="countUp text-success">0</h2>
+						Total<br />Price Notices
+					</div>
+					<div class="col-md-4">
+						<h2 class="countUp text-success">0</h2>
+						Active<br />Price Notices
+					</div>
+					<div class="col-md-4">
+						<h2 class="countUp text-success">0</h2>
+						Expired<br />Price Notices
+					</div>
+				</div>
+				<br />
+				<a href="../PriceNotice" target="_blank" class="btn btn-sm btn-success">Price Notice Organizer</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<div class="row">
+	<div class="col-md-6 text-center">
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				<h2 class="panel-title txt-lg">
+					Top Deed &amp; Foreclosure Auctions 
+				</h2>
+			</div>
+			<div class="panel-body">
+				<div class="row">
+					<h4 class="col-md-6">Auctions: <span class="text-success bold">1,723</span></h4>
+					<h4 class="col-md-6">Tax Deeds: <span class="text-success bold">20,901</span></h4>
+				</div>
+
+				<table class="table table-responsive table-striped">
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(331669)">
+									<div class="txt-lg bold">20</div>
+									<span class="txt-sm">Feb</span>
+								</div>
+							</td>
+							<td class="text-left">
+								PA: Wayne Repository Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-primary"><span class="glyphicon glyphicon-map-marker"></span><br />In-Person</span>
+							</td>
+								<td>471<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_331669" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_331669">
+										<li><a href="../map?countyCode=42127&InventoryType=331669" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=42127&InventoryType=331669" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(331669)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(332805)">
+									<div class="txt-lg bold">9</div>
+									<span class="txt-sm">Mar</span>
+								</div>
+							</td>
+							<td class="text-left">
+								CA: Kern Tax Deed Auction
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+								<td>928<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_332805" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_332805">
+										<li><a href="../map?countyCode=6029&InventoryType=332805" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=6029&InventoryType=332805" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(332805)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(333371)">
+									<div class="txt-lg bold">11</div>
+									<span class="txt-sm">Mar</span>
+								</div>
+							</td>
+							<td class="text-left">
+								PA: Washington Repository Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-primary"><span class="glyphicon glyphicon-map-marker"></span><br />In-Person</span>
+							</td>
+								<td>787<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_333371" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333371">
+										<li><a href="../map?countyCode=42125&InventoryType=333371" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=42125&InventoryType=333371" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(333371)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(333981)">
+									<div class="txt-lg bold">16</div>
+									<span class="txt-sm">Mar</span>
+								</div>
+							</td>
+							<td class="text-left">
+								CA: San Diego Tax Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+								<td>698<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_333981" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333981">
+										<li><a href="../map?countyCode=6073&InventoryType=333981" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=6073&InventoryType=333981" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(333981)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(327818)">
+									<div class="txt-lg bold">21</div>
+									<span class="txt-sm">Apr</span>
+								</div>
+							</td>
+							<td class="text-left">
+								TN: Shelby Tax Sale #2202
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+								<td>807<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_327818" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_327818">
+										<li><a href="../map?countyCode=47157&InventoryType=327818" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=47157&InventoryType=327818" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(327818)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(331671)">
+									<div class="txt-lg bold">15</div>
+									<span class="txt-sm">May</span>
+								</div>
+							</td>
+							<td class="text-left">
+								PA: Wayne Repository Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-primary"><span class="glyphicon glyphicon-map-marker"></span><br />In-Person</span>
+							</td>
+								<td>465<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_331671" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_331671">
+										<li><a href="../map?countyCode=42127&InventoryType=331671" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=42127&InventoryType=331671" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(331671)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(323667)">
+									<div class="txt-lg bold">31</div>
+									<span class="txt-sm">May</span>
+								</div>
+							</td>
+							<td class="text-left">
+								PA: Pike Repository Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+								<td>1,984<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_323667" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_323667">
+										<li><a href="../map?countyCode=42103&InventoryType=323667" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=42103&InventoryType=323667" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(323667)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(331672)">
+									<div class="txt-lg bold">21</div>
+									<span class="txt-sm">Aug</span>
+								</div>
+							</td>
+							<td class="text-left">
+								PA: Wayne Repository Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-primary"><span class="glyphicon glyphicon-map-marker"></span><br />In-Person</span>
+							</td>
+								<td>465<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_331672" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_331672">
+										<li><a href="../map?countyCode=42127&InventoryType=331672" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=42127&InventoryType=331672" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(331672)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(333089)">
+									<div class="txt-lg bold">27</div>
+									<span class="txt-sm">Oct</span>
+								</div>
+							</td>
+							<td class="text-left">
+								TN: Shelby Tax Sale #2301
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+								<td>3,118<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_333089" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333089">
+										<li><a href="../map?countyCode=47157&InventoryType=333089" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=47157&InventoryType=333089" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(333089)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(331673)">
+									<div class="txt-lg bold">20</div>
+									<span class="txt-sm">Nov</span>
+								</div>
+							</td>
+							<td class="text-left">
+								PA: Wayne Repository Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-primary"><span class="glyphicon glyphicon-map-marker"></span><br />In-Person</span>
+							</td>
+								<td>444<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_331673" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_331673">
+										<li><a href="../map?countyCode=42127&InventoryType=331673" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=42127&InventoryType=331673" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(331673)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+				</table>
+				<a href="../Auction/Calendar?state=ALL&status=Deed" target="_blank" class="btn btn-sm btn-success">
+					<span class="glyphicon glyphicon-new-window"></span> Tax Deed &amp; Foreclosure Auction Calendar
+				</a>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-6 text-center">
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				<h2 class="panel-title txt-lg">
+					Top Tax Lien Auctions 
+				</h2>
+			</div>
+			<div class="panel-body">
+				<div class="row">
+					<h4 class="col-md-6">Auctions: <span class="text-success bold">54</span></h4>
+					<h4 class="col-md-6">Tax Liens: <span class="text-success bold">49,511</span></h4>
+				</div>
+				<table class="table table-responsive table-striped" style="max-width:100%">
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(332959)">
+									<div class="txt-lg bold">17</div>
+									<span class="txt-sm">Feb</span>
+								</div>
+							</td>
+							<td class="text-left">
+								NY: Nassau Tax Lien Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+
+								<td>3,937<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_332959" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_332959">
+										<li><a href="../map?countyCode=36059&InventoryType=332959" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=36059&InventoryType=332959" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(332959)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(333556)">
+									<div class="txt-lg bold">18</div>
+									<span class="txt-sm">Feb</span>
+								</div>
+							</td>
+							<td class="text-left">
+								AZ: Apache 2026 Tax Lien Auction
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+
+								<td>8,958<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_333556" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333556">
+										<li><a href="../map?countyCode=4001&InventoryType=333556" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=4001&InventoryType=333556" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(333556)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(333336)">
+									<div class="txt-lg bold">26</div>
+									<span class="txt-sm">Feb</span>
+								</div>
+							</td>
+							<td class="text-left">
+								AZ: Pima 2026 Tax Lien Auction
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+
+								<td>7,474<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_333336" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333336">
+										<li><a href="../map?countyCode=4019&InventoryType=333336" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=4019&InventoryType=333336" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(333336)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(333623)">
+									<div class="txt-lg bold">2</div>
+									<span class="txt-sm">Mar</span>
+								</div>
+							</td>
+							<td class="text-left">
+								NE: Douglas 2026 Tax Lien Auction
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+
+								<td>4,340<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_333623" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333623">
+										<li><a href="../map?countyCode=31055&InventoryType=333623" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=31055&InventoryType=333623" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(333623)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(333087)">
+									<div class="txt-lg bold">4</div>
+									<span class="txt-sm">May</span>
+								</div>
+							</td>
+							<td class="text-left">
+								IN: Lake 2026 Commissioner&#39;s Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+
+								<td>6,315<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_333087" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333087">
+										<li><a href="../map?countyCode=18089&InventoryType=333087" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=18089&InventoryType=333087" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(333087)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(332519)">
+									<div class="txt-lg bold">20</div>
+									<span class="txt-sm">May</span>
+								</div>
+							</td>
+							<td class="text-left">
+								LA: Ouachita Tax Lien Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+
+								<td>6,159<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_332519" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_332519">
+										<li><a href="../map?countyCode=22073&InventoryType=332519" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=22073&InventoryType=332519" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(332519)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(332918)">
+									<div class="txt-lg bold">20</div>
+									<span class="txt-sm">May</span>
+								</div>
+							</td>
+							<td class="text-left">
+								LA: Washington Tax Lien Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+
+								<td>2,061<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_332918" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_332918">
+										<li><a href="../map?countyCode=22117&InventoryType=332918" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=22117&InventoryType=332918" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(332918)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(333826)">
+									<div class="txt-lg bold">27</div>
+									<span class="txt-sm">May</span>
+								</div>
+							</td>
+							<td class="text-left">
+								LA: Evangeline Tax Lien Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+
+								<td>1,738<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_333826" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333826">
+										<li><a href="../map?countyCode=22039&InventoryType=333826" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=22039&InventoryType=333826" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(333826)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(332520)">
+									<div class="txt-lg bold">27</div>
+									<span class="txt-sm">May</span>
+								</div>
+							</td>
+							<td class="text-left">
+								LA: Ville Platte Tax Lien Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+
+								<td>1,738<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_332520" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_332520">
+										<li><a href="../map?countyCode=22039&InventoryType=332520" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=22039&InventoryType=332520" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(332520)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="badge clickable" onclick="openAuctionDetails(332931)">
+									<div class="txt-lg bold">25</div>
+									<span class="txt-sm">Jun</span>
+								</div>
+							</td>
+							<td class="text-left">
+								LA: St John the Baptist Tax Lien Sale
+							</td>
+							<td class="text-nowrap">
+									<span class="text-success"><span class="glyphicon glyphicon-flash"></span><br />Online</span>
+							</td>
+
+								<td>2,156<br />parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="auctionBtn_332931" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_332931">
+										<li><a href="../map?countyCode=22095&InventoryType=332931" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=22095&InventoryType=332931" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+										<li><a href="#" class="clickable" onclick="openAuctionDetails(332931)"><span class="glyphicon glyphicon-info-sign"></span> Auction Info</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+				</table>
+				<a href="../Auction/Calendar?state=ALL&status=Lien" target="_blank" class="btn btn-sm btn-success">
+					<span class="glyphicon glyphicon-new-window"></span> Tax Lien Auction Calendar
+				</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-md-6 text-center">
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				<h2 class="panel-title txt-lg">
+					Top OTC Deed &amp; Land Bank Markets
+				</h2>
+			</div>
+			<div class="panel-body">
+				<div class="row">
+					<h4 class="col-md-12 ">Over-the-Counter Tax Deed &amp; Land Bank Parcels: <span class="text-success bold">45,499</span></h4>
+				</div>
+				<table class="table table-responsive table-striped">
+						<tr>
+							<td class="text-left">
+									<span>AL: Jefferson-Birmingham County</span>
+							</td>
+								<td>9,186 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_100001" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_100001">
+										<li><a href="../map?countyCode=1&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=1&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>MO: Kansas City MO Land Bank</span>
+							</td>
+								<td>2,779 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_320867" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_320867">
+										<li><a href="../map?countyCode=29095&State=MO&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=29095&State=MO&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>AL: Jefferson-Bessemer County</span>
+							</td>
+								<td>2,573 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_100068" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_100068">
+										<li><a href="../map?countyCode=68&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=68&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>TN: Shelby TN Land Bank</span>
+							</td>
+								<td>2,325 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_1003" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_1003">
+										<li><a href="../map?countyCode=47157&State=TN&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=47157&State=TN&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>PA: Beaver County</span>
+							</td>
+								<td>2,182 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_316764" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_316764">
+										<li><a href="../map?countyCode=42007&State=PA&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=42007&State=PA&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>WI: Douglas County</span>
+							</td>
+								<td>1,810 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_321420" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_321420">
+										<li><a href="../map?countyCode=55031&State=WI&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=55031&State=WI&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>MS: Hinds County</span>
+							</td>
+								<td>1,751 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_128049" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_128049">
+										<li><a href="../map?countyCode=28049&State=MS&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=28049&State=MS&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>MI: Detroit Land Bank Authority (BuildingDetroit.org)</span>
+							</td>
+								<td>1,195 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_328234" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_328234">
+										<li><a href="../map?countyCode=26163&State=MI&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=26163&State=MI&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>AL: Montgomery County</span>
+							</td>
+								<td>1,097 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_100003" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_100003">
+										<li><a href="../map?countyCode=3&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=3&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>MI: Saginaw MI Land Bank</span>
+							</td>
+								<td>1,033 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_330658" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_330658">
+										<li><a href="../map?countyCode=26145&State=MI&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=26145&State=MI&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>MO: St. Louis County</span>
+							</td>
+								<td>970 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_310125" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_310125">
+										<li><a href="../map?countyCode=29189&State=MO&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=29189&State=MO&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>AL: Birmingham Land Bank Authority</span>
+							</td>
+								<td>969 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_1001" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_1001">
+										<li><a href="../map?countyCode=1&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=1&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>MS: Washington County</span>
+							</td>
+								<td>881 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_128151" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_128151">
+										<li><a href="../map?countyCode=28151&State=MS&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=28151&State=MS&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>AL: Mobile County</span>
+							</td>
+								<td>878 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_100002" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_100002">
+										<li><a href="../map?countyCode=2&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=2&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>NY: Greater Syracuse NY Land Bank</span>
+							</td>
+								<td>872 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_318157" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_318157">
+										<li><a href="../map?countyCode=36067&State=NY&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=36067&State=NY&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>IL: Cook County Land Bank - Residential</span>
+							</td>
+								<td>858 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_333504" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333504">
+										<li><a href="../map?countyCode=17031&State=IL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=17031&State=IL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>MI: Wayne County MI Land Bank</span>
+							</td>
+								<td>792 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_318158" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_318158">
+										<li><a href="../map?countyCode=26163&State=MI&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=26163&State=MI&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>IL: Cook County Land Bank - Commercial / Industrial</span>
+							</td>
+								<td>762 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_333505" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333505">
+										<li><a href="../map?countyCode=17031&State=IL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=17031&State=IL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>AL: Calhoun County</span>
+							</td>
+								<td>668 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_100011" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_100011">
+										<li><a href="../map?countyCode=11&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=11&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td class="text-left">
+									<span>PA: Luzerne County</span>
+							</td>
+								<td>665 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_316765" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_316765">
+										<li><a href="../map?countyCode=42079&State=PA&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=42079&State=PA&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+				</table>
+				<span class="dropdown">
+					<button class="btn btn-sm btn-success dropdown-toggle" type="button" id="deedViewMoreBtn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						<span class="glyphicon glyphicon-search"></span>
+						View More
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu" aria-labelledby="deedViewMoreBtn">
+						<li><a href="../map" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> Map Search</a></li>
+						<li><a href="../parcel" target="_blank"><span class="glyphicon glyphicon-list"></span> List Search</a></li>
+
+					</ul>
+				</span>
+
+			</div>
+		</div>
+	</div>
+	<div class="col-md-6 text-center">
+		<div class="panel panel-primary">
+			<div class="panel-heading">
+				<h2 class="panel-title txt-lg">
+					Top OTC Tax Lien Markets
+				</h2>
+			</div>
+			<div class="panel-body">
+				<div class="row">
+					<h4 class="col-md-12">Over-the-Counter Tax Lien Parcels: <span class="text-success bold">46,676</span></h4>
+				</div>
+				<table class="table table-responsive table-striped text-nowrap">
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								AZ: Cochise County
+							</td>
+								<td>10,738 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_204003" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_204003">
+										<li><a href="../map?countyCode=4003&TaxStatus=Lien&State=AZ&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=4003&TaxStatus=Lien&State=AZ&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								AZ: Apache County
+							</td>
+								<td>6,639 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_204001" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_204001">
+										<li><a href="../map?countyCode=4001&TaxStatus=Lien&State=AZ&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=4001&TaxStatus=Lien&State=AZ&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								FL: Highlands County
+							</td>
+								<td>2,996 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_212055" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_212055">
+										<li><a href="../map?countyCode=12055&TaxStatus=Lien&State=FL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=12055&TaxStatus=Lien&State=FL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								AZ: Mohave County
+							</td>
+								<td>2,591 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_204015" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_204015">
+										<li><a href="../map?countyCode=4015&TaxStatus=Lien&State=AZ&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=4015&TaxStatus=Lien&State=AZ&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								AZ: Maricopa County
+							</td>
+								<td>1,830 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_204013" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_204013">
+										<li><a href="../map?countyCode=4013&TaxStatus=Lien&State=AZ&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=4013&TaxStatus=Lien&State=AZ&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								AZ: Santa Cruz County
+							</td>
+								<td>1,826 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_333334" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_333334">
+										<li><a href="../map?countyCode=4023&TaxStatus=Lien&State=AZ&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=4023&TaxStatus=Lien&State=AZ&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								FL: Washington County
+							</td>
+								<td>1,548 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_212133" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_212133">
+										<li><a href="../map?countyCode=12133&TaxStatus=Lien&State=FL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=12133&TaxStatus=Lien&State=FL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								FL: Marion County
+							</td>
+								<td>1,183 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_212083" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_212083">
+										<li><a href="../map?countyCode=12083&TaxStatus=Lien&State=FL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=12083&TaxStatus=Lien&State=FL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								MD: Baltimore City County
+							</td>
+								<td>826 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_300538" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_300538">
+										<li><a href="../map?countyCode=24510&TaxStatus=Lien&State=MD&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=24510&TaxStatus=Lien&State=MD&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								MD: Baltimore City County
+							</td>
+								<td>817 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_304756" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_304756">
+										<li><a href="../map?countyCode=24510&TaxStatus=Lien&State=MD&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=24510&TaxStatus=Lien&State=MD&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								FL: Santa Rosa County
+							</td>
+								<td>706 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_212113" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_212113">
+										<li><a href="../map?countyCode=12113&TaxStatus=Lien&State=FL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=12113&TaxStatus=Lien&State=FL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								WV: Lincoln County
+							</td>
+								<td>628 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_326806" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_326806">
+										<li><a href="../map?countyCode=54043&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=54043&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								WV: McDowell County
+							</td>
+								<td>590 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_326808" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_326808">
+										<li><a href="../map?countyCode=54047&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=54047&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								AL: Mobile County
+							</td>
+								<td>586 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_200002" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_200002">
+										<li><a href="../map?countyCode=2&TaxStatus=Lien&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=2&TaxStatus=Lien&State=AL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								WV: Preston County
+							</td>
+								<td>532 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_326823" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_326823">
+										<li><a href="../map?countyCode=54077&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=54077&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								FL: Volusia County
+							</td>
+								<td>489 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_212127" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_212127">
+										<li><a href="../map?countyCode=12127&TaxStatus=Lien&State=FL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=12127&TaxStatus=Lien&State=FL&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								WV: Roane County
+							</td>
+								<td>446 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_326828" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_326828">
+										<li><a href="../map?countyCode=54087&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=54087&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								WV: Raleigh County
+							</td>
+								<td>430 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_326825" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_326825">
+										<li><a href="../map?countyCode=54081&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=54081&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								WV: Doddridge County
+							</td>
+								<td>404 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_326793" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_326793">
+										<li><a href="../map?countyCode=54017&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=54017&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+						<tr>
+							<td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" class="text-left">
+								WV: Marion County
+							</td>
+								<td>377 parcels</td>
+							<td>
+								<span class="dropdown">
+									<button class="btn btn-sm btn-default dropdown-toggle" type="button" id="inventoryBtn_326809" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<span class="glyphicon glyphicon-search"></span>
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="auctionBtn_326809">
+										<li><a href="../map?countyCode=54049&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> View on Map</a></li>
+										<li><a href="../parcel?countyCode=54049&TaxStatus=Lien&State=WV&InventoryType=OTC" target="_blank"><span class="glyphicon glyphicon-list"></span> View List</a></li>
+									</ul>
+								</span>
+							</td>
+						</tr>
+				</table>
+				<span class="dropdown">
+					<button class="btn btn-sm btn-success dropdown-toggle" type="button" id="lienViewMoreBtn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						<span class="glyphicon glyphicon-search"></span>
+						View More
+						<span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu" aria-labelledby="lienViewMoreBtn">
+						<li><a href="../map" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> Map Search</a></li>
+						<li><a href="../parcel" target="_blank"><span class="glyphicon glyphicon-list"></span> List Search</a></li>
+					</ul>
+				</span>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	$('.countUp').each(function () { countUp(this); })
+</script>
+
+			<hr/>
+			<footer>
+				<p>
+					&copy; 2026 - ParcelFair.com
+					| <a href="/Home/Disclaimer">Disclaimer</a>
+					| <a href="/Home/TermsOfService">Terms of Service</a>
+					| <a href="/Home/PrivacyPolicy">Privacy Policy</a>
+				</p>
+			</footer>
+		</div>
+
+<script src="/bundles/bootstrap?v=M4Nk6kIOwMFflsEKET0iPL9i5YBqbzMzvUOrd8gyCnw1"></script>
+
+
+	<script>
+		$(".body-content").fadeOut(0);
+		$(".body-content").fadeIn(500);
+	</script>
+</body>
+</html>

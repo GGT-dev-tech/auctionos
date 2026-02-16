@@ -18,6 +18,18 @@ class PropertyType(str, enum.Enum):
     COMMERCIAL = "commercial"
     LAND = "land"
 
+class InventoryType(str, enum.Enum):
+    AUCTION = "auction"
+    OTC = "otc"
+    LAND_BANK = "land_bank"
+
+class TaxStatus(str, enum.Enum):
+    TAX_DEED = "tax_deed"
+    REDEEMABLE_DEED = "redeemable_deed"
+    QUIT_CLAIM = "quit_claim"
+    LIEN = "lien"
+    AVAILABLE = "available"
+
 class Property(Base):
     __tablename__ = "properties"
 
@@ -38,6 +50,16 @@ class Property(Base):
     smart_tag = Column(String(50), unique=True, index=True, nullable=True)
     local_id = Column(Integer, autoincrement=True, unique=True, nullable=True)
     
+    # New Fields for ParcelFair Migration
+    polygon = Column(Text, nullable=True) # GeoJSON string
+    inventory_type = Column(String(50), default=InventoryType.AUCTION, nullable=True)
+    tax_status = Column(String(50), nullable=True)
+    next_auction_date = Column(Date, nullable=True, index=True)
+    amount_due = Column(Float, nullable=True)
+    legal_description = Column(Text, nullable=True) # Denormalized for easy access or distinct from Details
+    owner_name = Column(String(255), nullable=True)
+    owner_address = Column(String(255), nullable=True)
+    
     # Ownership
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True, index=True)
 
@@ -52,6 +74,7 @@ class Property(Base):
     auction_details = relationship("AuctionDetails", uselist=False, back_populates="property", cascade="all, delete-orphan")
     expenses = relationship("Expense", back_populates="property", cascade="all, delete-orphan")
     notes = relationship("Note", back_populates="property", cascade="all, delete-orphan")
+    price_notices = relationship("PriceNotice", back_populates="property", cascade="all, delete-orphan")
 
 class PropertyDetails(Base):
     __tablename__ = "property_details"
@@ -90,6 +113,7 @@ class PropertyDetails(Base):
     assessed_value = Column(Float, nullable=True) # parval
     land_value = Column(Float, nullable=True)
     improvement_value = Column(Float, nullable=True)
+    total_market_value = Column(Float, nullable=True) # New field for Total Value from CSV
     tax_amount = Column(Float, nullable=True)
     tax_year = Column(Integer, nullable=True)
     homestead_exemption = Column(Boolean, default=False)

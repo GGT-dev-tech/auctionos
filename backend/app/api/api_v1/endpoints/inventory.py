@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db.repositories.inventory_repository import inventory_repo
 from app.schemas.inventory import InventoryFolder, InventoryFolderCreate, InventoryItem, InventoryItemCreate, InventoryItemUpdate
@@ -101,3 +101,49 @@ def delete_item(
     if inventory_repo.delete_item(db=db, item_id=item_id):
         return {"ok": True}
     raise HTTPException(status_code=404, detail="Item not found")
+
+# --- OTC / Market Inventory Endpoints ---
+
+from app.models.property import Property, InventoryType
+from app.schemas.property import Property as PropertySchema
+from sqlalchemy import func
+
+@router.get("/otc", response_model=List[PropertySchema])
+def get_otc_inventory(
+    db: Session = Depends(deps.get_db),
+    state: Optional[str] = Query(None, description="Filter by State (e.g. AL)"),
+    county: Optional[str] = Query(None, description="Filter by County"),
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Get Over-the-Counter (OTC) inventory properties.
+    """
+    query = db.query(Property).filter(Property.inventory_type == InventoryType.OTC)
+    
+    if state:
+        query = query.filter(Property.state == state)
+    if county:
+        query = query.filter(Property.county == county)
+        
+    return query.offset(skip).limit(limit).all()
+
+@router.get("/stats", response_model=dict)
+def get_otc_stats(
+    db: Session = Depends(deps.get_db),
+    state: Optional[str] = Query(None, description="Filter by State"),
+    county: Optional[str] = Query(None, description="Filter by County"),
+) -> Any:
+    """
+    Get statistics for OTC inventory (Added/Removed counts over time).
+    """
+    query = db.query(Property).filter(Property.inventory_type == InventoryType.OTC)
+    if state:
+        query = query.filter(Property.state == state)
+        
+    total_count = query.count()
+    
+    return {
+        "total_available": total_count,
+        "history": [] 
+    }

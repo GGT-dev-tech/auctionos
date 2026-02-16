@@ -69,6 +69,7 @@ class PropertyDetailsBase(BaseModel):
     gsi_url: Optional[str] = None
     gsi_data: Optional[str] = None
     max_bid: Optional[float] = None
+    total_market_value: Optional[float] = None
 
 class PropertyDetailsCreate(PropertyDetailsBase):
     pass
@@ -117,6 +118,16 @@ class PropertyBase(BaseModel):
     description: Optional[str] = None
     parcel_id: Optional[str] = None
     smart_tag: Optional[str] = None
+    
+    # ParcelFair Fields
+    polygon: Optional[str] = None
+    inventory_type: Optional[str] = None
+    tax_status: Optional[str] = None
+    next_auction_date: Optional[date] = None
+    amount_due: Optional[float] = None
+    legal_description: Optional[str] = None
+    owner_name: Optional[str] = None
+    owner_address: Optional[str] = None
 
 class PropertyCreate(PropertyBase):
     details: Optional[PropertyDetailsCreate] = None

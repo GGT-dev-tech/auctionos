@@ -16,3 +16,4 @@ class User(Base):
     # Relationships
     owned_companies = relationship("Company", back_populates="owner")
     companies = relationship("Company", secondary="user_company", back_populates="users")
+    price_notices = relationship("PriceNotice", back_populates="user")

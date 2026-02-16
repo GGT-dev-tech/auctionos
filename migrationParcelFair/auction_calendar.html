@@ -1,0 +1,2751 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link id="favicon" rel="icon" type="image/png" href="/favicon.ico" />
+	<title>Auction Calendar - Parcel Fair</title>
+	<script src="/bundles/jquery?v=2u0aRenDpYxArEyILB59ETSCA2cfQkSMlxb6jbMBqf81"></script>
+
+	<link href="/Content/css?v=120ZKF_Z1-mgFBqToPamd_kQ5RRRu4L6u5pT2UWvc9Y1" rel="stylesheet"/>
+
+	<script src="/bundles/application?v=-gau4D66ghk2M9P12kqAQ6x9JwyUdiS5rOkP1rJ5AQo1"></script>
+
+	
+	
+	
+
+
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-YX1L41HKYF"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'G-YX1L41HKYF');
+	</script>
+</head>
+<body>
+<style>
+	.dropdown-section { 
+	display: block; padding: 3px 15px; font-size: 16px;
+	line-height: 1.42857143; color: #777777; white-space: nowrap;
+	background-color:#ededed;
+	}
+</style>
+	<div class="navbar navbar-inverse navbar-fixed-top hidden-print">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a href="/" class="navbar-brand">Parcel Fair</a>
+			</div>
+			<div class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+						<li><a href="/dashboard">Home</a></li>
+					<li><a href="/Home/About">About</a></li>
+					<li><a href="/Home/Contact">Contact</a></li>
+					<li class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+							Tools <span class="caret"></span>
+						</a>
+						<ul class="dropdown-menu" aria-labelledby="Tools">
+							<li class="dropdown-section">Find Parcels:</li>
+							<li><a href="/Map" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> Map Search</a></li>
+							<li><a href="/Parcel" target="_blank"><span class="glyphicon glyphicon-search"></span> List Search</a></li>
+							<li><a href="/Auction/Calendar"><span class="glyphicon glyphicon-calendar"></span> Auction Calendar</a></li>
+							<li><a href="/Inventory"><span class="glyphicon glyphicon-saved"></span> OTC Inventory Tracker</a></li>
+							<li class="dropdown-section">My Research:</li>
+							<li><a href="/Dashboard"><span class="glyphicon glyphicon-th-large"></span> My Dashboard</a></li>
+							<li><a href="/Parcel/Favorites"><span class="glyphicon glyphicon-heart"></span> My Favorites</a></li>
+							<li><a href="/Lists"><span class="glyphicon glyphicon-list"></span> My Saved Lists</a></li>
+							<li><a href="/PriceNotice"><span class="glyphicon glyphicon-tag"></span> Price Notice Organizer</a></li>
+						</ul>
+					</li>
+						<li class="dropdown">
+							<a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+								Connect<span class="caret"></span>
+							</a>
+							<ul class="dropdown-menu" aria-labelledby="Connect">
+								
+								<li><a href="/Video/ParcelFair101"><span class="glyphicon glyphicon-book"></span> Parcel Fair 101 Training</a></li>
+								<li><a href="https://www.youtube.com/c/ParcelFair" target="_blank"><span class="glyphicon glyphicon-play"></span> YouTube Community</a></li>
+									<li><a href="https://www.facebook.com/groups/parcelfair" target="_blank"><span class="glyphicon glyphicon-user"></span> Facebook Group</a></li>
+																<li><a href="/Video/OnlineMeetup"><span class="glyphicon glyphicon-play-circle"></span> Online Meetups</a></li>
+									<li><a href="/Manage"><span class="glyphicon glyphicon-wrench"></span> Account Support</a></li>
+							</ul>
+						</li>
+					</ul>
+				<form action="/Account/LogOff" class="navbar-right" id="logoutForm" method="post"><input name="__RequestVerificationToken" type="hidden" value="0IwuqNdvAFf1v3EA0nYLAKYoWT07dHcHJqutGgOcsWTL7VIZcnEpYTpQdQa3tpnTMvCeMm9DS-By6AGq1qTP-AIPcFuGRhf0SUvRJuY68MUJcNHU8Ey5HYuh_VBhvlFMmhjnzi_ZyVraGA73WUHxpA2" />		<ul class="nav navbar-nav navbar-right">
+			<li>
+				<a href="/Manage" title="Manage">gustavot.gomes7@gmail.com</a>
+			</li>
+					<li>
+						<div style="margin:8px;">
+							<a href="../Subscription/" class="btn btn-success"><span class="glyphicon glyphicon-flash"></span> Upgrade Trial Account</a>
+						</div>
+					</li>
+			<li>
+				<div style="margin:8px;">
+					<a href="javascript:document.getElementById('logoutForm').submit()" class="btn btn-warning">Log off</a>
+				</div>
+			</li>
+		</ul>
+</form>
+			</div>
+		</div>
+	</div>
+		<div class="container body-content">
+			
+			
+
+
+<style>
+	.valign-middle { display: inline-block; vertical-align: middle; float: none; }
+	.auction { padding-bottom: 15px; }
+</style>
+<script>$(function () { $('[data-toggle="popover"]').popover() })</script>
+
+<div class="row">
+	<div class="col-md-6">
+		<h2>
+			All States Auction Calendar
+		</h2>
+	</div>
+	<div class="col-md-6 text-info text-right" data-toggle="popover" data-placement="bottom" data-content="Be sure to check back frequently as we add and update auctions - dates and times often change and we will update our calendar accordingly">
+		<h4>
+			<span class="glyphicon glyphicon-exclamation-sign"></span>
+			Note: Auction dates are subject to change!
+		</h4>
+	</div>
+</div>
+
+<div class="row" style="margin-top: 4px; margin-bottom: 14px;">
+	<div class="col-md-12">
+		<div class="bg-info text-center" style="padding:8px; vertical-align:baseline;">
+			<select name="state" id="state" class="input-lg" onchange="filterResults();" style="margin-bottom:4px;">
+					<option value="ALL" >All States</option>
+					<option value="AL" >Alabama</option>
+					<option value="AK" >Alaska</option>
+					<option value="AZ" >Arizona</option>
+					<option value="AR" >Arkansas</option>
+					<option value="CA" >California</option>
+					<option value="CO" >Colorado</option>
+					<option value="CT" >Connecticut</option>
+					<option value="DE" >Delaware</option>
+					<option value="FL" >Florida</option>
+					<option value="GA" >Georgia</option>
+					<option value="HI" >Hawaii</option>
+					<option value="ID" >Idaho</option>
+					<option value="IL" >Illinois</option>
+					<option value="IN" >Indiana</option>
+					<option value="IA" >Iowa</option>
+					<option value="KS" >Kansas</option>
+					<option value="KY" >Kentucky</option>
+					<option value="LA" >Louisiana</option>
+					<option value="ME" >Maine</option>
+					<option value="MD" >Maryland</option>
+					<option value="MA" >Massachusetts</option>
+					<option value="MI" >Michigan</option>
+					<option value="MN" >Minnesota</option>
+					<option value="MS" >Mississippi</option>
+					<option value="MO" >Missouri</option>
+					<option value="MT" >Montana</option>
+					<option value="NE" >Nebraska</option>
+					<option value="NV" >Nevada</option>
+					<option value="NH" >New Hampshire</option>
+					<option value="NJ" >New Jersey</option>
+					<option value="NM" >New Mexico</option>
+					<option value="NY" >New York</option>
+					<option value="NC" >North Carolina</option>
+					<option value="ND" >North Dakota</option>
+					<option value="OH" >Ohio</option>
+					<option value="OK" >Oklahoma</option>
+					<option value="OR" >Oregon</option>
+					<option value="PA" >Pennsylvania</option>
+					<option value="RI" >Rhode Island</option>
+					<option value="SC" >South Carolina</option>
+					<option value="SD" >South Dakota</option>
+					<option value="TN" >Tennessee</option>
+					<option value="TX" >Texas</option>
+					<option value="UT" >Utah</option>
+					<option value="VT" >Vermont</option>
+					<option value="VA" >Virginia</option>
+					<option value="WA" >Washington</option>
+					<option value="DC" >Washington, DC</option>
+					<option value="WV" >West Virginia</option>
+					<option value="WI" >Wisconsin</option>
+					<option value="WY" >Wyoming</option>
+			</select>
+							<select name="status" id="status" class="input-lg" onchange="filterResults();">
+					<option value="All"  selected>All Auction Types</option>
+
+						<option value="Lien" >Tax Lien Auctions Only</option>
+						<option value="Deed" >Tax Deed Auctions Only</option>
+						<option value="DeedsForeclosures" >Tax Deeds &amp; Foreclosures Only</option>
+						<option value="Foreclosure" >Foreclosure Auctions Only</option>
+				</select>
+					</div>
+	</div>
+</div>
+
+<style>
+	#resultsTable, #resultsTable th, #resultsTable td { white-space: nowrap; }
+	th { cursor: pointer; text-align: left; position: sticky; top: 50px; z-index: 999; position: -webkit-sticky; background-color: #fff; }
+	#resultsTable th:nth-last-child(-n+12), #resultsTable td:nth-last-child(-n+12) { width: 45px; min-width: 45px; max-width: 45px; box-sizing: border-box; text-align: center; }
+</style>
+	<style>
+		.colHover { border-right: 2px solid #f77272 !important; border-left: 2px solid #f77272 !important; }
+		#resultsTable th.colHover { background-color: #F5F5F5; /*border-top: 2px solid red !important;*/ }
+		#resultsTable tr:has(td):hover { border-top: 2px solid #f77272 !important; border-bottom: 2px solid #f77272 !important; }
+		#resultsTable tr:has(td):hover { background-color: rgba(245, 245, 245, 0.6) !important; /* 0.6 = 60% opacity */ }
+	</style>
+<table class="table" id="resultsTable">
+	<tr>
+			<th>State</th>
+		<th>Auction</th>
+		<th class="text-center">Type</th>
+		<th class="text-center">Max<br />Interest</th>
+		<th class="text-center">Redemption<br />(Months)</th>
+		<th class="always-desc">Jan</th>
+		<th class="always-desc">Feb</th>
+		<th class="always-desc">Mar</th>
+		<th class="always-desc">Apr</th>
+		<th class="always-desc">May</th>
+		<th class="always-desc">Jun</th>
+		<th class="always-desc">Jul</th>
+		<th class="always-desc">Aug</th>
+		<th class="always-desc">Sep</th>
+		<th class="always-desc">Oct</th>
+		<th class="always-desc">Nov</th>
+		<th class="always-desc">Dec</th>
+	</tr>
+		<tr>
+				<td data-sort="Arkansas">
+						<a href="../Auction/Calendar?state=AR&status=Deed&location=All">Arkansas</a>
+				</td>
+			<td data-sort="Leftover Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Leftover Tax Deeds from the annual sales are sold throughout the year through one-off auctions by the state. Parcel Fair tracks this type of tax deed as over-the-counter property since they are leftovers. You can locate these parcels year-round using the Map Search or List Search."></span>
+				Leftover Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+		</tr>
+		<tr>
+				<td data-sort="California">
+						<a href="../Auction/Calendar?state=CA&status=Deed&location=All">California</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="California counties auction non-redeemable tax deeds throughout the year on an as-needed basis."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#5AABF2"></td>
+			<td data-sort="211" style="background-color:#4E9FE6"></td>
+			<td data-sort="211" style="background-color:#4496DD"></td>
+			<td data-sort="211" style="background-color:#4E9FE6"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#2E81C9"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="211" style="background-color:#57A8EF"></td>
+			<td data-sort="211" style="background-color:#51A2E9"></td>
+			<td data-sort="211" style="background-color:#54A5EC"></td>
+			<td data-sort="211" style="background-color:#4E9FE6"></td>
+			<td data-sort="211" style="background-color:#57A8EF"></td>
+		</tr>
+		<tr>
+				<td data-sort="Colorado">
+						<a href="../Auction/Calendar?state=CO&status=Foreclosure&location=All">Colorado</a>
+				</td>
+			<td data-sort="Foreclosure Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Foreclosure properties in Colorado are sold throughout the year at auction."></span>
+				Foreclosure Auctions
+			</td>
+			<td data-sort="Foreclosure" class="text-center">
+				Foreclosure
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#B69DF4"></td>
+			<td data-sort="211" style="background-color:#B299F1"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#B69DF4"></td>
+			<td data-sort="211" style="background-color:#B299F1"></td>
+			<td data-sort="211" style="background-color:#BAA1F7"></td>
+			<td data-sort="211" style="background-color:#BAA1F7"></td>
+			<td data-sort="211" style="background-color:#B69DF4"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#AE94EE"></td>
+			<td data-sort="211" style="background-color:#AA90EB"></td>
+		</tr>
+		<tr>
+				<td data-sort="Connecticut">
+						<a href="../Auction/Calendar?state=CT&status=Deed&location=All">Connecticut</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Connecticut sells tax deeds at auction throughout the year along with other foreclosure properties."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="18" class="text-center">
+18%
+			</td>
+			<td data-sort="6" class="text-center">
+6			</td>
+			<td data-sort="211" style="background-color:#4092D9"></td>
+			<td data-sort="211" style="background-color:#58A9EF"></td>
+			<td data-sort="211" style="background-color:#3A8CD4"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#3A8CD4"></td>
+			<td data-sort="211" style="background-color:#4697DF"></td>
+			<td data-sort="211" style="background-color:#4697DF"></td>
+			<td data-sort="211" style="background-color:#3486CE"></td>
+			<td data-sort="211" style="background-color:#58A9EF"></td>
+			<td data-sort="211" style="background-color:#4C9DE4"></td>
+			<td data-sort="211" style="background-color:#52A3EA"></td>
+			<td data-sort="211" style="background-color:#4697DF"></td>
+		</tr>
+		<tr>
+				<td data-sort="Delaware">
+						<a href="../Auction/Calendar?state=DE&status=Foreclosure&location=All">Delaware</a>
+				</td>
+			<td data-sort="Sheriff Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Delaware sells foreclosure properties throughout the year"></span>
+				Sheriff Sales
+			</td>
+			<td data-sort="Foreclosure" class="text-center">
+				Foreclosure
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+		</tr>
+		<tr>
+				<td data-sort="Florida">
+						<a href="../Auction/Calendar?state=FL&status=Deed&location=All">Florida</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Florida counties auction non-redeemable tax deeds throughout the year on an as-needed basis using both online and in-person sales."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#2D80C8"></td>
+			<td data-sort="211" style="background-color:#3688D0"></td>
+			<td data-sort="211" style="background-color:#3183CB"></td>
+			<td data-sort="211" style="background-color:#3486CE"></td>
+			<td data-sort="211" style="background-color:#3588D0"></td>
+			<td data-sort="211" style="background-color:#3486CE"></td>
+			<td data-sort="211" style="background-color:#2F81CA"></td>
+			<td data-sort="211" style="background-color:#2578C0"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#2578C0"></td>
+			<td data-sort="211" style="background-color:#2E81C9"></td>
+			<td data-sort="211" style="background-color:#297BC4"></td>
+		</tr>
+		<tr>
+				<td data-sort="Florida">
+						<a href="../Auction/Calendar?state=FL&status=Foreclosure&location=All">Florida</a>
+				</td>
+			<td data-sort="Foreclosure Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Florida counties hold foreclosure auctions throughout the year as needed."></span>
+				Foreclosure Auctions
+			</td>
+			<td data-sort="Foreclosure" class="text-center">
+				Foreclosure
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="211" style="background-color:#B89FF6"></td>
+			<td data-sort="211" style="background-color:#B199F1"></td>
+			<td data-sort="211" style="background-color:#B79EF5"></td>
+			<td data-sort="211" style="background-color:#B89FF6"></td>
+			<td data-sort="211" style="background-color:#B69DF5"></td>
+			<td data-sort="211" style="background-color:#B59CF4"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#B79FF6"></td>
+			<td data-sort="211" style="background-color:#B89FF6"></td>
+			<td data-sort="211" style="background-color:#BDA5FA"></td>
+			<td data-sort="211" style="background-color:#AB92EC"></td>
+			<td data-sort="211" style="background-color:#B198F1"></td>
+		</tr>
+		<tr>
+				<td data-sort="Hawaii">
+						<a href="../Auction/Calendar?state=HI&status=Deed&location=All">Hawaii</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Hawaii sells tax deeds at auction throughout the year on an as-needed basis with a 12-month redemption period, 12% penalty interest rate."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="12" class="text-center">
+12%
+			</td>
+			<td data-sort="12" class="text-center">
+12			</td>
+			<td data-sort="211" style="background-color:#4092D9"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="111" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Illinois">
+						<a href="../Auction/Calendar?state=IL&status=Deed&location=All">Illinois</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Leftover tax liens are foreclosed on and sold as tax deeds using a sealed bid format (also referred to as &quot;Surplus&quot; sales)"></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#5AABF1"></td>
+			<td data-sort="211" style="background-color:#5AABF1"></td>
+			<td data-sort="211" style="background-color:#58A9EF"></td>
+			<td data-sort="211" style="background-color:#58A9EF"></td>
+			<td data-sort="211" style="background-color:#58A9EF"></td>
+			<td data-sort="211" style="background-color:#58A9EF"></td>
+			<td data-sort="211" style="background-color:#52A3EA"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#3E90D7"></td>
+			<td data-sort="211" style="background-color:#3486CE"></td>
+			<td data-sort="211" style="background-color:#4495DD"></td>
+			<td data-sort="211" style="background-color:#56A7ED"></td>
+		</tr>
+		<tr>
+				<td data-sort="Indiana">
+						<a href="../Auction/Calendar?state=IN&status=Foreclosure&location=All">Indiana</a>
+				</td>
+			<td data-sort="Foreclosure Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Foreclosure properties are sold at auction throughout the year in Indiana."></span>
+				Foreclosure Auctions
+			</td>
+			<td data-sort="Foreclosure" class="text-center">
+				Foreclosure
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="211" style="background-color:#BAA2F8"></td>
+			<td data-sort="211" style="background-color:#AE95EF"></td>
+			<td data-sort="211" style="background-color:#B8A0F7"></td>
+			<td data-sort="211" style="background-color:#B29AF2"></td>
+			<td data-sort="211" style="background-color:#B79FF6"></td>
+			<td data-sort="211" style="background-color:#AF96F0"></td>
+			<td data-sort="211" style="background-color:#BCA4FA"></td>
+			<td data-sort="211" style="background-color:#B29AF2"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#B49CF3"></td>
+			<td data-sort="211" style="background-color:#B79FF6"></td>
+			<td data-sort="211" style="background-color:#987DDE"></td>
+		</tr>
+		<tr>
+				<td data-sort="Louisiana">
+						<a href="../Auction/Calendar?state=LA&status=Deed&location=All">Louisiana</a>
+				</td>
+			<td data-sort="Adjudicated Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Sheriff Sales and Adjudicated Sales of leftover tax properties occur throughout the year in Louisiana."></span>
+				Adjudicated Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#3587CF"></td>
+			<td data-sort="211" style="background-color:#2F82CA"></td>
+			<td data-sort="211" style="background-color:#2A7CC5"></td>
+			<td data-sort="211" style="background-color:#3284CD"></td>
+			<td data-sort="211" style="background-color:#3D8FD7"></td>
+			<td data-sort="211" style="background-color:#3587CF"></td>
+			<td data-sort="211" style="background-color:#3A8CD4"></td>
+			<td data-sort="211" style="background-color:#3D8FD7"></td>
+			<td data-sort="211" style="background-color:#3A8CD4"></td>
+			<td data-sort="211" style="background-color:#2F82CA"></td>
+			<td data-sort="211" style="background-color:#378AD2"></td>
+		</tr>
+		<tr>
+				<td data-sort="Maine">
+						<a href="../Auction/Calendar?state=ME&status=Foreclosure&location=All">Maine</a>
+				</td>
+			<td data-sort="Foreclosure Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Maine offers property through foreclosure sales throughout the year on an as-needed basis."></span>
+				Foreclosure Auctions
+			</td>
+			<td data-sort="Foreclosure" class="text-center">
+				Foreclosure
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+			<td data-sort="211" style="background-color:#866ad0"></td>
+		</tr>
+		<tr>
+				<td data-sort="Massachusetts">
+						<a href="../Auction/Calendar?state=MA&status=Deed&location=All">Massachusetts</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Massachusetts tax deeds are sold at auction by local townships and municipalities year round, offering a 6 month redemption and 16% interest rate."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="16" class="text-center">
+16%
+			</td>
+			<td data-sort="6" class="text-center">
+6			</td>
+			<td data-sort="211" style="background-color:#4A9CE3"></td>
+			<td data-sort="211" style="background-color:#489AE1"></td>
+			<td data-sort="211" style="background-color:#4EA0E6"></td>
+			<td data-sort="211" style="background-color:#4092DA"></td>
+			<td data-sort="211" style="background-color:#3587CF"></td>
+			<td data-sort="211" style="background-color:#2B7EC6"></td>
+			<td data-sort="211" style="background-color:#4A9CE3"></td>
+			<td data-sort="211" style="background-color:#2B7EC6"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#2B7EC6"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#277AC3"></td>
+		</tr>
+		<tr>
+				<td data-sort="Missouri">
+						<a href="../Auction/Calendar?state=MO&status=Lien&location=All">Missouri</a>
+				</td>
+			<td data-sort="Post-Third Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Missouri Post-Third (or fourth) sales include tax liens not sold in the first three sales and are sold with a 90-day redemption period. Post-Third sales are sometimes conducted in an auction format, and other times as over-the-counter purchases."></span>
+				Post-Third Sales
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="10" class="text-center">
+10%
+			</td>
+			<td data-sort="3" class="text-center">
+3			</td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+			<td data-sort="211" style="background-color:#96E290"></td>
+		</tr>
+		<tr>
+				<td data-sort="New Jersey">
+						<a href="../Auction/Calendar?state=NJ&status=Lien&location=All">New Jersey</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="New Jersey municipalities (not counties) hold tax lien auctions throughout the year with October - December holding the most auctions (up to 90+ auctions per month)"></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="18" class="text-center">
+18%
+			</td>
+			<td data-sort="24" class="text-center">
+24			</td>
+			<td data-sort="211" style="background-color:#90E08A"></td>
+			<td data-sort="211" style="background-color:#95E18F"></td>
+			<td data-sort="211" style="background-color:#92E08C"></td>
+			<td data-sort="211" style="background-color:#8BDE84"></td>
+			<td data-sort="211" style="background-color:#93E18D"></td>
+			<td data-sort="211" style="background-color:#87DD81"></td>
+			<td data-sort="211" style="background-color:#8DDF87"></td>
+			<td data-sort="211" style="background-color:#95E18F"></td>
+			<td data-sort="211" style="background-color:#85DC7E"></td>
+			<td data-sort="211" style="background-color:#45C63B"></td>
+			<td data-sort="211" style="background-color:#7DD976"></td>
+			<td data-sort="211" style="background-color:#52CA49"></td>
+		</tr>
+		<tr>
+				<td data-sort="North Carolina">
+						<a href="../Auction/Calendar?state=NC&status=Deed&location=All">North Carolina</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="North Carolina counties sell tax deeds at auction along with foreclosure properties."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#59AAF0"></td>
+			<td data-sort="211" style="background-color:#5AABF1"></td>
+			<td data-sort="211" style="background-color:#4092D9"></td>
+			<td data-sort="211" style="background-color:#3789D1"></td>
+			<td data-sort="211" style="background-color:#3588D0"></td>
+			<td data-sort="211" style="background-color:#388BD2"></td>
+			<td data-sort="211" style="background-color:#2578C0"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#3385CE"></td>
+			<td data-sort="211" style="background-color:#3183CB"></td>
+			<td data-sort="211" style="background-color:#3A8CD4"></td>
+			<td data-sort="211" style="background-color:#398BD3"></td>
+		</tr>
+		<tr>
+				<td data-sort="North Carolina">
+						<a href="../Auction/Calendar?state=NC&status=Deed&location=All">North Carolina</a>
+				</td>
+			<td data-sort="Upset Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="When a tax deed auction concludes in North Carolina the winning bids are available for 2 weeks under &quot;Upset Sales&quot; where another investor can outbid the winning bidder, causing another round of &quot;Upset Sale&quot; over the next 2 weeks and can continue for many weeks (or longer) until no upset bids are received."></span>
+				Upset Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#4496DD"></td>
+			<td data-sort="211" style="background-color:#50A2E8"></td>
+			<td data-sort="211" style="background-color:#2D80C8"></td>
+			<td data-sort="211" style="background-color:#2B7EC7"></td>
+			<td data-sort="211" style="background-color:#2C7EC7"></td>
+			<td data-sort="211" style="background-color:#3386CE"></td>
+			<td data-sort="211" style="background-color:#2A7DC5"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#2B7EC7"></td>
+			<td data-sort="211" style="background-color:#3184CC"></td>
+			<td data-sort="211" style="background-color:#3487CF"></td>
+		</tr>
+		<tr>
+				<td data-sort="Ohio">
+						<a href="../Auction/Calendar?state=OH&status=Deed&location=All">Ohio</a>
+				</td>
+			<td data-sort="Sheriff Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Ohio sells tax deeds and foreclosures via Sheriff Sale auctions throughout the year (typically 100+ auctions per month)."></span>
+				Sheriff Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#2A7DC6"></td>
+			<td data-sort="211" style="background-color:#3285CD"></td>
+			<td data-sort="211" style="background-color:#2A7DC6"></td>
+			<td data-sort="211" style="background-color:#2477C0"></td>
+			<td data-sort="211" style="background-color:#2578C1"></td>
+			<td data-sort="211" style="background-color:#2477C0"></td>
+			<td data-sort="211" style="background-color:#2B7DC6"></td>
+			<td data-sort="211" style="background-color:#297CC5"></td>
+			<td data-sort="211" style="background-color:#2779C2"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#3183CB"></td>
+			<td data-sort="211" style="background-color:#287BC4"></td>
+		</tr>
+		<tr>
+				<td data-sort="Oregon">
+						<a href="../Auction/Calendar?state=OR&status=Foreclosure&location=All">Oregon</a>
+				</td>
+			<td data-sort="Foreclosure Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Oregon offers property for sale at foreclosure auctions online."></span>
+				Foreclosure Auctions
+			</td>
+			<td data-sort="Foreclosure" class="text-center">
+				Foreclosure
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="211" style="background-color:#B198F1"></td>
+			<td data-sort="211" style="background-color:#BAA2F8"></td>
+			<td data-sort="211" style="background-color:#B49CF3"></td>
+			<td data-sort="211" style="background-color:#AE95EF"></td>
+			<td data-sort="211" style="background-color:#B198F1"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#AB92EC"></td>
+			<td data-sort="211" style="background-color:#A88EEA"></td>
+			<td data-sort="211" style="background-color:#AB92EC"></td>
+			<td data-sort="211" style="background-color:#B79FF6"></td>
+			<td data-sort="211" style="background-color:#9B81E0"></td>
+			<td data-sort="211" style="background-color:#BAA2F8"></td>
+		</tr>
+		<tr>
+				<td data-sort="Pennsylvania">
+						<a href="../Auction/Calendar?state=PA&status=Deed&location=All">Pennsylvania</a>
+				</td>
+			<td data-sort="Private Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Leftover tax deeds from the annual upset sales are sold via sealed-bid private sales throughout the year"></span>
+				Private Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+		</tr>
+		<tr>
+				<td data-sort="Pennsylvania">
+						<a href="../Auction/Calendar?state=PA&status=Deed&location=All">Pennsylvania</a>
+				</td>
+			<td data-sort="Judicial Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Leftover tax deeds are sold at Judicial Sales with no redemption period."></span>
+				Judicial Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="211" style="background-color:#2477C0"></td>
+			<td data-sort="211" style="background-color:#2D7FC8"></td>
+			<td data-sort="211" style="background-color:#2679C2"></td>
+			<td data-sort="211" style="background-color:#2A7DC6"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#2679C2"></td>
+			<td data-sort="211" style="background-color:#2D7FC8"></td>
+			<td data-sort="211" style="background-color:#3184CC"></td>
+			<td data-sort="211" style="background-color:#59AAF0"></td>
+			<td data-sort="211" style="background-color:#4799E0"></td>
+			<td data-sort="211" style="background-color:#2A7DC6"></td>
+			<td data-sort="211" style="background-color:#3184CC"></td>
+		</tr>
+		<tr>
+				<td data-sort="Pennsylvania">
+						<a href="../Auction/Calendar?state=PA&status=Deed&location=All">Pennsylvania</a>
+				</td>
+			<td data-sort="Repository Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Unsold tax deeds from Judicial Sales are made available through Repository Sales (at auction in some cases and occasionally as over-the-counter purchases)."></span>
+				Repository Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+			<td data-sort="211" style="background-color:#5EAFF5"></td>
+		</tr>
+		<tr>
+				<td data-sort="South Carolina">
+						<a href="../Auction/Calendar?state=SC&status=Foreclosure&location=All">South Carolina</a>
+				</td>
+			<td data-sort="Foreclosure Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Foreclosure property auctions are available year-round in South Carolina."></span>
+				Foreclosure Auctions
+			</td>
+			<td data-sort="Foreclosure" class="text-center">
+				Foreclosure
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="211" style="background-color:#A88EEA"></td>
+			<td data-sort="211" style="background-color:#A288E6"></td>
+			<td data-sort="211" style="background-color:#A48AE7"></td>
+			<td data-sort="211" style="background-color:#AF96EF"></td>
+			<td data-sort="211" style="background-color:#A88EEA"></td>
+			<td data-sort="211" style="background-color:#AF96EF"></td>
+			<td data-sort="211" style="background-color:#B59CF4"></td>
+			<td data-sort="211" style="background-color:#AF96EF"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#B59CF4"></td>
+			<td data-sort="211" style="background-color:#B9A1F7"></td>
+			<td data-sort="211" style="background-color:#B299F2"></td>
+		</tr>
+		<tr>
+				<td data-sort="Tennessee">
+						<a href="../Auction/Calendar?state=TN&status=Deed&location=All">Tennessee</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Redeemable tax deeds are sold with a 12 month redemption period and a 12% penalty interest rate"></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="12" class="text-center">
+12%
+			</td>
+			<td data-sort="12" class="text-center">
+12			</td>
+			<td data-sort="211" style="background-color:#4496DD"></td>
+			<td data-sort="211" style="background-color:#4C9EE5"></td>
+			<td data-sort="211" style="background-color:#2A7DC5"></td>
+			<td data-sort="211" style="background-color:#4C9EE5"></td>
+			<td data-sort="211" style="background-color:#4C9EE5"></td>
+			<td data-sort="211" style="background-color:#4496DD"></td>
+			<td data-sort="211" style="background-color:#3385CD"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#4496DD"></td>
+			<td data-sort="211" style="background-color:#3B8DD5"></td>
+			<td data-sort="211" style="background-color:#3B8DD5"></td>
+			<td data-sort="211" style="background-color:#4496DD"></td>
+		</tr>
+		<tr>
+				<td data-sort="Texas">
+						<a href="../Auction/Calendar?state=TX&status=Deed&location=All">Texas</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Texas tax deeds are sold at county auctions with a 25% penalty interest rate and a 6 month redemption period for non-homestead exempt property, or a 2 year redemption period for homestead exempt properties."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="25" class="text-center">
+25%
+			</td>
+			<td data-sort="6" class="text-center">
+6 - 24
+			</td>
+			<td data-sort="211" style="background-color:#52A3EA"></td>
+			<td data-sort="211" style="background-color:#388AD2"></td>
+			<td data-sort="211" style="background-color:#2C7FC7"></td>
+			<td data-sort="211" style="background-color:#3183CB"></td>
+			<td data-sort="211" style="background-color:#3385CD"></td>
+			<td data-sort="211" style="background-color:#3386CE"></td>
+			<td data-sort="211" style="background-color:#3A8DD4"></td>
+			<td data-sort="211" style="background-color:#3689D0"></td>
+			<td data-sort="211" style="background-color:#4193DA"></td>
+			<td data-sort="211" style="background-color:#4294DB"></td>
+			<td data-sort="211" style="background-color:#4092D9"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+		</tr>
+		<tr>
+				<td data-sort="Virginia">
+						<a href="../Auction/Calendar?state=VA&status=Deed&location=All">Virginia</a>
+				</td>
+			<td data-sort="Tax Foreclosure Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Virginia tax foreclosure sales sell non-redeemable deeds at a premium auction format, usually in-person but sometimes online."></span>
+				Tax Foreclosure Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#4FA0E7"></td>
+			<td data-sort="211" style="background-color:#4FA0E7"></td>
+			<td data-sort="211" style="background-color:#4799E0"></td>
+			<td data-sort="211" style="background-color:#3183CB"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+			<td data-sort="211" style="background-color:#4799E0"></td>
+			<td data-sort="211" style="background-color:#4092D9"></td>
+			<td data-sort="211" style="background-color:#388AD2"></td>
+			<td data-sort="211" style="background-color:#4092D9"></td>
+			<td data-sort="211" style="background-color:#388AD2"></td>
+			<td data-sort="211" style="background-color:#388AD2"></td>
+			<td data-sort="211" style="background-color:#4799E0"></td>
+		</tr>
+		<tr>
+				<td data-sort="Washington">
+						<a href="../Auction/Calendar?state=WA&status=Deed&location=All">Washington</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Washington sells non-redeemable tax deeds at premium bid auctions throughout the year."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="211" style="background-color:#4294DB"></td>
+			<td data-sort="211" style="background-color:#50A1E8"></td>
+			<td data-sort="211" style="background-color:#54A6EC"></td>
+			<td data-sort="211" style="background-color:#59AAF0"></td>
+			<td data-sort="211" style="background-color:#50A1E8"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="211" style="background-color:#59AAF0"></td>
+			<td data-sort="111" style="background-color:"></td>
+			<td data-sort="211" style="background-color:#4698DF"></td>
+			<td data-sort="211" style="background-color:#4294DB"></td>
+			<td data-sort="211" style="background-color:#3D8FD7"></td>
+			<td data-sort="211" style="background-color:#2275BE"></td>
+		</tr>
+		<tr>
+				<td data-sort="Washington">
+						<a href="../Auction/Calendar?state=WA&status=Foreclosure&location=All">Washington</a>
+				</td>
+			<td data-sort="Sheriff Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Washington sells foreclosed property throughout the year via Sheriff Sales."></span>
+				Sheriff Sales
+			</td>
+			<td data-sort="Foreclosure" class="text-center">
+				Foreclosure
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="211" style="background-color:#B29AF2"></td>
+			<td data-sort="211" style="background-color:#A78EE9"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#A78EE9"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#A78EE9"></td>
+			<td data-sort="211" style="background-color:#B29AF2"></td>
+			<td data-sort="211" style="background-color:#A78EE9"></td>
+			<td data-sort="211" style="background-color:#A78EE9"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+			<td data-sort="211" style="background-color:#B29AF2"></td>
+			<td data-sort="211" style="background-color:#BEA6FB"></td>
+		</tr>
+		<tr>
+				<td data-sort="Arizona">
+						<a href="../Auction/Calendar?state=AZ&status=Lien&location=All">Arizona</a>
+				</td>
+			<td data-sort="Tax Lien Auctions (Annual)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="All Arizona counties with tax delinquent properties participate in the annual tax lien auctions."></span>
+				Tax Lien Auctions (Annual)
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="16" class="text-center">
+16%
+			</td>
+			<td data-sort="36" class="text-center">
+36			</td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#45C63B"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Colorado">
+						<a href="../Auction/Calendar?state=CO&status=Deed&location=All">Colorado</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Colorado has recently implemented a new year-round tax deed auction process starting in 2025, some auctions are online and others in-person."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#59AAF1"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#51A2E9"></td>
+			<td data-sort="210" style="background-color:#3B8DD5"></td>
+			<td data-sort="210" style="background-color:#3B8DD5"></td>
+			<td data-sort="210" style="background-color:#3B8DD5"></td>
+			<td data-sort="210" style="background-color:#3B8DD5"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#3789D1"></td>
+			<td data-sort="210" style="background-color:#489AE1"></td>
+			<td data-sort="210" style="background-color:#3789D1"></td>
+		</tr>
+		<tr>
+				<td data-sort="Delaware">
+						<a href="../Auction/Calendar?state=DE&status=Deed&location=All">Delaware</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Delaware sells tax deeds throughout the year with a 60-day redemption period and 15% penalty interest rate."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="15" class="text-center">
+15%
+			</td>
+			<td data-sort="2" class="text-center">
+2			</td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#4A9BE2"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#4A9BE2"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#4A9BE2"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#4A9BE2"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#4A9BE2"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+		</tr>
+		<tr>
+				<td data-sort="Georgia">
+						<a href="../Auction/Calendar?state=GA&status=Deed&location=All">Georgia</a>
+				</td>
+			<td data-sort="Judicial Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Georgia Judicial Sales offer tax deeds at auction throughout the year with a 60 day redemption."></span>
+				Judicial Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="20" class="text-center">
+20%
+			</td>
+			<td data-sort="2" class="text-center">
+2			</td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#57A8EE"></td>
+			<td data-sort="210" style="background-color:#3688D0"></td>
+			<td data-sort="210" style="background-color:#50A2E8"></td>
+			<td data-sort="210" style="background-color:#287BC4"></td>
+			<td data-sort="210" style="background-color:#4A9BE2"></td>
+			<td data-sort="210" style="background-color:#50A2E8"></td>
+			<td data-sort="210" style="background-color:#4A9BE2"></td>
+			<td data-sort="210" style="background-color:#4395DC"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#3688D0"></td>
+		</tr>
+		<tr>
+				<td data-sort="Georgia">
+						<a href="../Auction/Calendar?state=GA&status=Deed&location=All">Georgia</a>
+				</td>
+			<td data-sort="Non-Judicial Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Georgia Non-Judicial sales offer tax deeds at auction throughout the year with a 12 month redemption, 20% penalty interest rate."></span>
+				Non-Judicial Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="20" class="text-center">
+20%
+			</td>
+			<td data-sort="12" class="text-center">
+12			</td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+		</tr>
+		<tr>
+				<td data-sort="Indiana">
+						<a href="../Auction/Calendar?state=IN&status=Lien&location=All">Indiana</a>
+				</td>
+			<td data-sort="Commissioner&#39;s Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Spring Auction Season: Commissioner&#39;s Sales (120 day redemption tax lien) are a rolling inventory of leftovers that did not sell in previous Fall Auction Seasons (Treasurer&#39;s Sales)"></span>
+				Commissioner&#39;s Sales
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="10" class="text-center">
+10%
+			</td>
+			<td data-sort="4" class="text-center">
+4			</td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#6DD465"></td>
+			<td data-sort="210" style="background-color:#45C63B"></td>
+			<td data-sort="210" style="background-color:#74D66C"></td>
+			<td data-sort="210" style="background-color:#88DD81"></td>
+			<td data-sort="210" style="background-color:#88DD81"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Maine">
+						<a href="../Auction/Calendar?state=ME&status=Deed&location=All">Maine</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Maine tax deed auctions are held at the township or municipality (not the county) and are allowed to use various types of auction formats, including Bid-Down Ownership, Sealed Bid, and Premium Bid.  Deeds are sold with a 2 year redemption period at an 8% interest rate."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="8" class="text-center">
+8%
+			</td>
+			<td data-sort="24" class="text-center">
+24			</td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#5AABF1"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Minnesota">
+						<a href="../Auction/Calendar?state=MN&status=Deed&location=All">Minnesota</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Minnesota counties hold tax deed auctions throughout the year on an as-needed basis."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#2275BE"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+			<td data-sort="210" style="background-color:#4092D9"></td>
+		</tr>
+		<tr>
+				<td data-sort="New York">
+						<a href="../Auction/Calendar?state=NY&status=Lien&location=All">New York</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Only a few counties in New York sell tax liens, some only offer through private sales. Tax Liens are sold at auction with a 20% max interest rate and a 2 year redemption period."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="20" class="text-center">
+20%
+			</td>
+			<td data-sort="24" class="text-center">
+24			</td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#96E290"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="South Carolina">
+						<a href="../Auction/Calendar?state=SC&status=Lien&location=All">South Carolina</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="South Carolina Tax Liens are sold at in-person auctions using a premium bid format with a 1 year redemption and a 12% penalty interest rate that accrues 3% every 3 months."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="12" class="text-center">
+12%
+			</td>
+			<td data-sort="12" class="text-center">
+12			</td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#91E08B"></td>
+			<td data-sort="210" style="background-color:#91E08B"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="110" style="background-color:"></td>
+			<td data-sort="210" style="background-color:#45C63B"></td>
+			<td data-sort="210" style="background-color:#72D56A"></td>
+			<td data-sort="210" style="background-color:#7FDA78"></td>
+		</tr>
+		<tr>
+				<td data-sort="Alabama">
+						<a href="../Auction/Calendar?state=AL&status=Lien&location=All">Alabama</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Most Alabama counties with delinquent tax properties participate in the annual tax lien auctions (new system) which issues a foreclosable tax lien at 12% max interest rate and a 4 year redemption period."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="12" class="text-center">
+12%
+			</td>
+			<td data-sort="48" class="text-center">
+48			</td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#93E18D"></td>
+			<td data-sort="209" style="background-color:#6DD465"></td>
+			<td data-sort="209" style="background-color:#45C63B"></td>
+			<td data-sort="209" style="background-color:#91E08B"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Arizona">
+						<a href="../Auction/Calendar?state=AZ&status=Deed&location=All">Arizona</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Arizona counties hold tax deed auctions throughout the year on an as-needed basis."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#2275BE"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+		</tr>
+		<tr>
+				<td data-sort="Indiana">
+						<a href="../Auction/Calendar?state=IN&status=Deed&location=All">Indiana</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Indiana counties offer tax deeds at auction on an as-needed basis. Many counties to do not need to participate in tax deed sales and only offer tax liens at auction."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#3688D0"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#3688D0"></td>
+			<td data-sort="209" style="background-color:#2275BE"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="109" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Kansas">
+						<a href="../Auction/Calendar?state=KS&status=Deed&location=All">Kansas</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Premium bid auction, non-redeemable tax deeds"></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#2275BE"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#3688D0"></td>
+			<td data-sort="209" style="background-color:#2275BE"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#4A9BE2"></td>
+			<td data-sort="209" style="background-color:#3688D0"></td>
+		</tr>
+		<tr>
+				<td data-sort="Maryland">
+						<a href="../Auction/Calendar?state=MD&status=Lien&location=All">Maryland</a>
+				</td>
+			<td data-sort="Tax Lien Auctions (Annual)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Maryland counties hold tax lien auctions each Spring from March - June, Baltimore County typically holds their auction in the Fall (August or later). Leftovers are sold in some cases through re-offer sales or over-the-counter."></span>
+				Tax Lien Auctions (Annual)
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="24" class="text-center">
+24%
+			</td>
+			<td data-sort="6" class="text-center">
+6 - 9
+			</td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#8FDF88"></td>
+			<td data-sort="209" style="background-color:#8FDF88"></td>
+			<td data-sort="209" style="background-color:#45C63B"></td>
+			<td data-sort="209" style="background-color:#7BD873"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#8FDF88"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#8FDF88"></td>
+		</tr>
+		<tr>
+				<td data-sort="Nebraska">
+						<a href="../Auction/Calendar?state=NE&status=Lien&location=All">Nebraska</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Nebraska offers tax liens at auction, typically from January through April. Liens have a max interest rate of 14% annually and have a 3 year redemption period. Bidding formats vary across counties and include premium bidding, random selection bidding, or rotational bidding."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="14" class="text-center">
+14%
+			</td>
+			<td data-sort="36" class="text-center">
+36			</td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#45C63B"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Nevada">
+						<a href="../Auction/Calendar?state=NV&status=Deed&location=All">Nevada</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Nevada sells non-redeemable tax deeds at premium bid auctions."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#4FA0E7"></td>
+			<td data-sort="209" style="background-color:#2275BE"></td>
+			<td data-sort="209" style="background-color:#4FA0E7"></td>
+			<td data-sort="209" style="background-color:#56A7EE"></td>
+			<td data-sort="209" style="background-color:#56A7EE"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#56A7EE"></td>
+			<td data-sort="209" style="background-color:#56A7EE"></td>
+			<td data-sort="209" style="background-color:#56A7EE"></td>
+		</tr>
+		<tr>
+				<td data-sort="New Hampshire">
+						<a href="../Auction/Calendar?state=NH&status=Deed&location=All">New Hampshire</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="New Hampshire offers non-redeemable tax deeds at Premium bid auctions"></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#5EAFF5"></td>
+			<td data-sort="209" style="background-color:#5EAFF5"></td>
+			<td data-sort="209" style="background-color:#5EAFF5"></td>
+			<td data-sort="209" style="background-color:#5EAFF5"></td>
+			<td data-sort="209" style="background-color:#5EAFF5"></td>
+			<td data-sort="209" style="background-color:#5EAFF5"></td>
+			<td data-sort="209" style="background-color:#5EAFF5"></td>
+			<td data-sort="209" style="background-color:#5EAFF5"></td>
+			<td data-sort="209" style="background-color:#5EAFF5"></td>
+			<td data-sort="209" style="background-color:#5EAFF5"></td>
+		</tr>
+		<tr>
+				<td data-sort="New Mexico">
+						<a href="../Auction/Calendar?state=NM&status=Deed&location=All">New Mexico</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="New Mexico counties sell non-redeemable tax deeds at in-person auctions throughout the year."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#2275BE"></td>
+			<td data-sort="209" style="background-color:#4FA0E7"></td>
+			<td data-sort="209" style="background-color:#4092D9"></td>
+			<td data-sort="209" style="background-color:#4799E0"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#297CC4"></td>
+			<td data-sort="209" style="background-color:#3183CB"></td>
+			<td data-sort="209" style="background-color:#4FA0E7"></td>
+			<td data-sort="209" style="background-color:#56A7EE"></td>
+			<td data-sort="209" style="background-color:#388AD2"></td>
+		</tr>
+		<tr>
+				<td data-sort="Ohio">
+						<a href="../Auction/Calendar?state=OH&status=Lien&location=All">Ohio</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Only a few larger counties in Ohio sell tax liens - these are available as &quot;Bulk Sales Only&quot; to large-scale investors. Tax Deed auctions are more commonly found in Ohio."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="18" class="text-center">
+18%
+			</td>
+			<td data-sort="12" class="text-center">
+12			</td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="209" style="background-color:#96E290"></td>
+			<td data-sort="209" style="background-color:#96E290"></td>
+			<td data-sort="209" style="background-color:#96E290"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+			<td data-sort="109" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Alabama">
+						<a href="../Auction/Calendar?state=AL&status=Lien&location=All">Alabama</a>
+				</td>
+			<td data-sort="Tax Cert Auctions (Classic)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Some Alabama counties participate in the &quot;classic&quot; or &quot;old system&quot; for tax certificate auctions, issuing tax certificates at 8% max interest, premium bid format, and mature to become tax deeds after 3 years."></span>
+				Tax Cert Auctions (Classic)
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="8" class="text-center">
+8%
+			</td>
+			<td data-sort="36" class="text-center">
+36			</td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#6DD465"></td>
+			<td data-sort="208" style="background-color:#45C63B"></td>
+			<td data-sort="208" style="background-color:#6DD465"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Idaho">
+						<a href="../Auction/Calendar?state=ID&status=Deed&location=All">Idaho</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Idaho offers tax deeds through Premium bid auctions with no redemption period."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#5EAFF5"></td>
+			<td data-sort="208" style="background-color:#5EAFF5"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Louisiana">
+						<a href="../Auction/Calendar?state=LA&status=Lien&location=All">Louisiana</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Tax Lien auctions for each parrish occur throughout the year in Louisiana."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="12" class="text-center">
+12%
+			</td>
+			<td data-sort="36" class="text-center">
+36			</td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#90E08A"></td>
+			<td data-sort="208" style="background-color:#4FC946"></td>
+			<td data-sort="208" style="background-color:#45C63B"></td>
+			<td data-sort="208" style="background-color:#80DA79"></td>
+			<td data-sort="208" style="background-color:#90E08A"></td>
+			<td data-sort="208" style="background-color:#80DA79"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#90E08A"></td>
+		</tr>
+		<tr>
+				<td data-sort="Mississippi">
+						<a href="../Auction/Calendar?state=MS&status=Lien&location=All">Mississippi</a>
+				</td>
+			<td data-sort="Spring Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Leftovers from the Fall tax lien auctions are sold at auction the following Spring (April)"></span>
+				Spring Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="12" class="text-center">
+12%
+			</td>
+			<td data-sort="24" class="text-center">
+24			</td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#45C63B"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Nevada">
+						<a href="../Auction/Calendar?state=NV&status=Lien&location=All">Nevada</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Nevada Tax Liens are sold with a 12% annual interest rate and a 2 year redemption period. Redemption period for vacant land is reduced to 120 days."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="12" class="text-center">
+12%
+			</td>
+			<td data-sort="24" class="text-center">
+24			</td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#96E290"></td>
+			<td data-sort="208" style="background-color:#96E290"></td>
+			<td data-sort="208" style="background-color:#96E290"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Oregon">
+						<a href="../Auction/Calendar?state=OR&status=Deed&location=All">Oregon</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Premium bid auction, non-redeemable tax deeds"></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#59AAF0"></td>
+			<td data-sort="208" style="background-color:#59AAF0"></td>
+			<td data-sort="208" style="background-color:#2C7EC7"></td>
+			<td data-sort="208" style="background-color:#2275BE"></td>
+			<td data-sort="208" style="background-color:#2C7EC7"></td>
+			<td data-sort="208" style="background-color:#59AAF0"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#59AAF0"></td>
+		</tr>
+		<tr>
+				<td data-sort="Rhode Island">
+						<a href="../Auction/Calendar?state=RI&status=Deed&location=All">Rhode Island</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Tax Deed with 1 year redemption period, bid-down ownership auction format, 10% interest for first 6 months, 1% monthly after that"></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="16" class="text-center">
+16%
+			</td>
+			<td data-sort="12" class="text-center">
+12			</td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#2275BE"></td>
+			<td data-sort="208" style="background-color:#4092D9"></td>
+			<td data-sort="208" style="background-color:#4092D9"></td>
+			<td data-sort="208" style="background-color:#4092D9"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Wisconsin">
+						<a href="../Auction/Calendar?state=WI&status=Deed&location=All">Wisconsin</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Wisconsin sells non-redeemable tax deeds at premium bid auctions, sometimes offering sealed bid auction formats as well."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#5EAFF5"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="208" style="background-color:#5EAFF5"></td>
+			<td data-sort="208" style="background-color:#5EAFF5"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+			<td data-sort="108" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Florida">
+						<a href="../Auction/Calendar?state=FL&status=Lien&location=All">Florida</a>
+				</td>
+			<td data-sort="Tax Lien Auctions (Annual)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Annual tax lien auctions for all Florida counties (18% max interest rate, bid-down auction format)"></span>
+				Tax Lien Auctions (Annual)
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="18" class="text-center">
+18%
+			</td>
+			<td data-sort="24" class="text-center">
+24			</td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="207" style="background-color:#45C63B"></td>
+			<td data-sort="207" style="background-color:#50CA47"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="New York">
+						<a href="../Auction/Calendar?state=NY&status=Deed&location=All">New York</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="New York counties offer tax deeds at auction throughout the year on an as-needed basis."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="207" style="background-color:#58A9F0"></td>
+			<td data-sort="207" style="background-color:#53A4EB"></td>
+			<td data-sort="207" style="background-color:#4899E1"></td>
+			<td data-sort="207" style="background-color:#4899E1"></td>
+			<td data-sort="207" style="background-color:#2275BE"></td>
+			<td data-sort="207" style="background-color:#3284CD"></td>
+			<td data-sort="207" style="background-color:#3284CD"></td>
+			<td data-sort="207" style="background-color:#4294DC"></td>
+		</tr>
+		<tr>
+				<td data-sort="Utah">
+						<a href="../Auction/Calendar?state=UT&status=Deed&location=All">Utah</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Utah sells tax deeds at Premium bid auctions (some online and some in-person), and issue non-redeemable tax deeds."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="207" style="background-color:#2275BE"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="West Virginia">
+						<a href="../Auction/Calendar?state=WV&status=Lien&location=All">West Virginia</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="West Virginia Tax Liens are sold in person at auction using a premium bid format with a 7.5% annual interest rate and an 18 month redemption period. This was recently reduced from a 12% annual interest rate."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="7" class="text-center">
+7%
+			</td>
+			<td data-sort="18" class="text-center">
+18			</td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="207" style="background-color:#4EC945"></td>
+			<td data-sort="207" style="background-color:#45C63B"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+			<td data-sort="107" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Alaska">
+						<a href="../Auction/Calendar?state=AK&status=Deed&location=All">Alaska</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Alaska conducts tax deed auctions with no redemption through both in-person auctions and sealed bid auctions."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="206" style="background-color:#5EAFF5"></td>
+			<td data-sort="206" style="background-color:#5EAFF5"></td>
+			<td data-sort="206" style="background-color:#5EAFF5"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Iowa">
+						<a href="../Auction/Calendar?state=IA&status=Lien&location=All">Iowa</a>
+				</td>
+			<td data-sort="Tax Lien Auctions (Annual)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Iowa auctions tax liens annually on the third Monday in June - a few counties offer secondary sales in July or later."></span>
+				Tax Lien Auctions (Annual)
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="24" class="text-center">
+24%
+			</td>
+			<td data-sort="24" class="text-center">
+24			</td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="206" style="background-color:#45C63B"></td>
+			<td data-sort="206" style="background-color:#90E089"></td>
+			<td data-sort="206" style="background-color:#90E089"></td>
+			<td data-sort="206" style="background-color:#90E089"></td>
+			<td data-sort="206" style="background-color:#90E089"></td>
+			<td data-sort="206" style="background-color:#90E089"></td>
+			<td data-sort="206" style="background-color:#90E089"></td>
+		</tr>
+		<tr>
+				<td data-sort="Montana">
+						<a href="../Auction/Calendar?state=MT&status=Lien&location=All">Montana</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Tax Liens are sold at auction with a 3 year redemption period and a 10% annual interest rate. Vacant land carries a 2 year redemption period.  Random and rotational bidding formats are both used by Montana counties."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="10" class="text-center">
+10%
+			</td>
+			<td data-sort="36" class="text-center">
+36			</td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="206" style="background-color:#96E290"></td>
+			<td data-sort="206" style="background-color:#96E290"></td>
+			<td data-sort="206" style="background-color:#96E290"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Oklahoma">
+						<a href="../Auction/Calendar?state=OK&status=Deed&location=All">Oklahoma</a>
+				</td>
+			<td data-sort="Tax Deed Auctions (Annual)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Oklahoma sells tax deeds annually in June through in-person auctions. The state recently passed a law allowing counties to sell via online auctions."></span>
+				Tax Deed Auctions (Annual)
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="206" style="background-color:#2275BE"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Vermont">
+						<a href="../Auction/Calendar?state=VT&status=Lien&location=All">Vermont</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Vermont Tax Liens are sold at auction using premium bid format with a 12% interest rate and a 3 year redemption period."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="12" class="text-center">
+12%
+			</td>
+			<td data-sort="36" class="text-center">
+36			</td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="206" style="background-color:#6DD465"></td>
+			<td data-sort="206" style="background-color:#6DD465"></td>
+			<td data-sort="206" style="background-color:#45C63B"></td>
+			<td data-sort="206" style="background-color:#6DD465"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+			<td data-sort="106" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Arkansas">
+						<a href="../Auction/Calendar?state=AR&status=Deed&location=All">Arkansas</a>
+				</td>
+			<td data-sort="Tax Deed Auctions (Annual)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="All Arkansas counties with delinquent tax properties participate in the annual tax deed auction season."></span>
+				Tax Deed Auctions (Annual)
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="205" style="background-color:#3789D1"></td>
+			<td data-sort="205" style="background-color:#2E81C9"></td>
+			<td data-sort="205" style="background-color:#2275BE"></td>
+			<td data-sort="205" style="background-color:#53A4EB"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Kentucky">
+						<a href="../Auction/Calendar?state=KY&status=Lien&location=All">Kentucky</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Tax Liens are sold at auction using either a premium bid format or a random selection of the winning bidder. Liens have an annual interest rate of 12% and a 1 year redemption period."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="12" class="text-center">
+12%
+			</td>
+			<td data-sort="12" class="text-center">
+12			</td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="205" style="background-color:#64D05C"></td>
+			<td data-sort="205" style="background-color:#45C63B"></td>
+			<td data-sort="205" style="background-color:#7DD976"></td>
+			<td data-sort="205" style="background-color:#8EDF88"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Washington, DC">
+						<a href="../Auction/Calendar?state=DC&status=Lien&location=All">Washington, DC</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Tax Liens are sold at auction using a premium bid format with an 18% annual interest rate and a 6 month redemption period."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="18" class="text-center">
+18%
+			</td>
+			<td data-sort="6" class="text-center">
+6			</td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="205" style="background-color:#96E290"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="205" style="background-color:#96E290"></td>
+		</tr>
+		<tr>
+				<td data-sort="Wyoming">
+						<a href="../Auction/Calendar?state=WY&status=Lien&location=All">Wyoming</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Wyoming Tax Liens are sold with a 4 year redemption period and a max 15% annual interest rate. Bidding formats vary by county and include random selection and rotation bidding formats."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="15" class="text-center">
+15%
+			</td>
+			<td data-sort="48" class="text-center">
+48			</td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="205" style="background-color:#7BD873"></td>
+			<td data-sort="205" style="background-color:#45C63B"></td>
+			<td data-sort="205" style="background-color:#7BD873"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+			<td data-sort="105" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Indiana">
+						<a href="../Auction/Calendar?state=IN&status=Lien&location=All">Indiana</a>
+				</td>
+			<td data-sort="Treasurer&#39;s Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Fall Auction Season: Treasurer&#39;s Sales (12 month redemption tax lien) are larger auctions selling newly delinquent tax liens as well as carry-over of liens that did not sell in previous auctions."></span>
+				Treasurer&#39;s Sales
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="15" class="text-center">
+15%
+			</td>
+			<td data-sort="12" class="text-center">
+12			</td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="204" style="background-color:#92E08C"></td>
+			<td data-sort="204" style="background-color:#45C63B"></td>
+			<td data-sort="204" style="background-color:#46C63C"></td>
+			<td data-sort="204" style="background-color:#94E18E"></td>
+			<td data-sort="104" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Michigan">
+						<a href="../Auction/Calendar?state=MI&status=Deed&location=All">Michigan</a>
+				</td>
+			<td data-sort="Tax Deed Auctions (Annual)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Michigan&#39;s annual tax deed auctions start in August each year."></span>
+				Tax Deed Auctions (Annual)
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="204" style="background-color:#2275BE"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Mississippi">
+						<a href="../Auction/Calendar?state=MS&status=Lien&location=All">Mississippi</a>
+				</td>
+			<td data-sort="Fall Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="All Mississippi counties with tax delinquent properties participate in the Fall auction season (late August)"></span>
+				Fall Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="12" class="text-center">
+12%
+			</td>
+			<td data-sort="24" class="text-center">
+24			</td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="204" style="background-color:#45C63B"></td>
+			<td data-sort="204" style="background-color:#8EDF87"></td>
+			<td data-sort="204" style="background-color:#95E18F"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Missouri">
+						<a href="../Auction/Calendar?state=MO&status=Lien&location=All">Missouri</a>
+				</td>
+			<td data-sort="Tax Lien Auctions (1st)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Missouri First offering sales include newly delinquent tax liens to be sold with a 12 month redemption period and a max interest rate of 10%."></span>
+				Tax Lien Auctions (1st)
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="10" class="text-center">
+10%
+			</td>
+			<td data-sort="12" class="text-center">
+12			</td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="204" style="background-color:#45C63B"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Missouri">
+						<a href="../Auction/Calendar?state=MO&status=Lien&location=All">Missouri</a>
+				</td>
+			<td data-sort="Tax Lien Auctions (2nd)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Missouri Second offering sales include tax liens not sold in the first sale and are sold with a 12 month redemption period and a max interest rate of 10%."></span>
+				Tax Lien Auctions (2nd)
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="10" class="text-center">
+10%
+			</td>
+			<td data-sort="12" class="text-center">
+12			</td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="204" style="background-color:#45C63B"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+			<td data-sort="104" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Illinois">
+						<a href="../Auction/Calendar?state=IL&status=Lien&location=All">Illinois</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Tax Liens are sold at auction using a bid-down interest format with an 18% max annual interest rate, redemption periods vary by property type and range from 6 months to 36 months."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="18" class="text-center">
+18%
+			</td>
+			<td data-sort="6" class="text-center">
+6 - 36
+			</td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="203" style="background-color:#96E290"></td>
+			<td data-sort="203" style="background-color:#96E290"></td>
+			<td data-sort="203" style="background-color:#96E290"></td>
+			<td data-sort="203" style="background-color:#96E290"></td>
+		</tr>
+		<tr>
+				<td data-sort="Michigan">
+						<a href="../Auction/Calendar?state=MI&status=Deed&location=All">Michigan</a>
+				</td>
+			<td data-sort="Re-Offer Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Counties with leftover tax deeds from the annual tax sale participate in a re-offer sale in early September"></span>
+				Re-Offer Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="203" style="background-color:#2275BE"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Missouri">
+						<a href="../Auction/Calendar?state=MO&status=Lien&location=All">Missouri</a>
+				</td>
+			<td data-sort="Tax Lien Auctions (3rd)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Missouri Third offering sales include tax liens not sold in the first two sales. These liens are sold with a 90 day redemption period."></span>
+				Tax Lien Auctions (3rd)
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="10" class="text-center">
+10%
+			</td>
+			<td data-sort="3" class="text-center">
+3			</td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="203" style="background-color:#45C63B"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="Pennsylvania">
+						<a href="../Auction/Calendar?state=PA&status=Deed&location=All">Pennsylvania</a>
+				</td>
+			<td data-sort="Upset Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Annual tax deed auctions are called &quot;Upset Sales&quot; in Pennsylvania and occur between August and October, occasionally including a &quot;Continued Upset Sale&quot; for a few counties."></span>
+				Upset Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="" class="text-center">
+			</td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="203" style="background-color:#2275BE"></td>
+			<td data-sort="103" style="background-color:"></td>
+			<td data-sort="203" style="background-color:#57A8EF"></td>
+			<td data-sort="203" style="background-color:#54A5EC"></td>
+		</tr>
+		<tr>
+				<td data-sort="Colorado">
+						<a href="../Auction/Calendar?state=CO&status=Lien&location=All">Colorado</a>
+				</td>
+			<td data-sort="Tax Lien Auctions (Annual)">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="All Colorado counties with tax delinquent properties participate in the annual tax lien auction season."></span>
+				Tax Lien Auctions (Annual)
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="14" class="text-center">
+14%
+			</td>
+			<td data-sort="36" class="text-center">
+36			</td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="202" style="background-color:#82DB7B"></td>
+			<td data-sort="202" style="background-color:#45C63B"></td>
+			<td data-sort="202" style="background-color:#93E18D"></td>
+		</tr>
+		<tr>
+				<td data-sort="Michigan">
+						<a href="../Auction/Calendar?state=MI&status=Deed&location=All">Michigan</a>
+				</td>
+			<td data-sort="No Reserve Sales">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Counties with leftover tax deeds from the annual re-offer sale participate in a &quot;No Reserve&quot; sale each November where the auction reserve price is dropped to motivate buyers."></span>
+				No Reserve Sales
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="202" style="background-color:#2275BE"></td>
+			<td data-sort="102" style="background-color:"></td>
+			<td data-sort="102" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="North Dakota">
+						<a href="../Auction/Calendar?state=ND&status=Deed&location=All">North Dakota</a>
+				</td>
+			<td data-sort="Tax Deed Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Counties in North Dakota offer tax deeds at auction each Fall with no redemption via in-person sales."></span>
+				Tax Deed Auctions
+			</td>
+			<td data-sort="Deed" class="text-center">
+				Deed
+			</td>
+			<td data-sort="0" class="text-center">
+					-
+			</td>
+			<td data-sort="0" class="text-center">
+0			</td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="201" style="background-color:#2275BE"></td>
+			<td data-sort="101" style="background-color:"></td>
+		</tr>
+		<tr>
+				<td data-sort="South Dakota">
+						<a href="../Auction/Calendar?state=SD&status=Lien&location=All">South Dakota</a>
+				</td>
+			<td data-sort="Tax Lien Auctions">
+					<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="South Dakota tax lien auctions offer 10% max interest with a 3 year redemption period."></span>
+				Tax Lien Auctions
+			</td>
+			<td data-sort="Lien" class="text-center">
+				Lien
+			</td>
+			<td data-sort="10" class="text-center">
+10%
+			</td>
+			<td data-sort="36" class="text-center">
+36			</td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="101" style="background-color:"></td>
+			<td data-sort="201" style="background-color:#59CD50"></td>
+			<td data-sort="201" style="background-color:#45C63B"></td>
+		</tr>
+</table>
+<script>
+	//function goToState(state, taxStatus) {
+	//	window.location.href = "../auction/calendar?state=" + state + "&taxStatus=" + taxStatus;
+	//}
+
+	$(function () { $('[data-toggle="popover"]').popover() })
+
+	$('th').click(function () {
+		var $th = $(this);
+		var table = $th.parents('table').eq(0);
+		var index = $th.index();
+		var alwaysDesc = $th.hasClass('always-desc');
+		$('#resultsTable').fadeOut(400, function () {
+			var $table = $(this);
+			var rows = $table.find('tr:gt(0)').toArray().sort(comparer(index, true));
+			if (alwaysDesc || !this.asc) { rows = rows.reverse(); }
+			this.asc = !alwaysDesc && !this.asc;
+			$table.find('tr:gt(0)').remove();
+			for (var i = 0; i < rows.length; i++) { $table.append(rows[i]); }
+			$('#resultsTable').fadeIn();
+		});
+	});
+</script>
+
+<script>
+	//freeze table column widths post-render to prevent shifting during hover
+	$('#resultsTable td').each(function () {
+		$(this).css('width', $(this).width());
+	});
+
+	const table = document.getElementById('resultsTable');
+	const cells = table.getElementsByTagName('td');
+	var startIndex = 0;
+
+	for (let cell of cells) {
+		cell.addEventListener('mouseover', function () {
+			const index = this.cellIndex;
+			if (index >= startIndex) {
+				for (let row of table.rows) {
+					row.cells[index].classList.add('colHover');
+				}
+			}
+		});
+
+		cell.addEventListener('mouseout', function () {
+			const index = this.cellIndex;
+			for (let row of table.rows) {
+				row.cells[index].classList.remove('colHover');
+			}
+		});
+	}
+</script>
+<div class="modal fade" id="sendInviteModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h3 class="modal-title text-primary" id="myModalLabel">Send Auction Reminder to Calendar</h3>
+			</div>
+			<form class="form-horizontal form-group">
+				<div class="modal-body">
+					<h4>
+						To send an auction reminder calendar invite, list each recipient email address below separated by comma:
+					</h4>
+					<br /><textarea id="inviteEmails" class="form-control col-xs-12" style="min-width:100%;">gustavot.gomes7@gmail.com</textarea>
+				</div>
+				<br /><br />
+				<div class="modal-footer">
+					<button type="button" class="btn btn-success" data-dismiss="modal" onclick="sendInvite();">Send Reminder</button>
+					<button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+				</div>
+				<input type="hidden" name="sendInviteInventoryId" />
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+	var currentInviteInventoryId;
+	function openAuctionCalendarInviteModal(inventoryId) {
+		$("#sendInviteModal").modal("show");
+		currentInviteInventoryId = inventoryId;
+	}
+	function sendInvite() {
+		var data = { inventoryId: currentInviteInventoryId, emails: $('#inviteEmails').val() };
+		updateUserSetting('AuctionCalendar.CalendarEmails', $('#inviteEmails').val());
+		$.ajax({
+			url: '/Auction/SendInvite',
+			data: JSON.stringify(data),
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'POST',
+			success: function (results) {
+				if (results) { console.log('Invitation sent.'); }
+				else { console.log('Invitation not sent.'); }
+			}
+		});
+	}
+</script>
+
+
+<script>
+	var currentInventoryDetailsId;
+	function filterResults() { document.location = '?' + getFilterQueryString(); }
+
+	function getFilterQueryString() {
+		var qs = keyValueToQueryString("&state", $("#state").val())
+			+ keyValueToQueryString("&year", $("#year").val())
+			+ keyValueToQueryString("&status", $("#status").val())
+			+ keyValueToQueryString("&location", $("#location").val());
+
+		if (qs.charAt(0) === "&") qs = qs.substring(1, qs.length);
+		return qs;
+	}
+	function updateAuctionTotal(className, labelId) {
+		var element = document.getElementsByClassName(className);
+		var total = element.length;
+		$("#" + labelId).text(total);
+	};
+	$('#exportButton').click(function () { window.open('/Auction/Download?state=ALL&year=&status=All&location=all', '_blank'); });
+
+	var totalAuctions = 0;
+</script>
+
+			<hr/>
+			<footer>
+				<p>
+					&copy; 2026 - ParcelFair.com
+					| <a href="/Home/Disclaimer">Disclaimer</a>
+					| <a href="/Home/TermsOfService">Terms of Service</a>
+					| <a href="/Home/PrivacyPolicy">Privacy Policy</a>
+				</p>
+			</footer>
+		</div>
+
+<script src="/bundles/bootstrap?v=M4Nk6kIOwMFflsEKET0iPL9i5YBqbzMzvUOrd8gyCnw1"></script>
+
+
+	<script>
+		$(".body-content").fadeOut(0);
+		$(".body-content").fadeIn(500);
+	</script>
+</body>
+</html>

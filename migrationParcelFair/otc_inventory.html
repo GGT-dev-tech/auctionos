@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link id="favicon" rel="icon" type="image/png" href="/favicon.ico" />
+    <title>Over the Counter Inventory Tracker - Parcel Fair</title>
+    <script src="/bundles/jquery?v=2u0aRenDpYxArEyILB59ETSCA2cfQkSMlxb6jbMBqf81"></script>
+
+    <link href="/Content/css?v=120ZKF_Z1-mgFBqToPamd_kQ5RRRu4L6u5pT2UWvc9Y1" rel="stylesheet" />
+
+    <script src="/bundles/application?v=-gau4D66ghk2M9P12kqAQ6x9JwyUdiS5rOkP1rJ5AQo1"></script>
+
+
+
+
+    <style>
+        th {
+            position: sticky;
+            top: 50px;
+            z-index: 999;
+            position: -webkit-sticky;
+            background-color: #fff;
+        }
+    </style>
+
+
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YX1L41HKYF"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-YX1L41HKYF');
+    </script>
+</head>
+
+<body>
+    <style>
+        .dropdown-section {
+            display: block;
+            padding: 3px 15px;
+            font-size: 16px;
+            line-height: 1.42857143;
+            color: #777777;
+            white-space: nowrap;
+            background-color: #ededed;
+        }
+    </style>
+    <div class="navbar navbar-inverse navbar-fixed-top hidden-print">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a href="/" class="navbar-brand">Parcel Fair</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="/dashboard">Home</a></li>
+                    <li><a href="/Home/About">About</a></li>
+                    <li><a href="/Home/Contact">Contact</a></li>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true"
+                            aria-expanded="false">
+                            Tools <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="Tools">
+                            <li class="dropdown-section">Find Parcels:</li>
+                            <li><a href="/Map" target="_blank"><span class="glyphicon glyphicon-map-marker"></span> Map
+                                    Search</a></li>
+                            <li><a href="/Parcel" target="_blank"><span class="glyphicon glyphicon-search"></span> List
+                                    Search</a></li>
+                            <li><a href="/Auction/Calendar"><span class="glyphicon glyphicon-calendar"></span> Auction
+                                    Calendar</a></li>
+                            <li><a href="/Inventory"><span class="glyphicon glyphicon-saved"></span> OTC Inventory
+                                    Tracker</a></li>
+                            <li class="dropdown-section">My Research:</li>
+                            <li><a href="/Dashboard"><span class="glyphicon glyphicon-th-large"></span> My Dashboard</a>
+                            </li>
+                            <li><a href="/Parcel/Favorites"><span class="glyphicon glyphicon-heart"></span> My
+                                    Favorites</a></li>
+                            <li><a href="/Lists"><span class="glyphicon glyphicon-list"></span> My Saved Lists</a></li>
+                            <li><a href="/PriceNotice"><span class="glyphicon glyphicon-tag"></span> Price Notice
+                                    Organizer</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true"
+                            aria-expanded="false">
+                            Connect<span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="Connect">
+
+                            <li><a href="/Video/ParcelFair101"><span class="glyphicon glyphicon-book"></span> Parcel
+                                    Fair 101 Training</a></li>
+                            <li><a href="https://www.youtube.com/c/ParcelFair" target="_blank"><span
+                                        class="glyphicon glyphicon-play"></span> YouTube Community</a></li>
+                            <li><a href="https://www.facebook.com/groups/parcelfair" target="_blank"><span
+                                        class="glyphicon glyphicon-user"></span> Facebook Group</a></li>
+                            <li><a href="/Video/OnlineMeetup"><span class="glyphicon glyphicon-play-circle"></span>
+                                    Online Meetups</a></li>
+                            <li><a href="/Manage"><span class="glyphicon glyphicon-wrench"></span> Account Support</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+                <form action="/Account/LogOff" class="navbar-right" id="logoutForm" method="post"><input
+                        name="__RequestVerificationToken" type="hidden"
+                        value="qsyITUjcQwMBisZWtRfqjOdfh-PEUGMPSsVvbMv-Hq4itmgZ5buZtjDYZm9N8OlAW7_W391fZRHohWaMe0ob3x9BA9O6y6pvWGX9qTKWN-j1pcRz_s_uIx93n4UNnZlHGGIFaiu7qVW1ncQ_itsZew2" />
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="/Manage" title="Manage">gustavot.gomes7@gmail.com</a>
+                        </li>
+                        <li>
+                            <div style="margin:8px;">
+                                <a href="../Subscription/" class="btn btn-success"><span
+                                        class="glyphicon glyphicon-flash"></span> Upgrade Trial Account</a>
+                            </div>
+                        </li>
+                        <li>
+                            <div style="margin:8px;">
+                                <a href="javascript:document.getElementById('logoutForm').submit()"
+                                    class="btn btn-warning">Log off</a>
+                            </div>
+                        </li>
+                    </ul>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <br />
+    <div class="full-page">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Over the Counter Inventory Tracker (OTC)</h3>
+            </div>
+            <div class="panel-body text-center">
+                <h4 id="nav">
+                    Parcels Added / Removed from Over-The-Counter Inventories in
+                    <select name="state" id="state" class="input-sm" onchange="filterResultsFromState();">
+                        <option value="AL" selected>Alabama</option>
+                        <option value="AR">Arkansas</option>
+                        <option value="AZ">Arizona</option>
+                        <option value="CO">Colorado</option>
+                        <option value="FL">Florida</option>
+                        <option value="GA">Georgia</option>
+                        <option value="LA">Louisiana</option>
+                        <option value="MD">Maryland</option>
+                        <option value="MI">Michigan</option>
+                        <option value="MS">Mississippi</option>
+                        <option value="MO">Missouri</option>
+                        <option value="NY">New York</option>
+                        <option value="OK">Oklahoma</option>
+                        <option value="PA">Pennsylvania</option>
+                        <option value="TN">Tennessee</option>
+                        <option value="DC">Washington DC</option>
+                        <option value="WV">West Virginia</option>
+                        <option value="WI">Wisconsin</option>
+                    </select>
+                    <select name="county" id="county" class="input-sm" onchange="filterResults();">
+                        <option value="0" selected> All Counties</option>
+                        <option value="4">Autauga</option>
+                        <option value="5">Baldwin</option>
+                        <option value="6">Barbour</option>
+                        <option value="7">Bibb</option>
+                        <option value="8">Blount</option>
+                        <option value="9">Bullock</option>
+                        <option value="10">Butler</option>
+                        <option value="11">Calhoun</option>
+                        <option value="12">Chambers</option>
+                        <option value="13">Cherokee</option>
+                        <option value="14">Chilton</option>
+                        <option value="15">Choctaw</option>
+                        <option value="16">Clarke</option>
+                        <option value="17">Clay</option>
+                        <option value="18">Cleburne</option>
+                        <option value="19">Coffee</option>
+                        <option value="20">Colbert</option>
+                        <option value="21">Conecuh</option>
+                        <option value="22">Coosa</option>
+                        <option value="23">Covington</option>
+                        <option value="24">Crenshaw</option>
+                        <option value="25">Cullman</option>
+                        <option value="26">Dale</option>
+                        <option value="27">Dallas</option>
+                        <option value="28">Dekalb</option>
+                        <option value="29">Elmore</option>
+                        <option value="30">Escambia</option>
+                        <option value="31">Etowah</option>
+                        <option value="32">Fayette</option>
+                        <option value="33">Franklin</option>
+                        <option value="34">Geneva</option>
+                        <option value="35">Greene</option>
+                        <option value="36">Hale</option>
+                        <option value="37">Henry</option>
+                        <option value="38">Houston</option>
+                        <option value="39">Jackson</option>
+                        <option value="68">Jefferson-Bessemer</option>
+                        <option value="1">Jefferson-Birmingham</option>
+                        <option value="40">Lamar</option>
+                        <option value="41">Lauderdale</option>
+                        <option value="42">Lawrence</option>
+                        <option value="43">Lee</option>
+                        <option value="44">Limestone</option>
+                        <option value="45">Lowndes</option>
+                        <option value="46">Macon</option>
+                        <option value="47">Madison</option>
+                        <option value="48">Marengo</option>
+                        <option value="49">Marion</option>
+                        <option value="50">Marshall</option>
+                        <option value="2">Mobile</option>
+                        <option value="51">Monroe</option>
+                        <option value="3">Montgomery</option>
+                        <option value="52">Morgan</option>
+                        <option value="53">Perry</option>
+                        <option value="54">Pickens</option>
+                        <option value="55">Pike</option>
+                        <option value="56">Randolph</option>
+                        <option value="57">Russell</option>
+                        <option value="58">Shelby</option>
+                        <option value="59">St Clair</option>
+                        <option value="60">Sumter</option>
+                        <option value="61">Talladega</option>
+                        <option value="62">Tallapoosa</option>
+                        <option value="63">Tuscaloosa</option>
+                        <option value="64">Walker</option>
+                        <option value="65">Washington</option>
+                        <option value="66">Wilcox</option>
+                        <option value="67">Winston</option>
+                    </select>
+                </h4>
+                <h5>Click <span class="inactive bold">red</span> and <span class="taxCertificate bold">green</span> bars
+                    to view added / removed parcels</h5>
+                <h4 class="alert alert-danger hide" id="chartAlert"></h4>
+                <div id="line_chart" style="width: 100%; height: 350px;"></div>
+            </div>
+        </div>
+
+        <div class="panel-title text-center full row">
+            <h3 id="resultsHeader">
+                <span class="col-md-10"></span>
+                <a href="#" class="btn btn-success btn-sm col-md-2 hide" id="exportButton"><span
+                        class="glyphicon glyphicon-export"></span> Export to CSV</a>
+            </h3>
+        </div>
+
+    </div>
+    <style>
+        #resultsTable {
+            display: none;
+        }
+
+        th {
+            cursor: pointer;
+            text-align: center;
+        }
+
+        td {
+            text-align: center;
+        }
+
+        th {
+            position: sticky;
+            top: 50px;
+            z-index: 999;
+            position: -webkit-sticky;
+            background-color: #fff;
+        }
+
+        table tr td:nth-child(5) {
+            max-width: 40ch;
+            word-break: break-word;
+            white-space: normal;
+            overflow-wrap: break-word;
+        }
+    </style>
+
+    <div class="panel">
+        <div class="panel-body" style="padding-left:0px">
+            <table class="table" id="resultsTable">
+                <tr>
+                    <th></th>
+                    <th>Parcel Number</th>
+                    <th>C/S#</th>
+                    <th>PIN</th>
+                    <th>Name</th>
+                    <th>County</th>
+                    <th>State</th>
+                    <th>Availability</th>
+                    <th>Sale Year</th>
+
+                    <th>Amount Due</th>
+                    <th>Acres</th>
+                    <th>Total Value</th>
+                    <th>Land</th>
+                    <th>Building</th>
+
+                    <th>Parcel Type</th>
+                    <th>Status</th>
+                    <th>Address</th>
+                    <th>Next Auction</th>
+                    <th>Occupancy</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function addRow(parcel, rowId, actions) {
+            var rowIdDisplay = '';
+            var actionsDisplay = '';
+            var redemptionNoticeDisplay = '';
+            var assessedValue = '';
+            if (parcel.AssessedValue > 0) assessedValue = parcel.AssessedValue;
+
+            if (rowId) rowIdDisplay = ' id="' + rowId + '"';
+            if (parcel.RedemptionNoticeDate) {
+                redemptionNoticeDisplay = '<br/><span class="text-danger">Redeemed ' + formatDate(parcel.RedemptionNoticeDate) + '</span>';
+            }
+
+            var rowClassDisplay = '';
+
+            if (!parcel.IsActive) {
+                rowClassDisplay = ' class="bg-gray"';
+            }
+
+            //console.log('next auction:' + parcel.NextAuction);
+
+            if (actions) actionsDisplay = actions;
+            var newRow = '<tr' + rowIdDisplay + rowClassDisplay + '>' +
+                '<td>' + actionsDisplay + '</td>' +
+                '<td><a href="/Parcel/Details/' + parcel.ParcelId + '" target="_blank">' + parcel.FormattedParcelNumber + '</a></td>' +
+                '<td>' + parcel.CsNumber + '</td>' +
+                '<td>' + parcel.PIN + '</td>' +
+                '<td>' + properCase(parcel.Name) + '</td>' +
+                '<td>' + parcel.CountyName + '</td>' +
+                '<td>' + parcel.State + '</td>' +
+                '<td>' + ((parcel.IsActive) ? '<span class="text-success">Available</span>' : '<span class="text-danger">Unavailable</span>') + redemptionNoticeDisplay + '</td>' +
+                '<td>' + (parcel.SaleYear > 0 ? parcel.SaleYear : '') + '</td>' +
+                '<td>' + formatCurrency(parcel.AmountDueAtSale) + '</td>' +
+                '<td>' + parcel.CalculatedAcreage.toFixed(2) + '</td>' +
+                '<td>' + formatCurrency(parcel.TotalValue) + '</td>' +
+                '<td>' + formatCurrency(parcel.LandValue) + '</td>' +
+                '<td>' + formatCurrency(parcel.ImprovementsValue) + '</td>' +
+                '<td>' + parcel.PropertyType + '</td>' +
+                '<td>' + parcel.TaxStatus + '</td>' +
+                '<td>' + properCase(parcel.Address) + '<br/>' + properCase(parcel.City) + ' ' + parcel.State + ' ' + parcel.Zip + '</td>' +
+                '<td>' + (parcel.NextAuctionDate != null ? formatDate(parcel.NextAuctionDate) : '') + '</td>' +
+                '<td>' + (parcel.Occupancy != null ? parcel.Occupancy : '') + '</td>' +
+                '</tr>';
+            //'<td>' + formatCurrency(assessedValue) + '</td>' +
+            //'<td>' + (parcel.DateAdded != null ? formatDate(parcel.DateAdded) : '') + '</td>' +
+            //'<td>' + parcel.DelinquentYear + '</td>' +
+            $('#resultsTable tr:last').after(newRow);
+        }
+
+        function hideResults() { $('#resultsTable').hide(); $('#resultsHeader > span').html(''); $('#exportButton').hide(); }
+        function showResults() { $('#resultsTable, #exportButton').fadeIn(); $('#resultsTable, #exportButton').removeClass('hide'); }
+        function loadingState() { $('#resultsHeader > span').html(loadingHtml); }
+
+        $('th').click(function () {
+            var table = $(this).parents('table').eq(0);
+            var index = $(this).index();
+            $('#resultsTable').fadeOut(400, function () {
+                var rows = table.find('tr:gt(0)').toArray().sort(comparer(index));
+                this.asc = !this.asc;
+                if (!this.asc) { rows = rows.reverse(); }
+                for (var i = 0; i < rows.length; i++) { table.append(rows[i]); }
+            });
+            $('#resultsTable').fadeIn();
+        });
+    </script>
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+
+
+        $(function () { $('[data-toggle="popover"]').popover(); });
+
+        function disableNav() { $("#nav").fadeOut(0); }
+        //function enableNav() { $("#nav").fadeIn(); $("#nav").removeClass("hide"); }
+
+        var currentEventType;
+        var currentSnapshotDate;
+        function resultsToCsv() { window.open('/Inventory/DownloadParcels?' + inventoryCriteriaToQueryString(), '_blank'); }
+
+        function filterResultsFromState() {
+            //$('#county').prop('selectedIndex', 0);
+            $('#county').val('0');
+            filterResults();
+        }
+
+        function filterResults() {
+            disableNav();
+            var qs = inventoryCriteriaToQueryString();
+            var url = '?' + qs;
+            document.location = url;
+        }
+
+        function inventoryCriteriaToQueryString() {
+            var qs = 'state=' + encodeURIComponent($('#state option:selected').val())
+                + '&countyCode=' + encodeURIComponent($('#county option:selected').val())
+                + '&eventType=' + encodeURIComponent(parameterizeEventType(currentEventType))
+                + '&snapshotDate=' + encodeURIComponent(currentSnapshotDate);
+            return qs;
+        }
+
+        var isTrialUser = true;
+        if (isTrialUser) { $('#resultsHeader > span').html('Parcel Lists are not available for trial users.<br/><br/><a href="../Subscription/" class="btn btn-success btn-lg btn txt-lg">Subscribe Now</a>'); }
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(loadChart);
+
+        function loadChart() {
+            /*console.log('loading chart data...');*/
+            var state = "AL";
+            var countyCode = 0;
+
+            $('#line_chart').html(loadingHtml);
+
+            $.ajax({
+                url: '/Inventory/ChartHistory?state=' + state + '&countyCode=' + countyCode,
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                type: 'POST',
+                success: function (results) {
+                    if (results.length > 1) {
+                        $('#line_chart').show();
+                        $('#chartAlert').addClass('hide');
+                        drawChart(results);
+                    }
+                    else //no results
+                    {
+                        $('#line_chart').fadeOut();
+                        clearRows($('#resultsTable'));
+                        hideResults();
+                        $('#chartAlert').html('Inventory History Unavailable for ' + $('#county option:selected').text()).removeClass('hide');
+                    }
+                }
+            });
+        }
+
+        function drawChart(chartArray) {
+            clearRows($('#resultsTable'));;
+            if (!isTrialUser) { loadingState(); }
+            var data = google.visualization.arrayToDataTable(chartArray);
+            var maxRows = chartArray.length - 2;
+            var maxCols = chartArray[0].length;
+            var logScaleType = null;
+            if (data.getValue(maxRows, 1) > 80) logScaleType = 'mirrorLog';
+            var showTextEvery = Math.round(maxRows / 8);
+
+            /*console.log(showTextEvery);*/
+
+            var options = {
+                legend: { position: 'bottom' },
+                series: {
+                    0: { lineWidth: 5, color: '#4A87C9', curveType: 'function' },
+                    1: { color: '#5ABD52', type: 'bars' },
+                    2: { color: '#ab261f', type: 'bars' }
+                },
+                chartArea: { right: 10, top: 10, width: '95%', height: '75%' },
+                vAxis: { scaleType: logScaleType, minValue: 0, viewWindow: { min: 0 } },
+                hAxis: { showTextEvery: showTextEvery }
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('line_chart'));
+            google.visualization.events.addListener(chart, 'select', function () {
+                var selectedItem = chart.getSelection()[0];
+                if (selectedItem) {
+                    var eventType = data.getColumnLabel(selectedItem.column);
+                    var date = data.getValue(selectedItem.row, 0);
+                    //console.log('Data Selected: ' + data.getValue(selectedItem.row, selectedItem.column));
+                    loadParcels(date, eventType);
+                }
+            });
+
+            chart.draw(data, options);
+
+            //find latest add or remove greater than zero, then reload parcels table
+
+            //for each row, in reverse, excluding row 0
+            for (var i = maxRows; i >= 0; i--) {
+                //check for additions
+                if (data.getValue(i, 2) > 0) {
+                    loadParcels(data.getValue(i, 0), data.getColumnLabel(2));
+                    break;
+                }
+
+                //check for removals
+                if (data.getValue(i, 3) > 0) {
+                    loadParcels(data.getValue(i, 0), data.getColumnLabel(3));
+                    break;
+                }
+            }
+        }
+
+        //$('#state,#county,#Rollup').change(function() { loadChart(); });
+
+        function parameterizeEventType(eventType) {
+            var paramEventType = '';
+            switch (eventType) {
+                case 'Removed Parcels':
+                    paramEventType = 'Removals';
+                    break;
+                case 'New Parcels':
+                    paramEventType = 'Adds';
+                    break;
+            }
+            return paramEventType;
+        }
+
+        function loadParcels(snapshotDate, eventType) {
+            var eventParam = parameterizeEventType(eventType);
+            currentEventType = eventType;		//set global copy
+            currentSnapshotDate = snapshotDate; //set global copy
+            if (eventParam != '' && !isTrialUser) {
+                //console.log('loading parcels...');
+                //disableNav();
+                clearRows($('#resultsTable'));;
+                hideResults();
+                loadingState();
+
+                var request = {
+                    State: $('#state option:selected').val(),
+                    CountyCode: $('#county option:selected').val(),
+                    SnapshotDate: snapshotDate,
+                    EventType: eventParam
+                };
+
+                $.ajax({
+                    url: '/Inventory/Parcels',
+                    data: JSON.stringify(request),
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    type: 'POST',
+                    success: function (results) {
+                        showResults();
+                        var parcelCount = 0;
+                        $.each(results, function (i, item) {
+                            addRow(results[i]);
+                            parcelCount++;
+                        });
+                        updateResultsHeader(parcelCount, snapshotDate, eventType);
+                        //enableNav();
+                    }
+                });
+            }
+        }
+
+        function updateResultsHeader(parcelCount, snapshotDate, eventType) {
+            var glyph = '';
+            if (parameterizeEventType(eventType) === 'Adds') { glyph = 'glyphicon glyphicon-plus-sign taxCertificate'; }
+            if (parameterizeEventType(eventType) === 'Removals') { glyph = 'glyphicon glyphicon-minus-sign inactive'; }
+
+            $('#resultsHeader > span').html('<span class="' + glyph + '"></span> ' + eventType + ': ' + parcelCount.toLocaleString('en') + ' (' + $('#county option:selected').text() + ' ' + snapshotDate + ')');
+        }
+    </script>
+    <script>$('#exportButton').click(function () { trialRedirect(); });</script>
+
+    <script src="/bundles/bootstrap?v=M4Nk6kIOwMFflsEKET0iPL9i5YBqbzMzvUOrd8gyCnw1"></script>
+
+
+    <script>
+        $(".body-content").fadeOut(0);
+        $(".body-content").fadeIn(500);
+    </script>
+</body>
+
+</html>
