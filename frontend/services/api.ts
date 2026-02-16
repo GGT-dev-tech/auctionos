@@ -46,6 +46,14 @@ export const AuctionService = {
         }
     },
 
+    getCalendar: async (): Promise<any> => {
+        const response = await fetch(`${API_URL}/auctions/calendar`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch auction calendar');
+        return response.json();
+    },
+
     bulkUpdate: async (ids: string[], action: 'update_status' | 'delete', status?: string): Promise<any> => {
         const response = await fetch(`${API_URL}/properties/bulk-update`, {
             method: 'POST',
@@ -529,6 +537,20 @@ export const InventoryService = {
         return response.json();
     },
 
+    getOTC: async (params: { skip?: number, limit?: number, state?: string, county?: string } = {}): Promise<any> => {
+        const queryParams = new URLSearchParams();
+        if (params.skip) queryParams.append('skip', String(params.skip));
+        if (params.limit) queryParams.append('limit', String(params.limit));
+        if (params.state) queryParams.append('state', params.state);
+        if (params.county) queryParams.append('county', params.county);
+
+        const response = await fetch(`${API_URL}/inventory/otc?${queryParams.toString()}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch OTC inventory');
+        return response.json();
+    },
+
     updateItem: async (itemId: string, data: any): Promise<any> => {
         const response = await fetch(`${API_URL}/inventory/items/${itemId}`, {
             method: 'PATCH',
@@ -592,3 +614,29 @@ export const FinanceService = {
         return response.json();
     }
 };
+
+export const MapService = {
+    search: async (bounds: { north: number, south: number, east: number, west: number }, filters?: any): Promise<any> => {
+        const queryParams = new URLSearchParams();
+        queryParams.append('north', String(bounds.north));
+        queryParams.append('south', String(bounds.south));
+        queryParams.append('east', String(bounds.east));
+        queryParams.append('west', String(bounds.west));
+
+        if (filters) {
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    queryParams.append(key, String(value));
+                }
+            });
+        }
+
+        const response = await fetch(`${API_URL}/map/search?${queryParams.toString()}`, {
+            headers: getHeaders()
+        });
+
+        if (!response.ok) throw new Error('Map search failed');
+        return response.json(); // Returns GeoJSON FeatureCollection
+    }
+};
+

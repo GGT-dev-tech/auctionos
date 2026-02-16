@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 
 # Add parent directory to path to import app modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app.db.session import SessionLocal
 from app.db.base import Base # Import base to register all models
 from app.models.property import Property, InventoryType, PropertyDetails
@@ -19,9 +21,16 @@ from app.models.user import User
 # from app.models.location import Location # if needed
 
 def parse_currency(value):
-    if not value or value == '-':
-        return None
-    return float(value.replace('$', '').replace(',', ''))
+    if not value or value == '-' or value == 'N/A':
+        return 0.0
+    try:
+        # Remove currency symbols and commas
+        clean_value = str(value).replace('$', '').replace(',', '').strip()
+        if not clean_value:
+            return 0.0
+        return float(clean_value)
+    except (ValueError, TypeError):
+        return 0.0
 
 def parse_date(value):
     if not value:
@@ -85,13 +94,23 @@ def import_properties_arkansas(csv_path: str, db: Session):
         reader = csv.DictReader(f)
         count = 0
         skipped = 0
+        seen_ids = set()
+        
         for row in reader:
             parcel_id = row.get('Parcel Number')
+            
+            if not parcel_id:
+                continue
+                
+            if parcel_id in seen_ids:
+                skipped += 1
+                continue
             
             # Check existence
             existing = db.query(Property).filter(Property.parcel_id == parcel_id).first()
             if existing:
                 skipped += 1
+                seen_ids.add(parcel_id)
                 continue
 
             # Coordinates parsing "lat,lon"
@@ -133,18 +152,28 @@ def import_properties_arkansas(csv_path: str, db: Session):
                 land_value=parse_currency(row.get('Land')),
                 improvement_value=parse_currency(row.get('Improvements')),
                 assessed_value=parse_currency(row.get('Assessed Value')),
-                lot_acres=float(row.get('Acres')) if row.get('Acres') and row.get('Acres') != '-' else None,
+                lot_acres=float(row.get('Acres')) if row.get('Acres') and row.get('Acres') != '-' and row.get('Acres') != 'N/A' else None,
                 tax_year=int(row.get('Tax Sale Year')) if row.get('Tax Sale Year') and row.get('Tax Sale Year').isdigit() else None,
             )
             property.details = details
             
             db.add(property)
+            seen_ids.add(parcel_id)
             count += 1
             if count % 100 == 0:
                 print(f"Processed {count} records...")
-                db.commit() # Commit in chunks to avoid large transactions
+                try:
+                    db.commit() # Commit in chunks to avoid large transactions
+                except Exception as e:
+                    db.rollback()
+                    print(f"Error committing chunk: {e}")
                 
-        db.commit()
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(f"Error committing final chunk: {e}")
+            
     print(f"Imported {count} properties from Arkansas CSV. Skipped {skipped}.")
 
 def import_properties_leiloes(csv_path: str, db: Session):
@@ -153,17 +182,25 @@ def import_properties_leiloes(csv_path: str, db: Session):
         reader = csv.DictReader(f)
         count = 0
         skipped = 0
+        seen_ids = set()
+        
         for row in reader:
             # Map columns
             # Estado,Nome do Leilão,Tipo de Parcela,Data do Leilão,Condado,Parcela,Valor Devido,Local
             parcel_id = row.get('Parcela')
             
-            if parcel_id == '-': continue # Skip invalid
+            if not parcel_id or parcel_id == '-': 
+                continue # Skip invalid
             
-            # Check existence
+            if parcel_id in seen_ids:
+                skipped += 1
+                continue
+                
+            # Check existence in DB
             existing = db.query(Property).filter(Property.parcel_id == parcel_id).first()
             if existing:
                 skipped += 1
+                seen_ids.add(parcel_id)
                 continue
 
             property = Property(
@@ -179,17 +216,30 @@ def import_properties_leiloes(csv_path: str, db: Session):
             )
             
             db.add(property)
+            seen_ids.add(parcel_id)
             count += 1
             if count % 100 == 0:
-                 db.commit()
+                try:
+                    db.commit()
+                except Exception as e:
+                    db.rollback()
+                    print(f"Error committing chunk: {e}")
             
-        db.commit()
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(f"Error committing final chunk: {e}")
+
     print(f"Imported {count} properties from Leiloes CSV. Skipped {skipped}.")
 
 if __name__ == "__main__":
     db = SessionLocal()
     
-    base_path = "/Users/gustavo/Downloads/auctionos/migrationParcelFair"
+    # host path
+    # base_path = "/Users/gustavo/Downloads/auctionos/migrationParcelFair"
+    # container path (assuming copied to backend/)
+    base_path = "migrationParcelFair"
     
     try:
         import_auctions(f"{base_path}/auctionsAL.csv", db)

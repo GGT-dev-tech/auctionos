@@ -12,6 +12,9 @@ import { AuctionService } from './services/api';
 
 import { Analysis } from './pages/Analysis';
 import { Settings } from './pages/Settings';
+import MapIndex from './pages/MapIndex';
+import AuctionCalendar from './pages/AuctionCalendar';
+import OTCInventory from './pages/OTCInventory';
 import { Financials } from './pages/Financials';
 import { Reports } from './pages/Reports';
 import MyInventory from './pages/MyInventory';
@@ -45,6 +48,9 @@ const App: React.FC = () => {
             <Route path="my-inventory" element={<MyInventory />} />
             <Route path="properties/new" element={<PropertyWizard />} />
             <Route path="properties/:id/edit" element={<PropertyWizard />} />
+            <Route path="map" element={<MapIndex />} />
+            <Route path="calendar" element={<AuctionCalendar />} />
+            <Route path="inventory/otc" element={<OTCInventory />} />
             <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction</div>} />
           </Route>
         </Routes>

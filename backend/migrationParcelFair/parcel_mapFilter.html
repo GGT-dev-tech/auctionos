@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link id="favicon" rel="icon" type="image/png" href="/favicon.ico" />
+	<title>Map - Parcel Fair</title>
+	<script src="/bundles/jquery?v=2u0aRenDpYxArEyILB59ETSCA2cfQkSMlxb6jbMBqf81"></script>
+
+	<link href="/Content/css?v=120ZKF_Z1-mgFBqToPamd_kQ5RRRu4L6u5pT2UWvc9Y1" rel="stylesheet"/>
+
+	<script src="/bundles/application?v=-gau4D66ghk2M9P12kqAQ6x9JwyUdiS5rOkP1rJ5AQo1"></script>
+
+	
+	<style>
+		html, body { height: 100%; margin: 0; padding: 0; }
+		h4, h5 { margin: 2px 0 2px 0 }
+		.spaceMid { padding: 0 12px 0 12px; }
+		div.gm-style-iw-chr { max-height: 20px; }
+	</style>
+
+	
+	
+
+
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-YX1L41HKYF"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'G-YX1L41HKYF');
+	</script>
+</head>
+<body>
+<style>
+	.dropdown-section { 
+	display: block; padding: 3px 15px; font-size: 16px;
+	line-height: 1.42857143; color: #777777; white-space: nowrap;
+	background-color:#ededed;
+	}
+</style>
+
+
+
+
+<div class="pac-card" id="pac-card">
+	<div id="pac-container">
+		<span id="pac-icon" class="glyphicon glyphicon-map-marker text-primary"></span>
+		<input id="pac-input" type="text" placeholder="jump to location...">
+	</div>
+</div>
+<div id="map" class="col-md-10"></div>
+<div id="previewPanel" class="col-md-2 right">
+		<br />
+		<div class="alert alert-info text-center">
+			<span class="lead">Enjoying your trial?</span>
+			<br /><br /><a href="/Subscription/" class="btn btn-success btn-lg btn txt-lg">Upgrade Today!</a><br />
+		</div>
+	<br />
+	<div class="panel panel-primary">
+		<div class="panel-heading clickable" role="tab" id="mapSearchHeader" data-toggle="modal" href="#searchModal" aria-expanded="false" aria-controls="Map Search Filters">
+			<h4 class="panel-title">
+				<span class="glyphicon glyphicon-search"></span> Search Filters
+			</h4>
+		</div>
+	</div>
+	<div class="panel panel-primary">
+		<div class="panel-heading clickable" role="tab" id="mapOptionsHeader" onclick="loadOptionsModal();">
+			<h4 class="panel-title">
+				<span class="glyphicon glyphicon-map-marker"></span> Markers &amp; Overlays
+			</h4>
+		</div>
+	</div>
+	<div class="panel panel-primary">
+		<div class="panel-heading clickable" role="tab" id="resultsOptionsHeader" data-toggle="collapse" href="#resultsOptions" aria-expanded="false" aria-controls="resultsOptions">
+			<h4 class="panel-title">
+				<span class="glyphicon glyphicon-list" data-toggle="collapse" href="#resultsOptions" aria-expanded="false" aria-controls="resultsOptions"></span> Parcel Results
+			</h4>
+		</div>
+		<div id="resultsOptions" class="panel-collapse collapse" role="tabpanel" aria-labelledby="resultsOptionsHeader">
+			<div class="panel-body" style="padding:4px;">
+				<h5><a href="#" id="resultsToListButton"><span class="glyphicon glyphicon-list"></span> View Results as a List</a></h5>
+				<br /><h5><a href="#" id="resultsToSavedListButton"><span class="glyphicon glyphicon-save"></span> Save Results as a List</a></h5>
+				<br /><h5><a href="#" id="exportButton"><span class="glyphicon glyphicon-export"></span> Download Results (CSV)</a></h5>
+			</div>
+		</div>
+	</div>
+	<div id="unmappedResultCount"></div>
+	<div id="results"></div>
+	<div id="infowindow-content">
+		<img src="" width="16" height="16" id="place-icon">
+		<span id="place-name" class="title"></span><br>
+		<span id="place-address"></span>
+	</div>
+</div>
+
+<div id="searchNav" data-toggle="modal" data-target="#searchModal">
+	<span id="searchNavIcon" class="glyphicon glyphicon-search text-primary"></span>
+	<span id="resultCount"></span>
+</div>
+<div id="optionsNav" onclick="loadOptionsModal();">
+	<span id="optionsNavIcon" class="glyphicon glyphicon-map-marker text-primary"></span>
+</div>
+
+<div class="modal" id="optionsModal" tabindex="-1" role="dialog" aria-labelledby="Options" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="text-center modal-content">
+			<div class="modal-header">
+				<h3 class="text-primary modal-title">
+					<span class="glyphicon glyphicon-search"></span> Markers &amp; Overlays
+					<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				</h3>
+			</div>
+			<div class="modal-body">
+
+				<div class="row">
+					<div class="col-md-7 text-left">
+						<h5><a href="#" id="showSearchResultsMarkers"><span class="glyphicon glyphicon-unchecked"></span> Show Search Results Markers</a></h5>
+						<br /><h5><a href="#" id="showFavMarkers"><span class="glyphicon glyphicon-unchecked"></span> Show My Favorites Markers</a></h5>
+						<br /><h5><a href="#" id="showPriceNoticeMarkers"><span class="glyphicon glyphicon-unchecked"></span> Show Active Price Notice Markers</a></h5>
+						<br /><h5><a href="#" id="showExpiredPriceNoticeMarkers"><span class="glyphicon glyphicon-unchecked"></span> Show Expired Price Notice Markers</a></h5>
+						<br /><h5><a href="#" id="displayCountyBoundaries"><span class="glyphicon glyphicon-unchecked"></span> Draw County Borders</a></h5>
+						<br /><h5><a href="#" id="displayOpportunityZones"><span class="glyphicon glyphicon-unchecked"></span> Draw Opportunity Zones</a></h5>
+					</div>
+					<div class="col-md-5 text-center">
+						<br />
+						<a id="findMyLocation" class="btn btn-lg btn-info"><span class="glyphicon glyphicon-phone"></span> Find My Location</a>
+						<br />
+						<div id="selectListMarkersPanel" style="display: none;">
+							<br /><select id="selectListMarkers" onchange="loadListMarkers();" class="input-lg"></select><br />
+						</div>
+					</div>
+				</div>
+				<br />
+				<div class="row">
+					<div class="col-md-12 text-center">
+						<button class="btn btn-sm btn-default" onclick="closeOptionsModal();"><span class="glyphicon glyphicon-remove"></span> Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+	<form id="searchForm" method="get">
+		<style>
+			option { padding: 0; }
+			#SearchCriteria_TextFilter { max-width: 140px; }
+			.input-tiny { width: 73px !important;}
+			select{ max-width: 200px;}
+		</style>
+
+		<div class="modal" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="Search" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="text-center modal-content">
+					<div class="modal-body">
+						<div class="row">
+							<div class="col-md-12">
+								<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+							</div>
+						</div>
+						<h3 class="text-primary row">
+							<ul class="nav nav-tabs">
+								<li class="active"><a href="#"><span class="glyphicon glyphicon-search"></span> Search Filters</a></li>
+								<li><a href="#" onclick="openSelectQuickSearchModal();"><span class="glyphicon glyphicon-flash"></span> Quick Searches</a></li>
+							</ul>
+						</h3>
+						<div class="row bg-info">
+							<div class="col-md-5 text-center">
+								<br />
+								<select class="input-lg" id="SearchCriteria_State" name="SearchCriteria.State" style="max-width:100%"><option value="AL">Alabama</option>
+<option value="AK">Alaska</option>
+<option value="AZ">Arizona</option>
+<option value="AR">Arkansas</option>
+<option value="CA">California</option>
+<option value="CO">Colorado</option>
+<option value="CT">Connecticut</option>
+<option value="DE">Delaware</option>
+<option selected="selected" value="FL">Florida</option>
+<option value="GA">Georgia</option>
+<option value="HI">Hawaii</option>
+<option value="ID">Idaho</option>
+<option value="IL">Illinois</option>
+<option value="IN">Indiana</option>
+<option value="IA">Iowa</option>
+<option value="KS">Kansas</option>
+<option value="KY">Kentucky</option>
+<option value="LA">Louisiana</option>
+<option value="ME">Maine</option>
+<option value="MD">Maryland</option>
+<option value="MA">Massachusetts</option>
+<option value="MI">Michigan</option>
+<option value="MN">Minnesota</option>
+<option value="MS">Mississippi</option>
+<option value="MO">Missouri</option>
+<option value="MT">Montana</option>
+<option value="NE">Nebraska</option>
+<option value="NV">Nevada</option>
+<option value="NH">New Hampshire</option>
+<option value="NJ">New Jersey</option>
+<option value="NM">New Mexico</option>
+<option value="NY">New York</option>
+<option value="NC">North Carolina</option>
+<option value="ND">North Dakota</option>
+<option value="OH">Ohio</option>
+<option value="OK">Oklahoma</option>
+<option value="OR">Oregon</option>
+<option value="PA">Pennsylvania</option>
+<option value="RI">Rhode Island</option>
+<option value="SC">South Carolina</option>
+<option value="SD">South Dakota</option>
+<option value="TN">Tennessee</option>
+<option value="TX">Texas</option>
+<option value="UT">Utah</option>
+<option value="VT">Vermont</option>
+<option value="VA">Virginia</option>
+<option value="WA">Washington</option>
+<option value="DC">Washington D.C.</option>
+<option value="WV">West Virginia</option>
+<option value="WI">Wisconsin</option>
+<option value="WY">Wyoming</option>
+</select>
+							</div>
+							<div class="col-md-5 text-center">
+								<br />
+								<select name="SearchCriteria.CountyCode" id="SearchCriteria_CountyCode" class="input-lg" style="max-width:100%">
+									<option value="0">All Counties</option>
+								</select>
+								
+							</div>
+							<div class="col-md-2 text-center">
+								<br />
+								<button id="searchButton" class="btn btn-primary input-lg" data-dismiss="modal">GO</button>
+							</div>
+							<input data-val="true" data-val-number="The field Latitude must be a number." data-val-required="The Latitude field is required." id="SearchCriteria_Coordinates_Latitude" name="SearchCriteria.Coordinates.Latitude" type="hidden" value="39.83" />
+							<input data-val="true" data-val-number="The field Longitude must be a number." data-val-required="The Longitude field is required." id="SearchCriteria_Coordinates_Longitude" name="SearchCriteria.Coordinates.Longitude" type="hidden" value="-98.58" />
+							<br />&nbsp;
+						</div>
+						<div class="row bg-success">
+							<h5 class="col-md-12 text-center">
+								&nbsp;<span id="matchCountPanel">Matching Properties: <span id="matchCount" class="bold"></span></span>
+							</h5>
+						</div>
+						<br />
+						<div class="row text-left">
+							<div class="col-md-6">
+								<h4 class="text-info">
+									<span class="glyphicon glyphicon-filter"></span> Optional Filters:
+								</h4>
+							</div>
+							<div class="col-md-6 text-right">
+								<button class="btn btn-toolbar btn-xs" onclick="resetFilters(); return false;">
+									<span class="glyphicon glyphicon-refresh"></span>
+									Clear Filters
+								</button>
+							</div>
+						</div>
+						<br />
+						<div class="row">
+							<div class="col-md-4 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Filter property search by inventory type to show over-the-counter (OTC) properties that can be purchased year-round, upcoming tax auctions, or reseller properties (where available)"></span>
+								
+								<label for="SearchCriteria_InventoryType">Inventory</label>
+								<br />
+								<select name="SearchCriteria.InventoryType" id="SearchCriteria_InventoryType" class="input-sm" style="max-width:100%">
+									<optgroup label="Inventory Type:">
+											<option value="" >All Inventories</option>
+											<option value="OTC" >Over-the-Counter (OTC)</option>
+											<option value="Auction" >Upcoming Auctions</option>
+											<option value="Reseller" >Resellers Only</option>
+											<option value="OTC,Reseller" >OTC &amp; Resellers</option>
+									</optgroup>
+								</select>
+								
+							</div>
+							<div class="col-md-4 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Filter by the property's improvements to focus on either vacant land or properties with buildings and other improvements.  (*Note: This option is unavailable in some state / county markets where improvements are unknown.)"></span>
+								<label for="SearchCriteria_PropertyType">Improvements</label>
+								<br /><select class="input-sm" id="SearchCriteria_PropertyType" name="SearchCriteria.PropertyType"><option value="">All Parcel Types</option>
+<option value="Land">Vacant Land</option>
+<option value="Buildings">Improvements</option>
+</select>
+							</div>
+							<div class="col-md-4 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Filter by the property's tax status (Deed, Lien, Foreclosure) or by the tax sale year"></span>
+								<label for="SearchCriteria_TaxStatus">Availability</label>
+								<br /><select class="input-sm" id="SearchCriteria_TaxStatus" name="SearchCriteria.TaxStatus"><option value="">All Available</option>
+<option value="Cert">Certificates Only</option>
+<option value="Deed">Deeds Only</option>
+<option value="Foreclosure">Foreclosures Only</option>
+<option value="Lien">Liens Only</option>
+<option value="Quiet Title">Quiet Title Only</option>
+<option value="Quit Claim">Quit Claim Only</option>
+<option value="2+ Liens">2+ Liens Available</option>
+<option value="3+ Liens">3+ Liens Available</option>
+<option value="4+ Liens">4+ Liens Available</option>
+<option value="2026">2026</option>
+<option value="2025">2025</option>
+<option value="2024">2024</option>
+<option value="2023">2023</option>
+<option value="2022">2022</option>
+<option value="2021">2021</option>
+<option value="2020">2020</option>
+<option value="2019">2019</option>
+<option value="2018">2018</option>
+<option value="5 years+">5+ Years Delinquent</option>
+<option value="10 years+">10+ Years Delinquent</option>
+</select>
+							</div>
+						</div>
+						<br />
+						<br />
+						<div class="row">
+							<div class="editor-label col-md-4 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Filter search results by the county's total appraised value of a property by entering a minimum dollar value and/or a maximum dollar value"></span>
+								<label for="SearchCriteria_MinTotalValue">County Appraisal from </label>
+								<br />
+								<input class="input-tiny" data-val="true" data-val-number="The field County Appraisal from  must be a number." id="SearchCriteria_MinTotalValue" max="9000000" min="0" name="SearchCriteria.MinTotalValue" placeholder="min $" step="1000" type="number" value="" />
+								to
+								<input class="input-tiny" data-val="true" data-val-number="The field MaxTotalValue must be a number." id="SearchCriteria_MaxTotalValue" max="9999999" min="0" name="SearchCriteria.MaxTotalValue" placeholder="max $" step="1000" type="number" value="" />
+							</div>
+							<div class="editor-label col-md-4 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Filter search results by the amount due (opening bid in the case of auctions) by entering a minimum dollar value and/or a maximum dollar amount below"></span>
+								<label for="SearchCriteria_MinAmountDueAtSale">Amount Due from </label>
+								<br />
+								<input class="input-tiny" data-val="true" data-val-number="The field Amount Due from  must be a number." id="SearchCriteria_MinAmountDueAtSale" max="9000000" min="0" name="SearchCriteria.MinAmountDueAtSale" placeholder="min $" step="10" type="number" value="" />
+								to
+								<input class="input-tiny" data-val="true" data-val-number="The field  and  must be a number." id="SearchCriteria_MaxAmountDueAtSale" max="9999999" min="0" name="SearchCriteria.MaxAmountDueAtSale" placeholder="max $" step="10" type="number" value="" />
+							</div>
+							<div class="editor-label col-md-4 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Filter search results by the calculated acreage for a property by entering a minimum acreage and/or maximum acreage below"></span>
+								<label for="SearchCriteria_MinAcreage">Acreage from </label>
+								<br />
+								<input class="input-tiny" data-val="true" data-val-number="The field Acreage from  must be a number." id="SearchCriteria_MinAcreage" max="1000" min="0" name="SearchCriteria.MinAcreage" placeholder="min #" step="0.05" type="number" value="" />
+								to
+								<input class="input-tiny" data-val="true" data-val-number="The field  and  must be a number." id="SearchCriteria_MaxAcreage" max="999" min="0" name="SearchCriteria.MaxAcreage" placeholder="max #" step="0.05" type="number" value="" />
+							</div>
+						</div>
+						<br />
+						<br />
+						<div class="row">
+							<div class="editor-label col-md-4 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Limit your property search to only properties that have been verified as Vacant or Occupied within the last 60 days by the U.S. Postal Service"></span>
+								<label for="SearchCriteria_Occupancy">Occupancy</label>
+								<br />
+								<select class="input-sm" id="SearchCriteria_Occupancy" name="SearchCriteria.Occupancy"><option value="">All Occupancy Types</option>
+<option value="Vacant">Vacant Only</option>
+<option value="Occupied">Occupied Only</option>
+</select>
+							</div>
+							<div class="editor-label col-md-4 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Limit property results by remote owner opportunities where the owner's residence is different than that delinquent parcel's location"></span>
+								<label for="SearchCriteria_RemoteOwners">Owner Location</label>
+								<br />
+								<select class="input-sm" id="SearchCriteria_RemoteOwners" name="SearchCriteria.RemoteOwners"><option value="">All Owner Locations</option>
+<option value="State">Out of State Owners</option>
+<option value="City">Out of City Owners</option>
+<option value="Address">Diff. Owner Address</option>
+</select>
+							</div>
+							<div class="col-md-4">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Search by parcel number, account number, zip code, owner name, legal description, city, street address, or notes that you've saved on a property"></span>
+								<label for="SearchCriteria_TextFilter">Keyword Search</label>
+								<br />
+								<input class="input-sm" id="SearchCriteria_TextFilter" name="SearchCriteria.TextFilter" placeholder="parcel #, zip, pin, owner..." type="text" value="092729000001050000" />
+							</div>
+						</div>
+						<br /><br />
+						<div class="row text-left">
+							<div class="col-md-12">
+								<h4 class="text-muted"><span class="glyphicon glyphicon-filter"></span> Advanced Filters:</h4>
+							</div>
+						</div>
+						<br />
+						<div class="row text-muted">
+							<div class="editor-label col-md-3 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Filter search results by the date when the parcel was last added to one of the available inventories"></span>
+								<label for="SearchCriteria_MaxDaysOld">Added</label>
+								<br /><select class="input-sm" data-val="true" data-val-number="The field Added must be a number." id="SearchCriteria_MaxDaysOld" name="SearchCriteria.MaxDaysOld"><option value="">Whenever</option>
+<option value="1">Today</option>
+<option value="7">Last 7 days</option>
+<option value="14">Last 14 days</option>
+<option value="30">Last 30 days</option>
+<option value="90">Last 90 days</option>
+</select>
+							</div>
+							<div class="editor-label col-md-3 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Filter search results to include parcels that are no longer available. You can choose how long the parcels have been unavailable (Past 24 hours, Past 7 days, etc)"></span>
+								<label for="SearchCriteria_MaxDaysUnavailable">Unavailable</label>
+								<br /><select class="input-sm" data-val="true" data-val-number="The field Unavailable must be a number." id="SearchCriteria_MaxDaysUnavailable" name="SearchCriteria.MaxDaysUnavailable"><option value="">Do Not Include</option>
+<option value="1">Past 24 hours</option>
+<option value="7">Past 7 days</option>
+<option value="14">Past 14 days</option>
+<option value="30">Past 30 days</option>
+<option value="90">Past 90 days</option>
+<option value="365">Past Year</option>
+<option value="0">All Unavailable</option>
+</select>
+							</div>
+							<div class="editor-label col-md-3 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Filter search results by distance based on the center of the map. You can center your map on any location and use this option to limit properties by distance fom the center of the map (1/4 mile, 1/2 mile, etc)"></span>
+								<label for="SearchCriteria_MaxRadiusMiles">Located Within</label>
+								<br /><select class="input-sm" data-val="true" data-val-number="The field Located Within must be a number." id="SearchCriteria_MaxRadiusMiles" name="SearchCriteria.MaxRadiusMiles"><option value="">Unlimited</option>
+<option value=".25">1/4 mile</option>
+<option value=".5">1/2 mile</option>
+<option value="1">1 mile</option>
+<option value="2">2 miles</option>
+<option value="5">5 miles</option>
+<option value="10">10 miles</option>
+<option value="25">25 miles</option>
+<option value="50">50 miles</option>
+<option value="100">100 miles</option>
+<option value="200">200 miles</option>
+<option value="500">500 miles</option>
+</select>
+							</div>
+							<div class="editor-label col-md-3 text-center">
+								<span class="glyphicon glyphicon-question-sign text-primary" data-toggle="popover" data-placement="top" data-content="Limit the max number of results returned by selecting a max result option (100 parcels, 500 parcels, etc)"></span>
+								<label for="SearchCriteria_MaxResults">Max Results</label>
+								<br /><select class="input-sm" data-val="true" data-val-number="The field Max Results must be a number." id="SearchCriteria_MaxResults" name="SearchCriteria.MaxResults"><option value="">Unlimited</option>
+<option value="100">100 parcels</option>
+<option value="500">500 parcels</option>
+<option value="1000">1k parcels</option>
+<option value="5000">5k parcels</option>
+<option value="10000">10k parcels</option>
+</select>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<script>
+	var matchSequence = 0;
+	var stateChanged = false;
+	var countyChanged = false;
+
+	var selectedState = 'FL';
+	if (selectedState === '') selectedState = 'AL';
+
+	var selectedCounty = '0';
+	if (selectedCounty === '') selectedCounty = '0';
+
+	$('#searchButton').click(function () { search(); });
+	$("#searchForm").submit(function (event) { event.preventDefault(); });
+
+	$('.modal-body select, .modal-body input').change(function () {
+		hideMatchCount();
+
+		//if state changed, start from the top of the event handlers:
+		var newSelectedState = $("#SearchCriteria_State option:selected").val();
+
+		if (newSelectedState !== selectedState) {
+			stateChanged = true;
+			selectedState = newSelectedState;
+			updateCountyOptions();
+		}
+		else {
+			var newSelectedCounty = $("#SearchCriteria_CountyCode option:selected").val();
+			//if county changed, pick up at inventory type & cascade from there
+			if (newSelectedCounty !== selectedCounty) {
+				countyChanged = true;
+				selectedCounty = newSelectedCounty;
+				updateInventoryTypeOptions();
+			}
+			else { //if something else changed, just update the match count only
+				updateMatchCount();
+			}
+		}
+		stateChanged = false;
+		countyChanged = false;
+	});
+
+	function openSearchFormModal() {
+		$('.modal').modal('hide');
+		$('#searchModal').modal('show');
+	}
+
+	updateCountyOptions(); //initialize at the county level and cascade down
+
+	$(function () { $('[data-toggle="popover"]').popover(); });
+
+	function updateCountyOptions() {
+		var state = $("#SearchCriteria_State option:selected").val();
+		if (!state) state = selectedState;
+
+		$("#SearchCriteria_CountyCode > option[value!='0']").remove()
+
+		//hide vacant land / structure filter in some cases
+		if (state === "MI" || selectedCounty === "20209" || selectedCounty === "4013" || selectedCounty === "55031") hideImprovementsFilter();
+		else showImprovementsFilter();
+
+		$.ajax({
+			url: '/Parcel/ActiveCountiesByState',
+			data: JSON.stringify({ State: state }),
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'POST',
+			success: function (results) {
+				var options = '';
+				$.each(results, function (i, item) {
+					var selected = item.Value === selectedCounty ? 'selected' : '';
+					options += '<option value="' + item.Value + '" ' + selected + '>' + item.Name + '</option>';
+				});
+				$("#SearchCriteria_CountyCode").append(options);
+
+				if (stateChanged) $("#SearchCriteria_CountyCode").val("0"); //reset
+				updateInventoryTypeOptions();
+			}
+		});
+	}
+
+	function hideImprovementsFilter() {
+			$('#SearchCriteria_PropertyType').val($('#SearchCriteria_PropertyType option:first').val());
+			$('#SearchCriteria_PropertyType option:first').text('Unavailable');
+			$('#SearchCriteria_PropertyType').prop('disabled', true);
+	}
+
+	function showImprovementsFilter() {
+		$("#SearchCriteria_PropertyType").prop("disabled", false);
+		$('#SearchCriteria_PropertyType option:contains("Unavailable")').text('All Parcel Types');
+	}
+
+	function updateInventoryTypeOptions() {
+		var state = $("#SearchCriteria_State option:selected").val();
+		var countyCode = $("#SearchCriteria_CountyCode option:selected").val();
+
+		//hide vacant land / structure filter in some cases
+		if (state === "MI" || countyCode === "20209" || countyCode == "4013" || countyCode == "55031") hideImprovementsFilter();
+		else showImprovementsFilter();
+
+		var lastSelectedName = $('#SearchCriteria_InventoryType option:selected').text();
+		var lastSelectedValue = '';
+		$("#localInventoryOptions").remove();
+
+		if (countyCode > 0)
+		{
+			var request = { CountyCode: countyCode };
+
+			$.ajax({
+				url: '/Parcel/ActiveInventoriesByCounty',
+				data: JSON.stringify(request),
+				contentType: 'application/json; charset=utf-8',
+				dataType: 'json',
+				type: 'POST',
+				success: function (results) {
+					if (results.length > 0){
+						var $group = $('<optgroup label="Specific Inventory:" id="localInventoryOptions">');
+						$.each(results, function (i, item) {
+							var selected = item.Value === lastSelectedValue ? 'selected' : '';
+							$group.append('<option value="' + item.Value + '" ' + selected + ' class="localInventoryOption">' + item.Name + '</option>')
+						});
+						$("#SearchCriteria_InventoryType").append($group);
+					}
+
+					//select previous option if available (and county selection changed by user):
+					if (countyChanged) {
+						if (lastSelectedName !== '' && lastSelectedName !== null) {
+							$('#SearchCriteria_InventoryType option').filter(function (index) {
+								return $(this).text() === lastSelectedName && $(this).selectedIndex !== 0;
+							}).prop('selected', true);
+						}
+					}
+				}
+			});
+		}
+		if (stateChanged) $("#SearchCriteria_InventoryType").val(""); //reset
+
+		updateTaxStatusOptions(state);
+	}
+
+	function updateTaxStatusOptions() {
+		var state = $("#SearchCriteria_State option:selected").val();
+
+		//move to AJAX eventually... placeholder for now
+		$("#SearchCriteria_TaxStatus option").each(function () {
+			var showLienOptions = false;
+			var showCertOptions = false;
+			var showForeclosureOptions = false;
+			var showQuitClaimOptions = false;
+
+			if (state === "AL" || state === "AZ" || state === "CO" || state === "FL" || state === "SC") { showLienOptions = true; }
+			if (state === "AL") { showCertOptions = true; }
+			if (state === "CO" || state === "FL" || state === "IN" || state === "NC" || state === "PA" || state === "SC" || state === "WA") { showForeclosureOptions = true; }
+			if (state === "AL") { showQuitClaimOptions = true; }
+
+			if ($(this).val().includes("+ Liens")) {
+				if (showLienOptions) $(this).show();
+				else $(this).hide();
+			}
+
+			if ($(this).val().includes("Cert")) {
+				if (showCertOptions) $(this).show();
+				else $(this).hide();
+			}
+
+			if ($(this).val().includes("Forec")) {
+				if (showForeclosureOptions) $(this).show();
+				else $(this).hide();
+			}
+
+			if ($(this).val().includes("Quit Claim")) {
+				if (showQuitClaimOptions) $(this).show();
+				else $(this).hide();
+			}
+		});
+
+		$("#SearchCriteria_InventoryType option").each(function () {
+			var showResellers = false;
+			if (state === "AL" || state === "MS") { showResellers = true; }
+
+			if ($(this).val().includes("Reseller")) {
+				if (showResellers) $(this).show();
+				else $(this).hide();
+			}
+		});
+
+		if (stateChanged) $("#SearchCriteria_TaxStatus").val(""); //reset
+
+		updateMatchCount();
+	}
+
+	function resetFilters() {
+		hideMatchCount();
+
+		$("#SearchCriteria_PropertyType").val($("#SearchCriteria_PropertyType option:first").val());
+		$("#SearchCriteria_TaxStatus").val($("#SearchCriteria_TaxStatus option:first").val());
+		$("#SearchCriteria_InventoryType").val($("#SearchCriteria_InventoryType option:first").val());
+		$("#SearchCriteria_Occupancy").val($("#SearchCriteria_Occupancy option:first").val());
+		$("#SearchCriteria_RemoteOwners").val($("#SearchCriteria_RemoteOwners option:first").val());
+		$("#SearchCriteria_MaxDaysOld").val($("#SearchCriteria_MaxDaysOld option:first").val());
+		$("#SearchCriteria_MaxDaysUnavailable").val($("#SearchCriteria_MaxDaysUnavailable option:first").val());
+		$("#SearchCriteria_MaxRadiusMiles").val($("#SearchCriteria_MaxRadiusMiles option:first").val());
+		$("#SearchCriteria_MaxResults").val($("#SearchCriteria_MaxResults option:first").val());
+
+		$("#SearchCriteria_MinTotalValue").val("");
+		$("#SearchCriteria_MaxTotalValue").val("");
+		$("#SearchCriteria_MinAmountDueAtSale").val("");
+		$("#SearchCriteria_MaxAmountDueAtSale").val("");
+		$("#SearchCriteria_MinAcreage").val("");
+		$("#SearchCriteria_MaxAcreage").val("");
+		$("#SearchCriteria_TextFilter").val("");
+
+		updateMatchCount();
+	}
+
+	function updateMatchCount() {
+		var cachedMatchSequence = matchSequence;
+		var criteria = currentCriteria(true);
+		var countyCode = $("#SearchCriteria_CountyCode option:selected").val();
+
+		$.ajax({
+			url: '/Parcel/MatchCount',
+			data: '{"SearchCriteria" : ' + JSON.stringify(criteria) + '}',
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'POST',
+			success: function (results) {
+				if (cachedMatchSequence === matchSequence) {
+					matchSequence++;
+					updateMatchCountDisplay(results);
+				} else { console.log('match sequence fail'); }
+			}
+		});
+		//if (countyCode !== "0") {
+		//	$.ajax({
+		//		url: '/Parcel/MatchCount',
+		//		data: '{"SearchCriteria" : ' + JSON.stringify(criteria) + '}',
+		//		contentType: 'application/json; charset=utf-8',
+		//		dataType: 'json',
+		//		type: 'POST',
+		//		success: function (results) {
+		//			if (cachedMatchSequence === matchSequence) {
+		//				matchSequence++;
+		//				updateMatchCountDisplay(results);
+		//			} else { console.log('match sequence fail'); }
+		//		}
+		//	});
+		//}
+	}
+
+	function hideMatchCount() { $('#matchCountPanel').fadeOut(100); }
+
+	function updateMatchCountDisplay(count) {
+		$('#matchCount').html(formatNumber(count));
+		$('#matchCountPanel').fadeIn(300);
+	}
+	</script>
+<div class="modal fade" id="selectQuickSearchModal" tabindex="-1" role="dialog" aria-labelledby="selectQuickSearch" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+			</div>
+			<div class="modal-body input-group">
+				<h3 class="text-primary modal-title">
+					<ul class="nav nav-tabs">
+						<li><a href="#" onclick="openSearchFormModal();"><span class="glyphicon glyphicon-search"></span> Search Filters</a></li>
+						<li class="active"><a href="#"><span class="glyphicon glyphicon-flash"></span> Quick Searches</a></li>
+					</ul>
+				</h3>
+				<div class="row">
+					<div class="col-md-12 text-center">
+						<br />
+						<div id="selectQuickSearch_Controls">
+							<select id="SearchCriteria_QuickSearchOverride" class="input-lg"></select>
+							<button class="btn btn-primary btn-lg" style="vertical-align:baseline;" id="selectQuickSearch_Button"><span class="glyphicon glyphicon-search"></span> GO</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+	$('#selectQuickSearch_Button').click(function () { search(true); });
+
+	function openSelectQuickSearchModal() {
+		$('.modal').modal('hide');
+		$('#selectQuickSearchModal').modal('show');
+		$('#selectQuickSearch_Controls').hide();
+		loadSelectQuickSearches();
+	}
+
+	function loadSelectQuickSearches() {
+		$.ajax({
+			url: '/QuickSearch/Index',
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'POST',
+			success: function (results) {
+				$('#SearchCriteria_QuickSearchOverride').empty();
+				$('#SearchCriteria_QuickSearchOverride').append('<option value="" disabled selected hidden>select a quick search...</option>');
+				$.each(results, function (i, item) {
+					var options = '';
+					$.each(item.OptionGroup,
+						function(i, item) {
+							options += '<option value="' + item.Value + '">' + item.Name + '</option>';
+						}
+					);
+					$('#SearchCriteria_QuickSearchOverride').append('<optgroup label="' + item.Label + '">' + options + '</optgroup>');
+				});
+				$('#selectQuickSearch_Controls').fadeIn();
+			}
+		});
+	}
+</script>
+<div class="modal fade" id="saveSearchToListModal" tabindex="-1" role="dialog" aria-labelledby="Results to List" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title" id="myModalLabel">Save Results to List</h4>
+			</div>
+			<div class="modal-body">
+				&nbsp; <select id="myListsSelect" style="display: none;" class="input-lg" onchange="myListsSelectChange();"></select>
+				<input type="text" id="newParcelListName" style="display: none;" class="input-lg" placeholder="new list name..." />
+				<div class="row text-center">
+					<span id="saveSearchToListLoading"></span>
+				</div>
+				<br />
+				<br />
+				<div id="saveSearchToListExistsError" style="display: none;" class="alert alert-danger text-center">
+					<p class="lead">List already exists</p>
+					Try another list name or <a href="javascript:initializeSaveSearchToListModal();">click here to select from your existing lists.</a>
+				</div>
+				<div id="saveSearchToListSuccessMessage" style="display: none;" class="alert alert-success text-center">
+					<p class="lead">Results Saved to List.</p>
+					<br /><a class="btn btn-primary" href="../Lists" target="_blank">View My Lists</a>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" onclick="beginSaveSearchToList();">Save</button>
+				<button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+	function cleanupSaveSearchToListModal() {
+		$("#saveSearchToListLoading").html("");
+		$("#saveSearchToListExistsError").hide();
+		$("#saveSearchToListSuccessMessage").hide();
+		$("#newParcelListName").val("");
+	}
+
+	function initializeSaveSearchToListModal() {
+		cleanupSaveSearchToListModal();
+		loadListSelectOptions();
+	}
+
+	function openSaveSearchToListModal() {
+		$("#saveSearchToListModal").modal("show");
+		initializeSaveSearchToListModal();
+	}
+	function closeSaveSearchToListModal() {
+		cleanupSaveSearchToListModal();
+		$("#saveSearchToListModal").modal("hide");
+	}
+
+	function beginSaveSearchToList() {
+		var selectedListId = $("#myListsSelect option:selected").val();
+		var newListName = $("#newParcelListName").val();
+		console.log(selectedListId);
+
+		if (selectedListId == 0) createListAndSaveSearch(newListName);
+		else saveSearchToList(selectedListId);
+	}
+
+	function saveSearchToList(listId) {
+		$("#myListsSelect").hide();
+		$("#newParcelListName").hide();
+		$("#saveSearchToListLoading").html(loadingHtml);
+
+		if (listId > 0) {
+			var searchCriteria = resultsCriteria; //trying out a global variable instead of currentCriteria() for Safari / Mac (alternative: load criteria from user setting)
+			var postData = { SearchCriteria: searchCriteria, listId: listId };
+			$.ajax({
+				url: '/Parcel/SearchToList/',
+				data: JSON.stringify(postData),
+				contentType: 'application/json; charset=utf-8',
+				dataType: 'json',
+				type: 'POST',
+				success: function (data) {
+					$("#saveSearchToListLoading").html("");
+					$('#saveSearchToListSuccessMessage').fadeIn();
+					$('#saveSearchToListSuccessMessage a').attr("href", "../Lists?ListId=" + listId);
+				}
+			});
+		}
+	}
+
+	function createListAndSaveSearch(listName) {
+		if (listName) {
+			var postData = { listName: listName };
+			$.ajax({
+				url: '/ParcelList/Create/',
+				data: JSON.stringify(postData),
+				contentType: 'application/json; charset=utf-8',
+				dataType: 'json',
+				type: 'POST',
+				success: function (data) {
+					if (data > 0) saveSearchToList(data);
+					else $("#saveSearchToListExistsError").fadeIn();
+				}
+			});
+		}
+	}
+
+	function loadListSelectOptions() {
+		$('#newParcelListName').hide();
+		$('#myListsSelect').hide();
+		$.ajax({
+			url: '/ParcelList/Get',
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'POST',
+			success: function (results) {
+				$('#myListsSelect').empty();
+				$('#myListsSelect').append('<option value="">select a list...</option>');
+				var listCount = 0;
+				$.each(results, function (i, item) {
+					var option = '<option value="' + item.Id + '">' + item.Name + '</option>';
+					$('#myListsSelect').append(option);
+					listCount++;
+				});
+				$('#myListsSelect').append('<option value="0">create new list...</option>');
+				$('#myListsSelect').prop("selectedIndex", 0); //set to first element
+				if (listCount === 0) $('#newParcelListName').fadeIn();
+				else $('#myListsSelect').fadeIn();
+			}
+		});
+	}
+
+	function myListsSelectChange() {
+		var newListId = $('#myListsSelect option:selected').val();
+		console.log("new selected list id:" + newListId);
+		if (newListId.toString() === "0") {
+			console.log("create a new list");
+			$('#myListsSelect').hide();
+			$('#newParcelListName').fadeIn();
+		} else {
+			console.log('skipping new list: ' + newListId);
+		}
+	}
+</script>
+<div class="modal fade" id="unmappedParcelsHelpModal" tabindex="-1" role="dialog" aria-labelledby="UnmappedParcelsHelpModal" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h3 class="modal-title text-primary"><span class="glyphicon glyphicon-info-sign"></span> Search included parcels that are not mapped</h3>
+			</div>
+			<div class="modal-body">
+				<p class="lead">
+					You can still research unmapped parcels by <a href="#" id="resultsToGridLink">viewing the full search results in a grid</a>.
+					<br /><br />
+					Unmapped parcels can occur for a variety of reasons, including:
+					<ul class="lead">
+						<li>Parcels that are a sub-unit of a structure where the county did not provide specific map data</li>
+						<li>Rights being sold to the property are limited (i.e. mineral rights)</li>
+						<li>The county does not have mapping data for the parcel (or does not have mapping data at all)</li>
+						<li>The tax sale listed an incorrect parcel number and Parcel Fair could not locate mapping for the invalid parcel</li>
+					</ul>
+				</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-lg btn-danger" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="noMappedParcelsHelpModal" tabindex="-1" role="dialog" aria-labelledby="NoMappedParcelsHelpModal" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h3 class="modal-title text-primary"><span class="glyphicon glyphicon-info-sign"></span> Mapped Search Results Unavailable</h3>
+			</div>
+			<div class="modal-body">
+				<p class="lead">
+					In some cases, none of the parcel results returned from a search can be mapped.
+					<br /><br />
+					You can still research unmapped parcels by <a href="#" id="resultsToGridLink">viewing the full search results in a grid</a>.
+					<br/><br/>
+					Unmapped parcels can occur for a variety of reasons, including:
+					<ul class="lead">
+						<li>Parcels that are a sub-unit of a structure where the county did not provide specific map data</li>
+						<li>Rights being sold to the property are limited (i.e. mineral rights)</li>
+						<li>The county does not have mapping data for the parcel (or the county does not have GIS mapping available at all)</li>
+						<li>The tax sale listed an incorrect parcel number and Parcel Fair could not locate mapping for the invalid parcel</li>
+					</ul>
+				</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-lg btn-danger" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="noResultsHelpModal" tabindex="-1" role="dialog" aria-labelledby="noResultsHelpModal" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h3 class="modal-title text-primary"><span class="glyphicon glyphicon-info-sign"></span> No Results Available for this Search</h3>
+			</div>
+			<div class="modal-body">
+				<p class="lead">
+					The search resulted in zero matching parcels.
+					This is likely because the search criteria chosen for this location are too restrictive and all available parcels were eliminated.
+					<br /><br />
+					You can try the search again with less restrictive search filters, or click the "Clear Filters" button to view all parcels available in this location.
+				</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-lg btn-success" data-dismiss="modal" onclick="openSearchFormModal();">Back to Search Filters</button>
+				<button type="button" class="btn btn-lg btn-danger" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	var selectedQuickSearch;
+	var polygons = [];
+    var centerpoints = [];
+	var parcelDeedMarkers = [];
+	var parcelCertMarkers = [];
+	var parcelAuctionMarkers = [];
+	var parcelUnavailableMarkers = [];
+	var favMarkers = [];
+	var priceNoticeMarkers = [];
+	var expiredPriceNoticeMarkers = [];
+	var infowindows = [];
+	var listMarkers = [];
+	var selectedMarkerListId = "";
+	var parcelCount = 0;
+	var unmappedCount = 0;
+	var showFavMarkers = false;
+	var showPriceNoticeMarkers = false;
+	var showExpiredPriceNoticeMarkers = false;
+	var currentState = $('#SearchCriteria_State option:selected').val();
+	var opportunityZones = [];
+	var countyBoundaries = [];
+	var previewObserver = new IntersectionObserver(handlePreviewIntersect, { root: null, rootMargin: "0px", threshold: 0.1 });
+
+		var showSearchResultsMarkers = true;
+		setCheckDisplay("#showSearchResultsMarkers", showSearchResultsMarkers);
+
+	function loadingState() { $('#resultCount').html(loadingHtml); $("#searchNav").prop('disabled', true); $('#unmappedResultCount').html(''); }
+	function updateResultCount(i) {
+		$('#resultCount').html('<h3>' + i.toLocaleString('en') + ' parcels</h3>'); $("#searchNav").prop('disabled', false);
+
+		if (i === 0) { $("#noResultsHelpModal").modal("show"); } //no results modal
+
+		if (unmappedCount > 0) {
+			var parcelLabel = 'Parcels';
+			if (unmappedCount === 1) parcelLabel = 'Parcel';
+
+			if (unmappedCount === parcelCount) {
+				$('#unmappedResultCount').html('<div class="panel panel-warning">'
+					+ '<div class="panel-heading clickable">'
+					+ '<h4 data-toggle="modal" href="#noMappedParcelsHelpModal" class="panel-title text-center">'
+					+ '<span class="glyphicon glyphicon-question-sign text-primary"></span> '
+					+ ' Mapped Parcels Not Available</h4>'
+					+ '</div>'
+					+ '</div>');
+			}
+			else {
+
+				$('#unmappedResultCount').html('<div class="panel panel-default">'
+					+ '<div class="panel-heading clickable">'
+					+ '<h4 data-toggle="modal" href="#unmappedParcelsHelpModal" class="panel-title text-center">'
+					+ '<span class="glyphicon glyphicon-question-sign text-primary"></span> '
+					+ unmappedCount.toLocaleString('en') + ' Unmapped ' + parcelLabel + '</h4>'
+					+ '</div>'
+					+ '</div>');
+			}
+		}
+	}
+
+	function clearResultsPanel() { $('#results').html(''); $('#results').fadeOut(); }
+	function clearSearchResultsMarkers() { clearMapItems(parcelDeedMarkers); clearMapItems(parcelCertMarkers); clearMapItems(parcelAuctionMarkers); clearMapItems(parcelUnavailableMarkers); }
+	function clearFavMarkers() { clearMapItems(favMarkers); }
+	function clearListMarkers() { clearMapItems(listMarkers); }
+	function clearPriceNoticeMarkers() { clearMapItems(priceNoticeMarkers); }
+	function clearExpiredPriceNoticeMarkers() { clearMapItems(expiredPriceNoticeMarkers); }
+	function clearInfoWindows() { clearMapItems(infowindows); }
+	function clearOpportunityZones() { clearMapItems(opportunityZones); }
+	function clearCountyBoundaries() { clearMapItems(countyBoundaries); }
+	function clearPolygons() {
+		parcelCount = 0;
+		unmappedCount = 0;
+		clearResultsPanel();
+		loadingState();
+		clearMapItems(polygons);
+        centerpoints = [];
+    }
+
+	function clearMapItems(items) {
+		for (var i = 0; i < items.length; i++) {
+			try { items[i].setMap(null); } //remove from map
+			catch (err) { console.log('Failed to remove object from map'); }
+			items[i] = null; //remove from memory
+		}
+		items = []; //nuke the entire array
+	}
+
+	function addPolygon(parcelId, taxStatus, coordinates, centerpoint) {
+		parcelCount++;
+
+        var color;
+
+        switch(taxStatus)
+        {
+			case 1:
+				color = '#5ABD52'; //certificates
+				break;
+			case 2:
+				color = '#2275BE'; //deeds
+				break;
+			case 3:
+				color = '#E59010'; //active auction
+				break;
+			case 4:
+				color = '#5ABD52'; //liens
+				break;
+			default:
+				color = '#ab261f'; //inactive
+        }
+
+        var latLong = centerpoint.Latitude + ',' + centerpoint.Longitude;
+		var exists = false;
+
+		for (i = 0; i <= centerpoints.length; i++) {
+			if (centerpoints[i] === latLong) {
+				//override existing polygon - same array slot, different array
+                google.maps.event.clearListeners(polygons[i], 'click');
+                google.maps.event.addListener(polygons[i], 'click', function () { openMultiUnitInfoWindow(centerpoint.Latitude, centerpoint.Longitude); });
+				exists = true;
+                break;
+            }
+		}
+		if (!exists) {
+		    polygons.length = polygons.length++; //increment array of polygon objects
+		    var i = polygons.length;
+
+            centerpoints.length = i;
+            centerpoints[i] = latLong;
+
+		    polygons[i] = (new google.maps.Polygon({
+				    paths: coordinates,
+				    strokeColor: color,
+				    strokeOpacity: 0.8,
+				    strokeWeight: 2,
+				    fillColor: color,
+				    fillOpacity: 0.08,
+				    zIndex: 2
+			    })
+		    );
+		    polygons[i].setMap(window.map);
+			google.maps.event.addListener(polygons[i], 'click', function () { openInfoWindow(parcelId); });
+        }
+	}
+
+	async function displayOpportunityZones() {
+		clearOpportunityZones();
+		var postData = { state: currentState };
+		var color = '#E59010';
+		$.ajax({
+			url: '/Layer/OpportunityZones',
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			data: JSON.stringify(postData),
+			type: 'POST',
+			success: function (results) {
+				$.each(results, function (i, item) {
+					opportunityZones.length = i;
+					opportunityZones[i] = (new google.maps.Polygon({
+							paths: item.Polygon,
+							strokeColor: color,
+							strokeOpacity: 0.8,
+							strokeWeight: 2,
+							fillColor: color,
+							fillOpacity: 0.2,
+							zIndex: 1
+						})
+					);
+					opportunityZones[i].setMap(window.map);
+				});
+			}
+		});
+	}
+
+	function displayCountyBoundaries() {
+		clearCountyBoundaries();
+		var postData = { state: currentState };
+		$.ajax({
+			url: '/Layer/CountyBoundaries',
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			data: JSON.stringify(postData),
+			type: 'POST',
+			success: function (results) {
+				$.each(results, function (i, item) {
+					countyBoundaries.length = i;
+					countyBoundaries[i] = (new google.maps.Polygon({
+							paths: item.GeoBoundary,
+							strokeColor: '#6b6b6b',
+							strokeOpacity: 0.8,
+							strokeWeight: 6,
+							fillOpacity: 0,
+							zIndex: 1
+						})
+					);
+					countyBoundaries[i].setMap(window.map);
+				});
+			}
+		});
+	}
+
+	function addParcelMarker(parcelId, centerpoint, taxStatus) {
+		var markerPath;
+		switch(taxStatus)
+		{
+		case 1:
+			markerPath = '../Content/images/pin-green.png';
+			parcelCertMarkers.length = parcelCertMarkers.length++; //increment array of marker objects
+			var i = parcelCertMarkers.length;
+			parcelCertMarkers[i] = (new google.maps.Marker({ position: { lat: centerpoint.Latitude, lng: centerpoint.Longitude }, map: map, icon: markerPath }));
+			google.maps.event.addListener(parcelCertMarkers[i], 'click', function () { openInfoWindow(parcelId); });
+			break;
+		case 2:
+			markerPath = '../Content/images/pin-blue.png';
+			parcelDeedMarkers.length = parcelDeedMarkers.length++; //increment array of marker objects
+			var i = parcelDeedMarkers.length;
+                parcelDeedMarkers[i] = (new google.maps.Marker({ position: { lat: centerpoint.Latitude, lng: centerpoint.Longitude }, map: map, icon: markerPath }));
+			google.maps.event.addListener(parcelDeedMarkers[i], 'click', function () { openInfoWindow(parcelId); });
+			break;
+		case 3:
+			markerPath = '../Content/images/pin-orange.png';
+			parcelAuctionMarkers.length = parcelAuctionMarkers.length++; //increment array of marker objects
+			var i = parcelAuctionMarkers.length;
+                parcelAuctionMarkers[i] = (new google.maps.Marker({ position: { lat: centerpoint.Latitude, lng: centerpoint.Longitude }, map: map, icon: markerPath }));
+			google.maps.event.addListener(parcelAuctionMarkers[i], 'click', function () { openInfoWindow(parcelId); });
+			break;
+		case 4:
+			markerPath = '../Content/images/pin-green.png';
+			parcelCertMarkers.length = parcelCertMarkers.length++; //increment array of marker objects
+			var i = parcelCertMarkers.length;
+                parcelCertMarkers[i] = (new google.maps.Marker({ position: { lat: centerpoint.Latitude, lng: centerpoint.Longitude }, map: map, icon: markerPath }));
+			google.maps.event.addListener(parcelCertMarkers[i], 'click', function () { openInfoWindow(parcelId); });
+			break;
+		default:
+			markerPath = '../Content/images/pin-red.png';
+			parcelUnavailableMarkers.length = parcelUnavailableMarkers.length++; //increment array of marker objects
+			var i = parcelUnavailableMarkers.length;
+                parcelUnavailableMarkers[i] = (new google.maps.Marker({ position: { lat: centerpoint.Latitude, lng: centerpoint.Longitude }, map: map, icon: markerPath }));
+			google.maps.event.addListener(parcelUnavailableMarkers[i], 'click', function () { openInfoWindow(parcelId); });
+		}
+	}
+	function addFavMarker(favorite) { addMarker(favMarkers, '../Content/images/pin-heart.png', favorite.ParcelId, favorite.CenterPoint, null); }
+	function addListMarker(listItem) { addMarker(listMarkers, '../Content/images/pin-info.png', listItem.ParcelId, listItem.CenterPoint, null); }
+	function addPriceNoticeMarker(parcelId, centerpoint, daysRemaining) {
+		if (daysRemaining < 1) //expired
+		{
+			addMarker(expiredPriceNoticeMarkers, '../Content/images/pin-0.png', parcelId, centerpoint, 'Price Notice Expired');
+		}
+		else
+		{
+			if (daysRemaining > 20) daysRemaining = 20; //max 20
+			var title = (daysRemaining === 1 ? '1 day remaining' : daysRemaining + ' days remaining');
+			addMarker(priceNoticeMarkers, '../Content/images/pin-' + daysRemaining + '.png', parcelId, centerpoint, title);
+		}
+	}
+
+	function addMarker(markerArray, icon, parcelId, centerpoint, title) {
+		markerArray.length = markerArray.length++; //increment array of marker objects
+		var i = markerArray.length;
+		markerArray[i] = (new google.maps.Marker({ position: { lat: centerpoint.Latitude, lng: centerpoint.Longitude }, map: map, icon: icon, title:title }));
+		google.maps.event.addListener(markerArray[i], 'click', function () { openInfoWindow(parcelId); });
+	}
+
+	function openMultiUnitInfoWindow(lat, long) {
+		var postData = { latitude: lat, longitude: long };
+
+        $.ajax({
+            url: '/Map/PreviewMultiUnit',
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+            data: JSON.stringify(postData),
+			type: 'POST',
+			success: function (data) {
+                var unitList = '';
+				$.each(data, function (i, item) {
+					unitList += '<div class="overflow-ellipsis">'
+						+ '<a href="../Parcel/Details/' + item.ParcelId + '" target="_blank">' + icon('new-window') + '</a>'
+						+ ' <b>' + item.TaxStatus + ' - ' + item.UnitName + '</b>'
+						+ '</div>';
+                });
+
+				var contentString = '<div class="info">'
+					+ '<div class="text-left">'
+					+ '<h5>Multiple Units Available <span class="label label-success label-as-badge top">' + data.length + '</span></h5>'
+					+ '<br />' + unitList
+					+ '</div>'
+					+ '<br />'
+					+ '<a href="#" onClick="clearInfoWindows();" class="text-muted">' + icon('remove') + ' Close All</a>'
+					+ '</div>';
+
+                var result = data[0]; //only need first one
+                var midPoint = { lat: lat, lng: long };
+                window.map.panTo(midPoint);
+                if (window.map.zoom < 16) { window.map.setZoom(16); }
+                infowindows.length = infowindows.length++; //increment array of infowindow objects
+                var i = infowindows.length;
+                infowindows[i] = new google.maps.InfoWindow({ content: contentString, position: midPoint });
+                infowindows[i].open(window.map);
+            }
+        });
+    }
+
+	function openInfoWindow(parcelId)
+	{
+		$.ajax({
+			type: 'GET',
+			url: '/Parcel/Preview/' + parcelId,
+			success: function(data)
+			{
+				var result = data.Parcels[0]; //only need to preview first result
+				var landDescription = ''; //null case
+				if (result.HasBuildings) { landDescription = '<span class="text-primary bold">' + icon('home') + ' Land &amp; Buildings</span>'; } //explicit true
+				if (!result.HasBuildings) { landDescription = '<span class="text-success bold">' + icon('tree-conifer') + ' Land Only</span>'; } //explicit false
+				if (result.State === "MI") { landDescription = ''; }
+
+				var priceNoticeDisplay = '';
+				if (result.ActivePrice && result.PriceExpires) {
+					priceNoticeDisplay = '<br /><br /><b>Active Price Notice: <span class="text-success"> $' + result.ActivePrice.toLocaleString('en') + '</span></b>'
+						+ '<br /><b>Expires ' + formatDate(result.PriceExpires) + '</b>';
+				}
+				//console.log(result);
+				//+ ((result.Zoning != '') ? '<b>' + result.Zoning + '</b><br />' : '')
+				var contentString = '<div class="info">'
+					+ getTaxStatusDisplay(result.TaxStatus, result.IsActive, result.SaleYear, result.ActiveAuction)
+					+ '<h4 class="overflow-ellipsis">' + properCase(result.Name) + '</h4>'
+					+ '<b>' + result.CountyName + '</b><br />'
+					+ '<b>Total Value: <span class="text-success">' + ((result.TotalValue > '0') ? '$' + result.TotalValue.toLocaleString('en') : 'N/A') + '</span></b><br />'
+					+ ((result.CalculatedAcreage != '0') ? '<b>' + result.CalculatedAcreage.toFixed(2) + ' acres</b><br />' : '')
+					+ (landDescription != '' ? '' + landDescription + '<br />' : '')
+					+ '<br /><span class="text-primary bold text-nowrap">'
+					+ getApplicationCountDisplay(result.ApplicationCount, result.State) + ' &nbsp; '
+					+ getListCountDisplay(result.ListCount) + ' &nbsp; '
+					+ getNoteCountDisplay(result.HasNote) + ' &nbsp; '
+					+ getImageCountDisplay(result.ImageCount) + ' &nbsp; '
+					+ getAttachmentCountDisplay(result.AttachmentCount) + ' &nbsp; '
+					+ getPriceNoticeCountDisplay(result.PriceNoticeCount) + ' &nbsp; '
+					+ getFavoriteDisplay(result.IsFavorite) + '</span>'
+					+ priceNoticeDisplay
+					+ '<br /><br />'
+					+ '<a href="../Parcel/Details/' + parcelId + '" target="_blank">' + icon('new-window') + ' View Report</a>'
+					+ '<span class="spaceMid"></span>'
+					+ '<a href="#" onClick="clearInfoWindows();" class="text-muted">' + icon('remove') + ' Close All</a> '
+					+ '</div>';
+				var midPoint = {lat:result.CenterPoint.Latitude,lng:result.CenterPoint.Longitude};
+				window.map.panTo(midPoint);
+				//console.log(window.map.zoom);
+				if (window.map.zoom < 16) { window.map.setZoom(16); }
+				infowindows.length = infowindows.length++; //increment array of infowindow objects
+				var i = infowindows.length;
+				infowindows[i] = new google.maps.InfoWindow({ content: contentString, position: midPoint});
+				infowindows[i].open(window.map);
+				//+ 'Taxes: <b>' + ((result.AmountDueAtSale != '0') ? '$' + parseInt(result.AmountDueAtSale).toLocaleString('en') : 'N/A') + '</b><br />'
+			}
+		});
+	}
+
+	function loadFavMarkers() {
+		clearFavMarkers();
+		$.ajax({
+			url: '/ParcelFavorite/Coordinates',
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'GET',
+			success: function (data) { $.each(data, function (i, item) { addFavMarker(item); }); }
+		});
+	}
+
+	function loadOptionsModal() {
+		$("#optionsModal").modal("show");
+		loadSelectListMarkers();
+	}
+	function closeOptionsModal() { $("#optionsModal").modal("hide"); }
+
+	function loadSelectListMarkers() {
+		$("#selectListMarkersPanel").hide();
+		$("#selectListMarkers").empty();
+
+		var defaultOption = '<option value="">Show List Markers...</option>';
+		if (selectedMarkerListId) defaultOption = '<option value="">Hide List Markers</option>';
+		$("#selectListMarkers").append(defaultOption);
+
+		$.ajax({
+			url: '/ParcelList/Get',
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'POST',
+			success: function (results) {
+				var options = '';
+				var listCount = 0;
+				$.each(results,
+					function (i, item) {
+						options += '<option value="' + item.Id + '">List: ' + item.Name + '</option>';
+						listCount++;
+					});
+				$('#selectListMarkers').append(options).val(selectedMarkerListId);
+				if (listCount > 0) $('#selectListMarkersPanel').fadeIn();
+			}
+		});
+	}
+
+	function loadListMarkers() {
+		selectedMarkerListId = $('#selectListMarkers option:selected').val();
+		clearListMarkers();
+		if (selectedMarkerListId) {
+			var postData = { listId: selectedMarkerListId };
+			$.ajax({
+				url: '/ParcelList/Coordinates',
+				contentType: 'application/json; charset=utf-8',
+				dataType: 'json',
+				data: JSON.stringify(postData),
+				type: 'POST',
+				success: function (data) {
+					$.each(data, function(i, item) {
+						addListMarker(item);
+						if (i === 0) { window.map.panTo({ lat: item.CenterPoint.Latitude, lng: item.CenterPoint.Longitude }); }
+					});
+					loadSelectListMarkers();
+					closeOptionsModal();
+				}
+			});
+		}
+		else{ loadSelectListMarkers();}
+	}
+
+	function loadActivePriceNoticeMarkers() { clearPriceNoticeMarkers(); loadPriceNoticeMarkers('/PriceNotice/ActiveLocations', false) }
+	function loadExpiredPriceNoticeMarkers() { clearExpiredPriceNoticeMarkers(); loadPriceNoticeMarkers('/PriceNotice/ExpiredLocations', true) }
+	function loadPriceNoticeMarkers(url, isExpired)
+	{
+		$.ajax({
+			url: url,
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'GET',
+			success: function (data) {
+				$.each(data, function (i, item) {
+					addPriceNoticeMarker(item.Parcel.ParcelId, { Latitude: item.Parcel.CenterPoint.Latitude, Longitude: item.Parcel.CenterPoint.Longitude }, item.DaysRemaining, isExpired);
+				});
+			}
+		});
+	}
+	function resultsToGrid() { window.open("/Parcel?" + criteriaToQueryString(resultsCriteria, true), "_blank"); }
+	function resultsToList() { openSaveSearchToListModal(); }
+	function resultsToCsv() { window.open("/Parcel/Download?" + criteriaToQueryString(resultsCriteria), "_blank"); }
+	function jumpToParcel(parcelId) { openInfoWindow(parcelId); }
+
+	function refreshMapCenterPoint() {
+		var latLng = window.map.getCenter();
+		$('#SearchCriteria_Coordinates_Latitude').val(latLng.lat);
+		$('#SearchCriteria_Coordinates_Longitude').val(latLng.lng);
+	}
+
+	function loadPolygons(searchCriteria)
+	{
+		$('.modal').modal('hide');
+        clearInfoWindows();
+		clearPolygons();
+		clearSearchResultsMarkers();
+
+		if (currentState !== $('#SearchCriteria_State option:selected').val())
+		{
+			currentState = $('#SearchCriteria_State option:selected').val();
+			if (opportunityZonesEnabled) displayOpportunityZones();
+			if (countyBoundariesEnabled) displayCountyBoundaries();
+		}
+
+		resultsCriteria = searchCriteria;
+		var request = '{"SearchCriteria" : ' + JSON.stringify(searchCriteria) + '}';
+		var recenter = true;		
+		loadPolygonsRequest(request, 0, 2000, recenter);
+	}
+
+	function loadPolygonsRequest(request, skip, take, recenter)
+	{
+		$.ajax({
+			url: '/Map/Search?skip=' + skip + '&take=' + take,
+			data: request,
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'POST',
+			success: function(results)
+			{
+				var previewIds = [];
+				$.each(results, function(i, item){
+					if (recenter && i === 0 && item.Polygon[0]) {
+						window.map.panTo({ lat: item.Polygon[0].lat, lng: item.Polygon[0].lng });
+						map.setZoom(10);
+					} 
+
+					if (item.Polygon.length > 0) {
+						addPolygon(item.ParcelId, item.TaxStatus, item.Polygon, item.CenterPoint);
+					} else {
+						parcelCount++; //still add to running total of parcels
+						unmappedCount++;
+					}
+
+					if (showSearchResultsMarkers) {
+						addParcelMarker(item.ParcelId, item.CenterPoint, item.TaxStatus); //add back when ready to use parcel markers
+					}
+
+					if (previewIds.length <= 100 && skip === 0 && item.TaxStatus > 0) previewIds.push(item.ParcelId);
+				});
+				if(previewIds.length > 0) updateResultPanel(previewIds);
+				if(results.length > 0) { loadPolygonsRequest(request, skip + take, take, false); }
+				else { updateResultCount(parcelCount); }//no more polygons
+			}
+		});
+	}
+
+	function initMap() {
+		window.map = new google.maps.Map(document.getElementById("map"), {
+		zoom: 5, mapTypeId: "hybrid", gestureHandling: "greedy", styles: [
+			{ featureType: "poi.business", elementType: "labels", stylers: [{ visibility: "off" }] },
+			{ featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] }],
+		center: { lat: 39.83, lng: -98.58}
+		});
+
+			loadPolygons({"QuickSearchOverride":null,"Coordinates":{"Latitude":39.83,"Longitude":-98.58},"TextFilter":"092729000001050000","TaxStatus":null,"MaxRadiusMiles":null,"MaxResults":null,"MinPrice":null,"MaxPrice":null,"MinAcreage":null,"MaxAcreage":null,"MaxDaysOld":null,"MaxDaysUnavailable":null,"PropertyType":null,"State":"FL","CountyCode":0,"MinAmountDueAtSale":null,"MaxAmountDueAtSale":null,"MinTotalValue":null,"MaxTotalValue":null,"InventoryType":null,"Occupancy":null,"RemoteOwners":null});
+		initAutocomplete();
+	}
+
+	function initAutocomplete() {
+		var card = document.getElementById('pac-card');
+		var input = document.getElementById('pac-input');
+
+		map.controls[google.maps.ControlPosition.TOP_CENTER].push(card);
+		var options = { componentRestrictions: { country: 'US' } };
+		var autocomplete = new google.maps.places.Autocomplete(input, options);
+		// Bind the map's bounds (viewport) property to the autocomplete object, so that the autocomplete requests use the current map bounds for the bounds option in the request.
+		autocomplete.bindTo('bounds', map);
+
+		var infowindow = new google.maps.InfoWindow();
+		var infowindowContent = document.getElementById('infowindow-content');
+		infowindow.setContent(infowindowContent);
+		var marker = new google.maps.Marker({ map: map, anchorPoint: new google.maps.Point(0, -29) });
+
+		autocomplete.addListener('place_changed', function () {
+			infowindow.close();
+			marker.setVisible(false);
+
+			var place = autocomplete.getPlace();
+			// User entered the name of a Place that was not suggested and pressed the Enter key, or the Place Details request failed.
+			if (!place.geometry) { window.alert("No details available for input: '" + place.name + "'"); return; }
+
+			// If the place has a geometry, then present it on a map.
+			if (place.geometry.viewport) { map.fitBounds(place.geometry.viewport); }
+			else { map.setCenter(place.geometry.location); map.setZoom(12); }
+			marker.setPosition(place.geometry.location);
+			marker.setVisible(true);
+
+			$('#pac-input').val(''); //clear place input
+
+			var address = '';
+			if (place.address_components) {
+				address = [(place.address_components[0] && place.address_components[0].short_name || ''),
+					(place.address_components[1] && place.address_components[1].short_name || ''),
+					(place.address_components[2] && place.address_components[2].short_name || '')].join(' ');
+			}
+
+			infowindowContent.children['place-icon'].src = place.icon;
+			infowindowContent.children['place-name'].textContent = place.name;
+			infowindowContent.children['place-address'].textContent = address;
+			infowindow.open(map, marker);
+		});
+	}
+
+	function getFavoriteDisplay(isFavorite) { return isFavorite ? '<span class="glyphicon glyphicon-heart" title="Favorite"></span>' : ''; }
+	function getNoteCountDisplay(hasNote) { return getCountDisplay(hasNote ? 1 : 0, 'Note', 'Notes', 'edit', 'edit'); }
+	function getAttachmentCountDisplay(attachmentCount) { return getCountDisplay(attachmentCount, 'Attachment', 'Attachments', 'paperclip', 'paperclip'); }
+	function getImageCountDisplay(imageCount) { return getCountDisplay(imageCount, 'Photo', 'Photos', 'picture', 'picture'); }
+	function getPriceNoticeCountDisplay(priceNoticeCount, state) {
+		if (state === "AL" || state == "MS") { return getCountDisplay(priceNoticeCount, 'Price Notice', 'Price Notices', 'tag', 'tags'); }
+		return '';
+	}
+	function getApplicationCountDisplay(applicationCount, state) {
+		if (state === "AL" || state == "MS") { return getCountDisplay(applicationCount, 'Application', 'Applications', 'check', 'check'); } 
+		return "";
+	}
+	function getListCountDisplay(listCount) { return getCountDisplay(listCount, 'List', 'Lists', 'list', 'list'); }
+	function getCountDisplay(count, caption, pluralCaption, glyphicon, pluralGlyphicon) {
+		var display = count + ' ' + pluralCaption;
+		var icon = pluralGlyphicon;
+		if (count === 1) { display = '1 ' + caption; icon = glyphicon; }
+		return '<span title="' + display + '"><span class="glyphicon glyphicon-' + icon + '"></span> ' + count + '</span>'
+	}
+
+	function updateResultPanel(previewIds) {
+		clearResultsPanel();
+		$('#results').fadeIn();
+		var postData = { ids: previewIds};
+
+		$.ajax({
+			url: '/Parcel/PreviewList/',
+			data: JSON.stringify(postData),
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			type: 'POST',
+			success: function(data)
+			{
+				var i = 1;
+				$.each(data.Parcels, function(i, item){
+					var landDescription = ''; //null case
+					if (item.HasBuildings) { landDescription = 'Land &amp; Buildings'; } //explicit true
+					if (!item.HasBuildings) { landDescription = 'Land Only'; } //explicit false
+					if (item.State === "MI") { landDescription = ''; }
+
+					var location = getStreetviewLocation(item.CenterPoint.Latitude, item.CenterPoint.Longitude, item.Address, item.City, item.State, item.Zip);
+					//var location = item.CenterPoint.Latitude + ',' + item.CenterPoint.Longitude;
+					//if (item.Address != null && item.Address != '') { location = item.Address + ', ' + item.City + ' ' + item.State; }
+
+					var zoning = ((item.Zoning != '') ? '<br />' + item.Zoning : '');
+					var parcelId = item.ParcelId;
+
+					var findOnMapLink = '';
+					if (item.CenterPoint.Latitude !== 0 && item.CenterPoint.Latitude !== 0) {
+						findOnMapLink = '<a href="#" onClick="javascript:jumpToParcel(' + parcelId + ')">' + icon('map-marker') + ' Find on Map</a>&nbsp; | &nbsp;';
+					}
+
+					var content = '<div style="position:relative;">'
+						+ '<span class="overlay">' + getTaxStatusDisplay(item.TaxStatus, item.IsActive, item.SaleYear, item.ActiveAuction) + '</span>'
+						+ '<img src="" height="150" width="230" id="preview' + parcelId + '" />'
+						+ '<br />' + findOnMapLink
+						+ '<a href="../Parcel/Details/' + parcelId + '" target="_blank">' + icon('new-window') + ' View Report</a>'
+						+ '<h4 class="overflow-ellipsis">' + properCase(item.Name) + ' ' + getFavoriteDisplay(item.IsFavorite) + '</h4>'
+						+ item.CountyName + ' County'
+						+ '<br /><span>' + ((item.CalculatedAcreage != '0') ? '<b>' + item.CalculatedAcreage.toFixed(2) + '</b> ac. ' : '') + '</span>'
+						+ '<span style="float:right;">Total Value: &nbsp;' + ((item.TotalValue > 0) ? '<b>$' + item.TotalValue.toLocaleString('en') + '</b>' : '') + '</span>'
+						+ '<br /><span>' + landDescription + '</span>'
+						+ '<span style="float:right;">Amount Due: ' + ((item.AmountDueAtSale != '0') ? '<b>$' + (item.AmountDueAtSale > 0 ? parseInt(item.AmountDueAtSale).toLocaleString('en') : 'N/A') + '</b>' : '') + '</span>'
+							+ zoning + '</div><hr />';
+
+					$('#results').append(content);
+					setPreviewImage('#preview' + parcelId, location, parcelId, i);
+					i++;
+				});
+			}
+		});
+	}
+
+	function setPreviewImage(imgSelector, location, parcelId, imageCount)
+	{
+			if (imageCount >= 3)
+			{
+			$(imgSelector).attr("src", "../Content/images/TrialModePreviewPD.jpg");
+			return;
+			}
+		$(imgSelector).data('parcel', { location: location, id: parcelId });
+		$(document).ready(function () { previewObserver.observe(document.querySelector(imgSelector)); });
+	}
+
+	function handlePreviewIntersect(entries, observer){
+		entries.forEach(function (entry) {
+			if (entry.intersectionRatio > 0)
+			{
+				loadPreviewImage(entry.target);
+				previewObserver.unobserve(entry.target);
+			}
+		});
+	}
+
+	function loadPreviewImage(imgElement) {
+		var img = $(imgElement);
+		var parcel = img.data("parcel");
+		var imageUrl = getStreetviewUrlByLocation(parcel.location, 150, 230, "AIzaSyA0hcDJ0XZWJyv6vTJiYN2CwhNwVkKGczk");
+		var metaUrl = getStreetviewMetadataUrl(imageUrl);
+		$.get(metaUrl).done(function (data) {
+			if (data.status === "OK") { img.attr("src", imageUrl); }
+			else { setMapPreview(img, parcel.id); }
+		});
+	}
+
+	function setMapPreview(img, parcelId) { //streetside preview unavailable - show map preview
+		$.ajax({
+			url: "/Map/PreviewUrl/",
+			data: JSON.stringify({ id: parcelId }),
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			type: "POST",
+			success: function (data) { img.attr("src", data); }
+		});
+	}
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA0hcDJ0XZWJyv6vTJiYN2CwhNwVkKGczk&libraries=places&callback=initMap" async defer></script>
+<script>
+	$("#showSearchResultsMarkers").click(function () {		
+		showSearchResultsMarkers = !showSearchResultsMarkers;
+		setCheckDisplay("#showSearchResultsMarkers", showSearchResultsMarkers);
+		updateUserSetting("Map.ShowSearchResultsMarkers", showSearchResultsMarkers);
+		(showSearchResultsMarkers ? loadPolygons(currentCriteria()) : clearSearchResultsMarkers());
+	});
+
+	$("#showFavMarkers").click(function () {
+		showFavMarkers = !showFavMarkers;
+		setCheckDisplay("#showFavMarkers", showFavMarkers);
+		(showFavMarkers ? loadFavMarkers() : clearFavMarkers());
+	});
+
+	$("#showPriceNoticeMarkers").click(function () {
+		showPriceNoticeMarkers = !showPriceNoticeMarkers;
+		setCheckDisplay("#showPriceNoticeMarkers", showPriceNoticeMarkers);
+		(showPriceNoticeMarkers ? loadActivePriceNoticeMarkers() : clearPriceNoticeMarkers());
+	});
+
+	$("#showExpiredPriceNoticeMarkers").click(function () {
+		showExpiredPriceNoticeMarkers = !showExpiredPriceNoticeMarkers;
+		setCheckDisplay("#showExpiredPriceNoticeMarkers", showExpiredPriceNoticeMarkers);
+		(showExpiredPriceNoticeMarkers ? loadExpiredPriceNoticeMarkers() : clearExpiredPriceNoticeMarkers());
+	});
+
+	$("#displayCountyBoundaries").click(function () {
+		countyBoundariesEnabled = !countyBoundariesEnabled;
+		setCheckDisplay("#displayCountyBoundaries", countyBoundariesEnabled);
+		(countyBoundariesEnabled ? displayCountyBoundaries() : clearCountyBoundaries());
+	});
+
+	$("#displayOpportunityZones").click(function () {
+		opportunityZonesEnabled = !opportunityZonesEnabled;
+		setCheckDisplay("#displayOpportunityZones", opportunityZonesEnabled);
+		(opportunityZonesEnabled ? displayOpportunityZones() : clearOpportunityZones());
+	});
+	$("#findMyLocation").click(function () {
+		(navigator.geolocation ? navigator.geolocation.getCurrentPosition(showMyLocation) : alert("Browser does not support the Find My Location feature"));
+		closeOptionsModal();
+	});
+	$("#resultsToListButton").click(function () {resultsToGrid(); });
+
+	$(document).ready(function () {
+		$(window).keydown(function (event) {
+			if (event.keyCode === 13) {
+				if (event.target.id !== "pac-input") {
+					event.preventDefault();
+					search();
+					return false;
+				}
+			}
+		});
+	});
+
+	function search(isQuickSearch = false) {
+		refreshMapCenterPoint();
+		if (!isQuickSearch) {
+			$("#SearchCriteria_QuickSearchOverride option:selected").val("");
+			updateSearchCriteriaDefaults();
+		}
+		var searchCriteria = currentCriteria();
+		loadPolygons(searchCriteria);
+	}
+
+	var countyBoundariesEnabled = false;
+	var opportunityZonesEnabled = false;
+	var userPosition;
+	var userMarker;
+	function hideMyLocation() {userPosition = null; userMarker.setMap(null); userMarker = null; }
+	function showMyLocation(pos) {
+		userPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+		if (!userMarker) {
+			userMarker = new google.maps.Marker({
+				position: userPosition,
+				map: map,
+				title: "My Location",
+				icon: "../Content/images/pin-star.png"
+			});
+		}
+		else {userMarker.setPosition(userPosition); }
+		window.map.panTo(userPosition);
+		setTimeout(hideMyLocation, 120000);
+	}
+
+	$("#resultsToSavedListButton").click(function () {resultsToList(); });
+</script>
+
+	<script>
+		$("#exportButton").click(function () {trialRedirect(); });
+		/*$("#resultsToSavedListButton").click(function () {trialRedirect(); });*/
+	</script>
+
+<script src="/bundles/bootstrap?v=M4Nk6kIOwMFflsEKET0iPL9i5YBqbzMzvUOrd8gyCnw1"></script>
+
+
+	<script>
+		$(".body-content").fadeOut(0);
+		$(".body-content").fadeIn(500);
+	</script>
+</body>
+</html>

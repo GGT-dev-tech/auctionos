@@ -15,6 +15,7 @@ from app.api.api_v1.endpoints import (
     finance,
     map,
     auctions,
+    inventory,
 )
 
 api_router = APIRouter()
