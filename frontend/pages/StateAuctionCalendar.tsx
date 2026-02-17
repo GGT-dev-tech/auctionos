@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, Download, ChevronLeft, MapPin } from 'lucide-react';
+import { Calendar, Download, ChevronLeft, MapPin, HelpCircle, AlertTriangle } from 'lucide-react';
 import { Layout } from '../components/Layout';
 import { AuctionService } from '../services/api';
-import { AuctionEvent } from '../types';
+import { AuctionEvent, AuctionEventType } from '../types';
 
 const StateAuctionCalendar: React.FC = () => {
     const { state } = useParams<{ state: string }>();
@@ -28,127 +28,222 @@ const StateAuctionCalendar: React.FC = () => {
         }
     };
 
-    // Group events by month
-    const groupedEvents = events.reduce((acc, event) => {
-        const date = new Date(event.start_date);
-        const monthKey = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-        if (!acc[monthKey]) acc[monthKey] = [];
-        acc[monthKey].push(event);
-        return acc;
-    }, {} as Record<string, AuctionEvent[]>);
+    // Helper: Map AuctionEventType to display name
+    const getAuctionTypeName = (type: AuctionEventType | string): string => {
+        switch (type) {
+            case AuctionEventType.TAX_DEED: return "Tax Deed";
+            case AuctionEventType.TAX_LIEN: return "Tax Lien";
+            case AuctionEventType.FORECLOSURE: return "Foreclosure";
+            case AuctionEventType.SHERIFF_SALE: return "Sheriff Sale";
+            default: return (type as string) || "Other";
+        }
+    };
 
-    const monthKeys = Object.keys(groupedEvents).sort((a, b) => {
-        // Sort keys chronologically (simple version)
-        return new Date(a).getTime() - new Date(b).getTime();
+    // Helper: Get color based on Auction Type
+    const getTypeColor = (type: AuctionEventType | string) => {
+        switch (type) {
+            case AuctionEventType.TAX_DEED: return "bg-blue-500";
+            case AuctionEventType.TAX_LIEN: return "bg-green-500";
+            case AuctionEventType.FORECLOSURE: return "bg-purple-500";
+            default: return "bg-gray-500";
+        }
+    };
+
+    // 1. Identification of available auction types in the fetched events
+    const availableTypes = Array.from(new Set(events.map(e => e.auction_type)));
+
+    // 2. Data aggregation for the heatmap (Type -> Month -> Boolean/Count)
+    const heatmapData: Record<string, Record<number, number>> = {};
+
+    events.forEach(event => {
+        const date = new Date(event.start_date);
+        const month = date.getMonth(); // 0-11
+        const type = event.auction_type as string;
+
+        if (!heatmapData[type]) heatmapData[type] = {};
+        if (!heatmapData[type][month]) heatmapData[type][month] = 0;
+        heatmapData[type][month]++;
     });
+
+    // 3. Data aggregation for the Month Grid (Month -> Total Count)
+    const monthCounts = new Array(12).fill(0);
+    events.forEach(event => {
+        const date = new Date(event.start_date);
+        monthCounts[date.getMonth()]++;
+    });
+
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const fullMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    // Mock Data for "Max Interest" and "Redemption" (In a real app, this comes from a metadata endpoint)
+    const getMetadata = (type: string) => {
+        // Defaults
+        return { interest: '-', redemption: '0' };
+    };
+
+    const getStateName = (abbr: string) => {
+        const names: Record<string, string> = {
+            "AR": "Arkansas",
+            "FL": "Florida",
+            "CA": "California",
+            "TX": "Texas"
+        };
+        return names[abbr] || abbr;
+    };
 
     return (
         <Layout>
-            <div className="p-6 max-w-7xl mx-auto">
-                <button
-                    onClick={() => navigate('/calendar')}
-                    className="mb-4 text-sm text-slate-500 hover:text-blue-600 flex items-center gap-1"
-                >
-                    <ChevronLeft className="w-4 h-4" /> Back to All States
-                </button>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                        <span className="text-blue-600">{state}</span> Auction Calendar
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 md:mb-0">
+                        {getStateName(state || '')} Auction Calendar
                     </h1>
+                    <div className="flex items-center text-blue-600 font-medium dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-md border border-blue-100 dark:border-blue-800">
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        <span>Note: Auction dates are subject to change!</span>
+                    </div>
+                </div>
 
-                    {/* Filters Bar mimics the screenshot */}
-                    <div className="bg-blue-50 dark:bg-slate-800 p-2 rounded flex gap-2 items-center border border-blue-100 dark:border-slate-700">
-                        <select
-                            className="bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded px-3 py-1 text-sm font-bold"
-                            value={state}
-                            onChange={(e) => navigate(`/calendar/${e.target.value}`)}
-                        >
-                            <option value={state}>{state}</option>
-                            <option value="FL">FL</option>
-                            <option value="AR">AR</option>
-                        </select>
-                        <select
-                            className="bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded px-3 py-1 text-sm"
-                            defaultValue="Rolling"
-                        >
-                            <option>Rolling</option>
-                        </select>
-                        <select
-                            className="bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded px-3 py-1 text-sm min-w-[120px]"
-                            defaultValue="Any Location"
-                        >
-                            <option>Any Location</option>
-                        </select>
-                        <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded text-sm font-medium flex items-center gap-1">
-                            <Download className="w-4 h-4" /> Export
+                {/* Filters Bar */}
+                <div className="bg-blue-50 dark:bg-slate-800 rounded-lg p-4 mb-8 border border-blue-100 dark:border-slate-700 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative">
+                            <select
+                                className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+                                value={state}
+                                onChange={(e) => navigate(`/calendar/${e.target.value}`)}
+                            >
+                                <option value="AR">Arkansas</option>
+                                <option value="FL">Florida</option>
+                                <option value="CA">California</option>
+                            </select>
+                        </div>
+                        <div className="relative">
+                            <select className="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+                                <option>Rolling</option>
+                            </select>
+                        </div>
+                        <div className="relative">
+                            <select className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+                                <option>Any Location</option>
+                            </select>
+                        </div>
+                        <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow-sm flex items-center font-medium transition-colors ml-auto">
+                            <Download className="w-4 h-4 mr-2" />
+                            Export
                         </button>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 rounded-lg shadow mb-6">
-                    <div className="p-3 bg-blue-50 dark:bg-slate-800 border-b dark:border-slate-700 text-xs font-semibold text-slate-500 uppercase flex">
-                        <div className="w-1/3">Auction</div>
-                        <div className="w-1/6">Type</div>
-                        <div className="w-1/6">Max Interest</div>
-                        <div className="w-1/6">Redemption (Months)</div>
-                        <div className="w-1/3">Timeline (Jan - Dec)</div>
-                    </div>
-                    {/* Static Header Row Example (matches screenshot logic) */}
-                    <div className="p-4 border-b dark:border-slate-700 flex items-center text-sm">
-                        <div className="w-1/3 flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
-                            <div className="w-4 h-4 bg-slate-200 rounded-full flex items-center justify-center text-[10px] text-slate-600">?</div>
-                            Leftover Tax Deed Auctions
-                        </div>
-                        <div className="w-1/6 text-slate-600">Deed</div>
-                        <div className="w-1/6 text-slate-600">-</div>
-                        <div className="w-1/6 text-slate-600">0</div>
-                        <div className="w-1/3 bg-blue-400 h-8 rounded-sm mx-2"></div>
+                {/* Main Table (Heatmap) */}
+                <div className="bg-white dark:bg-slate-800 shadow rounded-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-700">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className="bg-gray-50 dark:bg-gray-900/50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-1/4">Auction</th>
+                                    <th className="px-3 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                                    <th className="px-3 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Max<br />Interest</th>
+                                    <th className="px-3 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Redemption<br />(Months)</th>
+                                    {months.map(m => (
+                                        <th key={m} className="px-1 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-8">{m}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                {availableTypes.length === 0 && !loading ? (
+                                    <tr>
+                                        <td colSpan={16} className="px-6 py-4 text-center text-sm text-gray-500">
+                                            No auctions found for this state in {year}.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    availableTypes.map(type => {
+                                        const typeStr = type as string;
+                                        const typeName = getAuctionTypeName(typeStr);
+                                        const meta = getMetadata(typeStr);
+                                        const typeColor = getTypeColor(typeStr);
+
+                                        return (
+                                            <tr key={typeStr}>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white flex items-center">
+                                                    <HelpCircle className="w-4 h-4 text-blue-500 mr-2" />
+                                                    {getStateName(state || '')} {typeName} Auctions
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-300">
+                                                    {typeName.split(' ')[1] || typeName}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-300">
+                                                    {meta.interest}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-300">
+                                                    {meta.redemption}
+                                                </td>
+
+                                                {/* Timeline Heatmap */}
+                                                <td colSpan={12} className="px-0 py-0 h-full relative p-0">
+                                                    <div className="flex w-full h-full absolute top-0 bottom-0">
+                                                        {months.map((_, idx) => {
+                                                            const count = heatmapData[typeStr]?.[idx] || 0;
+                                                            const isActive = count > 0;
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    className={`flex-1 border-r border-white dark:border-slate-700 ${isActive ? `${typeColor} opacity-90` : 'bg-transparent'}`}
+                                                                    title={isActive ? `${count} auctions in ${fullMonths[idx]}` : ''}
+                                                                ></div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <div className="space-y-4">
-                    {monthKeys.map(month => (
-                        <div key={month} className="bg-white dark:bg-slate-900 rounded-lg shadow overflow-hidden">
-                            <div className="bg-slate-100 dark:bg-slate-800 px-4 py-3 border-b dark:border-slate-700 flex items-center gap-2">
-                                <Calendar className="w-5 h-5 text-blue-500" />
-                                <h3 className="font-bold text-slate-700 dark:text-slate-200">{month}</h3>
-                                <span className="bg-slate-300 text-slate-700 text-xs px-2 py-0.5 rounded-full">
-                                    {groupedEvents[month].length}
-                                </span>
-                            </div>
-                            <div>
-                                {groupedEvents[month].map(evt => (
-                                    <div key={evt.id} className="p-4 border-b last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex justify-between items-center group cursor-pointer" onClick={() => navigate(`/search?auction_event_id=${evt.id}`)}>
-                                        <div>
-                                            <h4 className="font-medium text-slate-900 dark:text-white group-hover:text-blue-600 flex items-center gap-2">
-                                                {evt.county} County {evt.auction_type.replace('_', ' ').toUpperCase()}
-                                                {evt.total_assets && (
-                                                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                                                        {evt.total_assets} Assets
-                                                    </span>
-                                                )}
-                                            </h4>
-                                            <div className="text-sm text-slate-500 mt-1 flex items-center gap-4">
-                                                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(evt.start_date).toLocaleDateString()}</span>
-                                                <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {evt.county}, {evt.state}</span>
-                                                <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-xs capitalize">{evt.status}</span>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <button className="text-blue-600 hover:underline text-sm font-medium">View Properties</button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
+                {/* Month Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {fullMonths.map((month, idx) => {
+                        const count = monthCounts[idx];
+                        const isComplete = idx < new Date().getMonth(); // Mock "past" logic
 
-                    {monthKeys.length === 0 && !loading && (
-                        <div className="text-center py-12 text-slate-500 bg-white dark:bg-slate-900 rounded-lg">
-                            No auction events found for {state} in {year}.
-                        </div>
-                    )}
+                        return (
+                            <div
+                                key={month}
+                                onClick={() => {
+                                    if (count > 0) {
+                                        // Navigate to search filtered by this month
+                                        // We need to pass a date range to the search page
+                                        const startDate = `${year}-${String(idx + 1).padStart(2, '0')}-01`;
+                                        // Simple end date logic (approx)
+                                        const endDate = `${year}-${String(idx + 1).padStart(2, '0')}-31`;
+                                        navigate(`/search?state=${state}&min_date=${startDate}&max_date=${endDate}`);
+                                    }
+                                }}
+                                className={`
+                                    rounded-md border p-4 flex items-center shadow-sm transition-all
+                                    ${count > 0 ? 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 hover:shadow-md cursor-pointer' : 'bg-gray-50 dark:bg-slate-900 border-gray-100 dark:border-slate-800 opacity-60 cursor-default'}
+                                `}
+                            >
+                                <Calendar className={`w-5 h-5 mr-3 ${count > 0 ? 'text-blue-500' : 'text-gray-400'}`} />
+                                <span className={`font-semibold mr-2 ${count > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500'}`}>
+                                    {month} {year}
+                                </span>
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${count > 0 ? 'bg-gray-600 text-white' : 'bg-gray-300 text-gray-500'}`}>
+                                    {count}
+                                </span>
+                                {isComplete && count > 0 && (
+                                    <span className="ml-auto text-xs text-green-600 font-medium">(active)</span>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
 
             </div>

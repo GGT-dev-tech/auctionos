@@ -606,6 +606,23 @@ export const InventoryService = {
         return response.json();
     },
 
+    importParcelFairCsv: async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_URL}/ingestion/import-parcelfair`, {
+            method: 'POST',
+            headers: getMultiPartHeaders(),
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'CSV upload failed');
+        }
+        return response.json();
+    },
+
     getList: async (page: number = 1, limit: number = 100, filters?: any): Promise<any> => {
         const queryParams = new URLSearchParams();
         queryParams.append('skip', String((page - 1) * limit));

@@ -13,6 +13,14 @@ export enum PropertyType {
   Industrial = "industrial",
 }
 
+export enum AuctionEventType {
+  TAX_DEED = "tax_deed",
+  TAX_LIEN = "tax_lien",
+  FORECLOSURE = "foreclosure",
+  SHERIFF_SALE = "sheriff_sale",
+  REDEEMABLE_DEED = "redeemable_deed",
+}
+
 export enum FloodZone {
   ZoneX = "Zone X (Low Risk)",
   ZoneAE = "Zone AE (High Risk)",
@@ -186,7 +194,7 @@ export interface AuctionEvent {
   id: string;
   state: string;
   county: string;
-  auction_type: string; // tax_deed, tax_lien, etc.
+  auction_type: AuctionEventType | string;
   start_date: string;
   end_date?: string;
   status: string;

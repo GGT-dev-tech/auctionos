@@ -21,6 +21,8 @@ import { Financials } from './pages/Financials';
 import { Reports } from './pages/Reports';
 import MyInventory from './pages/MyInventory';
 import { ParcelSearch } from './pages/ParcelSearch';
+import { ListSearch } from './pages/ListSearch';
+import { AdminImport } from './pages/AdminImport';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ... existing protected route logic
@@ -44,7 +46,7 @@ const App: React.FC = () => {
             <Route index element={<Dashboard />} />
             <Route path="inventory" element={<Inventory />} />
             <Route path="parcel" element={<ParcelSearch />} />
-            <Route path="search" element={<div className="p-8 text-center text-slate-500">List Search Page (Coming Soon)</div>} />
+            <Route path="search" element={<ListSearch />} />
             <Route path="/auctions" element={<AuctionList />} />
             <Route path="financials" element={<Financials />} />
             <Route path="analysis" element={<Analysis />} />
@@ -57,6 +59,7 @@ const App: React.FC = () => {
             <Route path="map" element={<MapIndex />} />
             <Route path="calendar" element={<AuctionCalendarStateView />} />
             <Route path="calendar/:state" element={<StateAuctionCalendar />} />
+            <Route path="admin/import" element={<AdminImport />} />
             <Route path="inventory/otc" element={<OTCInventory />} />
             <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction</div>} />
           </Route>

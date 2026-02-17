@@ -7,6 +7,7 @@ from app.db.repositories.property_repository import PropertyRepository
 from app.models.user import User
 from app.services.scraper import scraper_service
 from app.services.importer import importer_service
+from app.services.parcelfair_service import parcelfair_importer
 import csv
 import io
 import re
@@ -257,3 +258,28 @@ async def trigger_import(
     """
     background_tasks.add_task(importer_service.run_import, db)
     return {"message": "Import started in the background."}
+
+@router.post("/import-parcelfair", response_model=dict)
+async def import_parcelfair_csv(
+    file: UploadFile = File(...),
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Import ParcelFair CSV data.
+    Updates existing properties by Parcel Number, creates new ones.
+    """
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a CSV.")
+
+    contents = await file.read()
+    decoded = contents.decode('utf-8', errors='replace')
+    
+    try:
+        stats = parcelfair_importer.import_csv(db, decoded)
+        return {
+            "message": "Import processed successfully.",
+            "stats": stats
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
