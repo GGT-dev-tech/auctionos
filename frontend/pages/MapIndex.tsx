@@ -16,6 +16,8 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+import { SearchFilters, FilterState } from '../components/SearchFilters';
+
 // Map Controller to handle bounds changes
 const MapController: React.FC<{ onBoundsChange: (bounds: any) => void }> = ({ onBoundsChange }) => {
     const map = useMapEvents({
@@ -48,8 +50,9 @@ const MapIndex: React.FC = () => {
     const [properties, setProperties] = useState<Property[]>([]); // GeoJSON features?
     const [loading, setLoading] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [activeTab, setActiveTab] = useState<'results' | 'filters'>('results');
     const [bounds, setBounds] = useState<any>(null);
-    const [filters, setFilters] = useState({
+    const [filters, setFilters] = useState<FilterState>({
         status: 'active',
         // Add more filters as needed
     });
@@ -96,22 +99,46 @@ const MapIndex: React.FC = () => {
                 <div
                     className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out flex flex-col ${sidebarOpen ? 'w-96 translate-x-0' : 'w-0 -translate-x-full opacity-0 overflow-hidden'}`}
                 >
-                    <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center min-w-[384px]">
-                        <h2 className="font-bold text-lg flex items-center gap-2">
-                            <List size={20} /> Properties ({properties.length})
-                        </h2>
-                        {loading && <Loader2 className="animate-spin text-blue-500" size={20} />}
+                    {/* Sidebar Header / Tabs */}
+                    <div className="flex border-b border-slate-200 dark:border-slate-800">
+                        <button
+                            className={`flex-1 py-3 text-sm font-medium ${activeTab === 'results' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            onClick={() => setActiveTab('results')}
+                        >
+                            Results ({properties.length})
+                        </button>
+                        <button
+                            className={`flex-1 py-3 text-sm font-medium ${activeTab === 'filters' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            onClick={() => setActiveTab('filters')}
+                        >
+                            Filters
+                        </button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 min-w-[384px]">
-                        {properties.length === 0 && !loading && (
-                            <div className="text-center py-10 text-slate-500">
-                                No properties found in this area. Move the map to search.
-                            </div>
+                        {activeTab === 'results' ? (
+                            <>
+                                {loading && <div className="flex justify-center p-4"><Loader2 className="animate-spin text-primary" /></div>}
+                                {properties.length === 0 && !loading && (
+                                    <div className="text-center py-10 text-slate-500">
+                                        No properties found in this area. Move the map to search.
+                                    </div>
+                                )}
+                                {properties.map(p => (
+                                    <PropertyCard key={p.id} property={p} compact />
+                                ))}
+                            </>
+                        ) : (
+                            <SearchFilters
+                                filters={filters}
+                                onChange={(name, value) => setFilters(prev => ({ ...prev, [name]: value }))}
+                                onSearch={() => {
+                                    if (bounds) fetchProperties(bounds); // Trigger search manually
+                                    setActiveTab('results'); // Switch back to results
+                                }}
+                                onClear={() => setFilters({})}
+                            />
                         )}
-                        {properties.map(p => (
-                            <PropertyCard key={p.id} property={p} compact />
-                        ))}
                     </div>
                 </div>
 

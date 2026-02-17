@@ -46,6 +46,59 @@ export const AuctionService = {
         }
     },
 
+    search: async (params: any) => {
+        // Convert array params to repeating query params if needed, or rely on axios params serialization
+        // Start with basic params
+        const queryParams: any = {
+            skip: params.skip || 0,
+            limit: params.limit || 100,
+            sort_by: params.sort_by,
+            sort_desc: params.sort_desc,
+            keyword: params.keyword,
+            state: params.state,
+            county: params.county,
+            zip_code: params.zip_code,
+            status: params.status,
+            inventory_type: params.inventory_type,
+
+            // Ranges
+            min_price: params.min_price,
+            max_price: params.max_price,
+            min_appraisal: params.min_appraisal,
+            max_appraisal: params.max_appraisal,
+            min_amount_due: params.min_amount_due,
+            max_amount_due: params.max_amount_due,
+            min_acreage: params.min_acreage,
+            max_acreage: params.max_acreage,
+
+            // Attributes
+            occupancy: params.occupancy,
+            owner_state: params.owner_state,
+            improvements: params.improvements,
+        };
+
+        // Remove undefined/null
+        Object.keys(queryParams).forEach(key => queryParams[key] === undefined && delete queryParams[key]);
+
+        // Handle array for status if multi-select is implemented later, currently backend accepts list
+
+        // Convert queryParams object to URLSearchParams for fetch API
+        const urlSearchParams = new URLSearchParams();
+        Object.entries(queryParams).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                urlSearchParams.append(key, String(value));
+            }
+        });
+
+        const response = await fetch(`${API_URL}/properties/?${urlSearchParams.toString()}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch properties');
+        }
+        return response.json();
+    },
+
     getCalendar: async (): Promise<any> => {
         const response = await fetch(`${API_URL}/auctions/calendar`, {
             headers: getHeaders()

@@ -111,9 +111,17 @@ const AuctionCalendar: React.FC = () => {
                                     </a>
                                 )}
                                 {auc.search_link && (
-                                    <a href={auc.search_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
-                                        Search <ExternalLink size={14} />
-                                    </a>
+                                    <div className="flex gap-2">
+                                        <a href={auc.search_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                                            Source <ExternalLink size={14} />
+                                        </a>
+                                        <Link
+                                            to={`/search?min_date=${auc.auction_date}&max_date=${auc.auction_date}&county=${encodeURIComponent(auc.county)}&state=${auc.state}`}
+                                            className="flex items-center gap-1 text-sm text-emerald-600 hover:underline"
+                                        >
+                                            View Properties <ExternalLink size={14} className="rotate-45" />
+                                        </Link>
+                                    </div>
                                 )}
                             </div>
                         </div>

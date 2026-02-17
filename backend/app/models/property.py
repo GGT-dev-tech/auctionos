@@ -59,6 +59,8 @@ class Property(Base):
     legal_description = Column(Text, nullable=True) # Denormalized for easy access or distinct from Details
     owner_name = Column(String(255), nullable=True)
     owner_address = Column(String(255), nullable=True)
+    owner_state = Column(String(2), nullable=True) # For "Owner Location" filter (In-State vs Out-of-State)
+    occupancy = Column(String(50), nullable=True) # "Vacant", "Occupied"
     
     # Ownership
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True, index=True)

@@ -94,6 +94,37 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Quick Access Buttons */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Link to="/calendar" className="flex items-center justify-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary hover:text-primary transition-all group">
+          <span className="p-2 rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+            <Calendar size={20} />
+          </span>
+          <span className="font-semibold text-slate-700 dark:text-slate-200">Auction Calendar</span>
+        </Link>
+
+        <Link to="/map" className="flex items-center justify-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary hover:text-primary transition-all group">
+          <span className="p-2 rounded-lg bg-purple-50 text-purple-600 group-hover:bg-purple-100">
+            <span className="material-symbols-outlined text-[20px]">map</span>
+          </span>
+          <span className="font-semibold text-slate-700 dark:text-slate-200">Map Search</span>
+        </Link>
+
+        <Link to="/favorites" className="flex items-center justify-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary hover:text-primary transition-all group">
+          <span className="p-2 rounded-lg bg-red-50 text-red-600 group-hover:bg-red-100">
+            <span className="material-symbols-outlined text-[20px]">favorite</span>
+          </span>
+          <span className="font-semibold text-slate-700 dark:text-slate-200">My Favorites</span>
+        </Link>
+
+        <Link to="/lists" className="flex items-center justify-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary hover:text-primary transition-all group">
+          <span className="p-2 rounded-lg bg-amber-50 text-amber-600 group-hover:bg-amber-100">
+            <span className="material-symbols-outlined text-[20px]">list</span>
+          </span>
+          <span className="font-semibold text-slate-700 dark:text-slate-200">My Lists</span>
+        </Link>
+      </div>
+
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[

@@ -30,6 +30,15 @@ def read_properties(
     max_date: Optional[str] = None,
     sort_by: Optional[str] = None,
     sort_desc: bool = False,
+    # New Advanced Filters
+    min_appraisal: Optional[float] = None, max_appraisal: Optional[float] = None,
+    min_amount_due: Optional[float] = None, max_amount_due: Optional[float] = None,
+    min_acreage: Optional[float] = None, max_acreage: Optional[float] = None,
+    occupancy: Optional[str] = None,
+    owner_state: Optional[str] = None,
+    improvements: Optional[bool] = None,
+    keyword: Optional[str] = None,
+    inventory_type: Optional[str] = None,
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
@@ -38,7 +47,13 @@ def read_properties(
     properties = property_repo.get_multi(
         db, skip=skip, limit=limit, state=state, city=city, county=county, zip_code=zip_code,
         min_price=min_price, max_price=max_price, status=status,
-        min_date=min_date, max_date=max_date, sort_by=sort_by, sort_desc=sort_desc
+        min_date=min_date, max_date=max_date, sort_by=sort_by, sort_desc=sort_desc,
+        min_appraisal=min_appraisal, max_appraisal=max_appraisal,
+        min_amount_due=min_amount_due, max_amount_due=max_amount_due,
+        min_acreage=min_acreage, max_acreage=max_acreage,
+        occupancy=occupancy, owner_state=owner_state,
+        improvements=improvements, keyword=keyword,
+        inventory_type=inventory_type
     )
     return properties
 

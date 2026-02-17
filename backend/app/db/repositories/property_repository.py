@@ -14,14 +14,33 @@ class PropertyRepository:
         min_price: Optional[float] = None, max_price: Optional[float] = None,
         status: Optional[List[str]] = None,
         min_date: Optional[str] = None, max_date: Optional[str] = None,
-        sort_by: Optional[str] = None, sort_desc: bool = False
+        sort_by: Optional[str] = None, sort_desc: bool = False,
+        # New Filters
+        min_appraisal: Optional[float] = None, max_appraisal: Optional[float] = None,
+        min_amount_due: Optional[float] = None, max_amount_due: Optional[float] = None,
+        min_acreage: Optional[float] = None, max_acreage: Optional[float] = None,
+        occupancy: Optional[str] = None,
+        owner_state: Optional[str] = None,
+        improvements: Optional[bool] = None,
+        keyword: Optional[str] = None,
+        inventory_type: Optional[str] = None
     ) -> List[Property]:
         query = db.query(Property)
         
-        # Joins if needed (for date filtering)
+        # Joins
+        need_details = any([
+            min_appraisal is not None, max_appraisal is not None, 
+            min_acreage is not None, max_acreage is not None,
+            improvements is not None
+        ])
+        
+        if need_details:
+             query = query.join(PropertyDetails, Property.id == PropertyDetails.property_id, isouter=True)
+
         if min_date or max_date or sort_by == 'auction_date':
             query = query.join(AuctionDetails, Property.id == AuctionDetails.property_id, isouter=True)
 
+        # Basic Filters
         if state:
             query = query.filter(Property.state == state)
         if city:
@@ -30,6 +49,8 @@ class PropertyRepository:
             query = query.filter(Property.county.ilike(f"%{county}%"))
         if zip_code:
             query = query.filter(Property.zip_code == zip_code)
+        if inventory_type:
+            query = query.filter(Property.inventory_type == inventory_type)
             
         if min_price is not None:
              query = query.filter(Property.price >= min_price)
@@ -43,6 +64,44 @@ class PropertyRepository:
              query = query.filter(AuctionDetails.auction_date >= min_date)
         if max_date:
              query = query.filter(AuctionDetails.auction_date <= max_date)
+
+        # Advanced Filters
+        if min_appraisal is not None:
+            query = query.filter(PropertyDetails.total_market_value >= min_appraisal)
+        if max_appraisal is not None:
+            query = query.filter(PropertyDetails.total_market_value <= max_appraisal)
+            
+        if min_amount_due is not None:
+            query = query.filter(Property.amount_due >= min_amount_due)
+        if max_amount_due is not None:
+            query = query.filter(Property.amount_due <= max_amount_due)
+
+        if min_acreage is not None:
+            query = query.filter(PropertyDetails.lot_acres >= min_acreage)
+        if max_acreage is not None:
+            query = query.filter(PropertyDetails.lot_acres <= max_acreage)
+
+        if occupancy:
+            query = query.filter(Property.occupancy == occupancy)
+            
+        if owner_state:
+            query = query.filter(Property.owner_state == owner_state)
+
+        if improvements is not None:
+            if improvements:
+                query = query.filter(PropertyDetails.improvement_value > 0)
+            else:
+                query = query.filter((PropertyDetails.improvement_value == 0) | (PropertyDetails.improvement_value == None))
+
+        if keyword:
+            term = f"%{keyword}%"
+            from sqlalchemy import or_
+            query = query.filter(or_(
+                Property.title.ilike(term),
+                Property.parcel_id.ilike(term),
+                Property.address.ilike(term),
+                Property.owner_name.ilike(term)
+            ))
              
         # Sorting
         if sort_by:
@@ -52,6 +111,10 @@ class PropertyRepository:
                 sort_col = AuctionDetails.auction_date
             elif sort_by == 'title':
                 sort_col = Property.title
+            elif sort_by == 'amount_due':
+                sort_col = Property.amount_due
+            elif sort_by == 'appraisal':
+                sort_col = PropertyDetails.total_market_value
             else:
                 sort_col = Property.created_at # Default
                 

@@ -40,6 +40,7 @@ const App: React.FC = () => {
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="inventory" element={<Inventory />} />
+            <Route path="search" element={<div className="p-8 text-center text-slate-500">List Search Page (Coming Soon)</div>} />
             <Route path="/auctions" element={<AuctionList />} />
             <Route path="financials" element={<Financials />} />
             <Route path="analysis" element={<Analysis />} />
