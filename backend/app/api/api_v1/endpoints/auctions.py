@@ -57,3 +57,80 @@ def get_auctions(
     if state:
         query = query.filter(Auction.state == state)
     return query.offset(skip).limit(limit).all()
+
+# --- New Endpoints for AuctionEvent (Calendar Feature) ---
+
+from app.models.auction_event import AuctionEvent, AuctionEventType
+from app.schemas.auction_event import AuctionEvent as AuctionEventSchema
+
+@router.get("/events/overview", response_model=Dict[str, Dict[str, Dict[str, int]]])
+def get_auction_calendar_overview(
+    db: Session = Depends(deps.get_db),
+    year: int = Query(2026, description="Year to fetch overview for")
+) -> Any:
+    """
+    Get aggregated auction counts for the heatmap.
+    Structure: { "FL": { "1": { "tax_deed": 5, "tax_lien": 2 }, "2": ... } }
+    """
+    # Group by State, Month, Type
+    # This might need raw SQL or careful SQLAlchemy grouping
+    # For now, we will fetch relevant events and aggregate in Python for simplicity
+    
+    start_date = date(year, 1, 1)
+    end_date = date(year, 12, 31)
+    
+    events = db.query(AuctionEvent).filter(
+        AuctionEvent.start_date >= start_date,
+        AuctionEvent.start_date <= end_date
+    ).all()
+    
+    # Aggregate
+    overview = {} # State -> Month (1-12) -> Type -> Count
+    
+    for event in events:
+        state = event.state
+        if not state: continue
+        
+        month = str(event.start_date.month)
+        auct_type = event.auction_type.value # Enum to string
+        
+        if state not in overview:
+            overview[state] = {}
+        if month not in overview[state]:
+            overview[state][month] = {}
+        if auct_type not in overview[state][month]:
+            overview[state][month][auct_type] = 0
+            
+        overview[state][month][auct_type] += 1
+        
+    return overview
+
+@router.get("/events/{state}", response_model=List[AuctionEventSchema])
+def get_state_auctions(
+    state: str,
+    db: Session = Depends(deps.get_db),
+    year: Optional[int] = Query(None),
+    month: Optional[int] = Query(None)
+) -> Any:
+    """
+    Get detailed auction events for a specific state.
+    """
+    query = db.query(AuctionEvent).filter(AuctionEvent.state == state)
+    
+    if year:
+        # Simple filter, ideally should adhere to start/end ranges
+        start_of_year = date(year, 1, 1)
+        end_of_year = date(year, 12, 31)
+        query = query.filter(AuctionEvent.start_date >= start_of_year, AuctionEvent.start_date <= end_of_year)
+        
+    if month and year:
+         # Filter for specific month
+         # Construct range for that month
+        import calendar
+        last_day = calendar.monthrange(year, month)[1]
+        start_of_month = date(year, month, 1)
+        end_of_month = date(year, month, last_day)
+        query = query.filter(AuctionEvent.start_date >= start_of_month, AuctionEvent.start_date <= end_of_month)
+
+    return query.order_by(AuctionEvent.start_date).all()
+

@@ -128,6 +128,19 @@ class PropertyBase(BaseModel):
     legal_description: Optional[str] = None
     owner_name: Optional[str] = None
     owner_address: Optional[str] = None
+    
+    # New ParcelFair Fields
+    parcel_number: Optional[str] = None
+    cs_number: Optional[str] = None
+    tax_sale_year: Optional[int] = None
+    delinquent_year: Optional[int] = None
+    total_value: Optional[float] = None
+    land_value: Optional[float] = None
+    improvement_value: Optional[float] = None
+    assessed_value: Optional[float] = None
+    parcel_type: Optional[str] = None
+    opportunity_zone: Optional[str] = None
+    coordinates: Optional[str] = None
 
 class PropertyCreate(PropertyBase):
     details: Optional[PropertyDetailsCreate] = None

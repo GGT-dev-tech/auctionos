@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>All States Auction Calendar Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#5cb85c", // Green from the "Upgrade Trial Account" button and export button
+                        "primary-dark": "#4cae4c",
+                        "secondary": "#f0ad4e", // Orange from "Log off"
+                        "background-light": "#fcfcfc",
+                        "background-dark": "#1a202c",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2d3748",
+                        "border-light": "#e2e8f0",
+                        "border-dark": "#4a5568",
+                        "text-light": "#1f2937",
+                        "text-dark": "#e2e8f0",
+                        "table-header-light": "#f8fafc", // Very light gray for header
+                        "table-header-dark": "#2d3748",
+                        "link-blue": "#3b82f6",
+                        // Gantt Chart Colors
+                        "gantt-blue-light": "#93c5fd",
+                        "gantt-blue": "#60a5fa",
+                        "gantt-blue-dark": "#2563eb",
+                        "gantt-purple-light": "#d8b4fe",
+                        "gantt-purple": "#a855f7",
+                        "gantt-purple-dark": "#7e22ce",
+                        "gantt-green-light": "#86efac",
+                        "gantt-green": "#4ade80",
+                        "gantt-green-dark": "#16a34a",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.375rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style>.scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #2d3748; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4a5568; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-body antialiased min-h-screen flex flex-col">
+<nav class="bg-[#333333] dark:bg-black text-white px-4 py-2 flex items-center justify-between text-sm shadow-md">
+<div class="flex items-center space-x-6 overflow-x-auto">
+<a class="text-lg font-semibold whitespace-nowrap tracking-tight text-gray-100 mr-2" href="#">Parcel Fair</a>
+<a class="hover:text-gray-300 transition-colors whitespace-nowrap hidden md:block" href="#">Home</a>
+<a class="hover:text-gray-300 transition-colors whitespace-nowrap hidden md:block" href="#">About</a>
+<a class="hover:text-gray-300 transition-colors whitespace-nowrap hidden md:block" href="#">Contact</a>
+<div class="relative group hidden md:block">
+<button class="flex items-center hover:text-gray-300 space-x-1">
+<span>Tools</span>
+<span class="material-icons text-xs">arrow_drop_down</span>
+</button>
+</div>
+<div class="relative group hidden md:block">
+<button class="flex items-center hover:text-gray-300 space-x-1">
+<span>Connect</span>
+<span class="material-icons text-xs">arrow_drop_down</span>
+</button>
+</div>
+</div>
+<div class="flex items-center space-x-3 ml-4">
+<span class="text-gray-400 text-xs hidden lg:block mr-2">gustavot.gomes7@gmail.com</span>
+<button class="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center transition-colors whitespace-nowrap">
+<span class="material-icons text-sm mr-1">bolt</span> Upgrade Trial Account
+            </button>
+<button class="bg-secondary hover:bg-orange-500 text-white px-3 py-1.5 rounded text-xs font-semibold transition-colors whitespace-nowrap">
+                Log off
+            </button>
+</div>
+</nav>
+<main class="flex-grow p-4 md:p-6 max-w-[1600px] mx-auto w-full">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+<h1 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">All States Auction Calendar</h1>
+<div class="flex items-center text-blue-700 dark:text-blue-400 text-sm font-medium bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-md border border-blue-100 dark:border-blue-800">
+<span class="material-icons text-base mr-1.5">error</span>
+<span>Note: Auction dates are subject to change!</span>
+</div>
+</div>
+<div class="bg-sky-100 dark:bg-sky-900/30 p-4 rounded-lg mb-8 flex flex-wrap justify-center items-center gap-3 shadow-sm border border-sky-200 dark:border-sky-800">
+<div class="relative w-full md:w-64">
+<select class="w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-surface-dark dark:text-gray-200 shadow-sm appearance-none cursor-pointer">
+<option>All States</option>
+<option>Arkansas</option>
+<option>California</option>
+<option>Florida</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+<span class="material-icons text-sm">unfold_more</span>
+</div>
+</div>
+<div class="relative w-full md:w-64">
+<select class="w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-surface-dark dark:text-gray-200 shadow-sm appearance-none cursor-pointer">
+<option>All Auction Types</option>
+<option>Tax Deed</option>
+<option>Foreclosure</option>
+<option>Tax Lien</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+<span class="material-icons text-sm">unfold_more</span>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-lg shadow border border-border-light dark:border-border-dark overflow-hidden">
+<div class="overflow-x-auto custom-scrollbar">
+<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+<thead class="bg-gray-50 dark:bg-gray-800">
+<tr>
+<th class="px-4 py-3 text-left text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider w-32 sticky left-0 z-10 bg-gray-50 dark:bg-gray-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" scope="col">State</th>
+<th class="px-4 py-3 text-left text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider min-w-[200px]" scope="col">Auction</th>
+<th class="px-3 py-3 text-center text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider w-24" scope="col">Type</th>
+<th class="px-2 py-3 text-center text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider w-20 leading-tight" scope="col">Max Interest</th>
+<th class="px-2 py-3 text-center text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider w-24 leading-tight" scope="col">Redemption (Months)</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">Jan</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">Feb</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">Mar</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">Apr</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">May</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">Jun</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">Jul</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">Aug</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">Sep</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">Oct</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10" scope="col">Nov</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-white w-10 border-r dark:border-gray-700" scope="col">Dec</th>
+</tr>
+</thead>
+<tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">Arkansas</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Leftover Tax Deed Auctions
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Deed</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">-</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">0</td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] bg-gantt-blue flex"></div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">California</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Tax Deed Auctions
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Deed</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">-</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">0</td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] flex">
+<div class="w-[41.66%] bg-gantt-blue-light border-r border-white/20"></div> 
+<div class="w-[16.66%] bg-gantt-blue-dark border-r border-white/20"></div> 
+<div class="w-[8.33%] bg-transparent border-r border-gray-100 dark:border-gray-700"></div> 
+<div class="w-[33.33%] bg-gantt-blue border-r border-white/20"></div> 
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">Colorado</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Foreclosure Auctions
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Foreclosure</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">-</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400"></td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] flex">
+<div class="w-[8.33%] bg-gantt-purple-light border-r border-white/20"></div>
+<div class="w-[66.66%] bg-gantt-purple-light opacity-80 border-r border-white/20"></div>
+<div class="w-[25%] bg-gantt-purple-light opacity-90"></div>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">Connecticut</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Tax Deed Auctions
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Deed</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">18%</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">6</td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] flex">
+<div class="w-[8.33%] bg-gantt-blue border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-blue-light border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-blue border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-blue-dark border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-blue border-r border-white/20"></div>
+<div class="w-[25%] bg-gantt-blue-light border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-blue-dark border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-blue-light border-r border-white/20"></div>
+<div class="w-[16.66%] bg-gantt-blue border-r border-white/20"></div>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">Delaware</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Sheriff Sales
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Foreclosure</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">-</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400"></td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] bg-gantt-purple-light opacity-90"></div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">Florida</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Tax Deed Auctions
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Deed</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">-</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">0</td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] flex">
+<div class="w-[16.66%] bg-gantt-blue-dark border-r border-white/20"></div>
+<div class="w-[33.33%] bg-gantt-blue border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-blue-light border-r border-white/20"></div>
+<div class="w-[41.66%] bg-gantt-blue-dark border-r border-white/20"></div>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">Florida</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Foreclosure Auctions
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Foreclosure</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">-</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400"></td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] bg-gantt-purple-light opacity-90 flex">
+<div class="w-[41.66%] bg-gantt-purple-light border-r border-white/20 opacity-80"></div>
+<div class="w-[33.33%] bg-gantt-purple-light border-r border-white/20 opacity-60"></div>
+<div class="w-[25%] bg-gantt-purple-light opacity-80"></div>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">Hawaii</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Tax Deed Auctions
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Deed</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">12%</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">12</td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] flex">
+<div class="w-[8.33%] bg-gantt-blue border-r border-white/20"></div> 
+<div class="w-[25%] bg-transparent border-r border-gray-100 dark:border-gray-700"></div> 
+<div class="w-[8.33%] bg-gantt-blue-dark border-r border-white/20"></div> 
+<div class="w-[58.33%] bg-transparent"></div> 
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">Illinois</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Tax Deed Auctions
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Deed</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">-</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">0</td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] flex">
+<div class="w-[58.33%] bg-gantt-blue-light border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-blue-dark border-r border-white/20"></div>
+<div class="w-[16.66%] bg-gantt-blue border-r border-white/20"></div>
+<div class="w-[16.66%] bg-gantt-blue-light"></div>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">Missouri</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Post-Third Sales
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Lien</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">10%</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">3</td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] bg-gantt-green-light"></div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">New Jersey</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Tax Lien Auctions
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Lien</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">18%</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">24</td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] flex">
+<div class="w-[50%] bg-gantt-green-light border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-green border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-green-light border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-green-dark border-r border-white/20"></div>
+<div class="w-[8.33%] bg-gantt-green-light border-r border-white/20"></div>
+<div class="w-[16.66%] bg-gantt-green-dark border-r border-white/20"></div>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<td class="px-4 py-3 whitespace-nowrap text-link-blue dark:text-blue-400 font-medium sticky left-0 bg-white dark:bg-surface-dark z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+<a href="#">North Carolina</a>
+</td>
+<td class="px-4 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+<div class="flex items-center">
+<span class="material-icons text-blue-500 text-base mr-2">help</span>
+                                    Tax Deed Auctions
+                                </div>
+</td>
+<td class="px-3 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">Deed</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">-</td>
+<td class="px-2 py-3 text-center whitespace-nowrap text-gray-600 dark:text-gray-400">0</td>
+<td class="p-0 h-full relative align-middle border-l dark:border-gray-700" colspan="12">
+<div class="w-full h-full min-h-[40px] flex">
+<div class="w-[16.66%] bg-gantt-blue-light border-r border-white/20"></div>
+<div class="w-[33.33%] bg-gantt-blue-dark opacity-80 border-r border-white/20"></div>
+<div class="w-[16.66%] bg-gantt-blue-dark border-r border-white/20"></div>
+<div class="w-[33.33%] bg-gantt-blue border-r border-white/20"></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="bg-gray-50 dark:bg-surface-dark px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between sm:px-6">
+<div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+<div>
+<p class="text-sm text-gray-700 dark:text-gray-300">
+                            Showing <span class="font-medium">1</span> to <span class="font-medium">12</span> of <span class="font-medium">50</span> results
+                        </p>
+</div>
+<div>
+<nav aria-label="Pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+<a class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-surface-dark text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" href="#">
+<span class="sr-only">Previous</span>
+<span class="material-icons text-base">chevron_left</span>
+</a>
+<a aria-current="page" class="z-10 bg-blue-50 dark:bg-blue-900 border-primary text-primary relative inline-flex items-center px-4 py-2 border text-sm font-medium" href="#">1</a>
+<a class="bg-white dark:bg-surface-dark border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 relative inline-flex items-center px-4 py-2 border text-sm font-medium" href="#">2</a>
+<a class="bg-white dark:bg-surface-dark border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hidden md:inline-flex relative items-center px-4 py-2 border text-sm font-medium" href="#">3</a>
+<a class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-surface-dark text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" href="#">
+<span class="sr-only">Next</span>
+<span class="material-icons text-base">chevron_right</span>
+</a>
+</nav>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="bg-white dark:bg-surface-dark border-t border-gray-200 dark:border-gray-700 mt-auto">
+<div class="max-w-[1600px] mx-auto py-6 px-4 sm:px-6 lg:px-8">
+<div class="flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+<div class="mb-4 md:mb-0">
+                    © 2024 Parcel Fair. All rights reserved.
+                </div>
+<div class="flex space-x-6">
+<a class="hover:text-gray-900 dark:hover:text-white" href="#">Privacy Policy</a>
+<a class="hover:text-gray-900 dark:hover:text-white" href="#">Terms of Service</a>
+<a class="hover:text-gray-900 dark:hover:text-white" href="#">Support</a>
+</div>
+</div>
+</div>
+</footer>
+
+</body></html>

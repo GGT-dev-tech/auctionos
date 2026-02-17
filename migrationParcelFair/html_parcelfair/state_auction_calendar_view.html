@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Arkansas Auction Calendar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#2e7d32", // Green shade close to the Upgrade button
+                        secondary: "#f57c00", // Orange for Log off
+                        "background-light": "#f8f9fa",
+                        "background-dark": "#1a202c",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2d3748",
+                        "accent-blue": "#0288d1",
+                        "table-header-light": "#f1f5f9",
+                        "table-header-dark": "#4a5568",
+                        "filter-bg-light": "#e0f2f1", // Light cyan/blue mix
+                        "filter-bg-dark": "#2c3e50",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.375rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }.overflow-x-auto::-webkit-scrollbar {
+            height: 8px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark .overflow-x-auto::-webkit-scrollbar-thumb {
+            background-color: #4a5568;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-100 transition-colors duration-200">
+<nav class="bg-gray-900 text-gray-300 dark:bg-black border-b border-gray-700">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between h-16 items-center">
+<div class="flex items-center space-x-6">
+<div class="flex-shrink-0 flex items-center text-white text-xl font-semibold tracking-tight">
+                        Parcel Fair
+                    </div>
+<div class="hidden md:flex space-x-4 text-sm font-medium">
+<a class="hover:text-white transition-colors" href="#">Home</a>
+<a class="hover:text-white transition-colors" href="#">About</a>
+<a class="hover:text-white transition-colors" href="#">Contact</a>
+<div class="relative group">
+<button class="flex items-center hover:text-white focus:outline-none">
+                                Tools <span class="material-icons text-base ml-1">arrow_drop_down</span>
+</button>
+</div>
+<div class="relative group">
+<button class="flex items-center hover:text-white focus:outline-none">
+                                Connect <span class="material-icons text-base ml-1">arrow_drop_down</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex items-center space-x-4 text-sm">
+<span class="hidden lg:block text-gray-400">gustavot.gomes7@gmail.com</span>
+<button class="bg-primary hover:bg-green-700 text-white px-4 py-2 rounded shadow-sm flex items-center font-medium transition-colors">
+<span class="material-icons text-sm mr-1">bolt</span>
+                        Upgrade Trial Account
+                    </button>
+<button class="bg-secondary hover:bg-orange-700 text-white px-4 py-2 rounded shadow-sm font-medium transition-colors">
+                        Log off
+                    </button>
+</div>
+</div>
+</div>
+</nav>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+<h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2 md:mb-0">Arkansas Auction Calendar</h1>
+<div class="flex items-center text-accent-blue font-medium dark:text-blue-400">
+<span class="material-icons mr-1">error_outline</span>
+<span>Note: Auction dates are subject to change!</span>
+</div>
+</div>
+<div class="bg-blue-100 dark:bg-slate-800 rounded-lg p-4 mb-8 border border-blue-200 dark:border-slate-700 shadow-sm">
+<div class="flex flex-wrap items-center justify-center gap-3">
+<div class="relative">
+<select class="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+<option>Arkansas</option>
+</select>
+</div>
+<div class="relative">
+<select class="block w-32 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+<option>Rolling</option>
+</select>
+</div>
+<div class="relative">
+<select class="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md shadow-sm dark:bg-gray-700 dark:text-white">
+<option>Any Location</option>
+</select>
+</div>
+<button class="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white px-4 py-2 rounded-md shadow-sm flex items-center font-medium transition-colors ml-2">
+<span class="material-icons text-sm mr-2">upload</span>
+                    Export
+                </button>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark shadow rounded-lg overflow-hidden mb-8 border border-gray-200 dark:border-gray-700">
+<div class="overflow-x-auto">
+<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+<thead class="bg-gray-50 dark:bg-gray-800">
+<tr>
+<th class="px-6 py-3 text-left text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-1/4" scope="col">Auction</th>
+<th class="px-3 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider" scope="col">Type</th>
+<th class="px-3 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider" scope="col">Max<br/>Interest</th>
+<th class="px-3 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider" scope="col">Redemption<br/>(Months)</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Jan</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Feb</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Mar</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Apr</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">May</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Jun</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Jul</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Aug</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Sep</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Oct</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Nov</th>
+<th class="px-1 py-3 text-center text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider w-8" scope="col">Dec</th>
+</tr>
+</thead>
+<tbody class="bg-white dark:bg-surface-dark divide-y divide-gray-200 dark:divide-gray-700">
+<tr>
+<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white flex items-center">
+<span class="material-icons text-blue-500 text-sm mr-2">help</span>
+                                Leftover Tax Deed Auctions
+                            </td>
+<td class="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-300">Deed</td>
+<td class="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-300">-</td>
+<td class="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-300">0</td>
+<td class="px-0 py-0 h-full relative" colspan="12">
+<div class="flex w-full h-full absolute top-0 bottom-0">
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+</div>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white flex items-center">
+<span class="material-icons text-blue-500 text-sm mr-2">help</span>
+                                Tax Deed Auctions (Annual)
+                            </td>
+<td class="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-300">Deed</td>
+<td class="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-300">-</td>
+<td class="px-3 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-300">0</td>
+<td class="px-0 py-0" colspan="6"></td> 
+<td class="px-0 py-0 h-full relative" colspan="4"> 
+<div class="flex w-full h-full absolute top-0 bottom-0">
+<div class="flex-1 bg-blue-600 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-600 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-700 opacity-90 border-r border-white dark:border-gray-700"></div>
+<div class="flex-1 bg-blue-400 opacity-90 border-r border-white dark:border-gray-700"></div>
+</div>
+</td>
+<td class="px-0 py-0" colspan="2"></td> 
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="space-y-3">
+<div class="bg-gray-100 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-4 flex items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons text-blue-500 mr-2">calendar_month</span>
+<span class="text-blue-600 dark:text-blue-400 font-semibold mr-2">January 2026</span>
+<span class="bg-gray-500 text-white text-xs font-bold px-2 py-0.5 rounded-full mr-2">0</span>
+<span class="text-blue-600 dark:text-blue-400 font-medium">(complete)</span>
+</div>
+<div class="bg-gray-100 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-4 flex items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons text-blue-500 mr-2">calendar_month</span>
+<span class="text-blue-600 dark:text-blue-400 font-semibold mr-2">February 2026</span>
+<span class="bg-gray-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+</div>
+<div class="bg-gray-100 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-4 flex items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons text-blue-500 mr-2">calendar_month</span>
+<span class="text-blue-600 dark:text-blue-400 font-semibold mr-2">March 2026</span>
+<span class="bg-gray-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+</div>
+<div class="bg-gray-100 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-4 flex items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons text-blue-500 mr-2">calendar_month</span>
+<span class="text-blue-600 dark:text-blue-400 font-semibold mr-2">April 2026</span>
+<span class="bg-gray-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+</div>
+<div class="bg-gray-100 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-4 flex items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons text-blue-500 mr-2">calendar_month</span>
+<span class="text-blue-600 dark:text-blue-400 font-semibold mr-2">May 2026</span>
+<span class="bg-gray-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+</div>
+<div class="bg-gray-100 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-4 flex items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons text-blue-500 mr-2">calendar_month</span>
+<span class="text-blue-600 dark:text-blue-400 font-semibold mr-2">June 2026</span>
+<span class="bg-gray-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+</div>
+<div class="bg-gray-100 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-4 flex items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons text-blue-500 mr-2">calendar_month</span>
+<span class="text-blue-600 dark:text-blue-400 font-semibold mr-2">July 2026</span>
+<span class="bg-gray-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+</div>
+<div class="bg-gray-100 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 p-4 flex items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<span class="material-icons text-blue-500 mr-2">calendar_month</span>
+<span class="text-blue-600 dark:text-blue-400 font-semibold mr-2">August 2026</span>
+<span class="bg-gray-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+</div>
+</div>
+</main>
+
+</body></html>

@@ -34,7 +34,7 @@ class Property(Base):
     __tablename__ = "properties"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    title = Column(String(255), nullable=False)
+    title = Column(String(255), nullable=True)
     address = Column(String(255), nullable=True)
     city = Column(String(100), index=True, nullable=True)
     state = Column(String(100), index=True, nullable=True)
@@ -64,7 +64,26 @@ class Property(Base):
     
     # Ownership
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True, index=True)
+    auction_event_id = Column(String(36), ForeignKey("auction_events.id"), nullable=True, index=True)
+    lot_number = Column(String(50), nullable=True) # Sequence number in the auction
 
+    # ParcelFair compatibility fields
+    parcel_number = Column(String, index=True)
+    cs_number = Column(String)
+    tax_sale_year = Column(Integer)
+    delinquent_year = Column(Integer)
+    amount_due = Column(Float) # Using Float for simplicity with SQLite, typically Numeric for currency
+    total_value = Column(Float)
+    land_value = Column(Float)
+    improvement_value = Column(Float)
+    assessed_value = Column(Float)
+    parcel_type = Column(String)
+    next_auction_date = Column(Date)
+    legal_description = Column(Text)
+    opportunity_zone = Column(String)
+    coordinates = Column(String) # Storing as string "lat,lon" for simplicity initially
+
+    # Keep existing logic but maybe map to these
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     deleted_at = Column(DateTime, nullable=True)
@@ -77,6 +96,7 @@ class Property(Base):
     expenses = relationship("Expense", back_populates="property", cascade="all, delete-orphan")
     notes = relationship("Note", back_populates="property", cascade="all, delete-orphan")
     price_notices = relationship("PriceNotice", back_populates="property", cascade="all, delete-orphan")
+    auction_event = relationship("AuctionEvent", back_populates="properties")
 
 class PropertyDetails(Base):
     __tablename__ = "property_details"

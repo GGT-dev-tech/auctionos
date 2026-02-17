@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Parcel Details - Parcel Fair</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#3b82f6", // Blue
+                        secondary: "#10b981", // Green
+                        accent: "#f59e0b", // Orange/Yellow
+                        "background-light": "#f3f4f6",
+                        "background-dark": "#111827",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1f2937",
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#374151",
+                        "header-blue": "#3b82f6", // Adjusted to match the header bars
+                        "light-blue-bg": "#e0f2fe", // For section headers
+                        "light-green-bg": "#dcfce7", // For status banners
+                        "light-yellow-bg": "#fef3c7", // For warning banners
+                        "light-blue-banner": "#dbeafe", // For info banners
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 min-h-screen flex flex-col">
+<nav class="bg-gray-800 text-white dark:bg-gray-900 shadow-md">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between h-16">
+<div class="flex items-center space-x-8">
+<div class="flex-shrink-0 text-xl font-semibold tracking-wide">
+                        Parcel Fair
+                    </div>
+<div class="hidden md:block">
+<div class="flex items-baseline space-x-4 text-sm font-medium">
+<a class="hover:text-gray-300 px-3 py-2 rounded-md" href="#">Home</a>
+<a class="hover:text-gray-300 px-3 py-2 rounded-md" href="#">About</a>
+<a class="hover:text-gray-300 px-3 py-2 rounded-md" href="#">Contact</a>
+<div class="relative group">
+<button class="hover:text-gray-300 px-3 py-2 rounded-md flex items-center">
+                                    Tools <span class="material-icons text-sm ml-1">arrow_drop_down</span>
+</button>
+</div>
+<div class="relative group">
+<button class="hover:text-gray-300 px-3 py-2 rounded-md flex items-center">
+                                    Connect <span class="material-icons text-sm ml-1">arrow_drop_down</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<span class="hidden lg:block text-sm text-gray-300">gustavot.gomes7@gmail.com</span>
+<button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium flex items-center transition-colors">
+<span class="material-icons text-sm mr-1">bolt</span> Upgrade Trial Account
+                    </button>
+<button class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+                        Log off
+                    </button>
+</div>
+</div>
+</div>
+</nav>
+<main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+<h1 class="text-3xl font-bold text-gray-900 dark:text-white uppercase mb-6">
+            CONSERVATION LAND TRUST
+        </h1>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="space-y-6">
+<div class="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-sm rounded-lg overflow-hidden">
+<div class="bg-blue-600 dark:bg-blue-800 text-white px-4 py-3 font-semibold text-lg text-center">
+                        Baker County, FL : 272N190000000000050
+                    </div>
+<div class="p-6">
+<div class="text-center mb-6">
+<h2 class="text-green-600 dark:text-green-400 font-bold text-2xl flex items-center justify-center gap-2">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                Tax Lien (2022)
+                            </h2>
+</div>
+<div class="grid grid-cols-2 gap-x-8 gap-y-2 mb-6">
+<div class="text-center sm:text-left">
+<div class="text-blue-600 dark:text-blue-400 font-bold text-2xl mb-2">9.72 acres</div>
+<div class="text-sm py-1 font-medium flex justify-between sm:justify-start sm:gap-2">
+<span class="text-gray-600 dark:text-gray-400">Tax Sale Year:</span>
+<span>2022 <i class="fas fa-question-circle text-blue-500 text-xs cursor-help"></i></span>
+</div>
+<div class="text-sm py-1 font-medium flex justify-between sm:justify-start sm:gap-2">
+<span class="text-gray-600 dark:text-gray-400">Tax Delinquent:</span>
+<span>2023 <i class="fas fa-question-circle text-blue-500 text-xs cursor-help"></i></span>
+</div>
+<div class="text-sm py-1 font-medium flex justify-between sm:justify-start sm:gap-2">
+<span class="text-gray-600 dark:text-gray-400">C/S Number:</span>
+<span>397</span>
+</div>
+<div class="text-sm py-1 font-medium flex justify-between sm:justify-start sm:gap-2">
+<span class="text-gray-600 dark:text-gray-400">Account #:</span>
+<span>0001895E</span>
+</div>
+</div>
+<div class="text-center sm:text-right">
+<div class="text-blue-600 dark:text-blue-400 font-bold text-2xl mb-2">Land Only</div>
+<div class="text-sm py-1 font-medium flex justify-between sm:justify-end sm:gap-2">
+<span class="text-gray-600 dark:text-gray-400">Amount Due:</span>
+<span>$151.73 <i class="fas fa-question-circle text-blue-500 text-xs cursor-help"></i></span>
+</div>
+<div class="text-sm py-1 font-medium flex justify-between sm:justify-end sm:gap-2">
+<span class="text-gray-600 dark:text-gray-400">Assessed:</span>
+<span>$4,659.00</span>
+</div>
+<div class="text-sm py-1 font-medium flex justify-between sm:justify-end sm:gap-2">
+<span class="text-gray-600 dark:text-gray-400">Land Value:</span>
+<span>$7,500.00</span>
+</div>
+<div class="text-sm py-1 font-medium flex justify-between sm:justify-end sm:gap-2">
+<span class="text-gray-600 dark:text-gray-400">Improvements:</span>
+<span>N/A</span>
+</div>
+<div class="text-sm py-1 font-medium flex justify-between sm:justify-end sm:gap-2 items-center mt-2">
+<span class="font-bold text-gray-800 dark:text-gray-200">Total Value:</span>
+<span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-2 py-1 rounded font-bold border border-green-200 dark:border-green-700">$7,500.00</span>
+</div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="bg-light-yellow-bg dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-md p-4 text-center">
+<div class="text-yellow-800 dark:text-yellow-200 font-bold text-lg flex items-center justify-center gap-2">
+<span class="material-icons">home</span> Addresses Unavailable During 7-day Trial
+                                </div>
+<div class="text-xs text-yellow-700 dark:text-yellow-300 mt-1 cursor-pointer hover:underline">Click Here to Subscribe Now!</div>
+</div>
+<div class="bg-light-green-bg dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md p-4 text-center cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/40 transition">
+<div class="text-green-800 dark:text-green-200 font-bold text-lg">
+                                    1 Tax Lien Available (2022)
+                                </div>
+<div class="text-xs text-green-700 dark:text-green-300 mt-1">click for tax lien details</div>
+</div>
+<div class="bg-light-blue-banner dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md p-4 text-center">
+<div class="text-blue-800 dark:text-blue-200 font-bold text-lg flex items-center justify-center gap-2">
+<span class="material-icons text-blue-600 dark:text-blue-400">help</span> Occupant Status Unknown
+                                </div>
+<div class="text-xs text-blue-700 dark:text-blue-300 italic mt-1">(last checked on 2/17/2026)</div>
+</div>
+</div>
+<div class="mt-6 text-sm text-gray-700 dark:text-gray-300 space-y-3">
+<p>
+<span class="font-bold text-gray-900 dark:text-white">Description:</span> 
+                                LEG 001000 ACRES SW 1/4 OF SW 1/4 OF SE 1/4 SEC 27-2N-19E DE SC IN OR 2018-7736 POM 18
+                            </p>
+<p>
+<span class="font-bold text-gray-900 dark:text-white">Opportunity Zone:</span> 
+                                12003040201 - Baker
+                            </p>
+<p class="flex items-center gap-1">
+<span>Low-Income Community</span>
+<a class="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1" href="#">
+<span class="material-icons text-sm">open_in_new</span> Opportunity Zone Information
+                                </a>
+</p>
+</div>
+<div class="mt-8 flex flex-col sm:flex-row gap-4">
+<button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded shadow-md flex items-center justify-center gap-2 transition">
+<span class="material-icons">location_on</span> View on Map
+                            </button>
+<button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded shadow-md flex items-center justify-center gap-2 transition">
+<span class="material-icons">favorite_border</span> Add Favorite
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<div class="bg-light-green-bg dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-t-lg p-3 text-center">
+<span class="text-green-800 dark:text-green-300 font-bold text-lg">Total Value : $7,500.00</span>
+</div>
+<div class="bg-gray-200 dark:bg-gray-700 rounded-b-lg overflow-hidden h-96 relative border border-gray-300 dark:border-gray-600 flex items-center justify-center">
+<div class="absolute inset-0 bg-gray-200 dark:bg-gray-800 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
+<div class="text-xs mb-8">Sorry, we have no imagery here.</div>
+<div class="text-2xl font-light text-white drop-shadow-md">Google Street View</div>
+<div class="mt-4 w-8 h-8 border-2 border-white rounded-full animate-spin border-t-transparent"></div>
+</div>
+<div class="absolute bottom-0 left-0 p-1">
+<img alt="Google" class="h-5 opacity-50 grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsFmhZ6pmPvOfTDOPtNTNsI3zEeE3mig4gDO_7tvKM4C3fYKSVxG3z3d-BCEZJa3LLlO78mB1hLRDGRkOA3AQyi-4SoWNeDdc0fB0avcs29AQ4OGSseseSbVEZ3XI9sYUHNnwRjEVXctSLnz2wppLunvNKJTsgktSOOsrRt5-ap_27DWIBrh_2IqRojfskF9HlLre-jXZYkT8Muq1_JbqvdDL60UfchmquYdXeYElM3_6QqoA_9n6nVn7mpZRemHatxwG02Eo1xlE"/>
+</div>
+<div class="absolute bottom-0 right-0 p-1 text-[10px] text-white bg-black/50 px-1">
+                        ©2020 Google
+                    </div>
+</div>
+<div class="bg-light-blue-banner dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-t-lg p-3 text-center flex items-center justify-center gap-2 mt-4">
+<span class="material-icons text-blue-600 dark:text-blue-400">location_on</span>
+<span class="text-blue-800 dark:text-blue-300 font-bold text-lg">30.546798 -82.397424</span>
+</div>
+<div class="bg-gray-200 dark:bg-gray-700 rounded-b-lg overflow-hidden h-64 relative border border-gray-300 dark:border-gray-600">
+<div class="w-full h-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBa4yNIEUiTCSHmUj_ulAu8mvq5C-oOZBQmgewGUiF_-51kwsyJ8NPWYuEaByU512Jq87HkUKPbQgW97GUdkBRdDl2DVw1VsY5KgYfVnYMpa_LuCHziG1uqAhJi88Axl6dqOoEICM9oeERe9T4fTrilndY87EDWcA4xxAM8XC98K5rhSS74VXHD0e-6d9Zjd51nSYPiGEs3ZRGsJ6PjNj2f7-I4c_ONGWQLqVPlBeR2LwHNaUcagg4uEsulMV2rcZSe7isKHBm1KDA');">
+<div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 w-32 h-32 border-2 border-green-500 bg-green-500/10"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-12 space-y-8">
+<div class="border border-border-light dark:border-border-dark rounded-lg overflow-hidden">
+<div class="bg-light-blue-bg dark:bg-blue-900/40 px-4 py-2 border-b border-border-light dark:border-border-dark flex items-center gap-2">
+<span class="material-icons text-blue-600 dark:text-blue-400 text-sm">info</span>
+<h3 class="font-bold text-blue-900 dark:text-blue-200">Parcel Numbers</h3>
+</div>
+<div class="bg-white dark:bg-surface-dark p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 text-sm">
+<div><span class="font-bold text-gray-900 dark:text-gray-100">Formatted Number:</span> 272N190000000000050</div>
+<div><span class="font-bold text-gray-900 dark:text-gray-100">Raw Number:</span> 272N190000000000050</div>
+<div><span class="font-bold text-gray-900 dark:text-gray-100">Account Number:</span> 0001895E</div>
+<div><span class="font-bold text-gray-900 dark:text-gray-100">PIN/PPIN:</span></div>
+<div><span class="font-bold text-gray-900 dark:text-gray-100">County FIPS:</span> 12003</div>
+</div>
+</div>
+<div class="border border-border-light dark:border-border-dark rounded-lg overflow-hidden">
+<div class="bg-light-blue-bg dark:bg-blue-900/40 px-4 py-2 border-b border-border-light dark:border-border-dark flex items-center gap-2">
+<span class="material-icons text-blue-600 dark:text-blue-400 text-sm">info</span>
+<h3 class="font-bold text-blue-900 dark:text-blue-200">Additional Parcel Number Formats</h3>
+</div>
+<div class="bg-white dark:bg-surface-dark p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-2 text-sm text-gray-700 dark:text-gray-300">
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">RawParcelNumber</span> 272N190000000000050</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">ShortParcelId</span> 2N19000000000050</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">DashedParcelId</span> 00</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">RawParcelNumber15</span> 272N19000000000</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">ShortParcelId16</span> 2N190000000000050</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">PaddedParcelId</span> 00</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">RawParcelNumber16</span> 272N190000000000</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">ShortParcelId17</span> 2N190000000000500</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">FormattedParcelId</span> 272N190000000000050</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">RawParcelNumber17</span> 272N1900000000005</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">ShortParcelId18</span> 2N1900000000005000</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">FormattedPaddedParcelId</span> 00</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">RawParcelNumber18</span> 272N190000000000050</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">TruncatedParcelId</span> 2N1900000000005</span></div>
+<div class="flex items-start gap-2"><span class="text-gray-400">•</span> <span><span class="font-bold text-gray-900 dark:text-gray-100">FormattedPaddedParcelIdX</span> 00.XXX</span></div>
+</div>
+</div>
+</div>
+</main>
+<footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-8 py-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-gray-500 dark:text-gray-400">
+<p>© 2026 - ParcelFair.com | <a class="text-blue-600 hover:underline" href="#">Disclaimer</a> | <a class="text-blue-600 hover:underline" href="#">Terms of Service</a> | <a class="text-blue-600 hover:underline" href="#">Privacy Policy</a></p>
+</div>
+</footer>
+
+</body></html>

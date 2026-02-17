@@ -6,6 +6,7 @@ import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { Dashboard } from './pages/Dashboard';
 import { Inventory } from './pages/Inventory';
+import { PropertyDetails } from './pages/PropertyDetails';
 import { PropertyWizard } from './pages/PropertyWizard';
 import { AuctionList } from './pages/AuctionList';
 import { AuctionService } from './services/api';
@@ -13,11 +14,13 @@ import { AuctionService } from './services/api';
 import { Analysis } from './pages/Analysis';
 import { Settings } from './pages/Settings';
 import MapIndex from './pages/MapIndex';
-import AuctionCalendar from './pages/AuctionCalendar';
+import AuctionCalendarStateView from './pages/AuctionCalendarStateView';
+import StateAuctionCalendar from './pages/StateAuctionCalendar';
 import OTCInventory from './pages/OTCInventory';
 import { Financials } from './pages/Financials';
 import { Reports } from './pages/Reports';
 import MyInventory from './pages/MyInventory';
+import { ParcelSearch } from './pages/ParcelSearch';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ... existing protected route logic
@@ -40,6 +43,7 @@ const App: React.FC = () => {
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="inventory" element={<Inventory />} />
+            <Route path="parcel" element={<ParcelSearch />} />
             <Route path="search" element={<div className="p-8 text-center text-slate-500">List Search Page (Coming Soon)</div>} />
             <Route path="/auctions" element={<AuctionList />} />
             <Route path="financials" element={<Financials />} />
@@ -48,9 +52,11 @@ const App: React.FC = () => {
             <Route path="settings" element={<Settings />} />
             <Route path="my-inventory" element={<MyInventory />} />
             <Route path="properties/new" element={<PropertyWizard />} />
+            <Route path="properties/:id" element={<PropertyDetails />} />
             <Route path="properties/:id/edit" element={<PropertyWizard />} />
             <Route path="map" element={<MapIndex />} />
-            <Route path="calendar" element={<AuctionCalendar />} />
+            <Route path="calendar" element={<AuctionCalendarStateView />} />
+            <Route path="calendar/:state" element={<StateAuctionCalendar />} />
             <Route path="inventory/otc" element={<OTCInventory />} />
             <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction</div>} />
           </Route>

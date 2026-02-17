@@ -181,3 +181,16 @@ export interface AuthState {
   isAuthenticated: boolean;
   token?: string;
 }
+
+export interface AuctionEvent {
+  id: string;
+  state: string;
+  county: string;
+  auction_type: string; // tax_deed, tax_lien, etc.
+  start_date: string;
+  end_date?: string;
+  status: string;
+  max_interest_rate?: number;
+  redemption_period?: number;
+  total_assets?: number;
+}

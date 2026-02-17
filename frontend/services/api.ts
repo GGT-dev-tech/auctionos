@@ -107,6 +107,22 @@ export const AuctionService = {
         return response.json();
     },
 
+    getAuctionCalendarOverview: async (year: number): Promise<any> => {
+        const response = await fetch(`${API_URL}/auctions/events/overview?year=${year}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch calendar overview');
+        return response.json();
+    },
+
+    getStateAuctionEvents: async (state: string, year: number): Promise<any[]> => {
+        const response = await fetch(`${API_URL}/auctions/events/${state}?year=${year}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch state events');
+        return response.json();
+    },
+
     bulkUpdate: async (ids: string[], action: 'update_status' | 'delete', status?: string): Promise<any> => {
         const response = await fetch(`${API_URL}/properties/bulk-update`, {
             method: 'POST',
@@ -588,6 +604,25 @@ export const InventoryService = {
         });
         if (!response.ok) throw new Error('Failed to fetch inventory items');
         return response.json();
+    },
+
+    getList: async (page: number = 1, limit: number = 100, filters?: any): Promise<any> => {
+        const queryParams = new URLSearchParams();
+        queryParams.append('skip', String((page - 1) * limit));
+        queryParams.append('limit', String(limit));
+        if (filters) {
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value) queryParams.append(key, String(value));
+            });
+        }
+
+        const response = await fetch(`${API_URL}/properties/?${queryParams.toString()}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch list');
+        // Standardizing response to { items: [], total: 0 }
+        const data = await response.json();
+        return { items: Array.isArray(data) ? data : [], total: 0 };
     },
 
     getOTC: async (params: { skip?: number, limit?: number, state?: string, county?: string } = {}): Promise<any> => {

@@ -12,3 +12,4 @@ from app.models.inventory import InventoryFolder, InventoryItem  # noqa
 from app.models.transaction import Transaction  # noqa
 from app.models.auction import Auction  # noqa
 from app.models.price_notice import PriceNotice  # noqa
+from app.models.auction_event import AuctionEvent  # noqa

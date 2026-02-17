@@ -1,0 +1,423 @@
+<html><head><script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#337ab7", // Bootstrap primary blue seen in headers
+          secondary: "#5cb85c", // Bootstrap success green
+          accent: "#f0ad4e", // Bootstrap warning orange
+          purple: "#9b59b6",
+          "background-light": "#f8f9fa",
+          "background-dark": "#1a202c",
+          "surface-light": "#ffffff",
+          "surface-dark": "#2d3748",
+          "text-light": "#333333",
+          "text-dark": "#e2e8f0",
+          "border-light": "#e5e7eb",
+          "border-dark": "#4a5568",
+        },
+        fontFamily: {
+          display: ["Inter", "sans-serif"],
+          body: ["Inter", "sans-serif"],
+        },
+        borderRadius: {
+          DEFAULT: "0.375rem",
+        },
+      },
+    },
+  };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+</head><body><div class="bg-background-light dark:bg-background-dark min-h-screen font-body text-text-light dark:text-text-dark pb-12">
+<nav class="bg-[#222222] dark:bg-[#111111] text-gray-300">
+<div class="max-w-[1400px] mx-auto px-4">
+<div class="flex items-center justify-between h-14">
+<div class="flex items-center space-x-8">
+<a class="text-xl font-bold text-gray-100 hover:text-white" href="#">Parcel Fair</a>
+<div class="hidden md:flex space-x-6 text-sm font-medium">
+<a class="hover:text-white transition-colors" href="#">Home</a>
+<a class="hover:text-white transition-colors" href="#">About</a>
+<a class="hover:text-white transition-colors" href="#">Contact</a>
+<div class="relative group">
+<button class="flex items-center hover:text-white transition-colors focus:outline-none">
+                Tools <span class="material-icons text-base ml-1">arrow_drop_down</span>
+</button>
+</div>
+<div class="relative group">
+<button class="flex items-center hover:text-white transition-colors focus:outline-none">
+                Connect <span class="material-icons text-base ml-1">arrow_drop_down</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex items-center space-x-4 text-sm">
+<span class="hidden lg:block text-gray-400">gustavot.gomes7@gmail.com</span>
+<button class="bg-[#5cb85c] hover:bg-[#449d44] text-white px-3 py-1.5 rounded flex items-center shadow-sm transition-colors font-semibold text-xs uppercase tracking-wide">
+<span class="material-icons text-sm mr-1">flash_on</span>
+            Upgrade Trial Account
+          </button>
+<button class="bg-[#f0ad4e] hover:bg-[#ec971f] text-white px-3 py-1.5 rounded shadow-sm transition-colors font-semibold text-xs uppercase tracking-wide">
+            Log off
+          </button>
+</div>
+</div>
+</div>
+</nav>
+<div class="bg-[#dff0d8] dark:bg-green-900 border-b border-[#d6e9c6] dark:border-green-800 text-[#3c763d] dark:text-green-100 py-4 px-4 text-center">
+<div class="max-w-[1400px] mx-auto flex flex-col items-center justify-center">
+<p class="font-bold text-lg flex items-center justify-center gap-2">
+<span class="material-icons">calendar_today</span>
+        Getting Started with Parcel Fair? Don't miss our next Parcel Fair 101 Online Training on 3/3/2026!
+      </p>
+<a class="text-sm hover:underline mt-1 opacity-80" href="#">click for registration details</a>
+</div>
+</div>
+<main class="max-w-[1400px] mx-auto px-4 py-8">
+<div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+<h1 class="text-3xl font-semibold text-primary dark:text-blue-400">Welcome to Parcel Fair!</h1>
+<div class="flex flex-wrap justify-center gap-2">
+<button class="bg-[#5cb85c] hover:bg-[#449d44] text-white px-4 py-2 rounded shadow-sm flex items-center transition-colors font-medium">
+<span class="material-icons text-sm mr-2">location_on</span>
+          Map Search
+        </button>
+<button class="bg-primary hover:bg-blue-700 text-white px-4 py-2 rounded shadow-sm flex items-center transition-colors font-medium">
+<span class="material-icons text-sm mr-2">search</span>
+          List Search
+        </button>
+<button class="bg-[#9b59b6] hover:bg-[#8e44ad] text-white px-4 py-2 rounded shadow-sm flex items-center transition-colors font-medium">
+<span class="material-icons text-sm mr-2">calendar_month</span>
+          Auction Calendar
+        </button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-lg shadow-sm overflow-hidden flex flex-col">
+<div class="bg-primary text-white text-center py-2 font-semibold text-lg">
+          My Favorites
+        </div>
+<div class="p-6 flex-grow flex flex-col justify-center">
+<div class="grid grid-cols-3 gap-4 text-center mb-6">
+<div>
+<div class="text-4xl text-green-700 dark:text-green-400 font-bold">0</div>
+<div class="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-tight">Total<br/>Favorites</div>
+</div>
+<div>
+<div class="text-4xl text-green-700 dark:text-green-400 font-bold">0</div>
+<div class="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-tight">Deeds &amp;<br/>Foreclosures</div>
+</div>
+<div>
+<div class="text-4xl text-green-700 dark:text-green-400 font-bold">0</div>
+<div class="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-tight">Tax<br/>Liens</div>
+</div>
+</div>
+<div class="text-center mt-auto">
+<button class="bg-[#5cb85c] hover:bg-[#449d44] text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+              View My Favorites
+            </button>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-lg shadow-sm overflow-hidden flex flex-col">
+<div class="bg-primary text-white text-center py-2 font-semibold text-lg">
+          My Saved Lists
+        </div>
+<div class="p-6 flex-grow flex flex-col justify-center">
+<div class="grid grid-cols-3 gap-4 text-center mb-6">
+<div>
+<div class="text-4xl text-green-700 dark:text-green-400 font-bold">0</div>
+<div class="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-tight">Saved<br/>Lists</div>
+</div>
+<div>
+<div class="text-4xl text-green-700 dark:text-green-400 font-bold">0</div>
+<div class="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-tight">Deeds &amp;<br/>Foreclosures</div>
+</div>
+<div>
+<div class="text-4xl text-green-700 dark:text-green-400 font-bold">0</div>
+<div class="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-tight">Tax<br/>Liens</div>
+</div>
+</div>
+<div class="text-center mt-auto">
+<button class="bg-[#5cb85c] hover:bg-[#449d44] text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+              View My Saved Lists
+            </button>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-lg shadow-sm overflow-hidden flex flex-col">
+<div class="bg-primary text-white text-center py-2 font-semibold text-lg">
+          My Price Notices
+        </div>
+<div class="p-6 flex-grow flex flex-col justify-center">
+<div class="grid grid-cols-3 gap-4 text-center mb-6">
+<div>
+<div class="text-4xl text-green-700 dark:text-green-400 font-bold">0</div>
+<div class="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-tight">Total<br/>Price Notices</div>
+</div>
+<div>
+<div class="text-4xl text-green-700 dark:text-green-400 font-bold">0</div>
+<div class="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-tight">Active<br/>Price Notices</div>
+</div>
+<div>
+<div class="text-4xl text-green-700 dark:text-green-400 font-bold">0</div>
+<div class="text-sm text-gray-600 dark:text-gray-300 mt-1 leading-tight">Expired<br/>Price Notices</div>
+</div>
+</div>
+<div class="text-center mt-auto">
+<button class="bg-[#5cb85c] hover:bg-[#449d44] text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+              Price Notice Organizer
+            </button>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-lg shadow-sm overflow-hidden">
+<div class="bg-primary text-white text-center py-3 font-semibold text-lg">
+          Top Deed &amp; Foreclosure Auctions
+        </div>
+<div class="p-4 border-b border-gray-200 dark:border-border-dark flex justify-around items-center bg-gray-50 dark:bg-gray-800">
+<div class="text-center">
+<span class="text-gray-600 dark:text-gray-400 font-semibold">Auctions:</span>
+<span class="text-green-700 dark:text-green-400 font-bold text-lg">1,723</span>
+</div>
+<div class="text-center">
+<span class="text-gray-600 dark:text-gray-400 font-semibold">Tax Deeds:</span>
+<span class="text-green-700 dark:text-green-400 font-bold text-lg">20,942</span>
+</div>
+</div>
+<div class="divide-y divide-gray-100 dark:divide-border-dark">
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-4">
+<div class="bg-primary text-white rounded w-12 h-12 flex flex-col items-center justify-center text-xs font-bold shrink-0">
+<span class="text-sm leading-none">20</span>
+<span class="uppercase leading-none mt-0.5">Feb</span>
+</div>
+<div class="flex-grow min-w-0">
+<div class="text-sm font-medium text-gray-900 dark:text-white truncate">PA: Wayne Repository Sale</div>
+</div>
+<div class="flex flex-col items-center text-xs text-primary dark:text-blue-300 w-20 shrink-0">
+<span class="material-icons text-base">location_on</span>
+<span>In-Person</span>
+</div>
+<div class="text-right text-sm text-gray-600 dark:text-gray-300 w-20 shrink-0">
+<div class="font-semibold">471</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">parcels</div>
+</div>
+<button class="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 rounded p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-icons text-sm">search</span>
+<span class="material-icons text-xs ml-0.5">arrow_drop_down</span>
+</button>
+</div>
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-4">
+<div class="bg-primary text-white rounded w-12 h-12 flex flex-col items-center justify-center text-xs font-bold shrink-0">
+<span class="text-sm leading-none">9</span>
+<span class="uppercase leading-none mt-0.5">Mar</span>
+</div>
+<div class="flex-grow min-w-0">
+<div class="text-sm font-medium text-gray-900 dark:text-white truncate">CA: Kern Tax Deed Auction</div>
+</div>
+<div class="flex flex-col items-center text-xs text-green-600 dark:text-green-400 w-20 shrink-0">
+<span class="material-icons text-base">flash_on</span>
+<span>Online</span>
+</div>
+<div class="text-right text-sm text-gray-600 dark:text-gray-300 w-20 shrink-0">
+<div class="font-semibold">928</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">parcels</div>
+</div>
+<button class="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 rounded p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-icons text-sm">search</span>
+<span class="material-icons text-xs ml-0.5">arrow_drop_down</span>
+</button>
+</div>
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-4">
+<div class="bg-primary text-white rounded w-12 h-12 flex flex-col items-center justify-center text-xs font-bold shrink-0">
+<span class="text-sm leading-none">11</span>
+<span class="uppercase leading-none mt-0.5">Mar</span>
+</div>
+<div class="flex-grow min-w-0">
+<div class="text-sm font-medium text-gray-900 dark:text-white truncate">PA: Washington Repository Sale</div>
+</div>
+<div class="flex flex-col items-center text-xs text-primary dark:text-blue-300 w-20 shrink-0">
+<span class="material-icons text-base">location_on</span>
+<span>In-Person</span>
+</div>
+<div class="text-right text-sm text-gray-600 dark:text-gray-300 w-20 shrink-0">
+<div class="font-semibold">787</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">parcels</div>
+</div>
+<button class="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 rounded p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-icons text-sm">search</span>
+<span class="material-icons text-xs ml-0.5">arrow_drop_down</span>
+</button>
+</div>
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-4">
+<div class="bg-primary text-white rounded w-12 h-12 flex flex-col items-center justify-center text-xs font-bold shrink-0">
+<span class="text-sm leading-none">16</span>
+<span class="uppercase leading-none mt-0.5">Mar</span>
+</div>
+<div class="flex-grow min-w-0">
+<div class="text-sm font-medium text-gray-900 dark:text-white truncate">CA: San Diego Tax Sale</div>
+</div>
+<div class="flex flex-col items-center text-xs text-green-600 dark:text-green-400 w-20 shrink-0">
+<span class="material-icons text-base">flash_on</span>
+<span>Online</span>
+</div>
+<div class="text-right text-sm text-gray-600 dark:text-gray-300 w-20 shrink-0">
+<div class="font-semibold">698</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">parcels</div>
+</div>
+<button class="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 rounded p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-icons text-sm">search</span>
+<span class="material-icons text-xs ml-0.5">arrow_drop_down</span>
+</button>
+</div>
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-4">
+<div class="bg-primary text-white rounded w-12 h-12 flex flex-col items-center justify-center text-xs font-bold shrink-0">
+<span class="text-sm leading-none">21</span>
+<span class="uppercase leading-none mt-0.5">Apr</span>
+</div>
+<div class="flex-grow min-w-0">
+<div class="text-sm font-medium text-gray-900 dark:text-white truncate">TN: Shelby Tax Sale #2202</div>
+</div>
+<div class="flex flex-col items-center text-xs text-green-600 dark:text-green-400 w-20 shrink-0">
+<span class="material-icons text-base">flash_on</span>
+<span>Online</span>
+</div>
+<div class="text-right text-sm text-gray-600 dark:text-gray-300 w-20 shrink-0">
+<div class="font-semibold">807</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">parcels</div>
+</div>
+<button class="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 rounded p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-icons text-sm">search</span>
+<span class="material-icons text-xs ml-0.5">arrow_drop_down</span>
+</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-lg shadow-sm overflow-hidden">
+<div class="bg-primary text-white text-center py-3 font-semibold text-lg">
+          Top Tax Lien Auctions
+        </div>
+<div class="p-4 border-b border-gray-200 dark:border-border-dark flex justify-around items-center bg-gray-50 dark:bg-gray-800">
+<div class="text-center">
+<span class="text-gray-600 dark:text-gray-400 font-semibold">Auctions:</span>
+<span class="text-green-700 dark:text-green-400 font-bold text-lg">54</span>
+</div>
+<div class="text-center">
+<span class="text-gray-600 dark:text-gray-400 font-semibold">Tax Liens:</span>
+<span class="text-green-700 dark:text-green-400 font-bold text-lg">49,244</span>
+</div>
+</div>
+<div class="divide-y divide-gray-100 dark:divide-border-dark">
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-4">
+<div class="bg-primary text-white rounded w-12 h-12 flex flex-col items-center justify-center text-xs font-bold shrink-0">
+<span class="text-sm leading-none">17</span>
+<span class="uppercase leading-none mt-0.5">Feb</span>
+</div>
+<div class="flex-grow min-w-0">
+<div class="text-sm font-medium text-gray-900 dark:text-white truncate">NY: Nassau Tax Lien Sale</div>
+</div>
+<div class="flex flex-col items-center text-xs text-green-600 dark:text-green-400 w-20 shrink-0">
+<span class="material-icons text-base">flash_on</span>
+<span>Online</span>
+</div>
+<div class="text-right text-sm text-gray-600 dark:text-gray-300 w-20 shrink-0">
+<div class="font-semibold">3,743</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">parcels</div>
+</div>
+<button class="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 rounded p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-icons text-sm">search</span>
+<span class="material-icons text-xs ml-0.5">arrow_drop_down</span>
+</button>
+</div>
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-4">
+<div class="bg-primary text-white rounded w-12 h-12 flex flex-col items-center justify-center text-xs font-bold shrink-0">
+<span class="text-sm leading-none">18</span>
+<span class="uppercase leading-none mt-0.5">Feb</span>
+</div>
+<div class="flex-grow min-w-0">
+<div class="text-sm font-medium text-gray-900 dark:text-white truncate">AZ: Apache 2026 Tax Lien Auction</div>
+</div>
+<div class="flex flex-col items-center text-xs text-green-600 dark:text-green-400 w-20 shrink-0">
+<span class="material-icons text-base">flash_on</span>
+<span>Online</span>
+</div>
+<div class="text-right text-sm text-gray-600 dark:text-gray-300 w-20 shrink-0">
+<div class="font-semibold">8,950</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">parcels</div>
+</div>
+<button class="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 rounded p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-icons text-sm">search</span>
+<span class="material-icons text-xs ml-0.5">arrow_drop_down</span>
+</button>
+</div>
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-4">
+<div class="bg-primary text-white rounded w-12 h-12 flex flex-col items-center justify-center text-xs font-bold shrink-0">
+<span class="text-sm leading-none">26</span>
+<span class="uppercase leading-none mt-0.5">Feb</span>
+</div>
+<div class="flex-grow min-w-0">
+<div class="text-sm font-medium text-gray-900 dark:text-white truncate">AZ: Pima 2026 Tax Lien Auction</div>
+</div>
+<div class="flex flex-col items-center text-xs text-green-600 dark:text-green-400 w-20 shrink-0">
+<span class="material-icons text-base">flash_on</span>
+<span>Online</span>
+</div>
+<div class="text-right text-sm text-gray-600 dark:text-gray-300 w-20 shrink-0">
+<div class="font-semibold">7,417</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">parcels</div>
+</div>
+<button class="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 rounded p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-icons text-sm">search</span>
+<span class="material-icons text-xs ml-0.5">arrow_drop_down</span>
+</button>
+</div>
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-4">
+<div class="bg-primary text-white rounded w-12 h-12 flex flex-col items-center justify-center text-xs font-bold shrink-0">
+<span class="text-sm leading-none">2</span>
+<span class="uppercase leading-none mt-0.5">Mar</span>
+</div>
+<div class="flex-grow min-w-0">
+<div class="text-sm font-medium text-gray-900 dark:text-white truncate">NE: Douglas 2026 Tax Lien Auction</div>
+</div>
+<div class="flex flex-col items-center text-xs text-green-600 dark:text-green-400 w-20 shrink-0">
+<span class="material-icons text-base">flash_on</span>
+<span>Online</span>
+</div>
+<div class="text-right text-sm text-gray-600 dark:text-gray-300 w-20 shrink-0">
+<div class="font-semibold">4,340</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">parcels</div>
+</div>
+<button class="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 rounded p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-icons text-sm">search</span>
+<span class="material-icons text-xs ml-0.5">arrow_drop_down</span>
+</button>
+</div>
+<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-4">
+<div class="bg-primary text-white rounded w-12 h-12 flex flex-col items-center justify-center text-xs font-bold shrink-0">
+<span class="text-sm leading-none">4</span>
+<span class="uppercase leading-none mt-0.5">May</span>
+</div>
+<div class="flex-grow min-w-0">
+<div class="text-sm font-medium text-gray-900 dark:text-white truncate">IN: Lake 2026 Commissioner's Sale</div>
+</div>
+<div class="flex flex-col items-center text-xs text-green-600 dark:text-green-400 w-20 shrink-0">
+<span class="material-icons text-base">flash_on</span>
+<span>Online</span>
+</div>
+<div class="text-right text-sm text-gray-600 dark:text-gray-300 w-20 shrink-0">
+<div class="font-semibold">6,315</div>
+<div class="text-xs text-gray-500 dark:text-gray-400">parcels</div>
+</div>
+<button class="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500 rounded p-1.5 shrink-0 flex items-center justify-center shadow-sm">
+<span class="material-icons text-sm">search</span>
+<span class="material-icons text-xs ml-0.5">arrow_drop_down</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div></body></html>

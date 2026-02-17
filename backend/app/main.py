@@ -42,7 +42,9 @@ else:
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
         "https://auctionos.up.railway.app",
-        "https://auctionos-production.up.railway.app"
+        "https://auctionos-production.up.railway.app",
+        "http://localhost:5293",
+        "http://127.0.0.1:5293"
     ]
 
 app.add_middleware(

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Parcel Fair Map Search</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#2563eb", // Using a rich blue similar to the screenshot
+                        secondary: "#1e3a8a", // Darker blue for sidebar buttons
+                        accent: "#16a34a", // Green for upgrade button
+                        "background-light": "#f3f4f6",
+                        "background-dark": "#1f2937",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#374151",
+                    },
+                    fontFamily: {
+                        display: ["Roboto", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style>.modal-scroll::-webkit-scrollbar {
+    width: 8px
+    }
+.modal-scroll::-webkit-scrollbar-track {
+    background: transparent
+    }
+.modal-scroll::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px
+    }
+.dark .modal-scroll::-webkit-scrollbar-thumb {
+    background-color: #4b5563
+    }.map-bg {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuAorwGC6a2HPTghB4L1V4GHYqAqI5yUVFoUyvzGwGBVwIto3LMnzFKpmuuf2-sBpF1KaNKo_s89xLQ_cibeouYfsDcISbNVNQIgEALN1JzwxxRrylo_AqFN2PkIOuMS-fnP7pEO1npQBE88KEXGQEFOqvBrfFvqRpoCoKn3qfrF4HLN_k-Ur3xSBnNTQBp_sl7kvZUujICJiRb2EXNHcPexAXTGvHy03WXppk-2rsUHeTUQx64bVOynQSszRlj-efNGdIg1x50TDfs);
+    background-size: cover;
+    background-position: center
+    }</style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-100 overflow-hidden h-screen w-screen relative">
+<div class="absolute inset-0 z-0 map-bg brightness-75"></div>
+<div class="absolute top-4 left-4 z-10 bg-white dark:bg-gray-800 rounded shadow-md flex overflow-hidden">
+<button class="px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border-r border-gray-200 dark:border-gray-600">Map</button>
+<button class="px-4 py-2 text-sm font-bold bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white">Satellite</button>
+</div>
+<div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 w-96 max-w-full">
+<div class="bg-white dark:bg-gray-800 rounded shadow-md flex items-center p-2">
+<span class="material-icons text-gray-400 mx-2">location_on</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400" placeholder="Jump to location..." type="text"/>
+<button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+<span class="material-icons text-xl">search</span>
+</button>
+</div>
+</div>
+<div class="absolute top-0 right-0 h-full w-64 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm shadow-xl z-20 flex flex-col p-4 border-l border-gray-200 dark:border-gray-700">
+<div class="bg-blue-50 dark:bg-gray-800 rounded-lg p-4 mb-6 text-center border border-blue-100 dark:border-gray-700 shadow-sm">
+<h3 class="text-secondary dark:text-blue-300 font-medium mb-2 text-lg">Enjoying your trial?</h3>
+<button class="w-full bg-accent hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition duration-150">
+                Upgrade Today!
+            </button>
+</div>
+<div class="flex flex-col space-y-3">
+<button class="flex items-center w-full bg-secondary hover:bg-blue-900 text-white py-3 px-4 rounded shadow transition duration-150 border-l-4 border-blue-400">
+<span class="material-icons mr-3">search</span>
+<span class="font-medium">Search Filters</span>
+</button>
+<button class="flex items-center w-full bg-secondary hover:bg-blue-900 text-white py-3 px-4 rounded shadow transition duration-150 opacity-90 hover:opacity-100">
+<span class="material-icons mr-3">place</span>
+<span class="font-medium">Markers &amp; Overlays</span>
+</button>
+<button class="flex items-center w-full bg-secondary hover:bg-blue-900 text-white py-3 px-4 rounded shadow transition duration-150 opacity-90 hover:opacity-100">
+<span class="material-icons mr-3">list</span>
+<span class="font-medium">Parcel Results</span>
+</button>
+</div>
+<div class="mt-auto">
+</div>
+</div>
+<div class="absolute inset-0 z-30 flex items-center justify-center p-4 pointer-events-none">
+<div class="bg-surface-light dark:bg-surface-dark w-full max-w-4xl max-h-[90vh] rounded-lg shadow-2xl flex flex-col pointer-events-auto overflow-hidden border border-gray-200 dark:border-gray-600">
+<div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 relative">
+<button class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+<span class="material-icons">close</span>
+</button>
+<div class="flex w-full">
+<button class="flex-1 py-4 text-center border-b-4 border-gray-600 dark:border-gray-400 bg-gray-50 dark:bg-gray-700">
+<div class="flex items-center justify-center text-xl font-bold text-gray-800 dark:text-white">
+<span class="material-icons mr-2 text-2xl">search</span>
+                            Search Filters
+                        </div>
+</button>
+<button class="flex-1 py-4 text-center border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+<div class="flex items-center justify-center text-xl font-bold text-blue-500 dark:text-blue-400">
+<span class="material-icons mr-2 text-2xl">bolt</span>
+                            Quick Searches
+                        </div>
+</button>
+</div>
+</div>
+<div class="p-6 overflow-y-auto modal-scroll bg-gray-50 dark:bg-gray-800/50">
+<div class="flex flex-col md:flex-row gap-4 mb-6 items-end bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+<div class="flex-1">
+<label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">State</label>
+<select class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white h-10">
+<option>Florida</option>
+<option>Texas</option>
+<option>California</option>
+</select>
+</div>
+<div class="flex-1">
+<label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">County</label>
+<select class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white h-10">
+<option>All Counties</option>
+<option>Miami-Dade</option>
+<option>Broward</option>
+</select>
+</div>
+<div>
+<button class="bg-primary hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow h-10 flex items-center">
+                            GO
+                        </button>
+</div>
+</div>
+<div class="text-center mb-4">
+<span class="text-sm font-semibold text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900 px-3 py-1 rounded-full">Matching Properties: Loading...</span>
+</div>
+<div class="mb-6">
+<div class="flex items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+<h3 class="text-lg font-bold text-secondary dark:text-blue-300 flex items-center">
+<span class="material-icons mr-1">filter_alt</span> Optional Filters:
+                        </h3>
+<button class="text-xs bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 px-2 py-1 rounded flex items-center">
+<span class="material-icons text-sm mr-1">refresh</span> Clear Filters
+                        </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Inventory</label>
+</div>
+<select class="form-select block w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm">
+<option>All Inventories</option>
+</select>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Improvements</label>
+</div>
+<select class="form-select block w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm">
+<option>All Parcel Types</option>
+</select>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Availability</label>
+</div>
+<select class="form-select block w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm">
+<option>All Available</option>
+</select>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">County Appraisal from</label>
+</div>
+<div class="flex items-center gap-2">
+<input class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="min $" type="text"/>
+<span class="text-gray-500 text-sm">to</span>
+<input class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="max $" type="text"/>
+</div>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Amount Due from</label>
+</div>
+<div class="flex items-center gap-2">
+<input class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="min $" type="text"/>
+<span class="text-gray-500 text-sm">to</span>
+<input class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="max $" type="text"/>
+</div>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Acreage from</label>
+</div>
+<div class="flex items-center gap-2">
+<input class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="min #" type="text"/>
+<span class="text-gray-500 text-sm">to</span>
+<input class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="max #" type="text"/>
+</div>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Occupancy</label>
+</div>
+<select class="form-select block w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm">
+<option>All Occupancy Types</option>
+</select>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Owner Location</label>
+</div>
+<select class="form-select block w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm">
+<option>All Owner Locations</option>
+</select>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Keyword Search</label>
+</div>
+<input class="w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm" placeholder="parcel #, zip, pin, own" type="text"/>
+</div>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-bold text-gray-500 dark:text-gray-400 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center">
+<span class="material-icons mr-1">filter_list</span> Advanced Filters:
+                    </h3>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Added</label>
+</div>
+<select class="form-select block w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm text-gray-500">
+<option>Whenever</option>
+</select>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Unavailable</label>
+</div>
+<select class="form-select block w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm text-gray-500">
+<option>Do Not Include</option>
+</select>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Located Within</label>
+</div>
+<select class="form-select block w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm text-gray-500">
+<option>Unlimited</option>
+</select>
+</div>
+<div>
+<div class="flex items-center mb-1">
+<span class="material-icons text-primary text-sm mr-1">help</span>
+<label class="text-sm font-bold text-gray-700 dark:text-gray-300">Max Results</label>
+</div>
+<select class="form-select block w-full rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 text-sm text-gray-500">
+<option>Unlimited</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-4 left-4 z-10 flex gap-2">
+<button class="bg-white dark:bg-gray-800 p-3 rounded shadow hover:bg-gray-100 dark:hover:bg-gray-700">
+<span class="material-icons text-gray-600 dark:text-gray-300">my_location</span>
+</button>
+<button class="bg-white dark:bg-gray-800 p-3 rounded shadow hover:bg-gray-100 dark:hover:bg-gray-700">
+<span class="material-icons text-gray-600 dark:text-gray-300">search</span>
+</button>
+</div>
+<div class="absolute bottom-20 right-72 z-10 flex flex-col gap-2">
+<button class="bg-white dark:bg-gray-800 p-2 rounded shadow hover:bg-gray-100 dark:hover:bg-gray-700">
+<span class="material-icons text-gray-600 dark:text-gray-300">fullscreen</span>
+</button>
+</div>
+<div class="absolute bottom-4 right-72 z-10 flex flex-col gap-2">
+<button class="bg-yellow-400 dark:bg-yellow-600 p-2 rounded shadow hover:bg-yellow-500 dark:hover:bg-yellow-700">
+<span class="material-icons text-white">person</span>
+</button>
+</div>
+
+</body></html>

@@ -1,0 +1,233 @@
+<html><head><script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#3b82f6", // Blue specific to the UI actions
+          secondary: "#4ade80", // Green for success/upgrade
+          "background-light": "#ffffff",
+          "background-dark": "#1f2937",
+          "surface-light": "#f3f4f6",
+          "surface-dark": "#374151",
+          "text-light": "#1f2937",
+          "text-dark": "#e5e7eb",
+          "header-bg": "#222222",
+        },
+        fontFamily: {
+          display: ["Inter", "sans-serif"],
+          body: ["Inter", "sans-serif"],
+        },
+        borderRadius: {
+          DEFAULT: "0.375rem",
+        },
+      },
+    },
+  };
+</script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+</head><body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-body antialiased min-h-screen flex flex-col">
+<nav class="bg-header-bg dark:bg-gray-900 text-gray-300 text-sm py-2 px-4 shadow-md">
+<div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center space-x-6">
+<a class="text-xl font-semibold text-white tracking-wide hover:text-gray-200" href="#">Parcel Fair</a>
+<div class="hidden md:flex space-x-4">
+<a class="hover:text-white transition-colors" href="#">Home</a>
+<a class="hover:text-white transition-colors" href="#">About</a>
+<a class="hover:text-white transition-colors" href="#">Contact</a>
+<div class="relative group">
+<button class="flex items-center hover:text-white transition-colors focus:outline-none">
+              Tools <span class="material-icons text-base ml-1">arrow_drop_down</span>
+</button>
+</div>
+<div class="relative group">
+<button class="flex items-center hover:text-white transition-colors focus:outline-none">
+              Connect <span class="material-icons text-base ml-1">arrow_drop_down</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex items-center space-x-4 ml-auto">
+<span class="hidden lg:inline text-gray-400">gustavot.gomes7@gmail.com</span>
+<button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded flex items-center transition-colors shadow-sm text-xs font-medium">
+<span class="material-icons text-sm mr-1">bolt</span> Upgrade Trial Account
+        </button>
+<button class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1.5 rounded transition-colors shadow-sm text-xs font-medium">
+          Log off
+        </button>
+</div>
+</div>
+</nav>
+<div class="bg-blue-50 dark:bg-blue-900/20 py-8 px-4 text-center border-b border-blue-100 dark:border-blue-800">
+<p class="text-xl md:text-2xl text-blue-800 dark:text-blue-200 font-light mb-4">
+      Enjoying your free trial? Subscribe to Parcel Fair for unlimited access and enjoy all of our features!
+    </p>
+<button class="bg-secondary hover:bg-green-500 text-white font-semibold py-2 px-6 rounded shadow-md transition-colors text-lg">
+      Upgrade Subscription
+    </button>
+</div>
+<main class="flex-grow w-full px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
+<div class="max-w-[1920px] mx-auto mb-6">
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+<div class="flex items-center gap-3">
+<h1 class="text-3xl font-bold text-gray-900 dark:text-white">Parcel Search</h1>
+<span class="material-icons text-blue-500 text-4xl">search</span>
+<span class="text-2xl font-light text-gray-600 dark:text-gray-400">51 parcels</span>
+</div>
+<div class="flex flex-wrap items-center gap-2">
+<button class="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white py-2 px-4 rounded shadow-sm text-sm font-medium flex items-center transition-colors">
+<span class="material-icons text-base mr-1">file_download</span> Export to CSV
+          </button>
+<button class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white py-2 px-4 rounded shadow-sm text-sm font-medium flex items-center transition-colors">
+<span class="material-icons text-base mr-1">save_alt</span> Save Results to List
+          </button>
+<button class="bg-sky-400 hover:bg-sky-500 dark:bg-sky-600 dark:hover:bg-sky-700 text-white py-2 px-4 rounded shadow-sm text-sm font-medium flex items-center transition-colors">
+<span class="material-icons text-base mr-1">location_on</span> Show Results on Map
+          </button>
+</div>
+</div>
+</div>
+<div class="max-w-[1920px] mx-auto bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+<div class="overflow-x-auto">
+<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+<thead class="bg-gray-50 dark:bg-gray-900">
+<tr>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap sticky left-0 z-10 bg-gray-50 dark:bg-gray-900" scope="col">Parcel Number</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">C/S#</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">PIN</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Name</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">County</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">State</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Availability</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Sale Year</th>
+<th class="px-3 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Amount Due</th>
+<th class="px-3 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Acres</th>
+<th class="px-3 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Total Value</th>
+<th class="px-3 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Land</th>
+<th class="px-3 py-3 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Building</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Parcel Type</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Status</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Address</th>
+<th class="px-3 py-3 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap" scope="col">Next Auction</th>
+</tr>
+</thead>
+<tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+<td class="px-3 py-4 whitespace-nowrap sticky left-0 bg-white dark:bg-gray-800 z-10">
+<a class="text-blue-600 dark:text-blue-400 hover:underline font-medium" href="#">071N19MINR00000012</a>
+</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">146</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400"></td>
+<td class="px-3 py-4 text-gray-900 dark:text-gray-200 max-w-xs break-words">Murphy Minerals Corp</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Baker</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">FL</td>
+<td class="px-3 py-4 whitespace-nowrap text-green-600 dark:text-green-400 font-medium">Available</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">2017</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$68.07</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">0.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$500.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$500.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$0.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Land Only</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Lien</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">FL</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400"></td>
+</tr>
+<tr class="bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+<td class="px-3 py-4 whitespace-nowrap sticky left-0 bg-gray-50 dark:bg-gray-900/50 z-10">
+<a class="text-blue-600 dark:text-blue-400 hover:underline font-medium" href="#">071N19MINR00000014</a>
+</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">113</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400"></td>
+<td class="px-3 py-4 text-gray-900 dark:text-gray-200 max-w-xs break-words">Conley Judy</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Baker</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">FL</td>
+<td class="px-3 py-4 whitespace-nowrap text-green-600 dark:text-green-400 font-medium">Available</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">2021</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$182.44</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">0.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$5,000.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$5,000.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$0.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Land Only</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Lien</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">FL</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400"></td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+<td class="px-3 py-4 whitespace-nowrap sticky left-0 bg-white dark:bg-gray-800 z-10">
+<a class="text-blue-600 dark:text-blue-400 hover:underline font-medium" href="#">181N19MINR00000012</a>
+</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">308</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400"></td>
+<td class="px-3 py-4 text-gray-900 dark:text-gray-200 max-w-xs break-words">Murphy Minerals Corp</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Baker</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">FL</td>
+<td class="px-3 py-4 whitespace-nowrap text-green-600 dark:text-green-400 font-medium">Available</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">2017</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$68.07</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">0.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$500.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$500.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$0.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Land Only</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Lien</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">FL</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400"></td>
+</tr>
+<tr class="bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+<td class="px-3 py-4 whitespace-nowrap sticky left-0 bg-gray-50 dark:bg-gray-900/50 z-10">
+<a class="text-blue-600 dark:text-blue-400 hover:underline font-medium" href="#">191N19MINR00000012</a>
+</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">325</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400"></td>
+<td class="px-3 py-4 text-gray-900 dark:text-gray-200 max-w-xs break-words">Murphy Minerals Corp</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Baker</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">FL</td>
+<td class="px-3 py-4 whitespace-nowrap text-green-600 dark:text-green-400 font-medium">Available</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">2017</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$68.07</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">0.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$500.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$500.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$0.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Land Only</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Lien</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">FL</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400"></td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+<td class="px-3 py-4 whitespace-nowrap sticky left-0 bg-white dark:bg-gray-800 z-10">
+<a class="text-blue-600 dark:text-blue-400 hover:underline font-medium" href="#">201N19MINR00000012</a>
+</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">348</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400"></td>
+<td class="px-3 py-4 text-gray-900 dark:text-gray-200 max-w-xs break-words">Murphy Minerals Corp</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Baker</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">FL</td>
+<td class="px-3 py-4 whitespace-nowrap text-green-600 dark:text-green-400 font-medium">Available</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">2017</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$68.07</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">0.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$500.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$500.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-right text-gray-900 dark:text-gray-200">$0.00</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Land Only</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">Lien</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">FL</td>
+<td class="px-3 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400"></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<footer class="bg-gray-100 dark:bg-gray-900 py-6 text-center border-t border-gray-200 dark:border-gray-800">
+<p class="text-sm text-gray-500 dark:text-gray-400">© 2026 Parcel Fair - All rights reserved</p>
+</footer>
+
+</body></html>
