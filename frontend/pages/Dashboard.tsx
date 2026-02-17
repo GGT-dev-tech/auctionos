@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DashboardService } from '../services/api';
+import { DashboardService, AuctionService, InventoryService } from '../services/api';
 import { Property } from '../types';
 import { HunterMap } from '../components/HunterMap';
 import { Link } from 'react-router-dom';
@@ -7,12 +7,15 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import { Calendar, ShoppingBag, ArrowRight } from 'lucide-react';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
+  const [upcomingAuctions, setUpcomingAuctions] = useState<any[]>([]);
+  const [otcStats, setOtcStats] = useState<any>(null);
 
   // Filters
   const [selectedState, setSelectedState] = useState<string>('');
@@ -21,8 +24,26 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const dashboardData = await DashboardService.getInitData();
+        const [dashboardData, calendarData, otcData] = await Promise.all([
+          DashboardService.getInitData(),
+          AuctionService.getCalendar(),
+          InventoryService.getOTC({ limit: 1 }) // Just to get stats if returned, or we can use dashboardData if enhanced
+        ]);
+
         setData(dashboardData);
+
+        // Process Calendar Data
+        const upcoming = Object.entries(calendarData)
+          .flatMap(([date, auctions]: [string, any]) => auctions)
+          .filter((a: any) => new Date(a.auction_date) >= new Date())
+          .sort((a: any, b: any) => new Date(a.auction_date).getTime() - new Date(b.auction_date).getTime())
+          .slice(0, 5);
+        setUpcomingAuctions(upcoming);
+
+        // Process OTC Data - Assuming getOTC returns list, we might need a stats endpoint or just use list length
+        // actually getOTC returns a list. 
+        setOtcStats({ count: otcData.length, label: 'Properties Available' });
+
       } catch (e) {
         console.error("Failed to load dashboard data", e);
       } finally {
@@ -35,9 +56,6 @@ export const Dashboard: React.FC = () => {
   const totalValue = data?.quick_stats?.total_value || 0;
   const activeAuctions = data?.quick_stats?.active_count || 0;
   const pending = data?.quick_stats?.pending_count || 0;
-
-  // Filter propertis for "Recent Activity" or if we want to show a list alongside map
-  // For now, consistent with design, map is main focus.
 
   const mapData = data?.county_stats || [];
 
@@ -77,13 +95,15 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Quick Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Value (Opening Bids)', icon: 'payments', value: `$${totalValue.toLocaleString()}`, color: 'text-emerald-500' },
+          { label: 'Total Value', icon: 'payments', value: `$${totalValue.toLocaleString()}`, color: 'text-emerald-500' },
           { label: 'Active Auctions', icon: 'gavel', value: activeAuctions.toString(), color: 'text-blue-500' },
+          { label: 'OTC Inventory', icon: 'shopping_bag', value: otcStats ? otcStats.count : '-', color: 'text-purple-500', link: '/inventory/otc' },
           { label: 'Pending / Draft', icon: 'pending_actions', value: pending.toString(), color: 'text-amber-500' },
         ].map((stat, idx) => (
-          <div key={idx} className="flex flex-col gap-3 rounded-xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
+          <div key={idx} className="flex flex-col gap-3 rounded-xl p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors relative">
+            {stat.link && <Link to={stat.link} className="absolute inset-0" />}
             <div className="flex items-center justify-between">
               <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold uppercase tracking-wide">{stat.label}</p>
               <span className={`material-symbols-outlined ${stat.color}`}>{stat.icon}</span>
@@ -95,26 +115,58 @@ export const Dashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Map Section */}
-      <div className="flex flex-col gap-4">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Hunter's Map</h2>
-        {/* Note: HunterMap handles its own container styling */}
-        <HunterMap
-          data={mapData}
-          onSelectRegion={(state, county) => {
-            setSelectedState(state); // We might need a map from county to state if state is missing
-            setSelectedCounty(county);
-            console.log("Selected:", state, county);
-          }}
-        />
-        <div className="flex gap-4 text-sm text-slate-500">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-[#0A3412] rounded-full"></div>
-            <span>High Activity</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Map Section */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Hunter's Map</h2>
+            <Link to="/map" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+              Full Map <ArrowRight size={14} />
+            </Link>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-[#EAEAEC] border border-slate-300 rounded-full"></div>
-            <span>No Activity</span>
+          <HunterMap
+            data={mapData}
+            onSelectRegion={(state, county) => {
+              setSelectedState(state);
+              setSelectedCounty(county);
+              console.log("Selected:", state, county);
+            }}
+          />
+        </div>
+
+        {/* Upcoming Auctions Widget */}
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Upcoming Auctions</h2>
+            <Link to="/calendar" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+              View Calendar <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex-1">
+            {loading ? (
+              <div className="p-4 space-y-4">
+                {[1, 2, 3].map(i => <div key={i} className="h-12 bg-slate-100 rounded animate-pulse" />)}
+              </div>
+            ) : upcomingAuctions.length > 0 ? (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {upcomingAuctions.map((auc: any) => (
+                  <div key={auc.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="font-semibold text-slate-900 dark:text-white line-clamp-1">{auc.name}</h3>
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-200 whitespace-nowrap">
+                        {new Date(auc.auction_date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center text-xs text-slate-500">
+                      <span className="material-symbols-outlined text-[14px] mr-1">location_on</span>
+                      {auc.county}, {auc.state}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center text-slate-500">No upcoming auctions found.</div>
+            )}
           </div>
         </div>
       </div>

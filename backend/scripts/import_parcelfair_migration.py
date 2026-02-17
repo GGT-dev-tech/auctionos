@@ -237,9 +237,9 @@ if __name__ == "__main__":
     db = SessionLocal()
     
     # host path
-    # base_path = "/Users/gustavo/Downloads/auctionos/migrationParcelFair"
+    base_path = "/Users/gustavo/Downloads/auctionos/migrationParcelFair"
     # container path (assuming copied to backend/)
-    base_path = "migrationParcelFair"
+    # base_path = "migrationParcelFair"
     
     try:
         import_auctions(f"{base_path}/auctionsAL.csv", db)

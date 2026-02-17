@@ -1,8 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { Property, PropertyStatus } from '../types';
 import { NotesManager } from './NotesManager';
 import { API_BASE_URL, AuctionService } from '../services/api';
+import { MapContainer, TileLayer, Polygon, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix for default marker icon
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 interface Props {
     property: Property | null;
@@ -19,7 +30,7 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
     // Update local state if prop changes
-    React.useEffect(() => {
+    useEffect(() => {
         setProperty(initialProperty);
     }, [initialProperty]);
 
@@ -64,6 +75,38 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                 return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">Draft</span>;
         }
     };
+
+    // Parse polygon if string
+    const polygonData = React.useMemo(() => {
+        if (!property.polygon) return null;
+        try {
+            return typeof property.polygon === 'string' ? JSON.parse(property.polygon) : property.polygon;
+        } catch (e) {
+            return null;
+        }
+    }, [property.polygon]);
+
+    // Parse market values if string
+    const marketValues = React.useMemo(() => {
+        if (!property.details?.market_values) return null;
+        try {
+            return typeof property.details.market_values === 'string' ? JSON.parse(property.details.market_values) : property.details.market_values;
+        } catch (e) {
+            return null;
+        }
+    }, [property.details?.market_values]);
+
+    // Parse coordinates for Polygon (GeoJSON is usually [lng, lat], Leaflet wants [lat, lng])
+    const leafletPolygon = React.useMemo(() => {
+        if (!polygonData || !polygonData.coordinates) return null;
+        // Assuming GeoJSON Polygon structure: coordinates is array of rings, first ring is outer
+        // GeoJSON: [ [ [lng, lat], [lng, lat] ] ]
+        try {
+            return polygonData.coordinates[0].map((coord: number[]) => [coord[1], coord[0]]);
+        } catch (e) {
+            return null;
+        }
+    }, [polygonData]);
 
     return (
         <>
@@ -127,6 +170,25 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                             <span className="material-symbols-outlined text-[18px]">location_on</span>
                             {property.address}, {property.city}, {property.state} {property.zip_code}
                         </div>
+                        {/* Additional Header Badges */}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {property.inventory_type && (
+                                <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-200">
+                                    {property.inventory_type}
+                                </span>
+                            )}
+                            {property.tax_status && (
+                                <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded border border-amber-200">
+                                    {property.tax_status}
+                                </span>
+                            )}
+                            {property.next_auction_date && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-200 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[12px]">calendar_month</span>
+                                    {new Date(property.next_auction_date).toLocaleDateString()}
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
                         {getStatusBadge(property.status as PropertyStatus)}
@@ -162,10 +224,13 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                                 {/* Key Stats */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                                        <p className="text-xs text-slate-500 uppercase font-semibold">Price</p>
+                                        <p className="text-xs text-slate-500 uppercase font-semibold">Price / Value</p>
                                         <p className="text-lg font-bold text-slate-900 dark:text-white">
-                                            {property.price ? `$${property.price.toLocaleString()}` : '-'}
+                                            {property.price ? `$${property.price.toLocaleString()}` : (property.marketValue ? `$${property.marketValue.toLocaleString()}` : '-')}
                                         </p>
+                                        {property.amount_due && (
+                                            <p className="text-xs text-red-500 font-medium">Due: ${property.amount_due.toLocaleString()}</p>
+                                        )}
                                     </div>
                                     <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                                         <p className="text-xs text-slate-500 uppercase font-semibold">Max Bid (70% Est)</p>
@@ -228,26 +293,52 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                                     </div>
                                 </div>
 
-                                {/* Description */}
-                                <div>
-                                    <h4 className="font-semibold text-slate-900 dark:text-white mb-2">Description</h4>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
-                                        {property.description || "No description available."}
-                                    </p>
+                                {/* Description & Legal */}
+                                <div className="space-y-4">
+                                    <div>
+                                        <h4 className="font-semibold text-slate-900 dark:text-white mb-2">Description</h4>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">
+                                            {property.description || "No description available."}
+                                        </p>
+                                    </div>
+                                    {property.legal_description && (
+                                        <div>
+                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-2">Legal Description</h4>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-mono bg-slate-50 p-2 rounded border border-slate-100 dark:bg-slate-800 dark:border-slate-700">
+                                                {property.legal_description}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {property.owner_info && (
+                                        <div>
+                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-2">Owner Info</h4>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                {property.owner_info}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Map Placeholder or Mini Map */}
-                            <div className="h-64 md:h-full bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden relative">
+                            {/* Map Section */}
+                            <div className="h-[400px] md:h-full bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden relative border border-slate-200 dark:border-slate-700">
                                 {property.latitude && property.longitude ? (
-                                    <iframe
-                                        width="100%"
-                                        height="100%"
-                                        frameBorder="0"
-                                        scrolling="no"
-                                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${property.longitude - 0.01}%2C${property.latitude - 0.01}%2C${property.longitude + 0.01}%2C${property.latitude + 0.01}&layer=mapnik&marker=${property.latitude}%2C${property.longitude}`}
-                                        style={{ border: 0 }}
-                                    ></iframe>
+                                    <MapContainer
+                                        center={[property.latitude, property.longitude]}
+                                        zoom={16}
+                                        style={{ height: '100%', width: '100%' }}
+                                    >
+                                        <TileLayer
+                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                        />
+                                        <Marker position={[property.latitude, property.longitude]}>
+                                            <Popup>{property.address}</Popup>
+                                        </Marker>
+                                        {leafletPolygon && (
+                                            <Polygon positions={leafletPolygon} color="blue" />
+                                        )}
+                                    </MapContainer>
                                 ) : (
                                     <div className="flex h-full items-center justify-center text-slate-400 flex-col gap-2">
                                         <span className="material-symbols-outlined text-4xl">map</span>
@@ -298,11 +389,11 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                                     <p className="text-xs text-slate-400 mt-2">Based on 70% of Market Value</p>
                                 </div>
                                 <div className="p-6 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-100 dark:border-slate-600">
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Zillow Est. Value</p>
-                                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                        {property.details?.estimated_value ? `$${property.details.estimated_value.toLocaleString()}` : '-'}
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Amount Due</p>
+                                    <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+                                        {property.amount_due ? `$${property.amount_due.toLocaleString()}` : '-'}
                                     </p>
-                                    <p className="text-xs text-slate-400 mt-2">Latest market estimate</p>
+                                    <p className="text-xs text-slate-400 mt-2">Total Tax/Lien Amount</p>
                                 </div>
                                 <div className="p-6 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-100 dark:border-slate-600">
                                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Equity Spread</p>
@@ -314,13 +405,26 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                                 </div>
                             </div>
 
+                            {marketValues && (
+                                <div>
+                                    <h3 className="font-bold text-lg mb-4 dark:text-white flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[20px]">equalizer</span>
+                                        Market Value Data
+                                    </h3>
+                                    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden p-4">
+                                        <pre className="text-xs text-slate-600 dark:text-slate-300 overflow-auto whitespace-pre-wrap font-mono">
+                                            {JSON.stringify(marketValues, null, 2)}
+                                        </pre>
+                                    </div>
+                                </div>
+                            )}
+
                             <div>
                                 <h3 className="font-bold text-lg mb-4 dark:text-white flex items-center gap-2">
                                     <span className="material-symbols-outlined text-[20px]">receipt_long</span>
                                     Linked Expenses
                                 </h3>
                                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                                    {/* Simplified table or list of expenses */}
                                     {property.price ? (
                                         <div className="p-4 flex items-center justify-between border-b last:border-0 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                             <div className="flex flex-col">
@@ -339,7 +443,6 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                 </div>
             </Modal>
 
-            {/* Image Preview Modal */}
             {selectedImage && (
                 <div
                     className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"

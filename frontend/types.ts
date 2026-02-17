@@ -90,6 +90,7 @@ export interface PropertyDetails {
   zillow_url?: string;
   gsi_url?: string;
   gsi_data?: string;
+  market_values?: any; // JSON
   max_bid?: number;
 }
 
@@ -120,6 +121,15 @@ export interface Property {
   longitude?: number;
   smart_tag?: string;
   local_id?: number;
+
+  // ParcelFair Specific
+  inventory_type?: string;
+  legal_description?: string;
+  owner_info?: string;
+  tax_status?: string;
+  next_auction_date?: string;
+  amount_due?: number;
+  polygon?: any; // JSON
 
   // Relations
   details?: PropertyDetails;
