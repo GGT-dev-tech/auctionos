@@ -55,7 +55,16 @@ export const ListSearch: React.FC = () => {
             if (filters.min_appraisal) params.min_appraisal = parseFloat(String(filters.min_appraisal));
             if (filters.max_appraisal) params.max_appraisal = parseFloat(String(filters.max_appraisal));
 
-            const data = await AuctionService.search(params);
+            // Clean params: remove empty strings and undefined/null
+            const cleanParams: any = {};
+            Object.keys(params).forEach(key => {
+                const val = params[key];
+                if (val !== '' && val !== null && val !== undefined) {
+                    cleanParams[key] = val;
+                }
+            });
+
+            const data = await AuctionService.search(cleanParams);
             setProperties(data);
             setShowFilters(false); // Close filters on search
         } catch (error) {
@@ -87,7 +96,16 @@ export const ListSearch: React.FC = () => {
                 if (initialFilters.improvements === 'yes') apiParams.improvements = true;
                 if (initialFilters.improvements === 'no') apiParams.improvements = false;
 
-                const data = await AuctionService.search(apiParams);
+                // Clean params
+                const cleanParams: any = {};
+                Object.keys(apiParams).forEach(key => {
+                    const val = apiParams[key];
+                    if (val !== '' && val !== null && val !== undefined) {
+                        cleanParams[key] = val;
+                    }
+                });
+
+                const data = await AuctionService.search(cleanParams);
                 setProperties(data);
             } catch (e) { console.error(e); }
             finally { setLoading(false); }
@@ -124,15 +142,16 @@ export const ListSearch: React.FC = () => {
                         Results <span className="text-slate-400 font-normal text-base">({properties.length} loaded)</span>
                     </h1>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button className="p-2 text-slate-500 hover:text-blue-600 rounded hover:bg-slate-100">
-                        <span className="material-symbols-outlined">grid_view</span>
+                {/* Header Actions matching ParcelFair */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <button className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white py-2 px-4 rounded shadow-sm text-sm font-medium flex items-center transition-colors">
+                        <span className="material-symbols-outlined text-base mr-1">file_download</span> Export to CSV
                     </button>
-                    <button className="p-2 text-blue-600 bg-blue-50 rounded border border-blue-200">
-                        <span className="material-symbols-outlined">view_list</span>
+                    <button className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white py-2 px-4 rounded shadow-sm text-sm font-medium flex items-center transition-colors">
+                        <span className="material-symbols-outlined text-base mr-1">save_alt</span> Save Results to List
                     </button>
-                    <button className="p-2 text-slate-500 hover:text-blue-600 rounded hover:bg-slate-100">
-                        <span className="material-symbols-outlined">map</span>
+                    <button className="bg-sky-400 hover:bg-sky-500 dark:bg-sky-600 dark:hover:bg-sky-700 text-white py-2 px-4 rounded shadow-sm text-sm font-medium flex items-center transition-colors">
+                        <span className="material-symbols-outlined text-base mr-1">location_on</span> Show Results on Map
                     </button>
                 </div>
             </div>
@@ -160,90 +179,107 @@ export const ListSearch: React.FC = () => {
                     </div>
                 ) : (
                     <div className="bg-white dark:bg-slate-900 rounded-lg shadow border border-slate-200 dark:border-slate-800 overflow-hidden">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 font-medium">
-                                <tr>
-                                    <th className="p-3">State/County</th>
-                                    <th className="p-3">Parcel ID</th>
-                                    <th className="p-3">Address</th>
-                                    <th className="p-3">Owner</th>
-                                    <th className="p-3 text-right">Appraised</th>
-                                    <th className="p-3 text-right">Amt Due/Bid</th>
-                                    <th className="p-3 text-right">Acres</th>
-                                    <th className="p-3 text-center">Status</th>
-                                    <th className="p-3 text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {properties.length === 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+                                <thead className="bg-slate-50 dark:bg-slate-800">
                                     <tr>
-                                        <td colSpan={9} className="p-8 text-center text-slate-500">
-                                            No properties found matching filters.
-                                        </td>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap sticky left-0 z-10 bg-slate-50 dark:bg-slate-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Parcel Number</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">C/S#</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">PIN</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Name</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">County</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">State</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Availability</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Sale Year</th>
+                                        <th className="px-3 py-3 text-right text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Amount Due</th>
+                                        <th className="px-3 py-3 text-right text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Acres</th>
+                                        <th className="px-3 py-3 text-right text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Total Value</th>
+                                        <th className="px-3 py-3 text-right text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Land</th>
+                                        <th className="px-3 py-3 text-right text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Building</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Parcel Type</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Status</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Address</th>
+                                        <th className="px-3 py-3 text-left text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">Next Auction</th>
                                     </tr>
-                                ) : (
-                                    properties.map(p => (
-                                        <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                                            <td className="p-3">
-                                                <div className="font-medium text-slate-900 dark:text-white">{p.state}</div>
-                                                <div className="text-xs text-slate-500">{p.county}</div>
-                                            </td>
-                                            <td className="p-3 font-mono text-xs select-all text-blue-600 hover:underline cursor-pointer" onClick={() => setSelectedProperty(p)}>{p.parcel_id}</td>
-                                            <td className="p-3 max-w-[200px] truncate" title={p.address || ''}>
-                                                {p.address || 'N/A'}
-                                            </td>
-                                            <td className="p-3 max-w-[150px] truncate" title={p.owner_name || ''}>
-                                                {p.owner_name || '-'}
-                                            </td>
-                                            <td className="p-3 text-right font-mono">
-                                                {p.details?.total_market_value
-                                                    ? `$${p.details.total_market_value.toLocaleString()}`
-                                                    : (p.details?.assessed_value ? `$${p.details.assessed_value.toLocaleString()}` : '-')}
-                                            </td>
-                                            <td className="p-3 text-right font-mono font-bold text-emerald-600">
-                                                {p.amount_due ? `$${p.amount_due.toLocaleString()}` : (p.price ? `$${p.price.toLocaleString()}` : '-')}
-                                            </td>
-                                            <td className="p-3 text-right font-mono text-slate-500">
-                                                {p.details?.lot_acres ? `${p.details.lot_acres} ac` : '-'}
-                                            </td>
-                                            <td className="p-3 text-center">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                                                    ${p.status === 'active' ? 'bg-green-100 text-green-800' :
-                                                        p.status === 'sold' ? 'bg-red-100 text-red-800' :
-                                                            'bg-gray-100 text-gray-800'}`}>
-                                                    {p.status}
-                                                </span>
-                                                {p.inventory_type === 'otc' && (
-                                                    <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">OTC</span>
-                                                )}
-                                            </td>
-                                            <td className="p-3 text-center">
-                                                <button
-                                                    onClick={() => setSelectedProperty(p)}
-                                                    className="text-blue-600 hover:text-blue-800 font-medium text-xs border border-blue-200 bg-blue-50 px-3 py-1 rounded hover:bg-blue-100"
-                                                >
-                                                    Details
-                                                </button>
+                                </thead>
+                                <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800">
+                                    {properties.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={17} className="p-8 text-center text-slate-500">
+                                                No properties found matching filters.
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                    ) : (
+                                        properties.map(p => (
+                                            <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                <td className="px-3 py-4 whitespace-nowrap sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                                    <span
+                                                        className="text-blue-600 dark:text-blue-400 hover:underline font-bold font-mono cursor-pointer"
+                                                        onClick={() => setSelectedProperty(p)}
+                                                    >
+                                                        {p.parcel_id}
+                                                    </span>
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 text-xs">
+                                                    {p.auction_details?.case_number || p.auction_details?.certificate_number || '-'}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 text-xs"></td>
+                                                <td className="px-3 py-4 text-slate-900 dark:text-slate-200 max-w-xs truncate text-xs font-medium" title={p.owner_name || ''}>
+                                                    {p.owner_name || 'Unknown'}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 text-xs">{p.county}</td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 text-xs">{p.state}</td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-green-600 dark:text-green-400 font-bold text-xs">Available</td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 text-xs">{p.tax_sale_year || '-'}</td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-right text-slate-900 dark:text-slate-200 font-mono text-xs font-bold">
+                                                    {p.amount_due ? `$${p.amount_due.toLocaleString()}` : '-'}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-right text-slate-900 dark:text-slate-200 text-xs text-xs">
+                                                    {p.details?.lot_acres || '-'}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-right text-slate-900 dark:text-slate-200 text-xs font-medium">
+                                                    {p.details?.total_market_value || p.details?.assessed_value ? `$${(p.details?.total_market_value || p.details?.assessed_value).toLocaleString()}` : '-'}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-right text-slate-500 dark:text-slate-400 text-xs">
+                                                    {p.details?.land_value ? `$${p.details.land_value.toLocaleString()}` : '-'}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-right text-slate-500 dark:text-slate-400 text-xs">
+                                                    {p.details?.improvement_value ? `$${p.details.improvement_value.toLocaleString()}` : '-'}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 text-xs capitalize">
+                                                    {p.property_type || 'Land Only'}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 text-xs">
+                                                    Lien
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 text-xs max-w-[150px] truncate" title={p.address || ''}>
+                                                    {p.address || ''}
+                                                </td>
+                                                <td className="px-3 py-4 whitespace-nowrap text-slate-500 dark:text-slate-400 text-xs">
+                                                    {p.next_auction_date || '-'}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table >
+                        </div>
+                    </div >
                 )}
-            </div>
+            </div >
 
             {/* Details Modal */}
-            {selectedProperty && (
-                <PropertyDetailsModal
-                    property={selectedProperty}
-                    onClose={() => setSelectedProperty(null)}
-                    onUpdate={() => {
-                        fetchProperties(); // Refresh list if updated
-                    }}
-                />
-            )}
-        </div>
+            {
+                selectedProperty && (
+                    <PropertyDetailsModal
+                        property={selectedProperty}
+                        onClose={() => setSelectedProperty(null)}
+                        onUpdate={() => {
+                            fetchProperties(); // Refresh list if updated
+                        }}
+                    />
+                )
+            }
+        </div >
     );
 };

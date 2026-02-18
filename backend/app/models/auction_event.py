@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Float, Date, Enum, DateTime
+from sqlalchemy import Column, String, Integer, Float, Date, Enum, DateTime, Text
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 import enum
@@ -34,6 +34,15 @@ class AuctionEvent(Base):
     # Specifics
     max_interest_rate = Column(Float, nullable=True) # e.g. 18.0 for 18%
     redemption_period = Column(Integer, nullable=True) # In months
+    
+    # New CSV Fields
+    auction_time = Column(String(50), nullable=True)
+    location = Column(String(255), nullable=True)
+    registration_link = Column(String(500), nullable=True)
+    purchase_link = Column(String(500), nullable=True)
+    list_link = Column(String(500), nullable=True)
+    parcels_count = Column(Integer, default=0)
+    notes = Column(Text, nullable=True)
     
     # Computed/Cached counts (can be updated via background job)
     total_assets = Column(Integer, default=0)

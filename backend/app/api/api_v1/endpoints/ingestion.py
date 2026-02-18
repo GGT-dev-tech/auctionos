@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.schemas.property import PropertyCreate, PropertyDetailsCreate, AuctionDetailsCreate
@@ -262,23 +262,29 @@ async def trigger_import(
 @router.post("/import-parcelfair", response_model=dict)
 async def import_parcelfair_csv(
     file: UploadFile = File(...),
+    import_type: str = Query("properties", enum=["properties", "calendar"]),
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
     Import ParcelFair CSV data.
-    Updates existing properties by Parcel Number, creates new ones.
+    Supports 'properties' (default) or 'calendar' type.
     """
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Invalid file type. Please upload a CSV.")
 
     contents = await file.read()
-    decoded = contents.decode('utf-8', errors='replace')
+    
+    from app.services.import_service import ImportService
     
     try:
-        stats = parcelfair_importer.import_csv(db, decoded)
+        if import_type == "calendar":
+            stats = ImportService.import_calendar_csv(db, contents)
+        else:
+            stats = ImportService.import_properties_csv(db, contents)
+            
         return {
-            "message": "Import processed successfully.",
+            "message": f"Import of {import_type} processed successfully.",
             "stats": stats
         }
     except Exception as e:

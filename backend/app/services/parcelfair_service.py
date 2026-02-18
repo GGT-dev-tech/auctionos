@@ -22,9 +22,86 @@ class ParcelFairImporter:
         except ValueError:
             return None
 
-    def import_csv(self, db: Session, file_content: str) -> Dict[str, Any]:
+    def import_csv(self, db: Session, file_content: str, import_type: str = "properties") -> Dict[str, Any]:
         """
-        Parses CSV content and updates/creates properties and auction events.
+        Parses CSV content and updates/creates records based on import type.
+        """
+        if import_type == "calendar":
+            return self.import_auction_calendar(db, file_content)
+        elif import_type == "properties":
+            return self.import_properties(db, file_content)
+        else:
+            raise ValueError(f"Unknown import type: {import_type}")
+
+    def import_auction_calendar(self, db: Session, file_content: str) -> Dict[str, Any]:
+        reader = csv.DictReader(io.StringIO(file_content))
+        stats = {
+            "total_rows": 0, "added": 0, "updated": 0, "skipped": 0, "errors": 0, "error_messages": []
+        }
+
+        for row in reader:
+            stats["total_rows"] += 1
+            try:
+                # Fields: State, County Name, Auction Date, Tax Status, Time, Location
+                state = row.get('State')
+                county = row.get('County Name')
+                date_str = row.get('Auction Date')
+                tax_status = row.get('Tax Status')
+                
+                if not state or not county or not date_str:
+                    stats["skipped"] += 1
+                    continue
+
+                # Parse Date
+                try:
+                    start_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    stats["errors"] += 1
+                    stats["error_messages"].append(f"Row {stats['total_rows']}: Invalid Date {date_str}")
+                    continue
+
+                # Map Type
+                auction_type = AuctionEventType.TAX_DEED # Default
+                if 'Lien' in tax_status or 'lien' in tax_status.lower():
+                    auction_type = AuctionEventType.TAX_LIEN
+                elif 'Redeemable' in tax_status:
+                    auction_type = AuctionEventType.REDEEMABLE_DEED
+                
+                # Check Existing
+                existing = db.query(AuctionEvent).filter(
+                    AuctionEvent.state == state,
+                    AuctionEvent.county == county,
+                    AuctionEvent.auction_type == auction_type,
+                    AuctionEvent.start_date == start_date
+                ).first()
+
+                if existing:
+                    # Update info
+                    existing.status = AuctionEventStatus.ACTIVE
+                    stats["updated"] += 1
+                else:
+                    # Create New
+                    new_event = AuctionEvent(
+                        state=state,
+                        county=county,
+                        auction_type=auction_type,
+                        status=AuctionEventStatus.ACTIVE,
+                        start_date=start_date,
+                        total_assets=0 # Will be updated when properties are imported
+                    )
+                    db.add(new_event)
+                    stats["added"] += 1
+            
+            except Exception as e:
+                stats["errors"] += 1
+                stats["error_messages"].append(f"Row {stats['total_rows']}: {str(e)}")
+
+        db.commit()
+        return stats
+
+    def import_properties(self, db: Session, file_content: str) -> Dict[str, Any]:
+        """
+        Parses Property CSV content and updates/creates properties and auction events.
         """
         reader = csv.DictReader(io.StringIO(file_content))
         

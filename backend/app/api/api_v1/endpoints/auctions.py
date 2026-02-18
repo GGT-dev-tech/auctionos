@@ -92,7 +92,9 @@ def get_auction_calendar_overview(
         if not state: continue
         
         month = str(event.start_date.month)
-        auct_type = event.auction_type.value # Enum to string
+        auct_type = event.auction_type # It's a string column, so no .value needed
+        if hasattr(auct_type, 'value'): # Safety fallback if it somehow IS an enum
+             auct_type = auct_type.value
         
         if state not in overview:
             overview[state] = {}

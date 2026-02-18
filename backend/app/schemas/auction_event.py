@@ -13,6 +13,15 @@ class AuctionEventBase(BaseModel):
     status: AuctionEventStatus = AuctionEventStatus.UPCOMING
     max_interest_rate: Optional[float] = None
     redemption_period: Optional[int] = None
+    
+    # New CSV Fields
+    auction_time: Optional[str] = None
+    location: Optional[str] = None
+    registration_link: Optional[str] = None
+    purchase_link: Optional[str] = None
+    list_link: Optional[str] = None
+    parcels_count: Optional[int] = 0
+    notes: Optional[str] = None
 
 # Properties to receive on item creation
 class AuctionEventCreate(AuctionEventBase):

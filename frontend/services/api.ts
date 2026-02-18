@@ -606,11 +606,11 @@ export const InventoryService = {
         return response.json();
     },
 
-    importParcelFairCsv: async (file: File) => {
+    importParcelFairCsv: async (file: File, importType: 'properties' | 'calendar' = 'properties') => {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${API_URL}/ingestion/import-parcelfair`, {
+        const response = await fetch(`${API_URL}/ingestion/import-parcelfair?import_type=${importType}`, {
             method: 'POST',
             headers: getMultiPartHeaders(),
             body: formData,

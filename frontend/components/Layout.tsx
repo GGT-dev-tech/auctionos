@@ -17,10 +17,11 @@ export const Layout: React.FC = () => {
     { icon: 'search', label: 'List Search', path: '/search' },
     { icon: 'real_estate_agent', label: 'Property Search and Editing', path: '/inventory' },
     { icon: 'inventory_2', label: 'My Inventory', path: '/my-inventory' },
-    { icon: 'gavel', label: 'Auctions', path: '/auctions' },
+    { icon: 'calendar_month', label: 'Auction Calendar', path: '/calendar' },
     { icon: 'description', label: 'Reports', path: '/reports' },
     { icon: 'monitoring', label: 'Financials', path: '/financials' },
     { icon: 'analytics', label: 'Analysis', path: '/analysis' },
+    { icon: 'upload_file', label: 'Import Data', path: '/admin/import' },
     { icon: 'settings', label: 'Settings', path: '/settings' },
   ];
 

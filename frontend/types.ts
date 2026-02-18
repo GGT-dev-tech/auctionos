@@ -201,4 +201,12 @@ export interface AuctionEvent {
   max_interest_rate?: number;
   redemption_period?: number;
   total_assets?: number;
+  property_count?: number;
+  notes?: string;
+  location?: string;
+  auction_time?: string; // Mapped from backend 'auction_time'
+  registration_link?: string;
+  purchase_link?: string;
+  list_link?: string;
+  parcels_count?: number;
 }

@@ -54,10 +54,39 @@ export const MapCmp: React.FC<MapCmpProps> = ({ properties }) => {
                     return (
                         <Marker key={prop.id} position={[prop.latitude, prop.longitude]}>
                             <Popup>
-                                <b>{prop.title || prop.address}</b><br />
-                                {prop.address}<br />
-                                {prop.city}, {prop.state}<br />
-                                {prop.smart_tag && <span className="text-xs bg-slate-100 text-slate-600 px-1 rounded">{prop.smart_tag}</span>}
+                                <div className="min-w-[200px]">
+                                    <div className="font-bold text-sm mb-1">{prop.address}</div>
+                                    <div className="text-xs text-slate-600 mb-2">
+                                        {prop.city}, {prop.state} {prop.zip_code}
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs mb-3">
+                                        <div className="text-slate-500">Owner:</div>
+                                        <div className="font-medium truncate" title={prop.owner_name || ''}>{prop.owner_name || 'N/A'}</div>
+
+                                        <div className="text-slate-500">Value:</div>
+                                        <div className="font-medium">
+                                            {prop.details?.total_market_value
+                                                ? `$${prop.details.total_market_value.toLocaleString()}`
+                                                : (prop.details?.assessed_value ? `$${prop.details.assessed_value.toLocaleString()}` : '-')}
+                                        </div>
+
+                                        <div className="text-slate-500">Acres:</div>
+                                        <div className="font-medium">{prop.details?.lot_acres || '-'}</div>
+
+                                        <div className="text-slate-500">Due:</div>
+                                        <div className="font-medium text-emerald-600 font-bold">
+                                            {prop.amount_due ? `$${prop.amount_due.toLocaleString()}` : (prop.price ? `$${prop.price.toLocaleString()}` : '-')}
+                                        </div>
+                                    </div>
+
+                                    <a
+                                        href={`/#/property/${prop.id}`}
+                                        className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 rounded transition-colors"
+                                    >
+                                        View Details
+                                    </a>
+                                </div>
                             </Popup>
                         </Marker>
                     );

@@ -111,60 +111,51 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
     return (
         <>
             <Modal isOpen={isOpen} onClose={onClose} title="Property Details" size="xl">
-                {/* Header Info */}
+                {/* Custom Header matching ParcelFair */}
                 <div className="mb-6">
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                        <div className="flex-1">
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-                                {property.address}
-                            </h2>
-                            <div className="text-sm text-slate-500 dark:text-slate-400 flex flex-wrap gap-4">
-                                <span>{property.city}, {property.state} {property.zip_code}</span>
-                                <span className="text-slate-300">|</span>
-                                <span className="font-mono">PID: {property.parcel_id}</span>
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            {getStatusBadge(property.status as PropertyStatus)}
-                            <button
-                                onClick={handleEnrich}
-                                disabled={isRefreshing}
-                                className="p-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                                title="Refresh Data"
-                            >
-                                <span className={`material-symbols-outlined text-[20px] ${isRefreshing ? 'animate-spin' : ''}`}>sync</span>
-                            </button>
-                            <button
-                                onClick={handleDownloadReport}
-                                className="p-1.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-                                title="Download Report"
-                            >
-                                <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
-                            </button>
-                        </div>
+                    <div className="bg-blue-600 dark:bg-blue-800 text-white px-4 py-3 font-semibold text-lg text-center rounded-t-lg">
+                        {property.county}, {property.state} : {property.parcel_id}
                     </div>
+                    <div className="bg-white dark:bg-slate-900 border-x border-b border-slate-200 dark:border-slate-700 p-6 rounded-b-lg shadow-sm">
+                        <div className="text-center mb-6">
+                            <h2 className="text-green-600 dark:text-green-400 font-bold text-2xl flex items-center justify-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                Tax Lien ({property.tax_sale_year || '2025'})
+                            </h2>
+                        </div>
 
-                    {/* Tags Bar */}
-                    <div className="flex flex-wrap gap-2 mt-3">
-                        {property.inventory_type && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-200 uppercase font-bold tracking-wider">{property.inventory_type}</span>}
-                        {property.items && (property.items as any[]).map((tag: string) => (
-                            <span key={tag} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">{tag}</span>
-                        ))}
+                        {/* Action Buttons (Top for mobile, or below header) */}
+                        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                            <button
+                                onClick={() => setActiveTab('map')}
+                                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded shadow-md flex items-center justify-center gap-2 transition"
+                            >
+                                <span className="material-symbols-outlined">location_on</span> View on Map
+                            </button>
+                            <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded shadow-md flex items-center justify-center gap-2 transition">
+                                <span className="material-symbols-outlined">favorite_border</span> Add Favorite
+                            </button>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 justify-center">
+                            {getStatusBadge(property.status as PropertyStatus)}
+                            {property.inventory_type && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded border border-purple-200 uppercase font-bold tracking-wider">{property.inventory_type}</span>}
+                        </div>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6 bg-slate-50/50 dark:bg-slate-800/50 rounded-t-lg">
-                    {(['overview', 'gallery', 'notes', 'financials'] as const).map((tab) => (
+                <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6 bg-slate-50/50 dark:bg-slate-800/50 rounded-t-lg overflow-x-auto">
+                    {(['overview', 'financials', 'auction', 'map', 'street_view', 'gallery', 'notes'] as const).map((tab) => (
                         <button
                             key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors capitalize ${activeTab === tab
+                            onClick={() => setActiveTab(tab as any)}
+                            className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors capitalize whitespace-nowrap ${activeTab === tab
                                 ? 'border-blue-600 text-blue-600 bg-white dark:bg-slate-900'
                                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                         >
-                            {tab}
+                            {tab.replace('_', ' ')}
                         </button>
                     ))}
                 </div>
@@ -172,184 +163,145 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                 {/* Content */}
                 <div className="min-h-[400px]">
                     {activeTab === 'overview' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                            {/* LEFT COLUMN */}
+                            {/* LEFT COLUMN: Property Identifiers & Details */}
                             <div className="space-y-6">
+                                <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <div className="text-center sm:text-left">
+                                        <div className="text-blue-600 dark:text-blue-400 font-bold text-2xl mb-4">
+                                            {property.details?.lot_acres ? `${property.details.lot_acres} acres` : 'N/A Acres'}
+                                        </div>
 
-                                {/* Snapshot / Map */}
-                                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                                    <div className="h-48 relative">
-                                        {property.latitude && property.longitude ? (
-                                            <MapContainer center={[property.latitude, property.longitude]} zoom={17} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={false}>
-                                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                                <Marker position={[property.latitude, property.longitude]} />
-                                                {leafletPolygon && <Polygon positions={leafletPolygon} color="blue" />}
-                                            </MapContainer>
-                                        ) : (
-                                            <div className="h-full bg-slate-100 flex items-center justify-center text-slate-400">No Map Data</div>
-                                        )}
-                                        <div className="absolute bottom-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-bold shadow-sm">
-                                            {property.details?.lot_acres || '?'} Acres
-                                        </div>
-                                    </div>
-                                    <div className="p-3 grid grid-cols-3 gap-2 text-center text-sm border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
-                                        <div>
-                                            <div className="text-slate-500 text-xs uppercase">Est. Value</div>
-                                            <div className="font-bold text-blue-600">{property.details?.estimated_value ? `$${property.details.estimated_value.toLocaleString()}` : '-'}</div>
-                                        </div>
-                                        <div className="border-x border-slate-200 dark:border-slate-700">
-                                            <div className="text-slate-500 text-xs uppercase">Opening Bid</div>
-                                            <div className="font-bold text-emerald-600">{property.price ? `$${property.price.toLocaleString()}` : '-'}</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-slate-500 text-xs uppercase">Max Bid (70%)</div>
-                                            <div className="font-bold text-orange-600">{property.details?.max_bid ? `$${property.details.max_bid.toLocaleString()}` : '-'}</div>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between sm:justify-start sm:gap-4 text-sm border-b border-slate-100 dark:border-slate-800 py-1">
+                                                <span className="text-slate-600 dark:text-slate-400 font-medium">Tax Sale Year:</span>
+                                                <span className="font-bold">{property.tax_sale_year || '2025'}</span>
+                                            </div>
+                                            <div className="flex justify-between sm:justify-start sm:gap-4 text-sm border-b border-slate-100 dark:border-slate-800 py-1">
+                                                <span className="text-slate-600 dark:text-slate-400 font-medium">Tax Delinquent:</span>
+                                                <span className="font-bold">{property.tax_sale_year ? parseInt(property.tax_sale_year) + 1 : '2026'}</span>
+                                            </div>
+                                            <div className="flex justify-between sm:justify-start sm:gap-4 text-sm border-b border-slate-100 dark:border-slate-800 py-1">
+                                                <span className="text-slate-600 dark:text-slate-400 font-medium">C/S Number:</span>
+                                                <span className="font-bold">{property.auction_details?.case_number || 'N/A'}</span>
+                                            </div>
+                                            <div className="flex justify-between sm:justify-start sm:gap-4 text-sm border-b border-slate-100 dark:border-slate-800 py-1">
+                                                <span className="text-slate-600 dark:text-slate-400 font-medium">Account #:</span>
+                                                <span className="font-bold">{property.parcel_id.substring(0, 8)}...</span>
+                                            </div>
+                                            <div className="flex justify-between sm:justify-start sm:gap-4 text-sm py-1">
+                                                <span className="text-slate-600 dark:text-slate-400 font-medium">Owner:</span>
+                                                <span className="font-bold truncate max-w-[200px]" title={property.owner_name}>{property.owner_name || 'Unknown'}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Property Information */}
-                                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                                    <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 font-bold text-sm text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                                        Property Information
+                                {/* Banners */}
+                                <div className="space-y-4">
+                                    <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-md p-4 text-center">
+                                        <div className="text-yellow-800 dark:text-yellow-200 font-bold text-lg flex items-center justify-center gap-2">
+                                            <span className="material-symbols-outlined">home</span> Addresses Unavailable During Trial
+                                        </div>
+                                        <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-1 cursor-pointer hover:underline">Click Here to Subscribe Now!</div>
                                     </div>
-                                    <table className="w-full text-sm">
-                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500 w-1/3">Owner Name</td>
-                                                <td className="px-4 py-2 font-medium">{property.owner_name || '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Owner Address</td>
-                                                <td className="px-4 py-2">{property.owner_info || '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Parcel ID</td>
-                                                <td className="px-4 py-2 font-mono select-all">{property.parcel_id}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Legal Desc</td>
-                                                <td className="px-4 py-2 text-xs text-slate-600 line-clamp-3" title={property.legal_description}>{property.legal_description || '-'}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
 
-                                {/* Structure Details */}
-                                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                                    <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 font-bold text-sm text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                                        Structure Information
+                                    <div className="bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-md p-4 text-center cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40 transition">
+                                        <div className="text-green-800 dark:text-green-200 font-bold text-lg">
+                                            1 Tax Lien Available ({property.tax_sale_year || '2025'})
+                                        </div>
+                                        <div className="text-xs text-green-700 dark:text-green-300 mt-1">click for tax lien details</div>
                                     </div>
-                                    <div className="grid grid-cols-2 text-sm">
-                                        <div className="p-3 border-b border-r border-slate-100">
-                                            <div className="text-slate-500 text-xs">Living Area</div>
-                                            <div className="font-bold">{property.details?.sqft ? `${property.details.sqft.toLocaleString()} sqft` : '-'}</div>
+
+                                    <div className="bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md p-4 text-center">
+                                        <div className="text-blue-800 dark:text-blue-200 font-bold text-lg flex items-center justify-center gap-2">
+                                            <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">help</span> Occupant Status Unknown
                                         </div>
-                                        <div className="p-3 border-b border-slate-100">
-                                            <div className="text-slate-500 text-xs">Year Built</div>
-                                            <div className="font-bold">{property.details?.year_built || '-'}</div>
-                                        </div>
-                                        <div className="p-3 border-r border-slate-100">
-                                            <div className="text-slate-500 text-xs">Bedrooms</div>
-                                            <div className="font-bold">{property.details?.bedrooms || '-'}</div>
-                                        </div>
-                                        <div className="p-3">
-                                            <div className="text-slate-500 text-xs">Bathrooms</div>
-                                            <div className="font-bold">{property.details?.bathrooms || '-'}</div>
-                                        </div>
+                                        <div className="text-xs text-blue-700 dark:text-blue-300 italic mt-1">(last checked on {new Date().toLocaleDateString()})</div>
                                     </div>
                                 </div>
 
+                                {/* Description */}
+                                <div className="mt-6 text-sm text-slate-700 dark:text-slate-300 space-y-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                                    <p>
+                                        <span className="font-bold text-slate-900 dark:text-white">Description:</span><br />
+                                        {property.legal_description || 'No legal description available for this property.'}
+                                    </p>
+                                    <p>
+                                        <span className="font-bold text-slate-900 dark:text-white">Address:</span><br />
+                                        {property.address}, {property.city}, {property.state} {property.zip_code}
+                                    </p>
+                                </div>
                             </div>
 
-                            {/* RIGHT COLUMN */}
+                            {/* RIGHT COLUMN: Financials & Values */}
                             <div className="space-y-6">
-
-                                {/* Assessment & Tax */}
-                                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                                    <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 font-bold text-sm text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                                        Assessment & Tax
+                                <div className="bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm text-center sm:text-right">
+                                    <div className="text-blue-600 dark:text-blue-400 font-bold text-2xl mb-4">
+                                        {property.property_type === 'land' ? 'Land Only' : property.property_type || 'Property'}
                                     </div>
-                                    <table className="w-full text-sm">
-                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500 w-1/3">Total Market Value</td>
-                                                <td className="px-4 py-2 font-bold">{property.details?.total_market_value ? `$${property.details.total_market_value.toLocaleString()}` : '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Assessed Value</td>
-                                                <td className="px-4 py-2">{property.details?.assessed_value ? `$${property.details.assessed_value.toLocaleString()}` : '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Land Value</td>
-                                                <td className="px-4 py-2">{property.details?.land_value ? `$${property.details.land_value.toLocaleString()}` : '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Improvement Value</td>
-                                                <td className="px-4 py-2">{property.details?.improvement_value ? `$${property.details.improvement_value.toLocaleString()}` : '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Tax Year</td>
-                                                <td className="px-4 py-2">{property.details?.tax_year || '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Tax Amount</td>
-                                                <td className="px-4 py-2">{property.details?.tax_amount ? `$${property.details.tax_amount.toLocaleString()}` : '-'}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
 
-                                {/* Land & Location */}
-                                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                                    <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 font-bold text-sm text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                                        Land & Location
-                                    </div>
-                                    <table className="w-full text-sm">
-                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500 w-1/3">Lot Acres</td>
-                                                <td className="px-4 py-2 font-medium">{property.details?.lot_acres || '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Use Code</td>
-                                                <td className="px-4 py-2">{property.details?.use_code || '-'} ({property.details?.use_description || 'N/A'})</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Zoning</td>
-                                                <td className="px-4 py-2">{property.details?.zoning || '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td className="px-4 py-2 text-slate-500">Flood Zone</td>
-                                                <td className="px-4 py-2 flex items-center gap-2">
-                                                    {property.details?.flood_zone_code || '-'}
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                    <div className="space-y-2 flex flex-col items-center sm:items-end">
+                                        <div className="flex justify-between sm:justify-end gap-4 text-sm w-full py-1">
+                                            <span className="text-slate-600 dark:text-slate-400 font-medium">Amount Due:</span>
+                                            <span className="font-bold text-red-600 dark:text-red-400">
+                                                {property.amount_due ? `$${property.amount_due.toLocaleString()}` : 'N/A'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between sm:justify-end gap-4 text-sm w-full py-1">
+                                            <span className="text-slate-600 dark:text-slate-400 font-medium">Assessed:</span>
+                                            <span className="font-bold">
+                                                {property.details?.assessed_value ? `$${property.details.assessed_value.toLocaleString()}` : 'N/A'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between sm:justify-end gap-4 text-sm w-full py-1">
+                                            <span className="text-slate-600 dark:text-slate-400 font-medium">Land Value:</span>
+                                            <span className="font-bold">
+                                                {property.details?.land_value ? `$${property.details.land_value.toLocaleString()}` : 'N/A'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between sm:justify-end gap-4 text-sm w-full py-1">
+                                            <span className="text-slate-600 dark:text-slate-400 font-medium">Improvements:</span>
+                                            <span className="font-bold">
+                                                {property.details?.improvement_value ? `$${property.details.improvement_value.toLocaleString()}` : 'N/A'}
+                                            </span>
+                                        </div>
 
-                                {/* External Links */}
-                                <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                                    <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 font-bold text-sm text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
-                                        External Resources
-                                    </div>
-                                    <div className="p-4 grid grid-cols-2 gap-3">
-                                        {property.details?.zillow_url && (
-                                            <a href={property.details.zillow_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline text-sm"><span className="material-symbols-outlined text-[16px]">open_in_new</span> Zillow</a>
-                                        )}
-                                        {property.details?.regrid_url && (
-                                            <a href={property.details.regrid_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline text-sm"><span className="material-symbols-outlined text-[16px]">map</span> Regrid</a>
-                                        )}
-                                        {property.details?.fema_url && (
-                                            <a href={property.details.fema_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline text-sm"><span className="material-symbols-outlined text-[16px]">water_drop</span> FEMA Map</a>
-                                        )}
-                                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address || '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline text-sm"><span className="material-symbols-outlined text-[16px]">pin_drop</span> Google Maps</a>
+                                        <div className="flex justify-between sm:justify-end gap-4 text-sm w-full py-2 mt-2 border-t border-slate-100 dark:border-slate-800 items-center">
+                                            <span className="font-bold text-slate-800 dark:text-slate-200">Total Value:</span>
+                                            <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-3 py-1 rounded font-bold border border-green-200 dark:border-green-700">
+                                                {property.details?.total_market_value || property.details?.assessed_value
+                                                    ? `$${(property.details?.total_market_value || property.details?.assessed_value).toLocaleString()}`
+                                                    : 'N/A'}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
+                                {/* Placeholder for Image/Map in Right Column if desired, or keep logic simple */}
+                                <div className="bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden h-64 relative border border-slate-300 dark:border-slate-600 flex items-center justify-center">
+                                    {/* Using Street View if available, else Generic */}
+                                    {property.latitude && property.longitude ? (
+                                        <iframe
+                                            width="100%"
+                                            height="100%"
+                                            style={{ border: 0 }}
+                                            loading="lazy"
+                                            src={`https://maps.google.com/maps?q=${property.latitude},${property.longitude}&layer=c&z=17&output=svembed`}
+                                        ></iframe>
+                                    ) : (
+                                        <div className="text-center text-slate-500">
+                                            <span className="material-symbols-outlined text-4xl mb-2">image_not_supported</span>
+                                            <div>No Street View Available</div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="text-center text-xs text-slate-400">
+                                    Google Street View (Preview)
+                                </div>
                             </div>
+
                         </div>
                     )}
 
@@ -411,6 +363,41 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                                 </div>
                             </div>
 
+                            {/* Assessment & Tax */}
+                            <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                                <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 font-bold text-sm text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                                    Assessment & Tax Details
+                                </div>
+                                <table className="w-full text-sm">
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        <tr>
+                                            <td className="px-4 py-2 text-slate-500 w-1/3">Total Market Value</td>
+                                            <td className="px-4 py-2 font-bold">{property.details?.total_market_value ? `$${property.details.total_market_value.toLocaleString()}` : '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 text-slate-500">Assessed Value</td>
+                                            <td className="px-4 py-2">{property.details?.assessed_value ? `$${property.details.assessed_value.toLocaleString()}` : '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 text-slate-500">Land Value</td>
+                                            <td className="px-4 py-2">{property.details?.land_value ? `$${property.details.land_value.toLocaleString()}` : '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 text-slate-500">Improvement Value</td>
+                                            <td className="px-4 py-2">{property.details?.improvement_value ? `$${property.details.improvement_value.toLocaleString()}` : '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 text-slate-500">Tax Year</td>
+                                            <td className="px-4 py-2">{property.details?.tax_year || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 text-slate-500">Tax Amount</td>
+                                            <td className="px-4 py-2">{property.details?.tax_amount ? `$${property.details.tax_amount.toLocaleString()}` : '-'}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
                             {/* Raw Market Data */}
                             {marketValues && (
                                 <div className="mt-8">
@@ -419,6 +406,138 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                                         <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">{JSON.stringify(marketValues, null, 2)}</pre>
                                     </div>
                                 </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'auction' && (
+                        <div className="space-y-6">
+                            {/* Countdown Widget */}
+                            <div className="bg-slate-900 text-white rounded-xl p-6 text-center shadow-lg relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <span className="material-symbols-outlined text-9xl">gavel</span>
+                                </div>
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Auction Starts In</h3>
+                                <div className="flex justify-center gap-4">
+                                    {(() => {
+                                        const auctionDate = property.auction_details?.auction_date || property.next_auction_date;
+                                        if (!auctionDate) return <div className="text-2xl">Date TBD</div>;
+
+                                        const now = new Date();
+                                        const end = new Date(auctionDate);
+                                        const diff = end.getTime() - now.getTime();
+
+                                        if (diff <= 0) return <div className="text-3xl font-bold text-red-400">Auction Ended</div>;
+
+                                        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                                        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+                                        return (
+                                            <>
+                                                <div className="flex flex-col">
+                                                    <span className="text-4xl font-black font-mono">{days}</span>
+                                                    <span className="text-xs text-slate-500 uppercase">Days</span>
+                                                </div>
+                                                <div className="text-4xl font-thin text-slate-600">:</div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-4xl font-black font-mono">{hours}</span>
+                                                    <span className="text-xs text-slate-500 uppercase">Hours</span>
+                                                </div>
+                                                <div className="text-4xl font-thin text-slate-600">:</div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-4xl font-black font-mono">{minutes}</span>
+                                                    <span className="text-xs text-slate-500 uppercase">Mins</span>
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                                <div className="mt-4 text-slate-400 text-sm">
+                                    {property.auction_details?.auction_date || property.next_auction_date || 'Date Not Set'}
+                                </div>
+                            </div>
+
+                            {/* Bid Status */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
+                                    <div className="text-sm text-slate-500 mb-1">Current Amount Due</div>
+                                    <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                                        {property.amount_due ? `$${property.amount_due.toLocaleString()}` : '-'}
+                                    </div>
+                                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between text-sm">
+                                        <span className="text-slate-500">Opening Bid</span>
+                                        <span className="font-medium">{property.auction_details?.opening_bid ? `$${property.auction_details.opening_bid.toLocaleString()}` : '-'}</span>
+                                    </div>
+                                </div>
+                                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
+                                    <div className="text-sm text-slate-500 mb-1">Your Max Bid</div>
+                                    <div className="flex gap-2">
+                                        <input type="text" placeholder="$0.00" className="flex-1 border rounded px-3 py-2 bg-slate-50" disabled />
+                                        <button className="bg-blue-600 text-white px-4 py-2 rounded font-bold disabled:opacity-50" disabled>Place Bid</button>
+                                    </div>
+                                    <div className="mt-4 text-xs text-slate-500 text-center">
+                                        Bidding is currently disabled for this demo.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Auction Details */}
+                            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+                                <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 font-bold text-sm text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                                    Auction Details
+                                </div>
+                                <table className="w-full text-sm">
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        <tr>
+                                            <td className="px-4 py-2 text-slate-500 w-1/3">Case Number</td>
+                                            <td className="px-4 py-2 font-medium">{property.auction_details?.case_number || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 text-slate-500">Certificate #</td>
+                                            <td className="px-4 py-2">{property.auction_details?.certificate_number || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 text-slate-500">Auction Type</td>
+                                            <td className="px-4 py-2 capitalize">{property.auction_details?.auction_type?.replace('_', ' ') || '-'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="px-4 py-2 text-slate-500">Status</td>
+                                            <td className="px-4 py-2">{property.auction_details?.status_detail || '-'}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'map' && (
+                        <div className="h-[500px] rounded-lg overflow-hidden border border-slate-200 shadow-sm relative z-0">
+                            {property.latitude && property.longitude ? (
+                                <MapContainer center={[property.latitude, property.longitude]} zoom={18} style={{ height: '100%', width: '100%' }}>
+                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                    <Marker position={[property.latitude, property.longitude]} />
+                                    {leafletPolygon && <Polygon positions={leafletPolygon} color="blue" />}
+                                </MapContainer>
+                            ) : (
+                                <div className="h-full bg-slate-100 flex items-center justify-center text-slate-400">No Map Data Available</div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'street_view' && (
+                        <div className="h-[500px] rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-black">
+                            {property.latitude && property.longitude ? (
+                                <iframe
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    loading="lazy"
+                                    allowFullScreen
+                                    src={`https://maps.google.com/maps?q=${property.latitude},${property.longitude}&layer=c&z=17&output=svembed`}
+                                ></iframe>
+                            ) : (
+                                <div className="h-full bg-slate-100 flex items-center justify-center text-slate-400">No Street View Data Available</div>
                             )}
                         </div>
                     )}
