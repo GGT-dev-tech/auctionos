@@ -11,7 +11,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
-    role = Column(Enum(UserRole), default=UserRole.AGENT, nullable=False)
+    role = Column(Enum(UserRole, values_callable=lambda x: [e.value for e in x]), default=UserRole.AGENT, nullable=False)
 
     # Relationships
     owned_companies = relationship("Company", back_populates="owner")
