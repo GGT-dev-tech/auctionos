@@ -26,24 +26,24 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Set all CORS enabled origins
-# Set all CORS enabled origins
+# Always include standard development and production origins
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:8000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    "https://auctionos.up.railway.app",
+    "https://auctionos-production.up.railway.app"
+]
+
 if settings.BACKEND_CORS_ORIGINS:
-    origins = [str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
-else:
-    # Default to open for dev convenience if not set
-    # Note: allow_credentials=True requires explicit origins, * will fail in some browsers
-    origins = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:8000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "https://auctionos.up.railway.app",
-        "https://auctionos-production.up.railway.app"
-    ]
+    origins.extend([str(origin) for origin in settings.BACKEND_CORS_ORIGINS])
+
+# Deduplicate
+origins = list(set(origins))
 
 app.add_middleware(
     CORSMiddleware,
