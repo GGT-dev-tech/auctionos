@@ -190,7 +190,7 @@ export const AuctionService = {
     },
 
     geocodeAddress: async (address: string, autocomplete: boolean = false): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/properties/geocode?address=${encodeURIComponent(address)}&autocomplete=${autocomplete}`, {
+        const response = await fetch(`${API_URL}/properties/geocode?address=${encodeURIComponent(address)}&autocomplete=${autocomplete}`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
             },
@@ -364,7 +364,7 @@ export const AuctionService = {
 
     // Auction Events
     getAuctionEvents: async (): Promise<any[]> => {
-        const response = await fetch(`${API_BASE_URL}/auctions/`, {
+        const response = await fetch(`${API_URL}/auctions/`, {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Failed to fetch auction events');
@@ -372,7 +372,7 @@ export const AuctionService = {
     },
 
     createAuctionEvent: async (data: any): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/auctions/`, {
+        const response = await fetch(`${API_URL}/auctions/`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -382,7 +382,7 @@ export const AuctionService = {
     },
 
     updateAuctionEvent: async (id: number, data: any): Promise<any> => {
-        const response = await fetch(`${API_BASE_URL}/auctions/${id}`, {
+        const response = await fetch(`${API_URL}/auctions/${id}`, {
             method: 'PUT',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -392,7 +392,7 @@ export const AuctionService = {
     },
 
     deleteAuctionEvent: async (id: number): Promise<void> => {
-        const response = await fetch(`${API_BASE_URL}/auctions/${id}`, {
+        const response = await fetch(`${API_URL}/auctions/${id}`, {
             method: 'DELETE',
             headers: getHeaders()
         });
@@ -629,7 +629,7 @@ export const FinanceService = {
         return response.json();
     },
     refundDeposit: async (id: string) => {
-        const response = await fetch(`${API_BASE_URL}/finance/deposits/${id}/refund`, {
+        const response = await fetch(`${API_URL}/finance/deposits/${id}/refund`, {
             method: 'POST',
             headers: getHeaders(), // Changed from this.getHeaders() to getHeaders() for consistency
         });
@@ -641,7 +641,7 @@ export const FinanceService = {
 export const GISService = {
     async getGeoJSON(parcelId: string): Promise<any> {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/gis/${parcelId}/geojson`, {
+        const response = await fetch(`${API_URL}/gis/${parcelId}/geojson`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -654,7 +654,7 @@ export const GISService = {
     },
     async triggerSnapshot(parcelId: string): Promise<any> {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/gis/${parcelId}/snapshot`, {
+        const response = await fetch(`${API_URL}/gis/${parcelId}/snapshot`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -670,7 +670,7 @@ export const AdminService = {
         const formData = new FormData();
         formData.append('file', file);
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/admin/import-properties`, {
+        const response = await fetch(`${API_URL}/admin/import-properties`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: formData
@@ -683,7 +683,7 @@ export const AdminService = {
         const formData = new FormData();
         formData.append('file', file);
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/admin/import-auctions`, {
+        const response = await fetch(`${API_URL}/admin/import-auctions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: formData
@@ -694,7 +694,7 @@ export const AdminService = {
 
     async getImportStatus(jobId: string): Promise<{ status: string }> {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/admin/import-status/${jobId}`, {
+        const response = await fetch(`${API_URL}/admin/import-status/${jobId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to get status');
@@ -703,7 +703,7 @@ export const AdminService = {
 
     async updatePropertyStatus(parcelId: string, status: string, auctionId?: number): Promise<any> {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/admin/properties/${parcelId}/status`, {
+        const response = await fetch(`${API_URL}/admin/properties/${parcelId}/status`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -723,7 +723,7 @@ export const AdminService = {
         if (filters.county) queryParams.append('county', filters.county);
         if (filters.state) queryParams.append('state', filters.state);
 
-        const response = await fetch(`${API_BASE_URL}/admin/properties?${queryParams.toString()}`, {
+        const response = await fetch(`${API_URL}/admin/properties?${queryParams.toString()}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to fetch properties');
@@ -732,7 +732,7 @@ export const AdminService = {
 
     async createProperty(data: any): Promise<any> {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/admin/properties`, {
+        const response = await fetch(`${API_URL}/admin/properties`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -749,7 +749,7 @@ export const AdminService = {
 
     async getProperty(parcelId: string): Promise<any> {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/admin/properties/${parcelId}`, {
+        const response = await fetch(`${API_URL}/admin/properties/${parcelId}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to fetch property');
@@ -758,7 +758,7 @@ export const AdminService = {
 
     async getCalendarEvents(): Promise<any[]> {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/auctions/calendar`, {
+        const response = await fetch(`${API_URL}/auctions/calendar`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to fetch calendar');
