@@ -296,22 +296,97 @@ def list_properties(
 @router.post("/properties")
 def create_property(data: dict, db=Depends(get_gis_db)):
     try:
-        # Simplified manual create - mostly for testing
         if "parcel_id" not in data:
             raise HTTPException(400, "parcel_id is required")
 
-        # Basic insert similar to import logic would go here
-        # For brevity, reusing the simple insert but ideally calling a shared service function
-        cols = list(data.keys())
-        cols_str = ", ".join(cols)
-        vals_str = ", ".join([f":{k}" for k in cols])
-        
-        query = text(f"INSERT INTO properties ({cols_str}) VALUES ({vals_str}) RETURNING parcel_id")
-        db.execute(query, data)
-        db.commit()
+        with engine.begin() as conn:
+            # 1. Properties Table
+            prop_data = {
+                "parcel_id": data.get("parcel_id"),
+                "title": data.get("owner_name", "Unknown Owner"), # Default title to owner name
+                "address": data.get("parcel_address"),
+                "owner_address": data.get("owner_address"),
+                "owner_name": data.get("owner_name"),
+                "county": data.get("county"),
+                "state": data.get("state_code"),
+                "description": data.get("description"),
+                "amount_due": parse_float(data.get("amount_due")),
+                "next_auction_date": parse_date(data.get("auction_date")),
+                "occupancy": data.get("occupancy"),
+                "tax_sale_year": int(data.get("tax_sale_year")) if data.get("tax_sale_year") else None,
+                "cs_number": data.get("cs_number"),
+                "parcel_code": data.get("parcel_code"),
+                "map_link": data.get("map_link"),
+                "property_type": data.get("property_category", "residential").lower(),
+                "status": "active"
+            }
+            
+            # Remove None values to let DB defaults work if needed, though mostly mapped
+            prop_data = {k: v for k, v in prop_data.items() if v is not None}
+
+            fields = ", ".join(prop_data.keys())
+            placeholders = ", ".join([f":{k}" for k in prop_data.keys()])
+            
+            query_p = text(f"""
+                INSERT INTO properties ({fields}) VALUES ({placeholders})
+                ON CONFLICT (parcel_id) DO UPDATE SET 
+                updated_at = CURRENT_TIMESTAMP
+                RETURNING id
+            """)
+            res = conn.execute(query_p, prop_data)
+            property_id = res.scalar()
+
+            # 2. Property Details Table
+            details_data = {
+                "property_id": property_id,
+                "account_number": data.get("account"),
+                "lot_acres": parse_float(data.get("acres")),
+                "estimated_arv": parse_float(data.get("estimated_arv")),
+                "estimated_rent": parse_float(data.get("estimated_rent")),
+                "improvement_value": parse_float(data.get("improvement_value")),
+                "land_value": parse_float(data.get("land_value")),
+                "total_market_value": parse_float(data.get("total_value")),
+                "property_category": data.get("property_category"),
+                "purchase_option_type": data.get("purchase_option_type"),
+                "updated_at": datetime.utcnow()
+            }
+             # Remove None values
+            details_data = {k: v for k, v in details_data.items() if v is not None}
+
+            fields_pd = ", ".join(details_data.keys())
+            placeholders_pd = ", ".join([f":{k}" for k in details_data.keys()])
+            
+            # Upsert Details
+            # Check if exists
+            existing_pd = conn.execute(text("SELECT id FROM property_details WHERE property_id = :pid"), {"pid": property_id}).fetchone()
+            
+            if existing_pd:
+                updates_pd = ", ".join([f"{k} = :{k}" for k in details_data.keys() if k != "property_id"])
+                query_pd = text(f"UPDATE property_details SET {updates_pd} WHERE property_id = :property_id")
+                conn.execute(query_pd, details_data)
+            else:
+                query_pd = text(f"INSERT INTO property_details ({fields_pd}) VALUES ({placeholders_pd})")
+                conn.execute(query_pd, details_data)
+
+            # 3. Auction History (if provided)
+            if data.get("auction_name") or data.get("auction_date"):
+                 history_data = {
+                    "property_id": property_id,
+                    "auction_name": data.get("auction_name"),
+                    "auction_date": parse_date(data.get("auction_date")),
+                    "taxes_due": parse_float(data.get("taxes_due_auction")),
+                }
+                 # Insert new history record
+                 fields_h = ", ".join(history_data.keys())
+                 placeholders_h = ", ".join([f":{k}" for k in history_data.keys()])
+                 query_h = text(f"INSERT INTO property_auction_history ({fields_h}) VALUES ({placeholders_h})")
+                 conn.execute(query_h, history_data)
+
         return {"status": "created", "parcel_id": data["parcel_id"]}
+
     except Exception as e:
-        db.rollback()
+        print(f"Create Error: {e}")
+        # db.rollback() # handled by context manager usually or raises
         raise HTTPException(500, str(e))
 
 @router.get("/properties/{parcel_id}")

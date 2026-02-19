@@ -144,7 +144,7 @@ const Inventory: React.FC = () => {
                     <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{p.parcel_id}</td>
                     <td className="px-4 py-3">{p.cs_number || '-'}</td>
                     <td className="px-4 py-3">{p.parcel_code || '-'}</td>
-                    <td className="px-4 py-3 max-w-[150px] truncate" title={p.owner_address}>{p.owner_address || '-'}</td>
+                    <td className="px-4 py-3 max-w-[150px] truncate" title={p.owner_name}>{p.owner_name || p.title || '-'}</td>
                     <td className="px-4 py-3">{p.county}</td>
                     <td className="px-4 py-3">{p.state}</td>
                     <td className="px-4 py-3">
