@@ -18,6 +18,7 @@ def parse_date(date_str):
     if pd.isna(date_str):
         return None
     try:
+        # Handle cases like "2026-02-04 00:00:00" or similar
         return pd.to_datetime(date_str).strftime('%Y-%m-%d')
     except:
         return None
@@ -48,11 +49,14 @@ async def process_properties_csv(file_content: bytes, job_id: str):
 
                 lat, lon = None, None
                 coords = row.get("coordinates")
-                if coords and isinstance(coords, str) and ',' in coords:
+                if coords and isinstance(coords, str):
                     try:
-                        parts = coords.split(',')
-                        lat = float(parts[0].strip())
-                        lon = float(parts[1].strip())
+                        # Handle both comma and space separators
+                        clean_coords = coords.replace(',', ' ').strip()
+                        parts = clean_coords.split()
+                        if len(parts) >= 2:
+                            lat = float(parts[0].strip())
+                            lon = float(parts[1].strip())
                     except:
                         pass
 
@@ -147,6 +151,19 @@ async def process_properties_csv(file_content: bytes, job_id: str):
 async def process_auctions_csv(file_content: bytes, job_id: str):
     try:
         df = pd.read_csv(io.BytesIO(file_content))
+        
+        # Check if headers are missing (first row looks like data)
+        # Expected headers: Search Link,Name,Short Name,Tax Status,Parcels,County Code,County Name,State,Auction Date,Time,Location,Notes,Register Date,Register Link,List Link,Purchase Info Link
+        expected_cols = [
+            "Search Link", "Name", "Short Name", "Tax Status", "Parcels", "County Code", 
+            "County Name", "State", "Auction Date", "Time", "Location", "Notes", 
+            "Register Date", "Register Link", "List Link", "Purchase Info Link"
+        ]
+        
+        # If 'Name' not in columns, assume no header and reload
+        if "Name" not in df.columns:
+             df = pd.read_csv(io.BytesIO(file_content), header=None, names=expected_cols)
+
         df = df.where(pd.notnull(df), None)
 
         with engine.begin() as conn:
