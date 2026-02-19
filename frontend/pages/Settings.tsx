@@ -61,8 +61,8 @@ export const Settings: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('general')}
                     className={`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'general'
-                            ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                            : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                        ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
                         }`}
                 >
                     General
@@ -72,8 +72,8 @@ export const Settings: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('users')}
                             className={`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'users'
-                                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
                                 }`}
                         >
                             User Management
@@ -81,8 +81,8 @@ export const Settings: React.FC = () => {
                         <button
                             onClick={() => setActiveTab('companies')}
                             className={`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'companies'
-                                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
                                 }`}
                         >
                             Company Management
@@ -94,46 +94,12 @@ export const Settings: React.FC = () => {
             {/* Tab Content */}
             {activeTab === 'general' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    {/* Data Ingestion Card */}
+                    {/* Data Ingestion - REMOVED as per architecture cleanup */
+                    /*
                     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
-                                <span className="material-symbols-outlined">cloud_sync</span>
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Data Ingestion</h3>
-                        </div>
-
-                        <p className="text-slate-500 dark:text-slate-400 mb-6">
-                            Manage data collection pipelines. Scraping runs in the background and may take several minutes.
-                        </p>
-
-                        <div className="flex flex-wrap gap-4">
-                            <button
-                                onClick={handleScrape}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <span className="material-symbols-outlined">public</span>
-                                {loading ? 'Processing...' : 'Trigger Cloud Scraper'}
-                            </button>
-
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileChange}
-                                accept=".csv"
-                                className="hidden"
-                            />
-                            <button
-                                onClick={handleImportClick}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <span className="material-symbols-outlined">publish</span>
-                                {loading ? 'Uploading...' : 'Upload CSV'}
-                            </button>
-                        </div>
+                        ...
                     </div>
+                    */}
 
                     {/* Preferences Card */}
                     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
