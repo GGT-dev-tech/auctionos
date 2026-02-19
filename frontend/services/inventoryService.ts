@@ -77,13 +77,19 @@ export const InventoryService = {
     importParcelFairCsv: async (file: File, type: 'properties' | 'calendar'): Promise<{ stats: any }> => {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('type', type);
+        // Map 'type' if needed, or use separate endpoints. 
+        // AdminService uses /admin/import-properties or /admin/import-auctions.
+        // Let's stick to the admin endpoints for consistency.
+
+        const endpoint = type === 'properties'
+            ? `${API_URL}/admin/import-properties`
+            : `${API_URL}/admin/import-auctions`;
 
         // Remove Content-Type so browser sets boundary
         const headers = getHeaders();
         delete (headers as any)['Content-Type'];
 
-        const res = await fetch(`${API_URL}/properties/upload-csv`, {
+        const res = await fetch(endpoint, {
             method: 'POST',
             body: formData,
             headers: headers
