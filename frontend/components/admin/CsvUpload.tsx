@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { AdminService } from '../services/api';
+import { AdminService } from '../../services/api';
 
 interface CsvUploadProps {
     type: 'properties' | 'auctions';
