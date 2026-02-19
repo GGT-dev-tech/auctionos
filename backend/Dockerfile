@@ -36,10 +36,7 @@ COPY . .
 # Ensure browsers are installed
 RUN playwright install chromium
 
-# Copy data directory (containing netronline_data.csv)
-COPY data/ /app/data/
-
-# Create data directory and set permissions
+# Create data directory and set permissions (don't copy local data to avoid build errors if missing)
 RUN mkdir -p /app/data/media /app/data/reports && chmod -R 777 /app/data
 
 COPY start.sh /start.sh
