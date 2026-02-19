@@ -221,6 +221,32 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                                 </div>
                             </div>
 
+                            {/* Auction Details */}
+                            <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg col-span-1 md:col-span-2">
+                                <h4 className="text-xs text-slate-500 uppercase font-semibold mb-3">Auction Details</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <p className="text-xs text-slate-500 mb-0.5">Tax Sale Year</p>
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                            {property.tax_sale_year || '-'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 mb-0.5">C/S Number</p>
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                            {property.cs_number || '-'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 mb-0.5">Account #</p>
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                            {property.parcel_code || property.details?.account_number || '-'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+
                             {/* Legal & Risk */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">

@@ -10,10 +10,7 @@ import { PropertyWizard } from './pages/PropertyWizard';
 import { AuctionList } from './pages/AuctionList';
 import { AuctionService } from './services/api';
 
-import { Analysis } from './pages/Analysis';
 import { Settings } from './pages/Settings';
-import { Financials } from './pages/Financials';
-import { Reports } from './pages/Reports';
 import MyInventory from './pages/MyInventory';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -38,9 +35,6 @@ const App: React.FC = () => {
             <Route index element={<Dashboard />} />
             <Route path="inventory" element={<Inventory />} />
             <Route path="/auctions" element={<AuctionList />} />
-            <Route path="financials" element={<Financials />} />
-            <Route path="analysis" element={<Analysis />} />
-            <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
             <Route path="my-inventory" element={<MyInventory />} />
             <Route path="properties/new" element={<PropertyWizard />} />

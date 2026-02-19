@@ -229,13 +229,46 @@ export const Inventory: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Property Inventory</h2>
           <p className="text-slate-500 dark:text-slate-400 mt-1">Manage active listings, pending auctions, and sold properties.</p>
         </div>
-        <button
-          onClick={() => navigate('/properties/new')}
-          className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg shadow-sm hover:shadow transition-all duration-200"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          <span>Add New Property</span>
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="file"
+            accept=".csv"
+            className="hidden"
+            id="csv-upload"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+
+              setLoading(true);
+              try {
+                await AuctionService.uploadCSV(file);
+                alert('CSV imported successfully!');
+                fetchProps();
+              } catch (error: any) {
+                console.error(error);
+                alert(error.message || 'Failed to import CSV');
+              } finally {
+                setLoading(false);
+                // Reset input
+                e.target.value = '';
+              }
+            }}
+          />
+          <button
+            onClick={() => document.getElementById('csv-upload')?.click()}
+            className="inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium px-5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-200"
+          >
+            <span className="material-symbols-outlined text-[20px]">upload_file</span>
+            <span>Import CSV</span>
+          </button>
+          <button
+            onClick={() => navigate('/properties/new')}
+            className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg shadow-sm hover:shadow transition-all duration-200"
+          >
+            <span className="material-symbols-outlined text-[20px]">add</span>
+            <span>Add New Property</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
