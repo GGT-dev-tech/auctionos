@@ -5,6 +5,11 @@ from geojson import Feature, dumps as geojson_dumps
 import os
 import json
 from app.services.snapshot_service import SnapshotService
+from app.db.gis import get_gis_db
+
+router = APIRouter()
+
+# GET /geojson uses shared get_gis_db now"
 
 @router.post("/{parcel_id}/snapshot")
 async def generate_snapshot(parcel_id: str, background_tasks: BackgroundTasks):

@@ -673,7 +673,6 @@ export const GISService = {
         }
         return response.json();
     },
-
     async triggerSnapshot(parcelId: string): Promise<any> {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_BASE_URL}/gis/${parcelId}/snapshot`, {
@@ -683,6 +682,66 @@ export const GISService = {
             }
         });
         if (!response.ok) throw new Error('Failed to trigger snapshot');
+        return response.json();
+    }
+};
+
+export const AdminService = {
+    async importProperties(file: File): Promise<{ job_id: string, status: string }> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/admin/import-properties`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        if (!response.ok) throw new Error('Import failed');
+        return response.json();
+    },
+
+    async importAuctions(file: File): Promise<{ job_id: string, status: string }> {
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/admin/import-auctions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        if (!response.ok) throw new Error('Import failed');
+        return response.json();
+    },
+
+    async getImportStatus(jobId: string): Promise<{ status: string }> {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/admin/import-status/${jobId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to get status');
+        return response.json();
+    },
+
+    async updatePropertyStatus(parcelId: string, status: string, auctionId?: number): Promise<any> {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/admin/properties/${parcelId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status, auction_id: auctionId })
+        });
+        if (!response.ok) throw new Error('Update failed');
+        return response.json();
+    },
+
+    async getCalendarEvents(): Promise<any[]> {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/auctions/calendar`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch calendar');
         return response.json();
     }
 };

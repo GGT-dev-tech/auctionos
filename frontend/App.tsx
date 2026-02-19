@@ -12,6 +12,7 @@ import { AuctionService } from './services/api';
 
 import { Settings } from './pages/Settings';
 import MyInventory from './pages/MyInventory';
+import AdminAuctions from './pages/admin/AdminAuctions';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ... existing protected route logic
@@ -35,6 +36,7 @@ const App: React.FC = () => {
             <Route index element={<Dashboard />} />
             <Route path="inventory" element={<Inventory />} />
             <Route path="/auctions" element={<AuctionList />} />
+            <Route path="/admin/auctions" element={<AdminAuctions />} />
             <Route path="settings" element={<Settings />} />
             <Route path="my-inventory" element={<MyInventory />} />
             <Route path="properties/new" element={<PropertyWizard />} />

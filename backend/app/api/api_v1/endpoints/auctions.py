@@ -112,3 +112,20 @@ async def import_auction_events_csv(
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/calendar", response_model=List[dict])
+def get_auction_calendar():
+    """
+    Get auction calendar events from PostGIS view.
+    """
+    from app.db.gis import engine
+    from sqlalchemy import text
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT * FROM auction_calendar"))
+            # Convert to list of dicts
+            events = [dict(row._mapping) for row in result]
+            return events
+    except Exception as e:
+        print(f"Calendar Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch calendar")
