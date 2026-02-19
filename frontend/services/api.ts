@@ -635,9 +635,7 @@ export const FinanceService = {
         });
         if (!response.ok) throw new Error('Deposit failed');
         return response.json();
-    },
-
-}
+    }
 };
 
 export const GISService = {
