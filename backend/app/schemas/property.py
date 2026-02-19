@@ -1,6 +1,6 @@
 from typing import Optional, List
 from datetime import datetime, date
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, validator, Field
 from app.models.property import PropertyStatus, PropertyType, MediaType
 
 # Shared properties

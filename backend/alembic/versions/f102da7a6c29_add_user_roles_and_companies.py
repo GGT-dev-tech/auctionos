@@ -46,8 +46,12 @@ def upgrade() -> None:
     op.create_index(op.f('ix_properties_company_id'), 'properties', ['company_id'], unique=False)
     op.create_foreign_key(None, 'properties', 'companies', ['company_id'], ['id'])
     # Create ENUM type first
-    user_role = sa.Enum('ADMIN', 'MANAGER', 'AGENT', name='userrole')
+    # Fix: Use lowercase to match Python model
+    user_role = sa.Enum('admin', 'manager', 'agent', name='userrole')
     user_role.create(op.get_bind(), checkfirst=True)
+
+    # Fix: Update legacy data before converting
+    op.execute("UPDATE users SET role = 'agent' WHERE role NOT IN ('admin', 'manager', 'agent')")
 
     op.alter_column('users', 'role',
                existing_type=mysql.VARCHAR(length=50),
@@ -62,12 +66,12 @@ def downgrade() -> None:
     
     # Revert to VARCHAR
     op.alter_column('users', 'role',
-               existing_type=sa.Enum('ADMIN', 'MANAGER', 'AGENT', name='userrole'),
+               existing_type=sa.Enum('admin', 'manager', 'agent', name='userrole'),
                type_=mysql.VARCHAR(length=50),
                existing_nullable=False)
     
     # Drop ENUM type
-    user_role = sa.Enum('ADMIN', 'MANAGER', 'AGENT', name='userrole')
+    user_role = sa.Enum('admin', 'manager', 'agent', name='userrole')
     user_role.drop(op.get_bind(), checkfirst=True)
     op.drop_constraint(None, 'properties', type_='foreignkey')
     op.drop_index(op.f('ix_properties_company_id'), table_name='properties')
