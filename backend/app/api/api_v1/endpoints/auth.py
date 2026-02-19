@@ -59,6 +59,50 @@ def register_user(
     db.refresh(user)
     return user
 
+@router.get("/db-report")
+def get_db_report(secret: str):
+    """
+    TEMPORARY ENDPOINT: Generates a database architecture report.
+    """
+    if secret != "ReportDBArch2026Secure!":
+        raise HTTPException(status_code=403, detail="Invalid secret")
+    
+    from sqlalchemy import create_engine, text
+    import os
+    
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        
+    engine = create_engine(DATABASE_URL)
+    data = {}
+    with engine.connect() as conn:
+        data['version'] = conn.execute(text("SELECT version();")).scalar()
+        
+        data['schemas'] = [r[0] for r in conn.execute(text("SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'pg_toast')"))]
+        
+        tables = conn.execute(text("SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'")).fetchall()
+        data['tables'] = {}
+        for schema, table in tables:
+            data['tables'][table] = {'columns': [], 'constraints': [], 'fks': []}
+            
+            cols = conn.execute(text("SELECT column_name, data_type, character_maximum_length, is_nullable, column_default FROM information_schema.columns WHERE table_schema = :s AND table_name = :t ORDER BY ordinal_position"), {"s": schema, "t": table}).fetchall()
+            for c in cols:
+                data['tables'][table]['columns'].append({'name': c[0], 'type': c[1], 'length': c[2], 'nullable': c[3], 'default': c[4]})
+            
+            consts = conn.execute(text("SELECT tc.constraint_type, tc.constraint_name, kcu.column_name FROM information_schema.table_constraints tc JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name WHERE tc.table_schema = :s AND tc.table_name = :t"), {"s": schema, "t": table}).fetchall()
+            for c in consts:
+                data['tables'][table]['constraints'].append({'type': c[0], 'name': c[1], 'column': c[2]})
+                
+            fks = conn.execute(text("SELECT kcu.column_name, ccu.table_name AS foreign_table, ccu.column_name AS foreign_column FROM information_schema.table_constraints AS tc JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = :s AND tc.table_name = :t"), {"s": schema, "t": table}).fetchall()
+            for f in fks:
+                 data['tables'][table]['fks'].append({'column': f[0], 'ref_table': f[1], 'ref_column': f[2]})
+                 
+        data['indexes'] = [dict(r._mapping) for r in conn.execute(text("SELECT tablename, indexname, indexdef FROM pg_indexes WHERE schemaname = 'public'"))]
+        data['table_sizes'] = [dict(r._mapping) for r in conn.execute(text("SELECT relname AS table_name, n_live_tup AS rows FROM pg_stat_user_tables ORDER BY n_live_tup DESC"))]
+
+    return data
+
 @router.get("/reset-admin-prod")
 def reset_admin_production(secret: str, db: Session = Depends(deps.get_db)):
     """
