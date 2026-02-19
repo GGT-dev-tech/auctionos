@@ -5,7 +5,7 @@ import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { Dashboard } from './pages/Dashboard';
-import { Inventory } from './pages/Inventory';
+import Inventory from './pages/Inventory';
 import { PropertyWizard } from './pages/PropertyWizard';
 import { AuctionList } from './pages/AuctionList';
 import { AuctionService } from './services/api';
