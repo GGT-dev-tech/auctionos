@@ -736,9 +736,15 @@ export const AdminService = {
         return response.json();
     },
 
-    async listProperties(skip = 0, limit = 100): Promise<any[]> {
+    async listProperties(filters: any = {}): Promise<any[]> {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/admin/properties?skip=${skip}&limit=${limit}`, {
+        const queryParams = new URLSearchParams();
+        if (filters.skip) queryParams.append('skip', String(filters.skip));
+        if (filters.limit) queryParams.append('limit', String(filters.limit));
+        if (filters.county) queryParams.append('county', filters.county);
+        if (filters.state) queryParams.append('state', filters.state);
+
+        const response = await fetch(`${API_BASE_URL}/admin/properties?${queryParams.toString()}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to fetch properties');

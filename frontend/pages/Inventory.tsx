@@ -27,10 +27,31 @@ const Inventory: React.FC = () => {
     fetchProperties();
   }, []);
 
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      const result = await AdminService.importProperties(file);
+      alert(`Import started! Job ID: ${result.job_id}`);
+      // Refresh after a short delay or poll (simple for now)
+      setTimeout(fetchProperties, 2000);
+    } catch (error: any) {
+      console.error('Import failed', error);
+      alert(error.message || 'Import failed');
+    } finally {
+      e.target.value = '';
+      setLoading(false);
+    }
+  };
+
   const filteredProperties = properties.filter(p =>
-    p.parcel_id?.toLowerCase().includes(filterText.toLowerCase()) ||
-    p.county?.toLowerCase().includes(filterText.toLowerCase()) ||
-    p.owner_address?.toLowerCase().includes(filterText.toLowerCase())
+    (p.parcel_id?.toLowerCase() || '').includes(filterText.toLowerCase()) ||
+    (p.county?.toLowerCase() || '').includes(filterText.toLowerCase()) ||
+    (p.owner_address?.toLowerCase() || '').includes(filterText.toLowerCase()) ||
+    (p.address?.toLowerCase() || '').includes(filterText.toLowerCase()) ||
+    (p.state?.toLowerCase() || '').includes(filterText.toLowerCase())
   );
 
   return (
@@ -41,6 +62,19 @@ const Inventory: React.FC = () => {
           <p className="text-slate-500 dark:text-slate-400">Manage your real estate assets and auction listings.</p>
         </div>
         <div className="flex gap-2">
+          <input
+            type="file"
+            accept=".csv"
+            className="hidden"
+            id="property-csv-upload"
+            onChange={handleImport}
+          />
+          <button
+            onClick={() => document.getElementById('property-csv-upload')?.click()}
+            className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
+          >
+            <Upload size={18} /> Import CSV
+          </button>
           <button
             onClick={() => navigate('/properties/new')}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
@@ -56,7 +90,7 @@ const Inventory: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
             type="text"
-            placeholder="Search by Parcel ID, Owner, or County..."
+            placeholder="Search by Parcel ID, Owner, County, State..."
             className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             value={filterText}
             onChange={e => setFilterText(e.target.value)}
@@ -105,30 +139,30 @@ const Inventory: React.FC = () => {
               ) : filteredProperties.length === 0 ? (
                 <tr><td colSpan={19} className="px-4 py-12 text-center text-slate-500">No properties found.</td></tr>
               ) : (
-                filteredProperties.map(p => (
-                  <tr key={p.parcel_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300">
+                filteredProperties.map((p, idx) => (
+                  <tr key={p.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300">
                     <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{p.parcel_id}</td>
                     <td className="px-4 py-3">{p.cs_number || '-'}</td>
                     <td className="px-4 py-3">{p.parcel_code || '-'}</td>
                     <td className="px-4 py-3 max-w-[150px] truncate" title={p.owner_address}>{p.owner_address || '-'}</td>
                     <td className="px-4 py-3">{p.county}</td>
-                    <td className="px-4 py-3">{p.state_code}</td>
+                    <td className="px-4 py-3">{p.state}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${p.status === 'available' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
-                        {p.status || 'Available'}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+                        {p.status || '-'}
                       </span>
                     </td>
                     <td className="px-4 py-3">{p.tax_sale_year || '-'}</td>
                     <td className="px-4 py-3 text-right font-medium text-red-600">{p.amount_due ? `$${Number(p.amount_due).toLocaleString()}` : '-'}</td>
-                    <td className="px-4 py-3 text-right">{p.acres || '-'}</td>
-                    <td className="px-4 py-3 text-right">{p.total_value ? `$${Number(p.total_value).toLocaleString()}` : '-'}</td>
+                    <td className="px-4 py-3 text-right">{p.lot_acres || '-'}</td>
+                    <td className="px-4 py-3 text-right">{p.total_market_value ? `$${Number(p.total_market_value).toLocaleString()}` : '-'}</td>
                     <td className="px-4 py-3 text-right">{p.land_value ? `$${Number(p.land_value).toLocaleString()}` : '-'}</td>
-                    <td className="px-4 py-3 text-right">{p.improvements || '-'}</td>
-                    <td className="px-4 py-3">{p.type || '-'}</td>
+                    <td className="px-4 py-3 text-right">{p.improvement_value || '-'}</td>
+                    <td className="px-4 py-3">{p.property_type || '-'}</td>
                     <td className="px-4 py-3">{p.status || '-'}</td>
-                    <td className="px-4 py-3 max-w-[200px] truncate" title={p.parcel_address}>{p.parcel_address || '-'}</td>
-                    <td className="px-4 py-3">{p.auction_date || '-'}</td>
-                    <td className="px-4 py-3">{p.vacancy ? 'Vacant' : 'Occupied'}</td>
+                    <td className="px-4 py-3 max-w-[200px] truncate" title={p.address}>{p.address || '-'}</td>
+                    <td className="px-4 py-3">{p.next_auction_date || '-'}</td>
+                    <td className="px-4 py-3">{p.occupancy || '-'}</td>
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => navigate(`/properties/${p.parcel_id}/edit`)}
