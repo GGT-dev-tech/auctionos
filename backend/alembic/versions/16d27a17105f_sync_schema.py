@@ -296,12 +296,10 @@ def upgrade() -> None:
             batch_op.create_index(batch_op.f('ix_transactions_company_id'), ['company_id'], unique=False)
             batch_op.create_index(batch_op.f('ix_transactions_property_id'), ['property_id'], unique=False)
 
-    with op.batch_alter_table('auctions', schema=None) as batch_op:
-        batch_op.drop_index('ix_auctions_auction_date')
-        batch_op.drop_index('ix_auctions_county')
-        batch_op.drop_index('ix_auctions_state')
-
-    op.drop_table('auctions')
+    op.execute("DROP INDEX IF EXISTS ix_auctions_auction_date")
+    op.execute("DROP INDEX IF EXISTS ix_auctions_county")
+    op.execute("DROP INDEX IF EXISTS ix_auctions_state")
+    op.execute("DROP TABLE IF EXISTS auctions")
     # ### end Alembic commands ###
 
 
