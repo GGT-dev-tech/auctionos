@@ -143,3 +143,59 @@ class PropertyExport(BaseModel):
     folder_id: Optional[str] = None
     status: Optional[str] = "interested"
     user_notes: Optional[str] = None
+
+class PropertyManualCreate(BaseModel):
+    parcel_id: str
+    parcel_address: Optional[str] = None
+    owner_name: Optional[str] = None
+    owner_address: Optional[str] = None
+    county: Optional[str] = None
+    state_code: Optional[str] = None
+    description: Optional[str] = None
+    amount_due: Optional[float] = None
+    auction_date: Optional[date] = None
+    auction_name: Optional[str] = None
+    taxes_due_auction: Optional[float] = None
+    tax_sale_year: Optional[int] = None
+    
+    # Details
+    account: Optional[str] = None
+    acres: Optional[float] = None
+    total_value: Optional[float] = None
+    land_value: Optional[float] = None
+    improvement_value: Optional[float] = None
+    estimated_arv: Optional[float] = None
+    estimated_rent: Optional[float] = None
+    property_category: Optional[str] = None
+    purchase_option_type: Optional[str] = None
+    occupancy: Optional[str] = None
+    map_link: Optional[str] = None
+    cs_number: Optional[str] = None
+    parcel_code: Optional[str] = None
+
+    @validator('amount_due', 'total_value', 'land_value', 'improvement_value', 'estimated_arv', 'estimated_rent', 'taxes_due_auction', 'acres', pre=True)
+    def parse_empty_float(cls, v):
+        if v == "" or v is None:
+            return None
+        if isinstance(v, str):
+            import re
+            clean = re.sub(r'[^\d.-]', '', v)
+            return float(clean) if clean else None
+        return v
+
+    @validator('auction_date', pre=True)
+    def parse_empty_date(cls, v):
+        if v == "" or v is None:
+            return None
+        if isinstance(v, str):
+             try:
+                 return datetime.strptime(v, "%Y-%m-%d").date()
+             except:
+                 return None
+        return v
+
+    @validator('tax_sale_year', pre=True)
+    def parse_empty_int(cls, v):
+         if v == "" or v is None:
+             return None
+         return int(v)

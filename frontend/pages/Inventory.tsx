@@ -122,6 +122,8 @@ const Inventory: React.FC = () => {
                 <th className="px-4 py-3">Sale Year</th>
                 <th className="px-4 py-3 text-right">Amount Due</th>
                 <th className="px-4 py-3 text-right">Acres</th>
+                <th className="px-4 py-3 text-right">Est. ARV</th>
+                <th className="px-4 py-3 text-right">Est. Rent</th>
                 <th className="px-4 py-3 text-right">Total Value</th>
                 <th className="px-4 py-3 text-right">Land</th>
                 <th className="px-4 py-3 text-right">Building</th>
@@ -135,9 +137,9 @@ const Inventory: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {loading ? (
-                <tr><td colSpan={19} className="px-4 py-12 text-center text-slate-500">Loading inventory...</td></tr>
+                <tr><td colSpan={21} className="px-4 py-12 text-center text-slate-500">Loading inventory...</td></tr>
               ) : filteredProperties.length === 0 ? (
-                <tr><td colSpan={19} className="px-4 py-12 text-center text-slate-500">No properties found.</td></tr>
+                <tr><td colSpan={21} className="px-4 py-12 text-center text-slate-500">No properties found.</td></tr>
               ) : (
                 filteredProperties.map((p, idx) => (
                   <tr key={p.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-300">
@@ -155,6 +157,8 @@ const Inventory: React.FC = () => {
                     <td className="px-4 py-3">{p.tax_sale_year || '-'}</td>
                     <td className="px-4 py-3 text-right font-medium text-red-600">{p.amount_due ? `$${Number(p.amount_due).toLocaleString()}` : '-'}</td>
                     <td className="px-4 py-3 text-right">{p.lot_acres || '-'}</td>
+                    <td className="px-4 py-3 text-right">{p.estimated_arv ? `$${Number(p.estimated_arv).toLocaleString()}` : '-'}</td>
+                    <td className="px-4 py-3 text-right">{p.estimated_rent ? `$${Number(p.estimated_rent).toLocaleString()}` : '-'}</td>
                     <td className="px-4 py-3 text-right">{p.total_market_value ? `$${Number(p.total_market_value).toLocaleString()}` : '-'}</td>
                     <td className="px-4 py-3 text-right">{p.land_value ? `$${Number(p.land_value).toLocaleString()}` : '-'}</td>
                     <td className="px-4 py-3 text-right">{p.improvement_value || '-'}</td>

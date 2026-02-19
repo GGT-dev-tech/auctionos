@@ -8,227 +8,20 @@ import os
 from app.db.gis import get_gis_db, engine
 from redis import Redis
 from datetime import datetime
+from app.services.import_service import ImportService
+from app.schemas.property import PropertyManualCreate
+from pydantic import ValidationError, validator
 
 router = APIRouter()
 redis = Redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0"))
 
-# --- Helper Functions ---
-
-def parse_date(date_str):
-    if pd.isna(date_str):
-        return None
-    try:
-        # Handle cases like "2026-02-04 00:00:00" or similar
-        return pd.to_datetime(date_str).strftime('%Y-%m-%d')
-    except:
-        return None
-
-def parse_float(val):
-    if pd.isna(val):
-        return None
-    try:
-        if isinstance(val, str):
-            val = val.replace('$', '').replace(',', '')
-        return float(val)
-    except:
-        return None
+# --- Helper Functions (Deprecated - handled in ImportService) ---
 
 async def process_properties_csv(file_content: bytes, job_id: str):
-    try:
-        df = pd.read_csv(io.BytesIO(file_content))
-        
-        # Mapping from CSV Header -> DB Field (Table)
-        # Table: properties (p), property_details (pd), property_auction_history (pah)
-        
-        with engine.begin() as conn:
-            for _, row in df.iterrows():
-                # 1. Prepare Property Data (Upsert)
-                parcel_id = str(row.get("Parcel ID", "")).strip()
-                if not parcel_id: 
-                    continue
-
-                lat, lon = None, None
-                coords = row.get("coordinates")
-                if coords and isinstance(coords, str):
-                    try:
-                        # Handle both comma and space separators
-                        clean_coords = coords.replace(',', ' ').strip()
-                        parts = clean_coords.split()
-                        if len(parts) >= 2:
-                            lat = float(parts[0].strip())
-                            lon = float(parts[1].strip())
-                    except:
-                        pass
-
-                prop_data = {
-                    "parcel_id": parcel_id,
-                    "title": f"{row.get('parcel_address', 'Unknown Address')}",
-                    "address": row.get("parcel_address"),
-                    "owner_address": row.get("owner_address"),
-                    "county": row.get("county"),
-                    "state": row.get("state_code"),
-                    "description": row.get("description"),
-                    "amount_due": parse_float(row.get("amount_due")),
-                    "next_auction_date": parse_date(row.get("auction_date")),
-                    "occupancy": row.get("vacancy"),
-                    "tax_sale_year": int(row.get("tax_sale_year")) if pd.notna(row.get("tax_sale_year")) else None,
-                    "cs_number": row.get("cs_number"),
-                    "parcel_code": row.get("parcel_code"),
-                    "map_link": row.get("map_link"),
-                    "property_type": row.get("type", "residential").lower(), # Map if needed
-                    "latitude": lat,
-                    "longitude": lon,
-                    "status": "active"
-                }
-
-                # Upsert Property
-                fields = ", ".join(prop_data.keys())
-                placeholders = ", ".join([f":{k}" for k in prop_data.keys()])
-                updates = ", ".join([f"{k} = EXCLUDED.{k}" for k in prop_data.keys() if k != "parcel_id"])
-                
-                query_p = text(f"""
-                    INSERT INTO properties ({fields}) VALUES ({placeholders})
-                    ON CONFLICT (parcel_id) DO UPDATE SET {updates}
-                    RETURNING id
-                """)
-                res = conn.execute(query_p, prop_data)
-                property_id = res.scalar()
-
-                # 2. Prepare Property Details Data (Upsert)
-                details_data = {
-                    "property_id": property_id,
-                    "account_number": row.get("account"),
-                    "lot_acres": parse_float(row.get("acres")),
-                    "estimated_arv": parse_float(row.get("estimated_arv")),
-                    "estimated_rent": parse_float(row.get("estimated_rent")),
-                    "improvement_value": parse_float(row.get("improvements")),
-                    "land_value": parse_float(row.get("land_value")),
-                    "total_market_value": parse_float(row.get("total_value")),
-                    "property_category": row.get("property_category"),
-                    "purchase_option_type": row.get("purchase_option_type"),
-                    "updated_at": datetime.utcnow() # timestamp for change tracking
-                }
-                
-                # Filter None values to avoid overwriting with NULL if we want partial updates? 
-                # For import, explicit overwrite is usually desired.
-                
-                fields_pd = ", ".join(details_data.keys())
-                placeholders_pd = ", ".join([f":{k}" for k in details_data.keys()])
-                
-                # Check if exists
-                existing_pd = conn.execute(text("SELECT id FROM property_details WHERE property_id = :pid"), {"pid": property_id}).fetchone()
-                
-                if existing_pd:
-                    updates_pd = ", ".join([f"{k} = :{k}" for k in details_data.keys() if k != "property_id"])
-                    query_pd = text(f"UPDATE property_details SET {updates_pd} WHERE property_id = :property_id")
-                    conn.execute(query_pd, details_data)
-                else:
-                    query_pd = text(f"INSERT INTO property_details ({fields_pd}) VALUES ({placeholders_pd})")
-                    conn.execute(query_pd, details_data)
-
-                # 3. Add Auction History (Insert)
-                # "auction_name","auction_info_link","auction_list_link","taxes_due_auction"
-                history_data = {
-                    "property_id": property_id,
-                    "auction_name": row.get("auction_name"),
-                    "auction_date": parse_date(row.get("auction_date")),
-                    "info_link": row.get("auction_info_link"),
-                    "list_link": row.get("auction_list_link"),
-                    "taxes_due": parse_float(row.get("taxes_due_auction")),
-                }
-                
-                if history_data["auction_name"] or history_data["auction_date"]:
-                     fields_h = ", ".join(history_data.keys())
-                     placeholders_h = ", ".join([f":{k}" for k in history_data.keys()])
-                     query_h = text(f"INSERT INTO property_auction_history ({fields_h}) VALUES ({placeholders_h})")
-                     conn.execute(query_h, history_data)
-
-        redis.set(f"import_status:{job_id}", f"success: {len(df)} properties processed", ex=3600)
-    except Exception as e:
-        print(f"Import Error: {e}")
-        redis.set(f"import_status:{job_id}", f"error: {str(e)}", ex=3600)
+    await ImportService.process_properties_csv(file_content, job_id)
 
 async def process_auctions_csv(file_content: bytes, job_id: str):
-    try:
-        df = pd.read_csv(io.BytesIO(file_content))
-        
-        # Check if headers are missing (first row looks like data)
-        # Expected headers: Search Link,Name,Short Name,Tax Status,Parcels,County Code,County Name,State,Auction Date,Time,Location,Notes,Register Date,Register Link,List Link,Purchase Info Link
-        expected_cols = [
-            "Search Link", "Name", "Short Name", "Tax Status", "Parcels", "County Code", 
-            "County Name", "State", "Auction Date", "Time", "Location", "Notes", 
-            "Register Date", "Register Link", "List Link", "Purchase Info Link"
-        ]
-        
-        # If 'Name' not in columns, assume no header and reload
-        if "Name" not in df.columns:
-             df = pd.read_csv(io.BytesIO(file_content), header=None, names=expected_cols)
-
-        df = df.where(pd.notnull(df), None)
-
-        with engine.begin() as conn:
-            for _, row in df.iterrows():
-                # 'Search Link','Name','Short Name','Tax Status','Parcels','County Code',
-                # 'County Name','State','Auction Date','Time','Location','Notes',
-                # 'Register Date','Register Link','List Link','Purchase Info Link'
-                
-                auction_data = {
-                    "name": row.get("Name"),
-                    "short_name": row.get("Short Name"),
-                    "auction_date": parse_date(row.get("Auction Date")),
-                    "time": row.get("Time"),
-                    "location": row.get("Location"),
-                    "county": row.get("County Name"),
-                    "state": row.get("State"),
-                    "county": row.get("County Name"),
-                    "state": row.get("State"),
-                    "notes": f"{row.get('Notes', '')} | Tax Status: {row.get('Tax Status', '')} | County Code: {row.get('County Code', '')}".strip(),
-                    "search_link": row.get("Search Link"),
-                    "register_date": parse_date(row.get("Register Date")),
-                    "register_link": row.get("Register Link"),
-                    "list_link": row.get("List Link"),
-                    "purchase_info_link": row.get("Purchase Info Link")
-                }
-
-                if not auction_data["name"] or not auction_data["auction_date"]:
-                    continue
-
-                # Upsert Auction Event (assuming Name + Date is unique-ish? or just insert)
-                # For now, let's Insert and return ID. If same name/date exists, we might duplicate. 
-                # Better to align on some unique constraint, but schema doesn't force it.
-                
-                fields = ", ".join(auction_data.keys())
-                placeholders = ", ".join([f":{k}" for k in auction_data.keys()])
-                
-                query = text(f"""
-                    INSERT INTO auction_events ({fields}) VALUES ({placeholders})
-                    RETURNING id
-                """)
-                result = conn.execute(query, auction_data)
-                auction_id = result.scalar()
-
-                # Link Parcels
-                parcels_str = row.get("Parcels")
-                if parcels_str:
-                    # Clean up: remove brackets if any, split by comma
-                    parcels_str = str(parcels_str).replace('[','').replace(']','').replace("'", "")
-                    parcels = [p.strip() for p in parcels_str.split(',') if p.strip()]
-                    
-                    for p_code_or_id in parcels:
-                        # Try to find property by parcel_id or parcel_code
-                        # For now assume it's parcel_id
-                        
-                        # Find property_id from properties table
-                        prop_res = conn.execute(text("SELECT id FROM properties WHERE parcel_id = :pid"), {"pid": p_code_or_id}).fetchone()
-                        if prop_res:
-                            prop_id = prop_res[0]
-                            # Update Property with auction_event_id
-                            conn.execute(text("UPDATE properties SET auction_event_id = :aid WHERE id = :pid"), {"aid": auction_id, "pid": prop_id})
-
-        redis.set(f"import_auctions_status:{job_id}", f"success: {len(df)} auctions processed", ex=3600)
-    except Exception as e:
-        print(f"Auction Import Error: {e}")
-        redis.set(f"import_auctions_status:{job_id}", f"error: {str(e)}", ex=3600)
+    await ImportService.process_auctions_csv(file_content, job_id)
 
 # --- Endpoints ---
 
@@ -240,7 +33,10 @@ async def import_properties(background_tasks: BackgroundTasks, file: UploadFile 
     content = await file.read()
     job_id = str(uuid.uuid4())
     redis.set(f"import_status:{job_id}", "pending")
-    background_tasks.add_task(process_properties_csv, content, job_id)
+    
+    # Offload to Background Task via Service
+    background_tasks.add_task(ImportService.process_properties_csv, content, job_id)
+    
     return {"job_id": job_id, "status": "processing"}
 
 @router.post("/import-auctions")
@@ -251,15 +47,25 @@ async def import_auctions(background_tasks: BackgroundTasks, file: UploadFile = 
     content = await file.read()
     job_id = str(uuid.uuid4())
     redis.set(f"import_auctions_status:{job_id}", "pending")
-    background_tasks.add_task(process_auctions_csv, content, job_id)
+    
+    background_tasks.add_task(ImportService.process_auctions_csv, content, job_id)
+    
     return {"job_id": job_id, "status": "processing"}
 
 @router.get("/import-status/{job_id}")
 def get_import_status(job_id: str):
+    # Check both keys as user might poll either
     status = redis.get(f"import_status:{job_id}") or redis.get(f"import_auctions_status:{job_id}")
+    errors = redis.get(f"import_errors:{job_id}")
+    
     if not status:
         raise HTTPException(404, detail="Job not found")
-    return {"status": status.decode()}
+        
+    response = {"status": status.decode()}
+    if errors:
+        response["errors"] = eval(errors.decode()) # strict eval or json.loads if json
+        
+    return response
 
 @router.get("/properties", response_model=list)
 def list_properties(
@@ -276,7 +82,14 @@ def list_properties(
     try:
         # Build dynamic query with Filters
         base_query = """
-            SELECT p.*, pd.lot_acres, pd.estimated_arv, pd.total_market_value, pd.purchase_option_type
+            SELECT p.*, 
+                   pd.lot_acres, 
+                   pd.estimated_arv, 
+                   pd.estimated_rent,
+                   pd.land_value,
+                   pd.improvement_value,
+                   pd.total_market_value, 
+                   pd.purchase_option_type
             FROM properties p
             LEFT JOIN property_details pd ON p.id = pd.property_id
             WHERE p.deleted_at IS NULL
@@ -311,34 +124,31 @@ def list_properties(
         raise HTTPException(500, str(e))
 
 @router.post("/properties")
-def create_property(data: dict, db=Depends(get_gis_db)):
+def create_property(data: PropertyManualCreate, db=Depends(get_gis_db)):
     try:
-        if "parcel_id" not in data:
-            raise HTTPException(400, "parcel_id is required")
-
         with engine.begin() as conn:
             # 1. Properties Table
             prop_data = {
-                "parcel_id": data.get("parcel_id"),
-                "title": data.get("owner_name", "Unknown Owner"), # Default title to owner name
-                "address": data.get("parcel_address"),
-                "owner_address": data.get("owner_address"),
-                "owner_name": data.get("owner_name"),
-                "county": data.get("county"),
-                "state": data.get("state_code"),
-                "description": data.get("description"),
-                "amount_due": parse_float(data.get("amount_due")),
-                "next_auction_date": parse_date(data.get("auction_date")),
-                "occupancy": data.get("occupancy"),
-                "tax_sale_year": int(data.get("tax_sale_year")) if data.get("tax_sale_year") else None,
-                "cs_number": data.get("cs_number"),
-                "parcel_code": data.get("parcel_code"),
-                "map_link": data.get("map_link"),
-                "property_type": data.get("property_category", "residential").lower(),
+                "parcel_id": data.parcel_id,
+                "title": data.owner_name or "Unknown Owner",
+                "address": data.parcel_address,
+                "owner_address": data.owner_address,
+                "owner_name": data.owner_name,
+                "county": data.county,
+                "state": data.state_code,
+                "description": data.description,
+                "amount_due": data.amount_due,
+                "next_auction_date": data.auction_date,
+                "occupancy": data.occupancy,
+                "tax_sale_year": data.tax_sale_year,
+                "cs_number": data.cs_number,
+                "parcel_code": data.parcel_code,
+                "map_link": data.map_link,
+                "property_type": (data.property_category or "residential").lower(),
                 "status": "active"
             }
             
-            # Remove None values to let DB defaults work if needed, though mostly mapped
+            # Remove None values
             prop_data = {k: v for k, v in prop_data.items() if v is not None}
 
             fields = ", ".join(prop_data.keys())
@@ -356,15 +166,15 @@ def create_property(data: dict, db=Depends(get_gis_db)):
             # 2. Property Details Table
             details_data = {
                 "property_id": property_id,
-                "account_number": data.get("account"),
-                "lot_acres": parse_float(data.get("acres")),
-                "estimated_arv": parse_float(data.get("estimated_arv")),
-                "estimated_rent": parse_float(data.get("estimated_rent")),
-                "improvement_value": parse_float(data.get("improvement_value")),
-                "land_value": parse_float(data.get("land_value")),
-                "total_market_value": parse_float(data.get("total_value")),
-                "property_category": data.get("property_category"),
-                "purchase_option_type": data.get("purchase_option_type"),
+                "account_number": data.account,
+                "lot_acres": data.acres,
+                "estimated_arv": data.estimated_arv,
+                "estimated_rent": data.estimated_rent,
+                "improvement_value": data.improvement_value,
+                "land_value": data.land_value,
+                "total_market_value": data.total_value,
+                "property_category": data.property_category,
+                "purchase_option_type": data.purchase_option_type,
                 "updated_at": datetime.utcnow()
             }
              # Remove None values
@@ -386,24 +196,37 @@ def create_property(data: dict, db=Depends(get_gis_db)):
                 conn.execute(query_pd, details_data)
 
             # 3. Auction History (if provided)
-            if data.get("auction_name") or data.get("auction_date"):
+            # Only insert if auction info is present
+            if data.auction_name or data.auction_date:
                  history_data = {
                     "property_id": property_id,
-                    "auction_name": data.get("auction_name"),
-                    "auction_date": parse_date(data.get("auction_date")),
-                    "taxes_due": parse_float(data.get("taxes_due_auction")),
+                    "auction_name": data.auction_name,
+                    "auction_date": data.auction_date,
+                    "taxes_due": data.taxes_due_auction,
                 }
-                 # Insert new history record
-                 fields_h = ", ".join(history_data.keys())
-                 placeholders_h = ", ".join([f":{k}" for k in history_data.keys()])
-                 query_h = text(f"INSERT INTO property_auction_history ({fields_h}) VALUES ({placeholders_h})")
-                 conn.execute(query_h, history_data)
+                 # Check if this exact auction event exists to prevent duplicates on multi-click
+                 check_h = text("""
+                    SELECT id FROM property_auction_history 
+                    WHERE property_id = :property_id 
+                    AND (auction_date = :auction_date OR auction_date IS NULL)
+                    AND (auction_name = :auction_name OR auction_name IS NULL)
+                 """)
+                 existing_h = conn.execute(check_h, {
+                     "property_id": property_id, 
+                     "auction_date": data.auction_date, 
+                     "auction_name": data.auction_name
+                 }).fetchone()
 
-        return {"status": "created", "parcel_id": data["parcel_id"]}
+                 if not existing_h:
+                     fields_h = ", ".join(history_data.keys())
+                     placeholders_h = ", ".join([f":{k}" for k in history_data.keys()])
+                     query_h = text(f"INSERT INTO property_auction_history ({fields_h}) VALUES ({placeholders_h})")
+                     conn.execute(query_h, history_data)
+
+        return {"status": "created", "parcel_id": data.parcel_id}
 
     except Exception as e:
         print(f"Create Error: {e}")
-        # db.rollback() # handled by context manager usually or raises
         raise HTTPException(500, str(e))
 
 @router.get("/properties/{parcel_id}")

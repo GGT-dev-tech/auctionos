@@ -6,7 +6,6 @@ import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { Dashboard } from './pages/Dashboard';
 import Inventory from './pages/Inventory';
-import { PropertyWizard } from './pages/PropertyWizard';
 import { AuctionList } from './pages/AuctionList';
 import { AuctionService } from './services/api';
 import PropertyManualEntry from './pages/PropertyManualEntry';
@@ -46,7 +45,7 @@ const App: React.FC = () => {
             <Route path="my-inventory" element={<MyInventory />} />
             <Route path="properties/new" element={<PropertyManualEntry />} />
             <Route path="properties/:id" element={<PropertyDetails />} />
-            <Route path="properties/:id/edit" element={<PropertyWizard />} />
+            {/* <Route path="properties/:id/edit" element={<PropertyWizard />} /> */}
             <Route path="finance" element={<Finance />} />
             <Route path="reports" element={<Reports />} />
             <Route path="profile" element={<Profile />} />

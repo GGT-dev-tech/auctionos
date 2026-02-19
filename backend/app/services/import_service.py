@@ -1,270 +1,136 @@
-
-import csv
+import pandas as pd
 import io
+import uuid
 import logging
-from datetime import datetime
 from sqlalchemy.orm import Session
-from app.models.property import Property, PropertyDetails, PropertyStatus, PropertyAuctionHistory
+from sqlalchemy import text
+from app.schemas.csv_import import PropertyCSVRow, AuctionCSVRow
+from app.db.gis import engine
+from datetime import datetime
+from redis import Redis
+import os
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+redis = Redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0"))
 
 class ImportService:
     @staticmethod
-    def _parse_float(val):
-        if not val: return 0.0
-        clean = str(val).replace('$', '').replace(',', '').strip()
-        if clean.lower() in ['n/a', '-', '', 'none']: return 0.0
+    async def process_properties_csv(file_content: bytes, job_id: str):
         try:
-            return float(clean)
-        except:
-            return 0.0
+            # Read CSV
+            df = pd.read_csv(io.BytesIO(file_content))
+            total_rows = len(df)
+            success_count = 0
+            errors = []
 
-    @staticmethod
-    def _parse_date(val):
-        if not val: return None
-        for fmt in ("%m/%d/%Y", "%Y-%m-%d", "%d-%b-%y", "%d-%b-%Y"):
-            try:
-                return datetime.strptime(val, fmt).date()
-            except:
-                continue
-        return None
-
-    @staticmethod
-    def import_properties_csv(db: Session, file_content: bytes):
-        decoded_content = file_content.decode('utf-8', errors='replace')
-        csv_reader = csv.DictReader(io.StringIO(decoded_content))
-        
-        # Normalize headers (lowercase, strip) - optional but good practice
-        # For now, rely on user providing exact headers or we check varied cases
-        
-        stats = {"total_rows": 0, "added": 0, "updated": 0, "errors": 0, "error_messages": []}
-
-        for row in csv_reader:
-            stats["total_rows"] += 1
-            try:
-                # Key identifier: Parcel ID (or Parcel Number?)
-                parcel_id = row.get("Parcel ID") or row.get("Parcel Number") or row.get("parcel_code")
-                if not parcel_id:
-                     # fallback
-                     parcel_id = row.get("account") # Maybe?
-                
-                if not parcel_id:
-                    stats["errors"] += 1
-                    stats["error_messages"].append(f"Row {stats['total_rows']}: Missing Parcel ID")
-                    continue
-                
-                # Check exist
-                prop = db.query(Property).filter(Property.parcel_id == parcel_id).first()
-
-                # Parse Coordinates
-                lat, lon = None, None
-                coords = row.get("coordinates")
-                if coords and ',' in coords:
+            with engine.begin() as conn:
+                for index, row in df.iterrows():
                     try:
-                        parts = coords.split(',')
-                        lat = float(parts[0].strip())
-                        lon = float(parts[1].strip())
-                    except:
-                        pass
-                
-                # Property Data
-                prop_data = {
-                    "parcel_id": parcel_id,
-                    "parcel_code": row.get("parcel_code"), 
-                    "address": row.get("parcel_address") or row.get("Address"),
-                    "owner_name": row.get("owner_name") or row.get("Owner Name"),
-                    "owner_address": row.get("owner_address"),
-                    "amount_due": ImportService._parse_float(row.get("amount_due") or row.get("Amount Due") or row.get("Amt Due")),
-                    "next_auction_date": ImportService._parse_date(row.get("auction_date") or row.get("Next Auction") or row.get("Auction Date")),
-                    "tax_sale_year": int(row.get("tax_sale_year")) if row.get("tax_sale_year", "").isdigit() else None,
-                    "cs_number": row.get("cs_number"),
-                    "county": row.get("county") or row.get("County"),
-                    "state": row.get("state_code") or row.get("State"),
-                    "occupancy": row.get("vacancy") or row.get("Occupancy") or row.get("Occupancy Status"), 
-                    "map_link": row.get("map_link"),
-                    "description": row.get("description"),
-                    "latitude": lat,
-                    "longitude": lon,
-                    "property_type": row.get("type", "residential").lower(),
-                    # Default status if new
-                    "status": PropertyStatus.ACTIVE 
-                }
+                        # Validation via Pydantic
+                        # Replace NaN with None for Pydantic
+                        row_dict = row.where(pd.notnull(row), None).to_dict()
+                        
+                        # Handle potential alias mapping if CSV headers don't match exactly?
+                        # For now assume headers match expected aliases in Schema
+                        
+                        validated_data = PropertyCSVRow(**row_dict)
+                        
+                        # 1. Upsert Property
+                        prop_data = {
+                            "parcel_id": validated_data.parcel_id,
+                            "address": validated_data.address,
+                            "owner_address": validated_data.owner_address,
+                            "county": validated_data.county,
+                            "state": validated_data.state_code,
+                            "description": validated_data.description,
+                            "amount_due": validated_data.amount_due,
+                            # "next_auction_date": ... (parse from string if needed)
+                            "occupancy": validated_data.vacancy,
+                            "tax_sale_year": int(validated_data.tax_sale_year) if validated_data.tax_sale_year else None,
+                            "cs_number": validated_data.cs_number,
+                            "parcel_code": validated_data.parcel_code,
+                            "map_link": validated_data.map_link,
+                            "property_type": validated_data.type,
+                            "status": "active"
+                        }
 
-                if prop:
-                    for k, v in prop_data.items():
-                        if v is not None:
-                            setattr(prop, k, v)
-                    stats["updated"] += 1
-                else:
-                    prop = Property(**prop_data)
-                    db.add(prop)
-                    stats["added"] += 1
-                
-                # Details Data
-                if not prop.details:
-                    prop.details = PropertyDetails(property_id=prop.id)
-                
-                det = prop.details
-                det.account_number = row.get("account")
-                det.lot_acres = ImportService._parse_float(row.get("acres") or row.get("Acres"))
-                det.estimated_arv = ImportService._parse_float(row.get("estimated_arv"))
-                det.estimated_rent = ImportService._parse_float(row.get("estimated_rent"))
-                det.improvement_value = ImportService._parse_float(row.get("improvements"))
-                det.land_value = ImportService._parse_float(row.get("land_value"))
-                det.total_market_value = ImportService._parse_float(row.get("total_value"))
-                det.property_category = row.get("property_category")
-                det.purchase_option_type = row.get("purchase_option_type")
-                # det.tax_amount = ImportService._parse_float(row.get("taxes_due_auction")) 
+                        # Handle Coordinates
+                        if validated_data.coordinates:
+                            try:
+                                clean_coords = validated_data.coordinates.replace(',', ' ').strip()
+                                parts = clean_coords.split()
+                                if len(parts) >= 2:
+                                    prop_data["latitude"] = float(parts[0])
+                                    prop_data["longitude"] = float(parts[1])
+                            except:
+                                pass
 
-                db.flush()
+                        # SQL Upsert Property
+                        fields = ", ".join(prop_data.keys())
+                        placeholders = ", ".join([f":{k}" for k in prop_data.keys()])
+                        updates = ", ".join([f"{k} = EXCLUDED.{k}" for k in prop_data.keys() if k != "parcel_id"])
+                        
+                        query_p = text(f"""
+                            INSERT INTO properties ({fields}) VALUES ({placeholders})
+                            ON CONFLICT (parcel_id) DO UPDATE SET {updates}
+                            RETURNING id
+                        """)
+                        res = conn.execute(query_p, prop_data)
+                        property_id = res.scalar()
 
-            except Exception as e:
-                stats["errors"] += 1
-                stats["error_messages"].append(f"Row {stats['total_rows']}: {str(e)}")
-        
-        db.commit()
-        return stats
+                        # 2. Upsert Property Details
+                        details_data = {
+                            "property_id": property_id,
+                            "account_number": validated_data.account,
+                            "lot_acres": validated_data.acres,
+                            "estimated_arv": validated_data.estimated_arv,
+                            "estimated_rent": validated_data.estimated_rent,
+                            "improvement_value": validated_data.improvements,
+                            "land_value": validated_data.land_value,
+                            "total_market_value": validated_data.total_value,
+                            "property_category": validated_data.property_category,
+                            "purchase_option_type": validated_data.purchase_option_type,
+                            "updated_at": datetime.utcnow()
+                        }
+                        
+                        # Check exist
+                        existing_pd = conn.execute(text("SELECT id FROM property_details WHERE property_id = :pid"), {"pid": property_id}).fetchone()
+                        
+                        fields_pd = ", ".join(details_data.keys())
+                        placeholders_pd = ", ".join([f":{k}" for k in details_data.keys()])
+                        
+                        if existing_pd:
+                            updates_pd = ", ".join([f"{k} = :{k}" for k in details_data.keys() if k != "property_id"])
+                            query_pd = text(f"UPDATE property_details SET {updates_pd} WHERE property_id = :property_id")
+                            conn.execute(query_pd, details_data)
+                        else:
+                            query_pd = text(f"INSERT INTO property_details ({fields_pd}) VALUES ({placeholders_pd})")
+                            conn.execute(query_pd, details_data)
 
-    @staticmethod
-    def import_auction_history_csv(db: Session, file_content: bytes):
-        decoded_content = file_content.decode('utf-8', errors='replace')
-        csv_reader = csv.DictReader(io.StringIO(decoded_content))
-        
-        stats = {"total_rows": 0, "added": 0, "updated": 0, "errors": 0, "error_messages": []}
+                        success_count += 1
+                        
+                    except Exception as e:
+                        errors.append(f"Row {index + 2}: {str(e)}")
 
-        for row in csv_reader:
-            stats["total_rows"] += 1
-            try:
-                # Link to property via "Listed As" -> Parcel ID
-                listed_as = row.get("Listed As")
-                if not listed_as:
-                    # Try linking by Auction Name? No, too risky.
-                    # Without link, maybe create Orphan property?
-                    # The user said "deviation for auction information that this property is listed... utilize tables..."
-                    # It implies connection.
-                    stats["errors"] += 1
-                    stats["error_messages"].append(f"Row {stats['total_rows']}: Missing 'Listed As' (Parcel ID)")
-                    continue
-                
-                prop = db.query(Property).filter(Property.parcel_id == listed_as).first()
-                if not prop:
-                    # Maybe try cleaning?
-                    # or error?
-                    stats["errors"] += 1
-                    stats["error_messages"].append(f"Row {stats['total_rows']}: Property not found for 'Listed As': {listed_as}")
-                    continue
-
-                # Create History Record
-                # Check duplicate? (Same auction_name + date?)
-                auction_date = ImportService._parse_date(row.get("Date"))
-                auction_name = row.get("Auction Name")
-                
-                existing = db.query(PropertyAuctionHistory).filter(
-                    PropertyAuctionHistory.property_id == prop.id,
-                    PropertyAuctionHistory.auction_name == auction_name,
-                    PropertyAuctionHistory.auction_date == auction_date
-                ).first()
-                
-                data = {
-                    "property_id": prop.id,
-                    "auction_name": auction_name,
-                    "auction_date": auction_date,
-                    "location": row.get("Where"),
-                    "listed_as": listed_as,
-                    "taxes_due": ImportService._parse_float(row.get("Taxes Due")),
-                    "info_link": row.get("Info Link"),
-                    "list_link": row.get("List Link")
-                }
-                
-                if existing:
-                    for k, v in data.items():
-                        setattr(existing, k, v)
-                    stats["updated"] += 1
-                else:
-                    history = PropertyAuctionHistory(**data)
-                    db.add(history)
-                    stats["added"] += 1
-
-            except Exception as e:
-                stats["errors"] += 1
-                stats["error_messages"].append(f"Row {stats['total_rows']}: {str(e)}")
-                
-        db.commit()
-        return stats
-    @staticmethod
-    def import_auction_events_csv(db: Session, content: bytes):
-        import csv
-        import io
-        from app.models.auction_event import AuctionEvent
-        from app.models.property import Property
-
-        decoded = content.decode('utf-8-sig')
-        reader = csv.DictReader(io.StringIO(decoded))
-        
-        created_count = 0
-        updated_count = 0
-        props_linked = 0
-        
-        for row in reader:
-            # Basic fields
-            name = row.get("Name")
-            if not name: continue
-            
-            short_name = row.get("Short Name")
-            auction_date = ImportService._parse_date(row.get("Auction Date"))
-            if not auction_date: continue # Date is required
-            
-            # Check existing
-            event = db.query(AuctionEvent).filter(
-                AuctionEvent.name == name, 
-                AuctionEvent.auction_date == auction_date
-            ).first()
-            
-            event_data = {
-                "name": name,
-                "short_name": short_name,
-                "auction_date": auction_date,
-                "time": row.get("Time"),
-                "location": row.get("Location"),
-                "county": row.get("County Name") or row.get("County Code"),
-                "state": row.get("State"),
-                "notes": row.get("Notes"),
-                "search_link": row.get("Search Link"),
-                "register_date": ImportService._parse_date(row.get("Register Date")),
-                "register_link": row.get("Register Link"),
-                "list_link": row.get("List Link"),
-                "purchase_info_link": row.get("Purchase Info Link")
-            }
-            
-            if event:
-                for k, v in event_data.items():
-                    setattr(event, k, v)
-                updated_count += 1
+            # Final Status Update
+            if errors:
+                status_msg = f"Completed with errors. Success: {success_count}/{total_rows}. Errors: {len(errors)}"
+                # Could store errors in Redis list for download
+                redis.set(f"import_errors:{job_id}", str(errors), ex=3600)
             else:
-                event = AuctionEvent(**event_data)
-                db.add(event)
-                created_count += 1
+                status_msg = f"Success: {success_count} properties processed"
             
-            db.flush() # Ensure we have ID
+            redis.set(f"import_status:{job_id}", status_msg, ex=3600)
             
-            # Link Parcels
-            parcels_str = row.get("Parcels")
-            if parcels_str:
-                parcel_ids = [p.strip() for p in parcels_str.split(',') if p.strip()]
-                for pid in parcel_ids:
-                    # Look up property by parcel_id or smart_tag
-                    prop = db.query(Property).filter(Property.parcel_id == pid).first()
-                    if not prop:
-                         # Attempt fallback or just skip
-                         pass
-                    
-                    if prop:
-                        prop.auction_event_id = event.id
-                        props_linked += 1
+        except Exception as e:
+            logger.error(f"Import Job Failed: {e}")
+            redis.set(f"import_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
 
-        db.commit()
-        return {
-            "created": created_count,
-            "updated": updated_count,
-            "properties_linked": props_linked
-        }
+    @staticmethod
+    async def process_auctions_csv(file_content: bytes, job_id: str):
+         # Similar implementation for Auctions using AuctionCSVRow
+         pass
+
+import_service = ImportService()
