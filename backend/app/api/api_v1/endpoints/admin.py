@@ -163,6 +163,70 @@ def get_import_status(job_id: str):
         raise HTTPException(404, detail="Job not found")
     return {"status": status.decode()}
 
+@router.get("/properties", response_model=list)
+def list_properties(skip: int = 0, limit: int = 100, db=Depends(get_gis_db)):
+    """
+    List properties from the view or table.
+    """
+    try:
+        # Use the view for listing as it has nice column names/formatting, 
+        # or just query table. Let's query table for raw admin data or view for display.
+        # The prompt asked for specific columns in the list.
+        # Let's return raw properties for now, frontend can map.
+        query = text("SELECT * FROM properties ORDER BY created_at DESC OFFSET :skip LIMIT :limit")
+        result = db.execute(query, {"skip": skip, "limit": limit}).fetchall()
+        return [dict(row._mapping) for row in result]
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+@router.post("/properties")
+def create_property(data: dict, db=Depends(get_gis_db)):
+    """
+    Manual creation of a property.
+    """
+    try:
+        # Generate SQL keys/values
+        # parcel_id is PK
+        if "parcel_id" not in data:
+            raise HTTPException(400, "parcel_id is required")
+
+        columns = list(data.keys())
+        # Filter for valid columns only? 
+        # For now assume FE sends correct keys matching DB columns.
+        
+        cols_str = ", ".join(columns)
+        vals_str = ", ".join([f":{k}" for k in columns])
+        
+        query = text(f"INSERT INTO properties ({cols_str}) VALUES ({vals_str}) RETURNING parcel_id")
+        db.execute(query, data)
+        db.commit()
+        return {"status": "created", "parcel_id": data["parcel_id"]}
+    except Exception as e:
+        db.rollback()
+        # Check for unique violation
+        if "duplicate key" in str(e):
+             raise HTTPException(400, f"Property with this Parcel ID already exists.")
+        raise HTTPException(500, str(e))
+
+@router.get("/properties/{parcel_id}")
+def get_property_details(parcel_id: str, db=Depends(get_gis_db)):
+    try:
+        query = text("SELECT * FROM properties WHERE parcel_id = :pid")
+        row = db.execute(query, {"pid": parcel_id}).fetchone()
+        if not row:
+            raise HTTPException(404, "Property not found")
+        
+        prop = dict(row._mapping)
+        
+        # Get History
+        hist_query = text("SELECT * FROM auction_history WHERE parcel_id = :pid ORDER BY date DESC")
+        hist_rows = db.execute(hist_query, {"pid": parcel_id}).fetchall()
+        prop["history"] = [dict(r._mapping) for r in hist_rows]
+        
+        return prop
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
 @router.patch("/properties/{parcel_id}/status")
 def update_property_status(parcel_id: str, data: dict, db=Depends(get_gis_db)):
     new_status = data.get('status')

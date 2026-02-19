@@ -736,6 +736,41 @@ export const AdminService = {
         return response.json();
     },
 
+    async listProperties(skip = 0, limit = 100): Promise<any[]> {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/admin/properties?skip=${skip}&limit=${limit}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch properties');
+        return response.json();
+    },
+
+    async createProperty(data: any): Promise<any> {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/admin/properties`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Creation failed');
+        }
+        return response.json();
+    },
+
+    async getProperty(parcelId: string): Promise<any> {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/admin/properties/${parcelId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch property');
+        return response.json();
+    },
+
     async getCalendarEvents(): Promise<any[]> {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_BASE_URL}/auctions/calendar`, {
