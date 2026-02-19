@@ -224,31 +224,50 @@ export const AuctionList: React.FC = () => {
                             </div>
                         ))}
                         {/* Placeholder Calendar Grid - Logic needed for proper calendar generation aligned with day of week */}
-                        {days.map(day => {
-                            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                            const dayEvents = auctionsByDate[dateStr] || [];
+                        {/* Calendar Grid */}
+                        {(() => {
+                            // Get start day of month (0 = Sun, 1 = Mon...)
+                            const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+                            // Create blanks for days before 1st
+                            const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => i);
 
                             return (
-                                <div key={day} className="min-h-[100px] border border-slate-100 dark:border-slate-700 rounded-lg p-2 relative">
-                                    <span className="text-sm font-medium text-slate-400">{day}</span>
-                                    <div className="mt-1 space-y-1">
-                                        {dayEvents.map(event => (
-                                            <div
-                                                key={event.id}
-                                                className="text-xs p-1 rounded bg-primary/10 text-primary truncate cursor-pointer hover:bg-primary/20"
-                                                onClick={() => {
-                                                    setEditingAuction(event);
-                                                    setIsModalOpen(true);
-                                                }}
-                                                title={event.name}
-                                            >
-                                                {event.time ? `${event.time} ` : ''}{event.short_name || event.name}
+                                <>
+                                    {blanks.map(blank => (
+                                        <div key={`blank-${blank}`} className="min-h-[100px] border border-slate-100 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/20 rounded-lg"></div>
+                                    ))}
+                                    {days.map(day => {
+                                        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                        const dayEvents = auctionsByDate[dateStr] || [];
+
+                                        return (
+                                            <div key={day} className="min-h-[100px] border border-slate-100 dark:border-slate-700 rounded-lg p-2 relative bg-white dark:bg-slate-800 hover:border-blue-200 transition-colors">
+                                                <span className={`text-sm font-medium ${day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()
+                                                        ? 'bg-blue-600 text-white w-6 h-6 flex items-center justify-center rounded-full'
+                                                        : 'text-slate-400'
+                                                    }`}>{day}</span>
+                                                <div className="mt-1 space-y-1 overflow-y-auto max-h-[80px]">
+                                                    {dayEvents.map(event => (
+                                                        <div
+                                                            key={event.id}
+                                                            className="text-xs p-1.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 truncate cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-100 dark:border-blue-800"
+                                                            onClick={() => {
+                                                                setEditingAuction(event);
+                                                                setIsModalOpen(true);
+                                                            }}
+                                                            title={event.name}
+                                                        >
+                                                            {event.time ? <span className="opacity-75 mr-1">{event.time.slice(0, 5)}</span> : ''}
+                                                            {event.short_name || event.name}
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )
-                        })}
+                                        )
+                                    })}
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
             )}

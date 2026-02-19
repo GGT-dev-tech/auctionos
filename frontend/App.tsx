@@ -12,6 +12,9 @@ import { AuctionService } from './services/api';
 import PropertyManualEntry from './pages/PropertyManualEntry';
 import PropertyDetails from './pages/PropertyDetails';
 
+import { Finance } from './pages/Finance';
+import { Reports } from './pages/Reports';
+import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 import MyInventory from './pages/MyInventory';
 import AdminAuctions from './pages/admin/AdminAuctions';
@@ -44,6 +47,9 @@ const App: React.FC = () => {
             <Route path="properties/new" element={<PropertyManualEntry />} />
             <Route path="properties/:id" element={<PropertyDetails />} />
             <Route path="properties/:id/edit" element={<PropertyWizard />} />
+            <Route path="finance" element={<Finance />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="profile" element={<Profile />} />
             <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction</div>} />
           </Route>
         </Routes>

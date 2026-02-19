@@ -163,7 +163,9 @@ async def process_auctions_csv(file_content: bytes, job_id: str):
                     "location": row.get("Location"),
                     "county": row.get("County Name"),
                     "state": row.get("State"),
-                    "notes": row.get("Notes"), # Could preserve Tax Status here too if needed
+                    "county": row.get("County Name"),
+                    "state": row.get("State"),
+                    "notes": f"{row.get('Notes', '')} | Tax Status: {row.get('Tax Status', '')} | County Code: {row.get('County Code', '')}".strip(),
                     "search_link": row.get("Search Link"),
                     "register_date": parse_date(row.get("Register Date")),
                     "register_link": row.get("Register Link"),
