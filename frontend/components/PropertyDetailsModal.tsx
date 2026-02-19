@@ -3,6 +3,7 @@ import { Modal } from './Modal';
 import { Property, PropertyStatus } from '../types';
 import { NotesManager } from './NotesManager';
 import { API_BASE_URL, AuctionService } from '../services/api';
+import PropertyMap from './PropertyMap';
 
 interface Props {
     property: Property | null;
@@ -281,21 +282,7 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                                 </div>
                             </div>
                             <div className="h-64 md:h-full bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden relative">
-                                {property.latitude && property.longitude ? (
-                                    <iframe
-                                        width="100%"
-                                        height="100%"
-                                        frameBorder="0"
-                                        scrolling="no"
-                                        src={`https://www.openstreetmap.org/export/embed.html?bbox=${property.longitude - 0.01}%2C${property.latitude - 0.01}%2C${property.longitude + 0.01}%2C${property.latitude + 0.01}&layer=mapnik&marker=${property.latitude}%2C${property.longitude}`}
-                                        style={{ border: 0 }}
-                                    ></iframe>
-                                ) : (
-                                    <div className="flex h-full items-center justify-center text-slate-400 flex-col gap-2">
-                                        <span className="material-symbols-outlined text-4xl">map</span>
-                                        <span className="text-sm">No coordinates available</span>
-                                    </div>
-                                )}
+                                <PropertyMap parcelId={property.parcel_id || null} />
                             </div>
                         </>
                     )}

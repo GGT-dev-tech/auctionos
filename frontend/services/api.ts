@@ -658,3 +658,31 @@ export const FinanceService = {
         return response.json();
     }
 };
+
+export const GISService = {
+    async getGeoJSON(parcelId: string): Promise<any> {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/gis/${parcelId}/geojson`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) {
+            if (response.status === 404) return null;
+            throw new Error('Failed to fetch GIS data');
+        }
+        return response.json();
+    },
+
+    async triggerSnapshot(parcelId: string): Promise<any> {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/gis/${parcelId}/snapshot`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) throw new Error('Failed to trigger snapshot');
+        return response.json();
+    }
+};

@@ -23,3 +23,5 @@ fpdf2==2.7.7
 fastapi-cache2[redis]==0.2.1
 celery==5.3.6
 fastapi-mail==1.4.1
+geojson==3.1.0
+shapely==2.0.3
