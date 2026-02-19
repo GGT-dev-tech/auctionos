@@ -14,6 +14,7 @@ from app.api.api_v1.endpoints import (
     counties,
     inventory,
     finance,
+    auctions,
 )
 
 api_router = APIRouter()
@@ -31,3 +32,4 @@ api_router.include_router(notes.router, prefix="/notes", tags=["notes"])
 api_router.include_router(counties.router, prefix="/counties", tags=["counties"])
 api_router.include_router(inventory.router, prefix="/inventory", tags=["inventory"])
 api_router.include_router(finance.router, prefix="/finance", tags=["finance"])
+api_router.include_router(auctions.router, prefix="/auctions", tags=["auctions"])

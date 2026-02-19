@@ -191,3 +191,80 @@ class ImportService:
                 
         db.commit()
         return stats
+    @staticmethod
+    def import_auction_events_csv(db: Session, content: bytes):
+        import csv
+        import io
+        from app.models.auction_event import AuctionEvent
+        from app.models.property import Property
+
+        decoded = content.decode('utf-8-sig')
+        reader = csv.DictReader(io.StringIO(decoded))
+        
+        created_count = 0
+        updated_count = 0
+        props_linked = 0
+        
+        for row in reader:
+            # Basic fields
+            name = row.get("Name")
+            if not name: continue
+            
+            short_name = row.get("Short Name")
+            auction_date = ImportService._parse_date(row.get("Auction Date"))
+            if not auction_date: continue # Date is required
+            
+            # Check existing
+            event = db.query(AuctionEvent).filter(
+                AuctionEvent.name == name, 
+                AuctionEvent.auction_date == auction_date
+            ).first()
+            
+            event_data = {
+                "name": name,
+                "short_name": short_name,
+                "auction_date": auction_date,
+                "time": row.get("Time"),
+                "location": row.get("Location"),
+                "county": row.get("County Name") or row.get("County Code"),
+                "state": row.get("State"),
+                "notes": row.get("Notes"),
+                "search_link": row.get("Search Link"),
+                "register_date": ImportService._parse_date(row.get("Register Date")),
+                "register_link": row.get("Register Link"),
+                "list_link": row.get("List Link"),
+                "purchase_info_link": row.get("Purchase Info Link")
+            }
+            
+            if event:
+                for k, v in event_data.items():
+                    setattr(event, k, v)
+                updated_count += 1
+            else:
+                event = AuctionEvent(**event_data)
+                db.add(event)
+                created_count += 1
+            
+            db.flush() # Ensure we have ID
+            
+            # Link Parcels
+            parcels_str = row.get("Parcels")
+            if parcels_str:
+                parcel_ids = [p.strip() for p in parcels_str.split(',') if p.strip()]
+                for pid in parcel_ids:
+                    # Look up property by parcel_id or smart_tag
+                    prop = db.query(Property).filter(Property.parcel_id == pid).first()
+                    if not prop:
+                         # Attempt fallback or just skip
+                         pass
+                    
+                    if prop:
+                        prop.auction_event_id = event.id
+                        props_linked += 1
+
+        db.commit()
+        return {
+            "created": created_count,
+            "updated": updated_count,
+            "properties_linked": props_linked
+        }

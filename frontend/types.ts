@@ -20,6 +20,24 @@ export enum FloodZone {
   Undetermined = "Undetermined",
 }
 
+export interface AuctionEvent {
+  id: number;
+  name: string;
+  short_name?: string;
+  auction_date: string;
+  time?: string;
+  location?: string;
+  county?: string;
+  state?: string;
+  notes?: string;
+  search_link?: string;
+  register_date?: string;
+  register_link?: string;
+  list_link?: string;
+  purchase_info_link?: string;
+  properties_count?: number;
+}
+
 export interface AuctionDetails {
   id: number;
   property_id: string;
@@ -108,6 +126,8 @@ export interface PropertyDetails {
   estimated_arv?: number;
   estimated_rent?: number;
   purchase_option_type?: string;
+  auction_event_id?: number;
+  auction_event?: AuctionEvent;
   total_market_value?: number;
   property_category?: string;
 }

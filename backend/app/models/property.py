@@ -51,6 +51,7 @@ class Property(Base):
 
     # Ownership
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True, index=True)
+    auction_event_id = Column(Integer, ForeignKey("auction_events.id"), nullable=True, index=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -58,6 +59,7 @@ class Property(Base):
 
     # Relationships
     company = relationship("Company", back_populates="properties")
+    auction_event = relationship("AuctionEvent", back_populates="properties")
     details = relationship("PropertyDetails", uselist=False, back_populates="property", cascade="all, delete-orphan")
     media = relationship("Media", back_populates="property", cascade="all, delete-orphan")
     auction_details = relationship("AuctionDetails", uselist=False, back_populates="property", cascade="all, delete-orphan")
