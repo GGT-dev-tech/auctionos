@@ -2,7 +2,8 @@ import { Property } from '../types';
 
 // Hardcoded fallback to ensure production works even if env var fails
 const PROD_API_URL = 'https://auctionos-production.up.railway.app/api/v1';
-export const API_URL = import.meta.env.VITE_API_URL || PROD_API_URL || 'http://localhost:8000/api/v1';
+// TEMPORARY: Force PROD_API_URL to rule out env var issues
+export const API_URL = PROD_API_URL;
 export const API_BASE_URL = API_URL.replace('/api/v1', '');
 
 console.log('API Config:', {
