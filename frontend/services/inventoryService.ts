@@ -73,4 +73,26 @@ export const InventoryService = {
         });
         if (!res.ok) throw new Error('Failed to delete item');
     },
+
+    importParcelFairCsv: async (file: File, type: 'properties' | 'calendar'): Promise<{ stats: any }> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', type);
+
+        // Remove Content-Type so browser sets boundary
+        const headers = getHeaders();
+        delete (headers as any)['Content-Type'];
+
+        const res = await fetch(`${API_URL}/properties/upload-csv`, {
+            method: 'POST',
+            body: formData,
+            headers: headers
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || 'Failed to import CSV');
+        }
+        return res.json();
+    },
 };

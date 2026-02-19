@@ -320,6 +320,42 @@ export const Step1BasicInfo: React.FC<Props> = ({ data, update }) => {
             </p>
           </div>
 
+          {/* Ownership & Occupancy */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Ownership & Occupancy</label>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="text-xs text-slate-500">Owner Name</label>
+                <input
+                  className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                  value={data.owner_name || ''}
+                  onChange={(e) => update({ owner_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">Owner Address</label>
+                <input
+                  className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                  value={data.owner_address || ''}
+                  onChange={(e) => update({ owner_address: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-500">Occupancy Status</label>
+                <select
+                  className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                  value={data.occupancy || ''}
+                  onChange={(e) => update({ occupancy: e.target.value })}
+                >
+                  <option value="">Select...</option>
+                  <option value="Occupied">Occupied</option>
+                  <option value="Vacant">Vacant</option>
+                  <option value="Unknown">Unknown</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         {/* Map Preview & Selector */}

@@ -128,6 +128,58 @@ export const Step2Financials: React.FC<Props> = ({ data, update }) => {
           </div>
         </div>
 
+
+
+        {/* Auction Financials */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white border-b pb-2">Auction Financials</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-slate-500">Amount Due</label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none text-slate-500">$</span>
+                <input
+                  className="pl-6 w-full rounded border-slate-300 text-sm"
+                  type="number"
+                  value={data.amount_due || ''}
+                  onChange={e => update({ amount_due: parseFloat(e.target.value) })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">Tax Sale Year</label>
+              <input
+                className="w-full rounded border-slate-300 text-sm"
+                type="number"
+                value={data.tax_sale_year || ''}
+                onChange={e => update({ tax_sale_year: parseInt(e.target.value) })}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">Next Auction Date</label>
+              <input
+                className="w-full rounded border-slate-300 text-sm"
+                type="date"
+                value={data.next_auction_date || ''}
+                onChange={e => update({ next_auction_date: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-500">Purchase Option</label>
+              <select
+                className="w-full rounded border-slate-300 text-sm"
+                value={data.details?.purchase_option_type || ''}
+                onChange={e => update({ details: { ...data.details, purchase_option_type: e.target.value } })}
+              >
+                <option value="">Select...</option>
+                <option value="Auction">Auction</option>
+                <option value="Direct Purchase">Direct Purchase</option>
+                <option value="Assignment">Assignment</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         {/* Market Data */}
         <div className="space-y-4">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white border-b pb-2">Market & Risk</h3>
@@ -237,6 +289,6 @@ export const Step2Financials: React.FC<Props> = ({ data, update }) => {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };

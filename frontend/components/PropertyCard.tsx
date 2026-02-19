@@ -95,9 +95,27 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
                     <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
                         <BadgeDollarSign size={14} className="text-slate-400" />
                         <div className="flex flex-col">
-                            <span className="text-[10px] text-slate-400 uppercase font-semibold">Flood Zone</span>
+                            <span className="text-[10px] text-slate-400 uppercase font-semibold">Amount Due</span>
+                            <span className="text-xs font-medium text-red-600 dark:text-red-400">
+                                {property.amount_due ? `$${property.amount_due.toLocaleString()}` : '-'}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                        <div className="text-slate-400 material-symbols-outlined text-[14px]">calendar_month</div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-slate-400 uppercase font-semibold">Auction</span>
                             <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                                {property.details?.flood_zone_code || '-'}
+                                {property.next_auction_date || '-'}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                        <div className="text-slate-400 material-symbols-outlined text-[14px]">person</div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-slate-400 uppercase font-semibold">Occupancy</span>
+                            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                {property.occupancy || '-'}
                             </span>
                         </div>
                     </div>

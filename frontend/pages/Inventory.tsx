@@ -394,9 +394,10 @@ export const Inventory: React.FC = () => {
                     </th>
                     <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Property</th>
                     <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Address details</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Smart Tag</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Owner</th>
                     <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Market Value</th>
-                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Flood Zone</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount Due</th>
+                    <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Next Auction</th>
                     <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                     <th className="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                   </tr>
@@ -429,22 +430,24 @@ export const Inventory: React.FC = () => {
                         </div>
                       </td>
                       <td className="py-4 px-6 align-middle">
-                        <span className="font-mono text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-                          {p.smart_tag || '-'}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[150px]" title={p.owner_name}>{p.owner_name || '-'}</span>
+                          <span className="text-xs text-slate-500 truncate max-w-[150px]" title={p.owner_address}>{p.owner_address}</span>
+                        </div>
                       </td>
                       <td className="py-4 px-6 align-middle">
                         <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {p.price ? `$${p.price.toLocaleString()}` : '-'}
+                          {p.details?.estimated_value ? `$${p.details.estimated_value.toLocaleString()}` : '-'}
                         </span>
                       </td>
                       <td className="py-4 px-6 align-middle">
-                        {/* Real flood zone display */}
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${p.details?.flood_zone_code
-                          ? 'bg-blue-100 text-blue-800 border-blue-200'
-                          : 'bg-slate-100 text-slate-500 border-slate-200'
-                          }`}>
-                          {p.details?.flood_zone_code || '-'}
+                        <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                          {p.amount_due ? `$${p.amount_due.toLocaleString()}` : '-'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 align-middle">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                          {p.next_auction_date || '-'}
                         </span>
                       </td>
                       <td className="py-4 px-6 align-middle">

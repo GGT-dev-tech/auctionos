@@ -38,6 +38,17 @@ class Property(Base):
     smart_tag = Column(String(50), unique=True, index=True, nullable=True)
     local_id = Column(Integer, autoincrement=True, unique=True, nullable=True)
     
+    # New Fields for Phase 4
+    owner_name = Column(String(255), nullable=True)
+    owner_address = Column(String(255), nullable=True)
+    amount_due = Column(Float, nullable=True)
+    next_auction_date = Column(Date, nullable=True)
+    occupancy = Column(String(50), nullable=True) # vacancy
+    tax_sale_year = Column(Integer, nullable=True)
+    cs_number = Column(String(100), nullable=True)
+    parcel_code = Column(String(100), nullable=True)
+    map_link = Column(String(500), nullable=True)
+
     # Ownership
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True, index=True)
 
@@ -50,6 +61,7 @@ class Property(Base):
     details = relationship("PropertyDetails", uselist=False, back_populates="property", cascade="all, delete-orphan")
     media = relationship("Media", back_populates="property", cascade="all, delete-orphan")
     auction_details = relationship("AuctionDetails", uselist=False, back_populates="property", cascade="all, delete-orphan")
+    auction_history = relationship("PropertyAuctionHistory", back_populates="property", cascade="all, delete-orphan")
     expenses = relationship("Expense", back_populates="property", cascade="all, delete-orphan")
     notes = relationship("Note", back_populates="property", cascade="all, delete-orphan")
 
@@ -68,6 +80,13 @@ class PropertyDetails(Base):
     state_parcel_id = Column(String(100), nullable=True)
     account_number = Column(String(100), nullable=True)
     attom_id = Column(String(100), nullable=True) # ll_uuid
+
+    # New Fields for Phase 4
+    estimated_arv = Column(Float, nullable=True)
+    estimated_rent = Column(Float, nullable=True)
+    purchase_option_type = Column(String(100), nullable=True)
+    total_market_value = Column(Float, nullable=True)
+    property_category = Column(String(100), nullable=True)
 
     # Legal & Zoning
     use_code = Column(String(50), nullable=True)
@@ -121,6 +140,24 @@ class PropertyDetails(Base):
     max_bid = Column(Float, nullable=True)
     
     property = relationship("Property", back_populates="details")
+
+class PropertyAuctionHistory(Base):
+    __tablename__ = "property_auction_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(String(36), ForeignKey("properties.id"), nullable=False)
+    
+    auction_name = Column(String(255), nullable=True)
+    auction_date = Column(Date, nullable=True)
+    location = Column(String(255), nullable=True) # Where
+    listed_as = Column(String(255), nullable=True)
+    taxes_due = Column(Float, nullable=True)
+    info_link = Column(String(500), nullable=True)
+    list_link = Column(String(500), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    property = relationship("Property", back_populates="auction_history")
 
 class MediaType(str, enum.Enum):
     IMAGE = "image"

@@ -35,6 +35,18 @@ export interface AuctionDetails {
   raw_text?: string;
 }
 
+export interface PropertyAuctionHistory {
+  id: number;
+  property_id: string;
+  auction_name?: string;
+  auction_date?: string;
+  location?: string;
+  listed_as?: string;
+  taxes_due?: number;
+  info_link?: string;
+  list_link?: string;
+}
+
 export interface PropertyDetails {
   id: number;
   property_id: string;
@@ -91,6 +103,13 @@ export interface PropertyDetails {
   gsi_url?: string;
   gsi_data?: string;
   max_bid?: number;
+
+  // Phase 4 additions
+  estimated_arv?: number;
+  estimated_rent?: number;
+  purchase_option_type?: string;
+  total_market_value?: number;
+  property_category?: string;
 }
 
 export interface Media {
@@ -125,6 +144,18 @@ export interface Property {
   details?: PropertyDetails;
   media?: Media[];
   auction_details?: AuctionDetails;
+  auction_history?: PropertyAuctionHistory[];
+
+  // Phase 4 New Fields
+  owner_name?: string;
+  owner_address?: string;
+  amount_due?: number;
+  next_auction_date?: string;
+  occupancy?: string;
+  tax_sale_year?: number;
+  cs_number?: string;
+  parcel_code?: string;
+  map_link?: string;
 
   // Frontend specific (optional or mapped)
   imageUrl?: string;

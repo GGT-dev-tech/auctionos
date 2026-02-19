@@ -1,6 +1,6 @@
 import json
 from typing import List, Optional, Any
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Form, Form
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.schemas.property import Property, PropertyCreate, PropertyUpdate
@@ -341,131 +341,26 @@ def upload_csv(
     *,
     db: Session = Depends(deps.get_db),
     file: UploadFile = File(...),
+    type: str = Form(...),
     current_user: User = Depends(deps.get_current_agent),
 ) -> Any:
     """
-    Upload and parse CSV file to ingest properties.
+    Upload and parse CSV file to ingest properties or auction history.
     """
-    import csv
+    from app.services.import_service import ImportService
     import codecs
-    from app.utils.csv_parser import parse_raw_text
-    from app.models.property import Property, PropertyDetails, AuctionDetails, PropertyStatus
 
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Invalid file type. Please upload a CSV file.")
 
-    count_created = 0
-    count_updated = 0
-    errors = []
-
     try:
-        # Read file content
-        csv_file = codecs.iterdecode(file.file, 'utf-8')
-        reader = csv.DictReader(csv_file)
-        
-        for row in reader:
-            try:
-                raw_text = row.get('raw_text', '')
-                if not raw_text:
-                    continue
-                
-                parsed_data = parse_raw_text(raw_text)
-                parcel_id = parsed_data.get('parcel_id')
-                
-                if not parcel_id:
-                    continue  # Skip if no parcel ID (key identifier)
-
-                # Check if property exists
-                existing_prop = property_repo.get_by_parcel_id(db, parcel_id=parcel_id)
-                
-                # Determine status
-                csv_status = parsed_data.get('status')
-                app_status = PropertyStatus.DRAFT # Default to Draft for review
-                if csv_status == 'Sold':
-                    app_status = PropertyStatus.SOLD
-                elif csv_status == 'Redeemed' or csv_status == 'Canceled':
-                    app_status = PropertyStatus.INACTIVE
-                
-                # Prepare data
-                prop_data = {
-                    "title": parsed_data.get('property_address') or f"Property {parcel_id}",
-                    "address": parsed_data.get('property_address'),
-                    "city": parsed_data.get('city'),
-                    "state": parsed_data.get('state'),
-                    "zip_code": parsed_data.get('zip_code'),
-                    "price": parsed_data.get('opening_bid'), # Use opening bid as price
-                    "parcel_id": parcel_id,
-                    "status": app_status,
-                    "description": raw_text[:500] if raw_text else None
-                }
-                
-                if existing_prop:
-                    # Update (simplified, mainly status and price if newer?)
-                    # For now just skip or update status
-                    existing_prop.status = app_status
-                    db.add(existing_prop)
-                    count_updated += 1
-                    property_obj = existing_prop
-                else:
-                    # Create new
-                    property_obj = Property(**prop_data)
-                    db.add(property_obj)
-                    db.flush() # Get ID and local_id
-                    
-                    if property_obj.local_id:
-                         tag = smart_tag_service.generate_tag(
-                            state=property_obj.state or "NA",
-                            county=property_obj.county or "NA",
-                            parcel_id=property_obj.parcel_id,
-                            property_id=property_obj.local_id
-                         )
-                         property_obj.smart_tag = tag
-                         db.add(property_obj)
-                    
-                    count_created += 1
-                
-                # Update/Create Auction Details
-                if property_obj.auction_details:
-                     auction_det = property_obj.auction_details
-                     auction_det.auction_date = None # TODO: Parse date from 'auction_date' column if needed
-                     auction_det.case_number = parsed_data.get('case_number')
-                     auction_det.certificate_number = parsed_data.get('certificate_number')
-                     auction_det.opening_bid = parsed_data.get('opening_bid')
-                     auction_det.amount = parsed_data.get('amount')
-                     auction_det.sold_to = parsed_data.get('sold_to')
-                     auction_det.raw_text = raw_text
-                else:
-                    auction_det = AuctionDetails(
-                        property_id=property_obj.id,
-                        case_number=parsed_data.get('case_number'),
-                        certificate_number=parsed_data.get('certificate_number'),
-                        opening_bid=parsed_data.get('opening_bid'),
-                        amount=parsed_data.get('amount'),
-                        sold_to=parsed_data.get('sold_to'),
-                        raw_text=raw_text
-                    )
-                    db.add(auction_det)
-
-                # Update/Create Property Details (Assessed Value)
-                if parsed_data.get('assessed_value'):
-                    if property_obj.details:
-                         property_obj.details.assessed_value = parsed_data.get('assessed_value')
-                    else:
-                        details_obj = PropertyDetails(
-                            property_id=property_obj.id,
-                            assessed_value=parsed_data.get('assessed_value')
-                        )
-                        db.add(details_obj)
-                        
-            except Exception as row_err:
-                 errors.append(f"Row error: {str(row_err)}")
-                 continue
-
-        db.commit()
+        if type == 'properties':
+            stats = ImportService.import_properties_csv(db, file.file.read())
+        elif type == 'calendar':
+            stats = ImportService.import_auction_history_csv(db, file.file.read())
+        else:
+             raise HTTPException(status_code=400, detail="Invalid import type")
+             
+        return {"message": "Import processed successfully", "stats": stats}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to process CSV: {str(e)}")
-
-    return {
-        "message": f"Import complete. Created: {count_created}, Updated: {count_updated}",
-        "errors": errors[:5] # Return first 5 errors if any
-    }
+        raise HTTPException(status_code=500, detail=str(e))
