@@ -360,6 +360,43 @@ export const AuctionService = {
         });
         if (!response.ok) throw new Error('GSI Validation failed');
         return response.json();
+    },
+
+    // Auction Events
+    getAuctionEvents: async (): Promise<any[]> => {
+        const response = await fetch(`${API_BASE_URL}/auctions/`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch auction events');
+        return response.json();
+    },
+
+    createAuctionEvent: async (data: any): Promise<any> => {
+        const response = await fetch(`${API_BASE_URL}/auctions/`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to create auction event');
+        return response.json();
+    },
+
+    updateAuctionEvent: async (id: number, data: any): Promise<any> => {
+        const response = await fetch(`${API_BASE_URL}/auctions/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to update auction event');
+        return response.json();
+    },
+
+    deleteAuctionEvent: async (id: number): Promise<void> => {
+        const response = await fetch(`${API_BASE_URL}/auctions/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to delete auction event');
     }
 };
 
@@ -600,63 +637,7 @@ export const FinanceService = {
         return response.json();
     },
 
-    // Auction Events
-    async getAuctionEvents() {
-        const response = await fetch(`${API_BASE_URL}/auctions/`, {
-            headers: getHeaders(), // Changed from this.getHeaders() to getHeaders() for consistency
-        });
-        if (!response.ok) throw new Error('Failed to fetch auction events');
-        return response.json();
-    },
-
-    async createAuctionEvent(data: any) {
-        const response = await fetch(`${API_BASE_URL}/auctions/`, {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error('Failed to create auction event');
-        return response.json();
-    },
-
-    async updateAuctionEvent(id: number, data: any) {
-        const response = await fetch(`${API_BASE_URL}/auctions/${id}`, {
-            method: 'PUT',
-            headers: this.getHeaders(),
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error('Failed to update auction event');
-        return response.json();
-    },
-
-    async deleteAuctionEvent(id: number) {
-        const response = await fetch(`${API_BASE_URL}/auctions/${id}`, {
-            method: 'DELETE',
-            headers: this.getHeaders(),
-        });
-        if (!response.ok) throw new Error('Failed to delete auction event');
-        return response.json();
-    },
-
-    async uploadAuctionCSV(file: File) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/auctions/import-csv`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-            body: formData,
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to upload CSV');
-        }
-        return response.json();
-    }
+}
 };
 
 export const GISService = {
@@ -787,50 +768,4 @@ export const AdminService = {
     }
 };
 
-export const AuctionService = {
-    async getAuctionEvents(): Promise<any[]> {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/auctions/`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) throw new Error('Failed to fetch auctions');
-        return response.json();
-    },
 
-    async createAuctionEvent(data: any): Promise<any> {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/auctions/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(data)
-        });
-        if (!response.ok) throw new Error('Failed to create auction');
-        return response.json();
-    },
-
-    async updateAuctionEvent(id: number, data: any): Promise<any> {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/auctions/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(data)
-        });
-        if (!response.ok) throw new Error('Failed to update auction');
-        return response.json();
-    },
-
-    async deleteAuctionEvent(id: number): Promise<void> {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/auctions/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) throw new Error('Failed to delete auction');
-    }
-};
