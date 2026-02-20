@@ -7,13 +7,17 @@ import { AuctionService } from '../../services/auction.service';
 import { AuctionDetailsModal } from './AuctionDetailsModal';
 import { useNavigate } from 'react-router-dom';
 
-const AuctionCalendar: React.FC = () => {
+interface AuctionCalendarProps {
+    filters?: any;
+}
+
+const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {} }) => {
     const [events, setEvents] = useState<any[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        AuctionService.getCalendarEvents()
+        AuctionService.getCalendarEvents(filters)
             .then(data => {
                 setEvents(data.map((item: any) => ({
                     title: `${item.event_title} (${item.property_count})`,
@@ -31,7 +35,7 @@ const AuctionCalendar: React.FC = () => {
                 })));
             })
             .catch(err => console.error("Failed to load calendar", err));
-    }, []);
+    }, [filters]);
 
     const handleEventClick = (info: any) => {
         setSelectedEvent(info.event);
@@ -62,6 +66,12 @@ const AuctionCalendar: React.FC = () => {
                 eventClick={handleEventClick}
                 height="100%"
                 eventColor="#3b82f6"
+                dayCellClassNames={(arg) => {
+                    if (arg.isPast) {
+                        return ['bg-slate-100', 'dark:bg-slate-800', 'opacity-60', 'grayscale'];
+                    }
+                    return [];
+                }}
             />
 
             <AuctionDetailsModal

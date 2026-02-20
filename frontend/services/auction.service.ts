@@ -2,8 +2,16 @@ import { API_URL, getHeaders } from './httpClient';
 import { AuctionEvent } from '../types';
 
 export const AuctionService = {
-    getAuctionEvents: async (): Promise<AuctionEvent[]> => {
-        const response = await fetch(`${API_URL}/auctions/`, {
+    getAuctionEvents: async (filters: any = {}): Promise<AuctionEvent[]> => {
+        const queryParams = new URLSearchParams();
+        if (filters.name) queryParams.append('name', filters.name);
+        if (filters.state) queryParams.append('state', filters.state);
+        if (filters.county) queryParams.append('county', filters.county);
+        if (filters.isPresencial !== undefined) queryParams.append('is_presential', String(filters.isPresencial));
+        if (filters.skip !== undefined) queryParams.append('skip', String(filters.skip));
+        if (filters.limit !== undefined) queryParams.append('limit', String(filters.limit));
+
+        const response = await fetch(`${API_URL}/auctions/?${queryParams.toString()}`, {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Failed to fetch auction events');
@@ -47,8 +55,14 @@ export const AuctionService = {
         return response.json();
     },
 
-    getCalendarEvents: async (): Promise<any[]> => {
-        const response = await fetch(`${API_URL}/auctions/calendar`, {
+    getCalendarEvents: async (filters: any = {}): Promise<any[]> => {
+        const queryParams = new URLSearchParams();
+        if (filters.name) queryParams.append('name', filters.name);
+        if (filters.state) queryParams.append('state', filters.state);
+        if (filters.county) queryParams.append('county', filters.county);
+        if (filters.isPresencial !== undefined) queryParams.append('is_presential', String(filters.isPresencial));
+
+        const response = await fetch(`${API_URL}/auctions/calendar?${queryParams.toString()}`, {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Failed to fetch calendar');
