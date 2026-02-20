@@ -15,6 +15,7 @@ class UserUpdate(UserBase):
 
 class User(UserBase):
     id: int
+    role: Optional[str] = "agent"
 
     class Config:
         from_attributes = True

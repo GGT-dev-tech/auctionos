@@ -14,7 +14,7 @@ export const Layout: React.FC = () => {
 
   const navItems = [
     { icon: 'dashboard', label: 'Dashboard', path: '/' },
-    { icon: 'gavel', label: 'Auctions', path: '/auctions' },
+    { icon: 'gavel', label: 'Auctions', path: user?.role === 'admin' ? '/admin/auctions' : '/auctions' },
     { icon: 'settings', label: 'Settings', path: '/settings' },
   ];
 
