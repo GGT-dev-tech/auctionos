@@ -46,12 +46,10 @@ def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-from app.models.user_role import UserRole
-
 def get_current_active_superuser(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    if not current_user.is_superuser and current_user.role != UserRole.ADMIN:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=400, detail="The user doesn't have enough privileges"
         )
@@ -60,8 +58,7 @@ def get_current_active_superuser(
 def get_current_active_manager(
     current_user: User = Depends(get_current_active_user),
 ) -> User:
-    # Managers and Admins can access manager-level features
-    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER] and not current_user.is_superuser:
+    if not current_user.is_superuser:
         raise HTTPException(
             status_code=400, detail="The user doesn't have enough privileges (Manager required)"
         )
@@ -70,14 +67,4 @@ def get_current_active_manager(
 def get_current_agent(
     current_user: User = Depends(get_current_active_user),
 ) -> User:
-    print(f"DEBUG: Checking agent permissions. User ID: {current_user.id}, Role: '{current_user.role}'")
-    # All authenticated active users (Admin, Manager, Agent) usually have agent-level access
-    # But strictly speaking, if we want "at least Agent", that covers everyone in the Enum.
-    # If we want to exclude "viewers" if that role existed, we would check.
-    # Given the Enum has Admin, Manager, Agent, all of them pass.
-    if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT] and not current_user.is_superuser:
-        print(f"DEBUG: Permission denied. Role '{current_user.role}' not in permitted roles")
-        raise HTTPException(
-            status_code=400, detail="The user doesn't have enough privileges (Agent required)"
-        )
     return current_user

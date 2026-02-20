@@ -1,7 +1,5 @@
 from datetime import date, datetime
-from typing import Optional
-from sqlalchemy import Column, Integer, String, Date, Text, Float, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Date, Text, DateTime
 from app.db.base_class import Base
 
 class AuctionEvent(Base):
@@ -25,8 +23,5 @@ class AuctionEvent(Base):
     purchase_info_link = Column(String(500), nullable=True)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    properties = relationship("Property", back_populates="auction_event")
+    created_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, nullable=True)

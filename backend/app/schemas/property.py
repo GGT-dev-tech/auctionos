@@ -1,67 +1,44 @@
 from typing import Optional, List
 from datetime import datetime, date
-from pydantic import BaseModel, ConfigDict, validator, Field
-from app.models.property import PropertyStatus, PropertyType, MediaType
+from pydantic import BaseModel, ConfigDict
 
-# Shared properties
-class MediaBase(BaseModel):
-    media_type: Optional[str] = MediaType.IMAGE
-    url: str
-    is_primary: Optional[bool] = False
-
-class MediaCreate(MediaBase):
-    pass
-
-class Media(MediaBase):
-    id: int
-    property_id: str
-    created_at: datetime
-    model_config = ConfigDict(from_attributes=True)
-
+# Property Details
 class PropertyDetailsBase(BaseModel):
+    property_id: str
     bedrooms: Optional[int] = None
     bathrooms: Optional[float] = None
     sqft: Optional[int] = None
     lot_size: Optional[float] = None
     year_built: Optional[int] = None
-    
-    # New Fields
+    estimated_value: Optional[float] = None
+    rental_value: Optional[float] = None
     state_parcel_id: Optional[str] = None
     account_number: Optional[str] = None
     attom_id: Optional[str] = None
-    
     use_code: Optional[str] = None
     use_description: Optional[str] = None
     zoning: Optional[str] = None
     zoning_description: Optional[str] = None
     legal_description: Optional[str] = None
     subdivision: Optional[str] = None
-    
     num_stories: Optional[int] = None
     num_units: Optional[int] = None
     structure_style: Optional[str] = None
     building_area_sqft: Optional[int] = None
-    
     lot_acres: Optional[float] = None
-    
     assessed_value: Optional[float] = None
     land_value: Optional[float] = None
     improvement_value: Optional[float] = None
     tax_amount: Optional[float] = None
     tax_year: Optional[int] = None
     homestead_exemption: Optional[bool] = None
-    
     last_sale_date: Optional[date] = None
     last_sale_price: Optional[float] = None
     last_transfer_date: Optional[date] = None
-    
     flood_zone_code: Optional[str] = None
     is_qoz: Optional[bool] = None
-
-    estimated_value: Optional[float] = None
-    rental_value: Optional[float] = None
     legal_tags: Optional[str] = None
-    
+    market_value_url: Optional[str] = None
     appraisal_desc: Optional[str] = None
     regrid_url: Optional[str] = None
     fema_url: Optional[str] = None
@@ -73,129 +50,31 @@ class PropertyDetailsBase(BaseModel):
 class PropertyDetailsCreate(PropertyDetailsBase):
     pass
 
+class PropertyDetailsUpdate(PropertyDetailsBase):
+    property_id: Optional[str] = None
+
 class PropertyDetails(PropertyDetailsBase):
     id: int
-    property_id: str
     model_config = ConfigDict(from_attributes=True)
 
-class AuctionDetailsBase(BaseModel):
+# Property Auction History
+class PropertyAuctionHistoryBase(BaseModel):
+    property_id: str
+    auction_name: Optional[str] = None
     auction_date: Optional[date] = None
-    auction_start: Optional[datetime] = None
-    auction_end: Optional[datetime] = None
-    reserve_price: Optional[float] = None
-    
-    scraped_file: Optional[str] = None
-    status_detail: Optional[str] = None
-    amount: Optional[float] = None
-    sold_to: Optional[str] = None
-    auction_type: Optional[str] = None
-    case_number: Optional[str] = None
-    certificate_number: Optional[str] = None
-    opening_bid: Optional[float] = None
-    raw_text: Optional[str] = None
+    location: Optional[str] = None
+    listed_as: Optional[str] = None
+    taxes_due: Optional[float] = None
+    info_link: Optional[str] = None
+    list_link: Optional[str] = None
 
-class AuctionDetailsCreate(AuctionDetailsBase):
+class PropertyAuctionHistoryCreate(PropertyAuctionHistoryBase):
     pass
 
-class AuctionDetails(AuctionDetailsBase):
+class PropertyAuctionHistoryUpdate(PropertyAuctionHistoryBase):
+    property_id: Optional[str] = None
+
+class PropertyAuctionHistory(PropertyAuctionHistoryBase):
     id: int
-    property_id: str
+    created_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
-
-class PropertyBase(BaseModel):
-    title: str
-    address: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    zip_code: Optional[str] = None
-    county: Optional[str] = None
-    price: Optional[float] = None
-    status: Optional[str] = PropertyStatus.ACTIVE
-    property_type: Optional[str] = PropertyType.RESIDENTIAL
-    description: Optional[str] = None
-    parcel_id: Optional[str] = None
-    smart_tag: Optional[str] = None
-
-class PropertyCreate(PropertyBase):
-    details: Optional[PropertyDetailsCreate] = None
-    media: Optional[List[MediaCreate]] = None
-    auction_details: Optional[AuctionDetailsCreate] = None
-
-class PropertyUpdate(PropertyBase):
-    title: Optional[str] = None
-    details: Optional[PropertyDetailsCreate] = None
-
-class Property(PropertyBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
-    deleted_at: Optional[datetime] = None
-    details: Optional[PropertyDetails] = None
-    media: List[Media] = []
-    auction_details: Optional[AuctionDetails] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-class PropertyExport(BaseModel):
-    company_id: int
-    folder_id: Optional[str] = None
-    status: Optional[str] = "interested"
-    user_notes: Optional[str] = None
-
-class PropertyManualCreate(BaseModel):
-    parcel_id: str
-    parcel_address: Optional[str] = None
-    owner_name: Optional[str] = None
-    owner_address: Optional[str] = None
-    county: Optional[str] = None
-    state_code: Optional[str] = None
-    description: Optional[str] = None
-    amount_due: Optional[float] = None
-    auction_date: Optional[date] = None
-    auction_name: Optional[str] = None
-    taxes_due_auction: Optional[float] = None
-    tax_sale_year: Optional[int] = None
-    
-    # Details
-    account: Optional[str] = None
-    acres: Optional[float] = None
-    total_value: Optional[float] = None
-    land_value: Optional[float] = None
-    improvement_value: Optional[float] = None
-    estimated_arv: Optional[float] = None
-    estimated_rent: Optional[float] = None
-    property_category: Optional[str] = None
-    purchase_option_type: Optional[str] = None
-    occupancy: Optional[str] = None
-    map_link: Optional[str] = None
-    cs_number: Optional[str] = None
-    parcel_code: Optional[str] = None
-
-    @validator('amount_due', 'total_value', 'land_value', 'improvement_value', 'estimated_arv', 'estimated_rent', 'taxes_due_auction', 'acres', pre=True)
-    def parse_empty_float(cls, v):
-        if v == "" or v is None:
-            return None
-        if isinstance(v, str):
-            import re
-            clean = re.sub(r'[^\d.-]', '', v)
-            return float(clean) if clean else None
-        return v
-
-    @validator('auction_date', pre=True)
-    def parse_empty_date(cls, v):
-        if v == "" or v is None:
-            return None
-        if isinstance(v, str):
-             try:
-                 return datetime.strptime(v, "%Y-%m-%d").date()
-             except:
-                 return None
-        return v
-
-    @validator('tax_sale_year', pre=True)
-    def parse_empty_int(cls, v):
-         if v == "" or v is None:
-             return None
-         return int(v)

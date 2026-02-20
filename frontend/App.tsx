@@ -5,17 +5,13 @@ import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { Dashboard } from './pages/Dashboard';
-import Inventory from './pages/Inventory';
 import { AuctionList } from './pages/AuctionList';
 import { AuctionService } from './services/api';
 import PropertyManualEntry from './pages/PropertyManualEntry';
 import PropertyDetails from './pages/PropertyDetails';
 
-import { Finance } from './pages/Finance';
-import { Reports } from './pages/Reports';
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
-import MyInventory from './pages/MyInventory';
 import AdminAuctions from './pages/admin/AdminAuctions';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -38,16 +34,12 @@ const App: React.FC = () => {
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
-            <Route path="inventory" element={<Inventory />} />
             <Route path="/auctions" element={<AuctionList />} />
             <Route path="/admin/auctions" element={<AdminAuctions />} />
             <Route path="settings" element={<Settings />} />
-            <Route path="my-inventory" element={<MyInventory />} />
             <Route path="properties/new" element={<PropertyManualEntry />} />
             <Route path="properties/:id" element={<PropertyDetails />} />
             {/* <Route path="properties/:id/edit" element={<PropertyWizard />} /> */}
-            <Route path="finance" element={<Finance />} />
-            <Route path="reports" element={<Reports />} />
             <Route path="profile" element={<Profile />} />
             <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction</div>} />
           </Route>
