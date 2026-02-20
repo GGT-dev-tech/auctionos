@@ -20,11 +20,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # We use raw SQL with CASCADE to automatically drop dependent foreign keys in Postgres.
-    # We wrap it in a try-except to handle MySQL's FOREIGN_KEY_CHECKS.
-    try:
-        op.execute("SET FOREIGN_KEY_CHECKS=0;")
-    except Exception:
-        pass
 
     tables_to_drop = [
         'user_company', 'expenses', 'media', 'inventory_items',
@@ -35,20 +30,13 @@ def upgrade() -> None:
     for table in tables_to_drop:
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE;")
 
-    with op.batch_alter_table('property_details', schema=None) as batch_op:
-        batch_op.drop_column('total_market_value')
-        batch_op.drop_column('estimated_rent')
-        batch_op.drop_column('property_category')
-        batch_op.drop_column('purchase_option_type')
-        batch_op.drop_column('estimated_arv')
+    columns_to_drop_pd = ['total_market_value', 'estimated_rent', 'property_category', 'purchase_option_type', 'estimated_arv']
+    for col in columns_to_drop_pd:
+        op.execute(f"ALTER TABLE property_details DROP COLUMN IF EXISTS {col};")
 
-    with op.batch_alter_table('users', schema=None) as batch_op:
-        batch_op.drop_column('role')
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS role;")
 
-    try:
-        op.execute("SET FOREIGN_KEY_CHECKS=1;")
-    except Exception:
-        pass
+    pass
 
 
 def downgrade() -> None:
