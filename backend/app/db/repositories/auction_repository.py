@@ -1,9 +1,14 @@
 from typing import List, Optional, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, or_, text
+from fastapi.encoders import jsonable_encoder
 from app.models.auction_event import AuctionEvent
+from app.schemas.auction_event import AuctionEventCreate, AuctionEventUpdate
 
 class AuctionRepository:
+    def get(self, db: Session, id: Any) -> Optional[AuctionEvent]:
+        return db.query(AuctionEvent).filter(AuctionEvent.id == id).first()
+
     def get_multi(
         self, db: Session, *, skip: int = 0, limit: int = 100,
         name: Optional[str] = None,
@@ -85,5 +90,30 @@ class AuctionRepository:
         
         results = db.execute(query, params).fetchall()
         return [dict(r._mapping) for r in results]
+
+    def create(self, db: Session, *, obj_in: AuctionEventCreate) -> AuctionEvent:
+        obj_in_data = jsonable_encoder(obj_in)
+        db_obj = AuctionEvent(**obj_in_data)
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
+    def update(self, db: Session, *, db_obj: AuctionEvent, obj_in: AuctionEventUpdate) -> AuctionEvent:
+        obj_data = jsonable_encoder(db_obj)
+        update_data = obj_in.dict(exclude_unset=True)
+        for field in obj_data:
+            if field in update_data:
+                setattr(db_obj, field, update_data[field])
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
+    def remove(self, db: Session, *, id: int) -> AuctionEvent:
+        obj = db.query(AuctionEvent).get(id)
+        db.delete(obj)
+        db.commit()
+        return obj
 
 auction_repo = AuctionRepository()

@@ -33,6 +33,8 @@ export interface AuctionEvent {
   location?: string;
   county?: string;
   state?: string;
+  tax_status?: string;
+  parcels_count?: number;
   notes?: string;
   search_link?: string;
   register_date?: string;

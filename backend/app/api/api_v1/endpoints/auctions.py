@@ -1,9 +1,10 @@
 from typing import List, Any, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
 from app.api import deps
-from app.schemas.auction_event import AuctionEvent as AuctionEventSchema
+from app.schemas.auction_event import AuctionEvent as AuctionEventSchema, AuctionEventCreate, AuctionEventUpdate
 from app.db.repositories.auction_repository import auction_repo
+from app.models.user import User
 
 router = APIRouter()
 
@@ -44,3 +45,50 @@ def get_auction_calendar(
         county=county,
         is_presential=is_presential
     )
+
+@router.post("/", response_model=AuctionEventSchema)
+def create_auction(
+    *,
+    db: Session = Depends(deps.get_db),
+    auction_in: AuctionEventCreate,
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Create new auction.
+    """
+    auction = auction_repo.create(db=db, obj_in=auction_in)
+    return auction
+
+@router.put("/{id}", response_model=AuctionEventSchema)
+def update_auction(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: int,
+    auction_in: AuctionEventUpdate,
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Update an auction.
+    """
+    auction = auction_repo.get(db=db, id=id)
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    auction = auction_repo.update(db=db, db_obj=auction, obj_in=auction_in)
+    return auction
+
+@router.delete("/{id}", response_model=AuctionEventSchema)
+def delete_auction(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: int,
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Delete an auction.
+    """
+    auction = auction_repo.get(db=db, id=id)
+    if not auction:
+        raise HTTPException(status_code=404, detail="Auction not found")
+    auction = auction_repo.remove(db=db, id=id)
+    return auction
+
