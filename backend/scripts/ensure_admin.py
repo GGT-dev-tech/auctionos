@@ -7,20 +7,18 @@ sys.path.append(os.getcwd())
 from app.db.session import SessionLocal
 import app.db.base # Import all models
 from app.models.user import User
-from app.models.user_role import UserRole
 
 def ensure_admin():
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.email == "admin@auctionpro.com").first()
         if user:
-            print(f"Found user {user.email}. Current Role: {user.role}, Superuser: {user.is_superuser}")
-            if user.role != UserRole.ADMIN or not user.is_superuser:
-                user.role = UserRole.ADMIN
+            print(f"Found user {user.email}. Superuser: {user.is_superuser}")
+            if not user.is_superuser:
                 user.is_superuser = True
                 db.add(user)
                 db.commit()
-                print(f"Updated user {user.email} to Role: admin, Superuser: True")
+                print(f"Updated user {user.email} to Superuser: True")
             else:
                 print("User already has correct permissions.")
         else:
@@ -29,7 +27,6 @@ def ensure_admin():
             new_user = User(
                 email="admin@auctionpro.com",
                 hashed_password=get_password_hash("password"),
-                role=UserRole.ADMIN,
                 is_superuser=True,
                 is_active=True
             )
