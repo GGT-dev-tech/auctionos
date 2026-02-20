@@ -4,7 +4,7 @@ export const AdminService = {
     importProperties: async (file: File): Promise<{ job_id: string, status: string }> => {
         const formData = new FormData();
         formData.append('file', file);
-        const response = await fetch(`${API_URL}/admin/import-properties`, {
+        const response = await fetch(`${API_URL}/admin/import/properties`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
             body: formData
@@ -16,7 +16,7 @@ export const AdminService = {
     importAuctions: async (file: File): Promise<{ job_id: string, status: string }> => {
         const formData = new FormData();
         formData.append('file', file);
-        const response = await fetch(`${API_URL}/admin/import-auctions`, {
+        const response = await fetch(`${API_URL}/admin/import/auctions`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
             body: formData
@@ -26,7 +26,7 @@ export const AdminService = {
     },
 
     getImportStatus: async (jobId: string): Promise<{ status: string }> => {
-        const response = await fetch(`${API_URL}/admin/import-status/${jobId}`, {
+        const response = await fetch(`${API_URL}/admin/import/status/${jobId}`, {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Failed to get status');

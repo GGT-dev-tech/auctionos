@@ -25,7 +25,7 @@ export default function AdminImport() {
                 {tabIndex === 0 && (
                     <div role="tabpanel" id="import-tabpanel-0" className="animate-fadeIn">
                         <UploadWizard
-                            endpoint="/admin/import-properties"
+                            endpoint="/admin/import/properties"
                             title="Upload Property CSV"
                             onComplete={() => console.log("Properties Imported")}
                         />
@@ -34,7 +34,7 @@ export default function AdminImport() {
                 {tabIndex === 1 && (
                     <div role="tabpanel" id="import-tabpanel-1" className="animate-fadeIn">
                         <UploadWizard
-                            endpoint="/admin/import-auctions"
+                            endpoint="/admin/import/auctions"
                             title="Upload Auctions CSV"
                             onComplete={() => console.log("Auctions Imported")}
                         />

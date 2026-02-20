@@ -87,7 +87,7 @@ export const UploadWizard: React.FC<UploadWizardProps> = ({ endpoint, onComplete
     const pollStatus = async (id: string) => {
         const interval = setInterval(async () => {
             try {
-                const res = await axios.get(`${API_URL}/admin/import-status/${id}`, {
+                const res = await axios.get(`${API_URL}/admin/import/status/${id}`, {
                     headers: getHeaders()
                 });
 
