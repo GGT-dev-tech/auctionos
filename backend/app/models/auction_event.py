@@ -12,7 +12,10 @@ class AuctionEvent(Base):
     time = Column(String(50), nullable=True)
     location = Column(String(255), nullable=True)
     county = Column(String(100), nullable=True)
+    county_code = Column(String(50), nullable=True)
     state = Column(String(100), nullable=True)
+    tax_status = Column(String(100), nullable=True)
+    parcels_count = Column(Integer, nullable=True, default=0)
     notes = Column(Text, nullable=True)
     
     # Links

@@ -29,7 +29,8 @@ def get_auction_calendar(
             time as event_time,
             location as event_location,
             notes as event_notes,
-            0 as property_count, -- Placeholder until linking table is fully populated
+            tax_status,
+            parcels_count as property_count,
             '' as linked_properties,
             '' as statuses,
             register_link,

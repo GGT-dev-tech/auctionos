@@ -5,7 +5,7 @@ import logging
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.schemas.csv_import import PropertyCSVRow, AuctionCSVRow
-from app.db.gis import engine
+from app.db.session import engine
 from datetime import datetime
 from redis import Redis
 import os
@@ -161,7 +161,10 @@ class ImportService:
                             "time": validated_data.time,
                             "location": validated_data.location,
                             "county": validated_data.county_name,
+                            "county_code": validated_data.county_code,
                             "state": validated_data.state,
+                            "tax_status": validated_data.tax_status,
+                            "parcels_count": int(float(validated_data.parcels)) if validated_data.parcels else 0,
                             "notes": validated_data.notes,
                             "search_link": validated_data.search_link,
                             "register_date": r_date,
@@ -192,6 +195,7 @@ class ImportService:
                         success_count += 1
                         
                     except Exception as e:
+                        logger.error(f"Row {index + 2} failed: {str(e)}")
                         errors.append(f"Row {index + 2}: {str(e)}")
 
             if errors:

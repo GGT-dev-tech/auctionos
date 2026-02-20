@@ -25,7 +25,8 @@ const AuctionCalendar: React.FC = () => {
                         statuses: item.statuses,
                         property_count: item.property_count,
                         register_link: item.register_link,
-                        list_link: item.list_link
+                        list_link: item.list_link,
+                        tax_status: item.tax_status
                     }
                 })));
             })

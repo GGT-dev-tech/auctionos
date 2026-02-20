@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, validator, root_validator
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Any
 from datetime import datetime
 import pandas as pd
 
@@ -73,9 +73,9 @@ class AuctionCSVRow(BaseModel):
     name: str = Field(alias="Name")
     short_name: Optional[str] = Field(None, alias="Short Name")
     tax_status: Optional[str] = Field(None, alias="Tax Status")
-    parcels: Optional[str] = Field(None, alias="Parcels") # Comma key
+    parcels: Any = Field(None, alias="Parcels")
     
-    county_code: Optional[str] = Field(None, alias="County Code")
+    county_code: Any = Field(None, alias="County Code")
     county_name: Optional[str] = Field(None, alias="County Name")
     state: Optional[str] = Field(None, alias="State")
     

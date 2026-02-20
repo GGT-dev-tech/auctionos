@@ -9,7 +9,10 @@ class AuctionEventBase(BaseModel):
     time: Optional[str] = None
     location: Optional[str] = None
     county: Optional[str] = None
+    county_code: Optional[str] = None
     state: Optional[str] = None
+    tax_status: Optional[str] = None
+    parcels_count: Optional[int] = 0
     notes: Optional[str] = None
     search_link: Optional[str] = None
     register_date: Optional[date] = None

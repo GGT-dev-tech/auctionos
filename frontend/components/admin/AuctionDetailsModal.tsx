@@ -46,10 +46,13 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
             </DialogTitle>
 
             <DialogContent dividers className="bg-white">
-                <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
+                <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                     <Chip icon={<EventIcon />} label={`${dateStr} at ${timeStr}`} color="primary" variant="outlined" />
                     {props.property_count > 0 && (
                         <Chip icon={<ListIcon />} label={`${props.property_count} Properties`} color="secondary" variant="outlined" />
+                    )}
+                    {props.tax_status && (
+                        <Chip label={props.tax_status} color={props.tax_status.toLowerCase() === 'deed' ? 'success' : 'error'} variant="filled" sx={{ fontWeight: 'bold' }} />
                     )}
                 </Box>
 
