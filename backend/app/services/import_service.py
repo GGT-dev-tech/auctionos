@@ -130,7 +130,80 @@ class ImportService:
 
     @staticmethod
     async def process_auctions_csv(file_content: bytes, job_id: str):
-         # Similar implementation for Auctions using AuctionCSVRow
-         pass
+        try:
+            df = pd.read_csv(io.BytesIO(file_content))
+            total_rows = len(df)
+            success_count = 0
+            errors = []
+
+            with engine.begin() as conn:
+                for index, row in df.iterrows():
+                    try:
+                        row_dict = row.where(pd.notnull(row), None).to_dict()
+                        validated_data = AuctionCSVRow(**row_dict)
+                        
+                        # Parse dates
+                        def parse_dt(d_str):
+                            if not d_str or d_str.strip() == "" or d_str == "N/A": return None
+                            try: return datetime.strptime(d_str.strip(), "%Y-%m-%d").date()
+                            except: return None
+                            
+                        a_date = parse_dt(validated_data.auction_date)
+                        if not a_date:
+                            raise ValueError(f"Invalid or missing auction date: {validated_data.auction_date}")
+                            
+                        r_date = parse_dt(validated_data.register_date)
+
+                        auction_data = {
+                            "name": validated_data.name,
+                            "short_name": validated_data.short_name,
+                            "auction_date": a_date,
+                            "time": validated_data.time,
+                            "location": validated_data.location,
+                            "county": validated_data.county_name,
+                            "state": validated_data.state,
+                            "notes": validated_data.notes,
+                            "search_link": validated_data.search_link,
+                            "register_date": r_date,
+                            "register_link": validated_data.register_link,
+                            "list_link": validated_data.list_link,
+                            "purchase_info_link": validated_data.purchase_info_link,
+                            "updated_at": datetime.utcnow()
+                        }
+                        
+                        # Check exist by name and date
+                        existing = conn.execute(
+                            text("SELECT id FROM auction_events WHERE name = :name AND auction_date = :auction_date"), 
+                            {"name": auction_data["name"], "auction_date": auction_data["auction_date"]}
+                        ).fetchone()
+                        
+                        if existing:
+                            updates = ", ".join([f"{k} = :{k}" for k in auction_data.keys() if k not in ["name", "auction_date"]])
+                            query = text(f"UPDATE auction_events SET {updates} WHERE id = :id")
+                            update_params = {**auction_data, "id": existing[0]}
+                            conn.execute(query, update_params)
+                        else:
+                            auction_data["created_at"] = datetime.utcnow()
+                            fields = ", ".join(auction_data.keys())
+                            placeholders = ", ".join([f":{k}" for k in auction_data.keys()])
+                            query = text(f"INSERT INTO auction_events ({fields}) VALUES ({placeholders})")
+                            conn.execute(query, auction_data)
+
+                        success_count += 1
+                        
+                    except Exception as e:
+                        errors.append(f"Row {index + 2}: {str(e)}")
+
+            if errors:
+                status_msg = f"Completed with errors. Success: {success_count}/{total_rows}. Errors: {len(errors)}"
+                redis.set(f"import_errors:{job_id}", str(errors), ex=3600)
+            else:
+                status_msg = f"Success: {success_count} auctions processed"
+            
+            redis.set(f"import_auctions_status:{job_id}", status_msg, ex=3600)
+            
+        except Exception as e:
+            logger.error(f"Auctions Import Job Failed: {e}")
+            redis.set(f"import_auctions_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
 
 import_service = ImportService()
