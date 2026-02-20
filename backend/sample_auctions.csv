@@ -1,3 +1,0 @@
-Search Link,Name,Short Name,Tax Status,Parcels,County Code,County Name,State,Auction Date,Time,Location,Notes,Register Date,Register Link,List Link,Purchase Info Link
-http://example.com,Test Auction 1,TA1,Active,"P123, P456",123,Test County,FL,2026-03-01,10:00 AM,Online,Notes here,2026-02-20,http://reg.example.com,http://list.example.com,http://info.example.com
-,Test Auction 2,TA2,Active,P789,124,Another County,FL,2026-03-15,02:00 PM,Courthouse,More notes,2026-02-25,,,

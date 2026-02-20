@@ -57,6 +57,27 @@ app.add_middleware(
 static_dir = os.path.join(os.getcwd(), "data")
 os.makedirs(static_dir, exist_ok=True)
 
+import uuid
+from fastapi import Request
+from app.core.logger import request_id_var, logger
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    req_id = str(uuid.uuid4())
+    token = request_id_var.set(req_id)
+    
+    # Log start of request (we avoid logging health checks/static to keep it clean, but for now log all)
+    if not request.url.path.startswith("/static"):
+        logger.info(f"Incoming request", extra={"method": request.method, "path": request.url.path})
+    
+    response = await call_next(request)
+    
+    if not request.url.path.startswith("/static"):
+        logger.info(f"Request completed", extra={"status_code": response.status_code})
+    
+    request_id_var.reset(token)
+    return response
+
 # Mount static files
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
