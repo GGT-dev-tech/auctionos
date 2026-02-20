@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import mapboxgl, { Map as MapboxMap } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { API_BASE_URL } from '../services/api';
+import { API_BASE_URL } from '../services/httpClient';
 
 // Access token from environment variable
 // Note: In Vite, env vars must start with VITE_

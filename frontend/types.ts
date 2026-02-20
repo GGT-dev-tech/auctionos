@@ -58,6 +58,34 @@ export interface PropertyAuctionHistory {
   created_at?: string;
 }
 
+// Property Main Model
+export interface Property {
+  id: string | number;
+  parcel_id?: string;
+  title: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  status: string;
+  smart_tag?: string;
+  price?: number;
+  amount_due?: number;
+  occupancy?: string;
+  owner_name?: string;
+  owner_address?: string;
+  tax_sale_year?: number;
+  cs_number?: string;
+  parcel_code?: string;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+  auction_id?: number | null;
+  details?: PropertyDetails;
+  media?: any[];
+  auction_history?: PropertyAuctionHistory[];
+}
+
 // Property Details
 export interface PropertyDetails {
   id: number;

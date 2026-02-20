@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuctionService } from '../services/api';
+import { AuthService } from '../services/auth.service';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -16,11 +16,11 @@ export const Login: React.FC = () => {
 
     try {
       // 1. Login to get token
-      const { access_token } = await AuctionService.login(email, password);
+      const { access_token } = await AuthService.login(email, password);
       localStorage.setItem('token', access_token);
 
       // 2. Fetch User Profile
-      const user = await AuctionService.getMe();
+      const user = await AuthService.getMe();
       localStorage.setItem('user', JSON.stringify(user));
 
       navigate('/');

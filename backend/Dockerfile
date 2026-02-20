@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc pkg-config default-libmysqlclient-dev libpq-dev build-essential python3-dev && \
+    apt-get install -y --no-install-recommends gcc pkg-config libpq-dev build-essential python3-dev && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -23,7 +23,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends default-libmysqlclient-dev libpq-dev && \
+    apt-get install -y --no-install-recommends libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/wheels /wheels

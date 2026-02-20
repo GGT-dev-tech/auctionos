@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Modal } from './Modal';
-import { Property, PropertyStatus } from '../types';
-import { NotesManager } from './NotesManager';
-import { API_BASE_URL, AuctionService } from '../services/api';
+import { PropertyDetails as Property } from '../types';
+import { API_BASE_URL } from '../services/httpClient';
+import { PropertyService } from '../services/property.service';
 import PropertyMap from './PropertyMap';
 
 interface Props {
@@ -29,7 +29,7 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
     const handleEnrich = async () => {
         setIsRefreshing(true);
         try {
-            const updated = await AuctionService.enrichProperty(property.id);
+            const updated = await PropertyService.enrichProperty(property.id.toString());
             setProperty(updated);
             if (onUpdate) onUpdate(updated);
         } catch (error) {
@@ -43,7 +43,7 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
     const handleDownloadReport = async () => {
         setIsGeneratingReport(true);
         try {
-            const { report_url } = await AuctionService.getPropertyReport(property.id);
+            const { report_url } = await PropertyService.getPropertyReport(property.id.toString());
             window.open(`${API_BASE_URL}${report_url}`, '_blank');
         } catch (error) {
             console.error(error);
@@ -53,13 +53,13 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
         }
     };
 
-    const getStatusBadge = (status: PropertyStatus) => {
+    const getStatusBadge = (status: string) => {
         switch (status) {
-            case PropertyStatus.Active:
+            case 'Active':
                 return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"><span className="size-1.5 rounded-full bg-green-500"></span>Active</span>;
-            case PropertyStatus.Pending:
+            case 'Pending':
                 return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"><span className="size-1.5 rounded-full bg-yellow-500"></span>Pending</span>;
-            case PropertyStatus.Sold:
+            case 'Sold':
                 return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300"><span className="size-1.5 rounded-full bg-slate-500"></span>Sold</span>;
             default:
                 return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">Draft</span>;
@@ -93,11 +93,11 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                                 onClick={async () => {
                                     setIsRefreshing(true);
                                     try {
-                                        const res = await AuctionService.validateGSI(property.id);
+                                        const res = await PropertyService.validateGSI(property.id.toString());
                                         // Update property data if needed, or just show success
                                         alert(`GSI Status: ${res.gsi_status}`);
                                         // Refresh property
-                                        const updated = await AuctionService.getProperty(property.id);
+                                        const updated = await PropertyService.getProperty(property.id.toString());
                                         setProperty(updated);
                                     } catch (e) {
                                         alert("GSI Validation failed.");
@@ -130,7 +130,7 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                         </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                        {getStatusBadge(property.status as PropertyStatus)}
+                        {/* {getStatusBadge(property.status as string)} */}
                         {property.smart_tag && (
                             <span className="font-mono text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded border border-slate-200 dark:border-slate-600">
                                 {property.smart_tag}
@@ -141,7 +141,7 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
 
                 {/* Tabs */}
                 <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6 overflow-x-auto">
-                    {(['overview', 'gallery', 'notes', 'financials', 'history'] as const).map((tab) => (
+                    {(['overview', 'gallery', 'financials', 'history'] as const).map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -312,9 +312,7 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                         </div>
                     )}
 
-                    {activeTab === 'notes' && (
-                        <NotesManager propertyId={property.id} />
-                    )}
+
 
                     {activeTab === 'financials' && (
                         <div className="space-y-8 animate-fadeIn">

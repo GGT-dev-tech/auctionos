@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { AuctionService } from '../services/api';
+import { AuthService } from '../services/auth.service';
 
 export const Layout: React.FC = () => {
   const navigate = useNavigate();
-  const user = AuctionService.getCurrentUser();
+  const user = AuthService.getCurrentUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    AuctionService.logout();
+    AuthService.logout();
     navigate('/login');
   };
 

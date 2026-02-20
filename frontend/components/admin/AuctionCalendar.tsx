@@ -4,13 +4,13 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { AdminService } from '../../services/api';
+import { AuctionService } from '../../services/auction.service';
 
 const AuctionCalendar: React.FC = () => {
     const [events, setEvents] = useState<any[]>([]);
 
     useEffect(() => {
-        AdminService.getCalendarEvents()
+        AuctionService.getCalendarEvents()
             .then(data => {
                 setEvents(data.map((item: any) => ({
                     title: `${item.event_title} (${item.property_count})`,

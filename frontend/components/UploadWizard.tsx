@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { CloudUpload as UploadIcon, InsertDriveFile as FileIcon } from '@mui/icons-material';
 import axios from 'axios';
-import { API_URL, getHeaders } from '../services/api';
+import { API_URL, getHeaders } from '../services/httpClient';
 
 interface UploadWizardProps {
     endpoint: string; // e.g., '/admin/import-properties'

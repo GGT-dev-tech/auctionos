@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DashboardService } from '../services/api';
+import { DashboardService } from '../services/dashboard.service';
 import { Property } from '../types';
 import { HunterMap } from '../components/HunterMap';
 import { Link } from 'react-router-dom';

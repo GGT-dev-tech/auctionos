@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuctionService, User } from '../services/api';
+import { AuthService } from '../services/auth.service';
+import { User } from '../types';
 
 interface AuthContextType {
     user: User | null;
@@ -14,10 +15,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
-        const loadedUser = AuctionService.getCurrentUser();
-        if (loadedUser) {
-            setUser(loadedUser);
-        }
+        const loadUser = async () => {
+            try {
+                const userProfile = await AuthService.getMe();
+                if (userProfile) {
+                    setUser(userProfile);
+                }
+            } catch (error) {
+                console.error("Failed to load user profile:", error);
+                // Optionally handle error, e.g., clear token if it's invalid
+            }
+        };
+        loadUser();
     }, []);
 
     const login = (token: string, userData: User) => {
@@ -27,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = () => {
-        AuctionService.logout();
+        AuthService.logout();
         setUser(null);
     };
 

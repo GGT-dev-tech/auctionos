@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { UserService, User, CompanyService, Company, UserRole } from '../../services/api';
+import { UserService } from '../../services/user.service';
+import { User, UserRole } from '../../types';
 
 export const UserManagement: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
-    const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -12,7 +12,6 @@ export const UserManagement: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState<UserRole>(UserRole.AGENT);
-    const [selectedCompanyIds, setSelectedCompanyIds] = useState<number[]>([]);
     const [isActive, setIsActive] = useState(true);
 
     useEffect(() => {
@@ -22,12 +21,8 @@ export const UserManagement: React.FC = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [usersData, companiesData] = await Promise.all([
-                UserService.list(),
-                CompanyService.list()
-            ]);
+            const usersData = await UserService.list();
             setUsers(usersData);
-            setCompanies(companiesData);
         } catch (error) {
             console.error(error);
             alert('Failed to fetch data');
@@ -43,7 +38,6 @@ export const UserManagement: React.FC = () => {
                 await UserService.update(editingUser.id, {
                     email,
                     role,
-                    company_ids: selectedCompanyIds,
                     is_active: isActive,
                     ...(password ? { password } : {})
                 });
@@ -52,8 +46,7 @@ export const UserManagement: React.FC = () => {
                 await UserService.create({
                     email,
                     password,
-                    role,
-                    company_ids: selectedCompanyIds
+                    role
                 });
                 alert('User created successfully');
             }
@@ -70,7 +63,6 @@ export const UserManagement: React.FC = () => {
         setEmail(user.email);
         setPassword('');
         setRole(user.role);
-        setSelectedCompanyIds(user.companies?.map(c => c.id) || []);
         setIsActive(user.is_active);
         setShowModal(true);
     };
@@ -91,14 +83,7 @@ export const UserManagement: React.FC = () => {
         setEmail('');
         setPassword('');
         setRole(UserRole.AGENT);
-        setSelectedCompanyIds([]);
         setIsActive(true);
-    };
-
-    const toggleCompanySelection = (id: number) => {
-        setSelectedCompanyIds(prev =>
-            prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
-        );
     };
 
     if (loading) return <div>Loading users...</div>;
@@ -109,7 +94,7 @@ export const UserManagement: React.FC = () => {
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">User Management</h3>
                 <button
                     onClick={() => { resetForm(); setShowModal(true); }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2"
+                    className="px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg flex items-center gap-2"
                 >
                     <span className="material-symbols-outlined">add</span>
                     Create User
@@ -122,7 +107,6 @@ export const UserManagement: React.FC = () => {
                         <tr>
                             <th className="p-4 font-medium">Email</th>
                             <th className="p-4 font-medium">Role</th>
-                            <th className="p-4 font-medium">Companies Linked</th>
                             <th className="p-4 font-medium">Status</th>
                             <th className="p-4 font-medium text-right">Actions</th>
                         </tr>
@@ -138,9 +122,6 @@ export const UserManagement: React.FC = () => {
                                                 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'}`}>
                                         {user.role}
                                     </span>
-                                </td>
-                                <td className="p-4 text-slate-600 dark:text-slate-300">
-                                    {user.companies?.map(c => c.name).join(', ') || '-'}
                                 </td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium 
@@ -178,7 +159,7 @@ export const UserManagement: React.FC = () => {
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                                 {editingUser ? 'Edit User' : 'Create New User'}
                             </h3>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
+                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 flex-shrink-0">
                                 <span className="material-symbols-outlined">close</span>
                             </button>
                         </div>
@@ -191,7 +172,7 @@ export const UserManagement: React.FC = () => {
                                     required
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none transition-all dark:text-white"
                                 />
                             </div>
                             <div>
@@ -203,7 +184,7 @@ export const UserManagement: React.FC = () => {
                                     required={!editingUser}
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none transition-all dark:text-white"
                                 />
                             </div>
                             <div>
@@ -211,7 +192,7 @@ export const UserManagement: React.FC = () => {
                                 <select
                                     value={role}
                                     onChange={e => setRole(e.target.value as UserRole)}
-                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none transition-all dark:text-white"
                                 >
                                     <option value={UserRole.AGENT}>Agent</option>
                                     <option value={UserRole.MANAGER}>Manager</option>
@@ -226,31 +207,13 @@ export const UserManagement: React.FC = () => {
                                         id="isActive"
                                         checked={isActive}
                                         onChange={e => setIsActive(e.target.checked)}
-                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                        className="rounded border-slate-300 text-primary focus:ring-primary"
                                     />
                                     <label htmlFor="isActive" className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
                                         Account Active
                                     </label>
                                 </div>
                             )}
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Assign Companies</label>
-                                <div className="max-h-40 overflow-y-auto space-y-2 border border-slate-200 dark:border-slate-700 rounded-lg p-2 bg-slate-50 dark:bg-slate-900/50">
-                                    {companies.map(company => (
-                                        <label key={company.id} className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 p-1 rounded transition-colors">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedCompanyIds.includes(company.id)}
-                                                onChange={() => toggleCompanySelection(company.id)}
-                                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                            />
-                                            <span className="text-sm text-slate-700 dark:text-slate-300">{company.name}</span>
-                                        </label>
-                                    ))}
-                                    {companies.length === 0 && <p className="text-sm text-slate-400">No companies available.</p>}
-                                </div>
-                            </div>
 
                             <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-100 dark:border-slate-700">
                                 <button
@@ -262,7 +225,7 @@ export const UserManagement: React.FC = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-lg shadow-blue-500/20 transition-all"
+                                    className="px-6 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg font-medium shadow-lg shadow-blue-500/20 transition-all"
                                 >
                                     {editingUser ? 'Save Changes' : 'Create User'}
                                 </button>

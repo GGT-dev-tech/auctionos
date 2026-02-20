@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import USMap from './USMap';
-import { AuctionService } from '../services/api';
+import { AuctionService } from '../services/auction.service';
 
 interface Office {
     name?: string;

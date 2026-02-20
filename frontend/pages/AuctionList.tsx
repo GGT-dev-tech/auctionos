@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { AuctionService, AdminService } from '../services/api';
+import { AuctionService } from '../services/auction.service';
+import { AdminService } from '../services/admin.service';
 import { AuctionEvent } from '../types';
 import { AuctionFormModal } from '../components/AuctionFormModal';
 
@@ -243,8 +244,8 @@ export const AuctionList: React.FC = () => {
                                         return (
                                             <div key={day} className="min-h-[100px] border border-slate-100 dark:border-slate-700 rounded-lg p-2 relative bg-white dark:bg-slate-800 hover:border-blue-200 transition-colors">
                                                 <span className={`text-sm font-medium ${day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()
-                                                        ? 'bg-blue-600 text-white w-6 h-6 flex items-center justify-center rounded-full'
-                                                        : 'text-slate-400'
+                                                    ? 'bg-blue-600 text-white w-6 h-6 flex items-center justify-center rounded-full'
+                                                    : 'text-slate-400'
                                                     }`}>{day}</span>
                                                 <div className="mt-1 space-y-1 overflow-y-auto max-h-[80px]">
                                                     {dayEvents.map(event => (

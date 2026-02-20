@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { AdminService } from '../../services/api';
+import { AdminService } from '../../services/admin.service';
 
 const PropertyForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
     const [formData, setFormData] = useState({

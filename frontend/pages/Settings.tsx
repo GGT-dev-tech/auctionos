@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { AuctionService } from '../services/api';
+import { AuthService } from '../services/auth.service';
+import { AdminService } from '../services/admin.service';
 import { useAuth } from '../context/AuthContext';
 import { UserManagement } from './Settings/UserManagement';
-import { CompanyManagement } from './Settings/CompanyManagement';
 
-type Tab = 'general' | 'users' | 'companies';
+type Tab = 'general' | 'users';
 
 export const Settings: React.FC = () => {
     const { user } = useAuth();
@@ -14,21 +14,12 @@ export const Settings: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleScrape = async () => {
-        try {
-            setLoading(true);
-            await AuctionService.scrape();
-            alert('Scraping started in background!');
-        } catch (e) {
-            console.error(e);
-            alert('Failed to start scraping.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleImportClick = () => {
         fileInputRef.current?.click();
+    };
+
+    const handleLogout = () => {
+        AuthService.logout();
     };
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,8 +28,8 @@ export const Settings: React.FC = () => {
 
         try {
             setLoading(true);
-            const result = await AuctionService.uploadCSV(file);
-            alert(result.message || 'Import successful!');
+            const result = await AdminService.importProperties(file);
+            alert(`Import started! Job ID: ${result.job_id}`);
         } catch (e: any) {
             console.error(e);
             alert(`Import failed: ${e.message}`);
@@ -68,39 +59,21 @@ export const Settings: React.FC = () => {
                     General
                 </button>
                 {isAdmin && (
-                    <>
-                        <button
-                            onClick={() => setActiveTab('users')}
-                            className={`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'users'
-                                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                                }`}
-                        >
-                            User Management
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('companies')}
-                            className={`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'companies'
-                                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                                }`}
-                        >
-                            Company Management
-                        </button>
-                    </>
+                    <button
+                        onClick={() => setActiveTab('users')}
+                        className={`px-4 py-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'users'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                            }`}
+                    >
+                        Users
+                    </button>
                 )}
             </div>
 
             {/* Tab Content */}
             {activeTab === 'general' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    {/* Data Ingestion - REMOVED as per architecture cleanup */
-                    /*
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
-                        ...
-                    </div>
-                    */}
-
                     {/* Preferences Card */}
                     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Preferences</h3>
@@ -113,7 +86,10 @@ export const Settings: React.FC = () => {
                                     <button
                                         key={t}
                                         onClick={() => setTheme(t)}
-                                        className={`px-4 py-2 rounded-lg border capitalize ${theme === t ? 'border-primary bg-primary/5 text-primary' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}
+                                        className={`px-4 py-2 rounded-lg border capitalize ${theme === t
+                                            ? 'border-primary bg-primary/5 text-primary'
+                                            : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                                            }`}
                                     >
                                         {t}
                                     </button>
@@ -128,14 +104,18 @@ export const Settings: React.FC = () => {
                                 </div>
                                 <button
                                     onClick={() => setNotifications(!notifications)}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifications ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'}`}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifications ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+                                        }`}
                                 >
-                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifications ? 'translate-x-6' : 'translate-x-1'}`} />
+                                    <span
+                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifications ? 'translate-x-6' : 'translate-x-1'
+                                            }`}
+                                    />
                                 </button>
                             </div>
                         </div>
                         <div className="p-6 bg-slate-50 dark:bg-slate-800/50">
-                            <button className="text-red-600 hover:text-red-700 font-medium text-sm">
+                            <button onClick={handleLogout} className="text-red-600 hover:text-red-700 font-medium text-sm">
                                 Log out of all devices
                             </button>
                         </div>
@@ -146,12 +126,6 @@ export const Settings: React.FC = () => {
             {activeTab === 'users' && isAdmin && (
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <UserManagement />
-                </div>
-            )}
-
-            {activeTab === 'companies' && isAdmin && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <CompanyManagement />
                 </div>
             )}
         </div>

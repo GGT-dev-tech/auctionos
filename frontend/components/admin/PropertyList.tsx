@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { AdminService } from '../../services/api';
+import { AdminService } from '../../services/admin.service';
 
 const PropertyList: React.FC = () => {
     const [properties, setProperties] = useState<any[]>([]);

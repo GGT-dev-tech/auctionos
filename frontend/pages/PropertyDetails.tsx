@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AdminService } from '../services/api';
+import { AdminService } from '../services/admin.service';
 import { ChevronLeft, ExternalLink, History, MapPin, Building, DollarSign } from 'lucide-react';
 
 const PropertyDetails: React.FC = () => {

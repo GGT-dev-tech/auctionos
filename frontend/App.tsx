@@ -6,7 +6,8 @@ import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { Dashboard } from './pages/Dashboard';
 import { AuctionList } from './pages/AuctionList';
-import { AuctionService } from './services/api';
+
+import { AuthService } from './services/auth.service';
 import PropertyManualEntry from './pages/PropertyManualEntry';
 import PropertyDetails from './pages/PropertyDetails';
 
@@ -16,7 +17,7 @@ import AdminAuctions from './pages/admin/AdminAuctions';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ... existing protected route logic
-  const user = AuctionService.getCurrentUser();
+  const user = AuthService.getCurrentUser();
   if (!user) {
     return <Navigate to="/login" replace />;
   }
