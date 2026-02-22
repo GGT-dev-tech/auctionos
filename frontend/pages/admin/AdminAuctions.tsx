@@ -41,7 +41,8 @@ const AdminAuctions: React.FC = () => {
             )}
 
             {activeTab === 'properties' && (
-                <div className="space-y-4">
+                <div className="space-y-8">
+                    <PropertyForm onSuccess={() => { }} />
                     <PropertyList filters={propertyFilters} />
                 </div>
             )}
