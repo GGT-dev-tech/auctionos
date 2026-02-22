@@ -1,10 +1,19 @@
 import os
 from celery import Celery
 
+def get_redis_url():
+    pwd = os.getenv("REDISPASSWORD")
+    host = os.getenv("REDISHOST")
+    port = os.getenv("REDISPORT", "6379")
+    if pwd and host:
+        return f"redis://:{pwd}@{host}:{port}/0"
+    return os.getenv("REDIS_URL", "redis://redis:6379/0")
+
+resolved_url = get_redis_url()
+
 # Railway sets REDIS_URL globally with password auth. Local docker-compose sets CELERY_BROKER_URL explicitly.
-redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
-broker_url = os.getenv("CELERY_BROKER_URL", redis_url)
-backend_url = os.getenv("CELERY_RESULT_BACKEND", redis_url)
+broker_url = os.getenv("CELERY_BROKER_URL", resolved_url)
+backend_url = os.getenv("CELERY_RESULT_BACKEND", resolved_url)
 
 celery_app = Celery(
     "worker",

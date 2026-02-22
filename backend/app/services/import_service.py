@@ -10,10 +10,22 @@ from datetime import datetime
 from redis import Redis
 import os
 
+import os
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-redis = Redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0"))
+def get_redis_url():
+    # Railway injects explicit components for the Redis plugin.
+    # We forcefully reconstruct the URL to bypass any dirty 'REDIS_URL' overrides the user might have saved.
+    pwd = os.getenv("REDISPASSWORD")
+    host = os.getenv("REDISHOST")
+    port = os.getenv("REDISPORT", "6379")
+    if pwd and host:
+        return f"redis://:{pwd}@{host}:{port}/0"
+    return os.getenv("REDIS_URL", "redis://redis:6379/0")
+
+redis = Redis.from_url(get_redis_url())
 
 class ImportService:
     @staticmethod
