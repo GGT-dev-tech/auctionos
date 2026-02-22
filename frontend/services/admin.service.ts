@@ -43,12 +43,13 @@ export const AdminService = {
         return response.json();
     },
 
-    listProperties: async (filters: any = {}): Promise<any[]> => {
+    listProperties: async (filters: any = {}): Promise<{ items: any[], total: number }> => {
         const queryParams = new URLSearchParams();
-        if (filters.skip) queryParams.append('skip', String(filters.skip));
-        if (filters.limit) queryParams.append('limit', String(filters.limit));
+        if (filters.skip !== undefined) queryParams.append('skip', String(filters.skip));
+        if (filters.limit !== undefined) queryParams.append('limit', String(filters.limit));
         if (filters.county) queryParams.append('county', filters.county);
         if (filters.state) queryParams.append('state', filters.state);
+        if (filters.auction_name) queryParams.append('auction_name', filters.auction_name);
 
         const response = await fetch(`${API_URL}/properties/?${queryParams.toString()}`, {
             headers: getHeaders()

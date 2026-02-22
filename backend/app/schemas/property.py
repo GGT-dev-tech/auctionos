@@ -101,3 +101,7 @@ class PropertyDashboardSchema(BaseModel):
     address: Optional[str] = None
     occupancy: Optional[str] = None
     purchase_option_type: Optional[str] = None
+
+class PaginatedPropertyResponse(BaseModel):
+    items: List[PropertyDashboardSchema]
+    total: int

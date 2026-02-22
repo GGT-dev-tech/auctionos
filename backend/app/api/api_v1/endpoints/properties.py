@@ -3,11 +3,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.api import deps
-from app.schemas.property import PropertyDashboardSchema
+from app.schemas.property import PropertyDashboardSchema, PaginatedPropertyResponse
 
 router = APIRouter()
 
-@router.get("/", response_model=List[PropertyDashboardSchema])
+@router.get("/", response_model=PaginatedPropertyResponse)
 def read_properties(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
@@ -17,7 +17,28 @@ def read_properties(
     auction_name: Optional[str] = None
 ) -> Any:
     
-    query = """
+    # 1. Build Base Filter Query
+    where_clauses = ["1=1"]
+    params = {"skip": skip, "limit": limit}
+
+    if county:
+        where_clauses.append("p.county ILIKE :county")
+        params["county"] = f"%{county}%"
+    if state:
+        where_clauses.append("p.state ILIKE :state")
+        params["state"] = f"%{state}%"
+    if auction_name:
+        where_clauses.append("pah.auction_name ILIKE :auction_name")
+        params["auction_name"] = f"%{auction_name}%"
+
+    where_str = " AND ".join(where_clauses)
+
+    # 2. Get Total Count (with same filters)
+    count_query = f"SELECT count(*) FROM property_details p LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id WHERE {where_str}"
+    total = db.execute(text(count_query), params).scalar()
+
+    # 3. Get Items
+    items_query = f"""
         SELECT 
             p.parcel_id, 
             p.county, 
@@ -41,25 +62,14 @@ def read_properties(
             p.purchase_option_type
         FROM property_details p
         LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
-        WHERE 1=1
+        WHERE {where_str}
+        ORDER BY pah.auction_date ASC NULLS LAST 
+        OFFSET :skip LIMIT :limit
     """
-    params = {"skip": skip, "limit": limit}
     
-    if county:
-        query += " AND p.county ILIKE :county"
-        params["county"] = f"%{county}%"
-    if state:
-        query += " AND p.state ILIKE :state"
-        params["state"] = f"%{state}%"
-    if auction_name:
-        query += " AND pah.auction_name ILIKE :auction_name"
-        params["auction_name"] = f"%{auction_name}%"
-        
-    query += " ORDER BY pah.auction_date ASC NULLS LAST OFFSET :skip LIMIT :limit"
+    result = db.execute(text(items_query), params).fetchall()
     
-    result = db.execute(text(query), params).fetchall()
-    
-    return [
+    items = [
         {
             "parcel_id": r[0] if r[0] else "",
             "county": r[1],
@@ -84,6 +94,8 @@ def read_properties(
         }
         for r in result
     ]
+
+    return {"items": items, "total": total}
 
 from fastapi import HTTPException
 from pydantic import BaseModel

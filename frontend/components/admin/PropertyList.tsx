@@ -12,20 +12,29 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [editRow, setEditRow] = useState<any | null>(null);
+    const [rowCount, setRowCount] = useState(0);
+    const [paginationModel, setPaginationModel] = useState({
+        page: 0,
+        pageSize: 50,
+    });
 
     const fetchProperties = async () => {
         setLoading(true);
         try {
-            const params = { ...filters, limit: 100, skip: 0 };
-            const data = await AdminService.listProperties(params);
+            const skip = paginationModel.page * paginationModel.pageSize;
+            const limit = paginationModel.pageSize;
+
+            const params = { ...filters, limit, skip };
+            const { items, total } = await AdminService.listProperties(params);
 
             // Map the data to have an `id` field required by DataGrid
-            const mappedData = data.map((item: any) => ({
+            const mappedData = items.map((item: any) => ({
                 ...item,
                 id: item.parcel_id
             }));
 
             setRows(mappedData);
+            setRowCount(total);
         } catch (err) {
             console.error(err);
         } finally {
@@ -35,7 +44,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
 
     useEffect(() => {
         fetchProperties();
-    }, [filters]);
+    }, [filters, paginationModel]);
 
     const handleEditClick = (row: any) => {
         setEditRow(row);
@@ -151,6 +160,10 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
                     rows={rows}
                     columns={columns}
                     loading={loading}
+                    rowCount={rowCount}
+                    paginationMode="server"
+                    paginationModel={paginationModel}
+                    onPaginationModelChange={setPaginationModel}
                     initialState={{
                         sorting: { sortModel: [{ field: 'auction_date', sort: 'asc' }] }
                     }}
