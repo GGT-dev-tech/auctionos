@@ -2,33 +2,33 @@
 import React, { useState } from 'react';
 import { AdminService } from '../../services/admin.service';
 
-const PropertyForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
+const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({ onSuccess, initialData }) => {
     const [formData, setFormData] = useState({
-        parcel_id: '',
-        account: '',
-        acres: '',
-        amount_due: '',
-        auction_date: '',
-        auction_name: '',
-        county: '',
-        description: '',
-        owner_name: '',
-        owner_address: '',
-        parcel_address: '',
-        state_code: '',
-        tax_sale_year: '',
-        taxes_due_auction: '',
-        total_value: '',
-        property_category: '',
-        purchase_option_type: '',
-        map_link: '',
-        cs_number: '',
-        parcel_code: '',
-        occupancy: '',
-        land_value: '',
-        improvement_value: '',
-        estimated_arv: '',
-        estimated_rent: ''
+        parcel_id: initialData?.parcel_id || '',
+        account: initialData?.account_number || '', // Mapping from DB account_number
+        acres: initialData?.lot_acres || '',        // Mapping from DB lot_acres
+        amount_due: initialData?.amount_due || '',
+        auction_date: initialData?.auction_date || '',
+        auction_name: initialData?.auction_name || '',
+        county: initialData?.county || '',
+        description: initialData?.description || '',
+        owner_name: initialData?.owner_name || '',
+        owner_address: initialData?.owner_address || '',
+        parcel_address: initialData?.address || '', // Mapping from DB address
+        state_code: initialData?.state_code || '',
+        tax_sale_year: initialData?.tax_year || '', // Mapping from DB tax_year
+        taxes_due_auction: initialData?.taxes_due || '',
+        total_value: initialData?.assessed_value || '', // Mapping from DB assessed_value
+        property_category: initialData?.property_category || '',
+        purchase_option_type: initialData?.purchase_option_type || '',
+        map_link: initialData?.map_link || '',
+        cs_number: initialData?.cs_number || '',
+        parcel_code: initialData?.parcel_code || '',
+        occupancy: initialData?.occupancy || '',
+        land_value: initialData?.land_value || '',
+        improvement_value: initialData?.improvement_value || '',
+        estimated_arv: initialData?.estimated_value || '', // Mapping from DB estimated_value
+        estimated_rent: initialData?.rental_value || ''    // Mapping from DB rental_value
     });
     const [status, setStatus] = useState('');
 
@@ -40,16 +40,36 @@ const PropertyForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
         e.preventDefault();
         setStatus('Saving...');
         try {
-            await AdminService.createProperty(formData);
-            setStatus('Property saved successfully!');
+            // Remap frontend names to backend expected keys for Update
+            const payload = {
+                ...formData,
+                account_number: formData.account,
+                lot_acres: formData.acres ? parseFloat(formData.acres) : null,
+                address: formData.parcel_address,
+                tax_year: formData.tax_sale_year ? parseInt(formData.tax_sale_year) : null,
+                assessed_value: formData.total_value ? parseFloat(formData.total_value) : null,
+                estimated_value: formData.estimated_arv ? parseFloat(formData.estimated_arv) : null,
+                rental_value: formData.estimated_rent ? parseFloat(formData.estimated_rent) : null,
+                land_value: formData.land_value ? parseFloat(formData.land_value) : null,
+                improvement_value: formData.improvement_value ? parseFloat(formData.improvement_value) : null,
+                amount_due: formData.amount_due ? parseFloat(formData.amount_due) : null,
+            };
+
+            if (initialData?.parcel_id) {
+                await AdminService.updateProperty(initialData.parcel_id, payload);
+                setStatus('Property updated successfully!');
+            } else {
+                await AdminService.createProperty(payload);
+                setStatus('Property created successfully!');
+                setFormData({
+                    parcel_id: '', account: '', acres: '', amount_due: '', auction_date: '', auction_name: '',
+                    county: '', description: '', owner_name: '', owner_address: '', parcel_address: '', state_code: '',
+                    tax_sale_year: '', taxes_due_auction: '', total_value: '', property_category: '', purchase_option_type: '',
+                    map_link: '', cs_number: '', parcel_code: '', occupancy: '', land_value: '', improvement_value: '',
+                    estimated_arv: '', estimated_rent: ''
+                });
+            }
             if (onSuccess) onSuccess();
-            setFormData({
-                parcel_id: '', account: '', acres: '', amount_due: '', auction_date: '', auction_name: '',
-                county: '', description: '', owner_name: '', owner_address: '', parcel_address: '', state_code: '',
-                tax_sale_year: '', taxes_due_auction: '', total_value: '', property_category: '', purchase_option_type: '',
-                map_link: '', cs_number: '', parcel_code: '', occupancy: '', land_value: '', improvement_value: '',
-                estimated_arv: '', estimated_rent: ''
-            });
         } catch (err: any) {
             setStatus('Error: ' + err.message);
         }

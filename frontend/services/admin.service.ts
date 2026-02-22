@@ -76,5 +76,24 @@ export const AdminService = {
         });
         if (!response.ok) throw new Error('Failed to fetch property');
         return response.json();
+    },
+
+    updateProperty: async (parcelId: string, data: any): Promise<any> => {
+        const response = await fetch(`${API_URL}/properties/${parcelId}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Update failed');
+        return response.json();
+    },
+
+    deleteProperty: async (parcelId: string): Promise<any> => {
+        const response = await fetch(`${API_URL}/properties/${parcelId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Delete failed');
+        return response.json();
     }
 };

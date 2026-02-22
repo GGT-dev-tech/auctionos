@@ -89,3 +89,15 @@ class PropertyDashboardSchema(BaseModel):
     auction_name: Optional[str] = None
     amount_due: Optional[float] = None
     assessed_value: Optional[float] = None
+    cs_number: Optional[str] = None
+    account_number: Optional[str] = None
+    owner_address: Optional[str] = None
+    tax_year: Optional[int] = None
+    lot_acres: Optional[float] = None
+    estimated_value: Optional[float] = None
+    land_value: Optional[float] = None
+    improvement_value: Optional[float] = None
+    property_type: Optional[str] = None
+    address: Optional[str] = None
+    occupancy: Optional[str] = None
+    purchase_option_type: Optional[str] = None
