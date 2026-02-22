@@ -15,6 +15,10 @@ class AuctionRepository:
         state: Optional[str] = None,
         county: Optional[str] = None,
         is_presential: Optional[bool] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        min_parcels: Optional[int] = None,
+        max_parcels: Optional[int] = None,
         sort_by_date: bool = True
     ) -> List[AuctionEvent]:
         query = db.query(AuctionEvent)
@@ -33,6 +37,14 @@ class AuctionRepository:
                 query = query.filter(AuctionEvent.location != "Online")
             else:
                 query = query.filter(AuctionEvent.location == "Online")
+        if start_date:
+            query = query.filter(AuctionEvent.auction_date >= start_date)
+        if end_date:
+            query = query.filter(AuctionEvent.auction_date <= end_date)
+        if min_parcels is not None:
+            query = query.filter(AuctionEvent.parcels_count >= min_parcels)
+        if max_parcels is not None:
+            query = query.filter(AuctionEvent.parcels_count <= max_parcels)
 
         if sort_by_date:
             query = query.order_by(asc(AuctionEvent.auction_date))
@@ -45,6 +57,8 @@ class AuctionRepository:
         state: Optional[str] = None,
         county: Optional[str] = None,
         is_presential: Optional[bool] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
     ) -> List[Any]:
         # Build dynamic WHERE clause
         where_clauses = []
@@ -64,6 +78,12 @@ class AuctionRepository:
                 where_clauses.append("location != 'Online'")
             else:
                 where_clauses.append("location = 'Online'")
+        if start_date:
+            where_clauses.append("auction_date >= :start_date")
+            params['start_date'] = start_date
+        if end_date:
+            where_clauses.append("auction_date <= :end_date")
+            params['end_date'] = end_date
 
         where_sql = ""
         if where_clauses:

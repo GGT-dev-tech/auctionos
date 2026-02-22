@@ -14,7 +14,13 @@ def read_properties(
     limit: int = 100,
     county: Optional[str] = None,
     state: Optional[str] = None,
-    auction_name: Optional[str] = None
+    auction_name: Optional[str] = None,
+    min_amount_due: Optional[float] = None,
+    max_amount_due: Optional[float] = None,
+    property_category: Optional[str] = None,
+    occupancy: Optional[str] = None,
+    tax_year: Optional[int] = None,
+    property_type: Optional[str] = None
 ) -> Any:
     
     # 1. Build Base Filter Query
@@ -30,6 +36,24 @@ def read_properties(
     if auction_name:
         where_clauses.append("pah.auction_name ILIKE :auction_name")
         params["auction_name"] = f"%{auction_name}%"
+    if min_amount_due is not None:
+        where_clauses.append("p.amount_due >= :min_amount_due")
+        params["min_amount_due"] = min_amount_due
+    if max_amount_due is not None:
+        where_clauses.append("p.amount_due <= :max_amount_due")
+        params["max_amount_due"] = max_amount_due
+    if property_category:
+        where_clauses.append("p.property_category = :property_category")
+        params["property_category"] = property_category
+    if occupancy:
+        where_clauses.append("p.occupancy ILIKE :occupancy")
+        params["occupancy"] = f"%{occupancy}%"
+    if tax_year:
+        where_clauses.append("p.tax_year = :tax_year")
+        params["tax_year"] = tax_year
+    if property_type:
+        where_clauses.append("p.property_type ILIKE :property_type")
+        params["property_type"] = f"%{property_type}%"
 
     where_str = " AND ".join(where_clauses)
 

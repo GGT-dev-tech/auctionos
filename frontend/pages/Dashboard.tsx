@@ -7,6 +7,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import PropertyFilters, { PropertyFilterParams } from '../components/admin/PropertyFilters';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -15,13 +16,13 @@ export const Dashboard: React.FC = () => {
   const [data, setData] = useState<any>(null);
 
   // Filters
-  const [selectedState, setSelectedState] = useState<string>('');
-  const [selectedCounty, setSelectedCounty] = useState<string>('');
+  const [propertyFilters, setPropertyFilters] = useState<PropertyFilterParams>({});
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const dashboardData = await DashboardService.getInitData();
+        setLoading(true);
+        const dashboardData = await DashboardService.getInitData(propertyFilters);
         setData(dashboardData);
       } catch (e) {
         console.error("Failed to load dashboard data", e);
@@ -30,15 +31,11 @@ export const Dashboard: React.FC = () => {
       }
     };
     loadData();
-  }, []);
+  }, [propertyFilters]);
 
   const totalValue = data?.quick_stats?.total_value || 0;
   const activeAuctions = data?.quick_stats?.active_count || 0;
   const pending = data?.quick_stats?.pending_count || 0;
-
-  // Filter propertis for "Recent Activity" or if we want to show a list alongside map
-  // For now, consistent with design, map is main focus.
-
   const mapData = data?.county_stats || [];
 
   return (
@@ -54,20 +51,6 @@ export const Dashboard: React.FC = () => {
           </p>
         </div>
 
-        {/* Filters Area (Mock for now until we have data to filter) */}
-        <div className="flex items-center gap-2">
-          <select
-            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm"
-            value={selectedState}
-            onChange={(e) => setSelectedState(e.target.value)}
-          >
-            <option value="">All States</option>
-            <option value="FL">Florida</option>
-            <option value="TX">Texas</option>
-            <option value="CA">California</option>
-          </select>
-        </div>
-
         <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
           <span className="material-symbols-outlined text-slate-400 text-[20px]">calendar_today</span>
           <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -75,6 +58,9 @@ export const Dashboard: React.FC = () => {
           </span>
         </div>
       </div>
+
+      {/* Advanced Filters */}
+      <PropertyFilters onFilterChange={setPropertyFilters} />
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -98,13 +84,10 @@ export const Dashboard: React.FC = () => {
       {/* Map Section */}
       <div className="flex flex-col gap-4">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Hunter's Map</h2>
-        {/* Note: HunterMap handles its own container styling */}
         <HunterMap
           data={mapData}
           onSelectRegion={(state, county) => {
-            setSelectedState(state); // We might need a map from county to state if state is missing
-            setSelectedCounty(county);
-            console.log("Selected:", state, county);
+            setPropertyFilters(prev => ({ ...prev, state, county }));
           }}
         />
         <div className="flex gap-4 text-sm text-slate-500">
@@ -174,26 +157,6 @@ export const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {data?.analytics?.county_breakdown && (
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">County Performance (Property Volume)</h3>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.analytics.county_breakdown} layout="vertical" margin={{ left: 40, right: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis dataKey="range" type="category" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} width={150} />
-                <Tooltip
-                  cursor={{ fill: 'transparent' }}
-                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                />
-                <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
       {/* Recent Activity */}
       <div className="flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
@@ -201,7 +164,7 @@ export const Dashboard: React.FC = () => {
           <Link to="/properties" className="text-primary text-sm font-medium hover:underline">View All</Link>
         </div>
         <div className="p-6">
-          {data?.recent_activity?.map((prop: Property) => (
+          {data?.recent_activity?.map((prop: Property & { title: string, city: string, created_at: string }) => (
             <div key={prop.id} className="grid grid-cols-[40px_1fr] gap-x-4 mb-4 border-b last:border-0 pb-2 last:pb-0 border-slate-100">
               <div className="flex flex-col items-center pt-1">
                 <span className="material-symbols-outlined text-slate-400">home</span>

@@ -8,6 +8,10 @@ export const AuctionService = {
         if (filters.state) queryParams.append('state', filters.state);
         if (filters.county) queryParams.append('county', filters.county);
         if (filters.isPresencial !== undefined) queryParams.append('is_presential', String(filters.isPresencial));
+        if (filters.startDate) queryParams.append('start_date', filters.startDate);
+        if (filters.endDate) queryParams.append('end_date', filters.endDate);
+        if (filters.minParcels) queryParams.append('min_parcels', String(filters.minParcels));
+        if (filters.maxParcels) queryParams.append('max_parcels', String(filters.maxParcels));
         if (filters.skip !== undefined) queryParams.append('skip', String(filters.skip));
         if (filters.limit !== undefined) queryParams.append('limit', String(filters.limit));
 
@@ -61,6 +65,8 @@ export const AuctionService = {
         if (filters.state) queryParams.append('state', filters.state);
         if (filters.county) queryParams.append('county', filters.county);
         if (filters.isPresencial !== undefined) queryParams.append('is_presential', String(filters.isPresencial));
+        if (filters.startDate) queryParams.append('start_date', filters.startDate);
+        if (filters.endDate) queryParams.append('end_date', filters.endDate);
 
         const response = await fetch(`${API_URL}/auctions/calendar?${queryParams.toString()}`, {
             headers: getHeaders()

@@ -3,6 +3,7 @@ import { AuctionService } from '../services/auction.service';
 import { AdminService } from '../services/admin.service';
 import { AuctionEvent } from '../types';
 import { AuctionFormModal } from '../components/AuctionFormModal';
+import AuctionFilters, { AuctionFilterParams } from '../components/admin/AuctionFilters';
 
 export const AuctionList: React.FC = () => {
     const [auctions, setAuctions] = useState<AuctionEvent[]>([]);
@@ -11,11 +12,12 @@ export const AuctionList: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
     const [editingAuction, setEditingAuction] = useState<AuctionEvent | undefined>(undefined);
+    const [filters, setFilters] = useState<AuctionFilterParams>({});
 
     const fetchAuctions = async () => {
         try {
             setIsLoading(true);
-            const data = await AuctionService.getAuctionEvents();
+            const data = await AuctionService.getAuctionEvents(filters);
             setAuctions(data);
         } catch (error) {
             console.error('Failed to fetch auctions', error);
@@ -26,7 +28,7 @@ export const AuctionList: React.FC = () => {
 
     useEffect(() => {
         fetchAuctions();
-    }, []);
+    }, [filters]);
 
     const handleCreateUpdate = async (data: Partial<AuctionEvent>) => {
         try {
@@ -73,14 +75,6 @@ export const AuctionList: React.FC = () => {
         }
     };
 
-    const calendarEvents = auctions.map(auction => ({
-        id: auction.id,
-        title: auction.name,
-        start: new Date(`${auction.auction_date}T${auction.time || '00:00:00'}`),
-        extendedProps: auction
-    }));
-
-    // Group auctions by date for calendar rendering
     const auctionsByDate = auctions.reduce((acc, auction) => {
         const date = auction.auction_date;
         if (!acc[date]) acc[date] = [];
@@ -88,7 +82,6 @@ export const AuctionList: React.FC = () => {
         return acc;
     }, {} as Record<string, AuctionEvent[]>);
 
-    // Generate calendar days (simple implementation for now)
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
@@ -150,6 +143,8 @@ export const AuctionList: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            <AuctionFilters onFilterChange={setFilters} />
 
             {viewMode === 'list' ? (
                 <div className="bg-white dark:bg-[#1a2634] rounded-xl border border-[#e7ecf3] dark:border-slate-700 overflow-hidden">
@@ -224,12 +219,8 @@ export const AuctionList: React.FC = () => {
                                 {day}
                             </div>
                         ))}
-                        {/* Placeholder Calendar Grid - Logic needed for proper calendar generation aligned with day of week */}
-                        {/* Calendar Grid */}
                         {(() => {
-                            // Get start day of month (0 = Sun, 1 = Mon...)
                             const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-                            // Create blanks for days before 1st
                             const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => i);
 
                             return (

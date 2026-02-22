@@ -6,12 +6,13 @@ import AuctionFilters, { AuctionFilterParams } from '../../components/admin/Auct
 import CsvUpload from '../../components/admin/CsvUpload';
 import PropertyForm from '../../components/admin/PropertyForm';
 import PropertyList from '../../components/admin/PropertyList';
+import PropertyFilters, { PropertyFilterParams } from '../../components/admin/PropertyFilters';
 import { Box } from '@mui/material';
 
 const AdminAuctions: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'auctions' | 'properties' | 'import_props' | 'import_auctions'>('auctions');
     const [filters, setFilters] = useState<AuctionFilterParams>({});
-    const [propertyFilters, setPropertyFilters] = useState<any>({});
+    const [propertyFilters, setPropertyFilters] = useState<PropertyFilterParams>({});
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -41,9 +42,16 @@ const AdminAuctions: React.FC = () => {
             )}
 
             {activeTab === 'properties' && (
-                <div className="space-y-8">
-                    <PropertyForm onSuccess={() => { }} />
-                    <PropertyList filters={propertyFilters} />
+                <div className="space-y-6">
+                    <PropertyFilters onFilterChange={setPropertyFilters} />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-1">
+                            <PropertyForm onSuccess={() => { }} />
+                        </div>
+                        <div className="lg:col-span-2">
+                            <PropertyList filters={propertyFilters} />
+                        </div>
+                    </div>
                 </div>
             )}
 

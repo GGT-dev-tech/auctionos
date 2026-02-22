@@ -15,6 +15,10 @@ def read_auctions(
     state: Optional[str] = Query(None, description="Filtro por estado"),
     county: Optional[str] = Query(None, description="Filtro por condado (county_name)"),
     is_presential: Optional[bool] = Query(None, description="True para presencial, False para online"),
+    start_date: Optional[date] = Query(None, description="Data inicial do leilão"),
+    end_date: Optional[date] = Query(None, description="Data final do leilão"),
+    min_parcels: Optional[int] = Query(None, description="Mínimo de parcelas (imóveis)"),
+    max_parcels: Optional[int] = Query(None, description="Máximo de parcelas (imóveis)"),
     sort_by_date: bool = Query(True, description="Ordenar por auction_date ascendente"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -27,6 +31,10 @@ def read_auctions(
         state=state,
         county=county,
         is_presential=is_presential,
+        start_date=start_date,
+        end_date=end_date,
+        min_parcels=min_parcels,
+        max_parcels=max_parcels,
         sort_by_date=sort_by_date
     )
 
@@ -37,13 +45,17 @@ def get_auction_calendar(
     state: Optional[str] = Query(None, description="Filtro por estado"),
     county: Optional[str] = Query(None, description="Filtro por condado (county_name)"),
     is_presential: Optional[bool] = Query(None, description="True para presencial, False para online"),
+    start_date: Optional[date] = Query(None, description="Data inicial"),
+    end_date: Optional[date] = Query(None, description="Data final"),
 ) -> Any:
     return auction_repo.get_calendar_events(
         db,
         name=name,
         state=state,
         county=county,
-        is_presential=is_presential
+        is_presential=is_presential,
+        start_date=start_date,
+        end_date=end_date
     )
 
 @router.post("/", response_model=AuctionEventSchema)
