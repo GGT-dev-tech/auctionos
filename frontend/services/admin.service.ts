@@ -50,7 +50,7 @@ export const AdminService = {
         if (filters.county) queryParams.append('county', filters.county);
         if (filters.state) queryParams.append('state', filters.state);
 
-        const response = await fetch(`${API_URL}/admin/properties?${queryParams.toString()}`, {
+        const response = await fetch(`${API_URL}/properties?${queryParams.toString()}`, {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Failed to fetch properties');
@@ -58,7 +58,7 @@ export const AdminService = {
     },
 
     createProperty: async (data: any): Promise<any> => {
-        const response = await fetch(`${API_URL}/admin/properties`, {
+        const response = await fetch(`${API_URL}/properties`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify(data)
@@ -71,7 +71,7 @@ export const AdminService = {
     },
 
     getProperty: async (parcelId: string): Promise<any> => {
-        const response = await fetch(`${API_URL}/admin/properties/${parcelId}`, {
+        const response = await fetch(`${API_URL}/properties/${parcelId}`, {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Failed to fetch property');
