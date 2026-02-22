@@ -31,8 +31,8 @@ class ImportService:
     @staticmethod
     async def process_properties_csv(file_content: bytes, job_id: str):
         try:
-            # Read CSV
-            df = pd.read_csv(io.BytesIO(file_content))
+            # Read CSV forcing all columns to string to prevent Pydantic Strict String validation crashes on inferred ints
+            df = pd.read_csv(io.BytesIO(file_content), dtype=str)
             total_rows = len(df)
             success_count = 0
             errors = []
@@ -59,14 +59,14 @@ class ImportService:
                             "description": validated_data.description,
                             "amount_due": validated_data.amount_due,
                             "occupancy": validated_data.vacancy,
-                            "tax_sale_year": int(float(validated_data.tax_sale_year)) if validated_data.tax_sale_year else None,
+                            "tax_year": int(float(validated_data.tax_sale_year)) if validated_data.tax_sale_year else None,
                             "cs_number": validated_data.cs_number,
                             "property_type": validated_data.type,
                             "status": "active",
                             "account_number": validated_data.account,
                             "lot_acres": validated_data.acres,
-                            "estimated_arv": validated_data.estimated_arv,
-                            "estimated_rent": validated_data.estimated_rent,
+                            "estimated_value": validated_data.estimated_arv,
+                            "rental_value": validated_data.estimated_rent,
                             "improvement_value": validated_data.improvements,
                             "land_value": validated_data.land_value,
                             "assessed_value": validated_data.total_value,
@@ -160,7 +160,8 @@ class ImportService:
     @staticmethod
     async def process_auctions_csv(file_content: bytes, job_id: str):
         try:
-            df = pd.read_csv(io.BytesIO(file_content))
+            # Read CSV forcing all columns to string to prevent Pydantic crashes
+            df = pd.read_csv(io.BytesIO(file_content), dtype=str)
             total_rows = len(df)
             success_count = 0
             errors = []
