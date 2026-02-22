@@ -61,75 +61,73 @@ class ImportService:
                 try: return datetime.strptime(d_str.strip(), "%Y-%m-%d").date()
                 except: return None
 
-            with engine.begin() as conn:
-                # 0. Count total rows for status? (Optional for progress tracking later)
-                # total_rows = sum(1 for line in open(file_path)) - 1
+            # Iterate in chunks
+            for chunk in pd.read_csv(file_path, dtype=str, chunksize=chunk_size):
+                total_rows += len(chunk)
                 
-                # Iterate in chunks
-                for chunk in pd.read_csv(file_path, dtype=str, chunksize=chunk_size):
-                    total_rows += len(chunk)
-                    
-                    details_batch = []
-                    history_batch = []
-                    
-                    for _, row in chunk.iterrows():
-                        try:
-                            row_dict = row.where(pd.notnull(row), None).to_dict()
-                            validated_data = PropertyCSVRow(**row_dict)
-                            
-                            # Prepare PropertyDetails map
-                            d = {
-                                "property_id": str(uuid.uuid4()),
-                                "parcel_id": validated_data.parcel_id,
-                                "address": validated_data.address,
-                                "owner_address": validated_data.owner_address,
-                                "county": validated_data.county,
-                                "state": validated_data.state_code,
-                                "amount_due": validated_data.amount_due,
-                                "occupancy": validated_data.vacancy,
-                                "tax_year": int(float(validated_data.tax_sale_year)) if validated_data.tax_sale_year else None,
-                                "cs_number": validated_data.cs_number,
-                                "property_type": validated_data.type,
-                                "status": "active",
-                                "account_number": validated_data.account,
-                                "lot_acres": validated_data.acres,
-                                "estimated_value": validated_data.estimated_arv,
-                                "rental_value": validated_data.estimated_rent,
-                                "improvement_value": validated_data.improvements,
-                                "land_value": validated_data.land_value,
-                                "assessed_value": validated_data.total_value,
-                                "property_category": validated_data.property_category,
-                                "purchase_option_type": validated_data.purchase_option_type,
-                                "latitude": None,
-                                "longitude": None
-                            }
-                            
-                            if validated_data.coordinates:
-                                try:
-                                    clean_coords = validated_data.coordinates.replace(',', ' ').strip()
-                                    parts = clean_coords.split()
-                                    if len(parts) >= 2:
-                                        d["latitude"] = float(parts[0])
-                                        d["longitude"] = float(parts[1])
-                                except: pass
+                details_batch = []
+                history_batch = []
+                
+                for _, row in chunk.iterrows():
+                    try:
+                        row_dict = row.where(pd.notnull(row), None).to_dict()
+                        validated_data = PropertyCSVRow(**row_dict)
+                        
+                        # Prepare PropertyDetails map
+                        d = {
+                            "property_id": str(uuid.uuid4()),
+                            "parcel_id": validated_data.parcel_id,
+                            "address": validated_data.address,
+                            "owner_address": validated_data.owner_address,
+                            "county": validated_data.county,
+                            "state": validated_data.state_code,
+                            "amount_due": validated_data.amount_due,
+                            "occupancy": validated_data.vacancy,
+                            "tax_year": int(float(validated_data.tax_sale_year)) if validated_data.tax_sale_year else None,
+                            "cs_number": validated_data.cs_number,
+                            "property_type": validated_data.type,
+                            "status": "active",
+                            "account_number": validated_data.account,
+                            "lot_acres": validated_data.acres,
+                            "estimated_value": validated_data.estimated_arv,
+                            "rental_value": validated_data.estimated_rent,
+                            "improvement_value": validated_data.improvements,
+                            "land_value": validated_data.land_value,
+                            "assessed_value": validated_data.total_value,
+                            "property_category": validated_data.property_category,
+                            "purchase_option_type": validated_data.purchase_option_type,
+                            "latitude": None,
+                            "longitude": None
+                        }
+                        
+                        if validated_data.coordinates:
+                            try:
+                                clean_coords = validated_data.coordinates.replace(',', ' ').strip()
+                                parts = clean_coords.split()
+                                if len(parts) >= 2:
+                                    d["latitude"] = float(parts[0])
+                                    d["longitude"] = float(parts[1])
+                            except: pass
 
-                            details_batch.append(d)
+                        details_batch.append(d)
 
-                            # Prepare Auction History mapping
-                            if validated_data.auction_name and validated_data.auction_date:
-                                history_batch.append({
-                                    "parcel_id": validated_data.parcel_id, # Temporary ref to link to property
-                                    "auction_name": validated_data.auction_name,
-                                    "auction_date": parse_auction_date(validated_data.auction_date),
-                                    "taxes_due": validated_data.taxes_due_auction,
-                                    "info_link": validated_data.auction_info_link,
-                                    "list_link": validated_data.auction_list_link,
-                                    "created_at": datetime.utcnow()
-                                })
+                        # Prepare Auction History mapping
+                        if validated_data.auction_name and validated_data.auction_date:
+                            history_batch.append({
+                                "parcel_id": validated_data.parcel_id, # Temporary ref to link to property
+                                "auction_name": validated_data.auction_name,
+                                "auction_date": parse_auction_date(validated_data.auction_date),
+                                "taxes_due": validated_data.taxes_due_auction,
+                                "info_link": validated_data.auction_info_link,
+                                "list_link": validated_data.auction_list_link,
+                                "created_at": datetime.utcnow()
+                            })
 
-                        except Exception as e:
-                            errors.append(f"Row {total_rows - chunk_size + _ + 2}: {str(e)}")
+                    except Exception as e:
+                        errors.append(f"Row {total_rows - chunk_size + _ + 2}: {str(e)}")
 
+                # Commit each chunk as a separate transaction for incremental visibility
+                with engine.begin() as conn:
                     # 1. Bulk Upsert PropertyDetails
                     if details_batch:
                         fields_pd = ", ".join(details_batch[0].keys())
@@ -142,10 +140,8 @@ class ImportService:
                         """)
                         conn.execute(query_pd, details_batch)
 
-                    # 2. Bulk Upsert Property Auction History (Linked by parcel_id -> property_id)
+                    # 2. Bulk Upsert Property Auction History
                     if history_batch:
-                        # This part is slightly complex because history needs property_id.
-                        # We use a subquery or join to resolve parcel_id -> property_id during insert
                         query_h = text("""
                             INSERT INTO property_auction_history (property_id, auction_name, auction_date, taxes_due, info_link, list_link, created_at)
                             SELECT p.property_id, :auction_name, :auction_date, :taxes_due, :info_link, :list_link, :created_at
@@ -157,12 +153,10 @@ class ImportService:
                                 info_link = EXCLUDED.info_link,
                                 list_link = EXCLUDED.list_link
                         """)
-                        # Note: We need to ensure there is a unique constraint on (property_id, auction_name) for this DO UPDATE to work.
-                        # If not, we just insert.
                         conn.execute(query_h, history_batch)
-                    
-                    success_count += len(details_batch)
-                    logger.info(f"Job {job_id}: Processed {total_rows} rows...")
+                
+                success_count += len(details_batch)
+                logger.info(f"Job {job_id}: Processed {total_rows} rows...")
 
             # Final Status Update
             if errors:
@@ -186,6 +180,7 @@ class ImportService:
             redis.set(f"import_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
             if os.path.exists(file_path):
                 os.remove(file_path)
+            raise e
 
     @staticmethod
     async def process_auctions_csv(file_content: bytes, job_id: str):
