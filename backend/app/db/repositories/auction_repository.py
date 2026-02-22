@@ -1,4 +1,5 @@
 from typing import List, Optional, Any
+from datetime import date
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, or_, text
 from fastapi.encoders import jsonable_encoder

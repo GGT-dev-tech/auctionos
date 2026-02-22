@@ -24,7 +24,7 @@ def read_properties(
 ) -> Any:
     
     # 1. Build Base Filter Query
-    where_clauses = ["1=1"]
+    where_clauses = ["p.status != 'deleted'"]
     params = {"skip": skip, "limit": limit}
 
     if county:
