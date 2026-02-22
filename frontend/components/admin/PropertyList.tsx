@@ -62,7 +62,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
         {
             field: 'status', headerName: 'Availability', width: 110,
             renderCell: (params) => {
-                const status = params.value || 'active';
+                const status = (params.value || 'active').toLowerCase();
                 const colors: any = {
                     'active': 'bg-green-100 text-green-700',
                     'sold': 'bg-red-100 text-red-700',
@@ -75,12 +75,36 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
                 );
             }
         },
-        { field: 'tax_year', headerName: 'Sale Year', width: 100 },
-        { field: 'amount_due', headerName: 'Amount Due', width: 110, valueFormatter: (params: any) => params.value ? `$${params.value.toLocaleString()}` : '-' },
-        { field: 'lot_acres', headerName: 'Acres', width: 80 },
-        { field: 'assessed_value', headerName: 'Total Value', width: 110, valueFormatter: (params: any) => params.value ? `$${params.value.toLocaleString()}` : '-' },
-        { field: 'land_value', headerName: 'Land', width: 100, valueFormatter: (params: any) => params.value ? `$${params.value.toLocaleString()}` : '-' },
-        { field: 'improvement_value', headerName: 'Building', width: 100, valueFormatter: (params: any) => params.value ? `$${params.value.toLocaleString()}` : '-' },
+        { field: 'tax_year', headerName: 'Sale Year', width: 100, valueFormatter: (params: any) => params?.value ?? '-' },
+        {
+            field: 'amount_due', headerName: 'Amount Due', width: 110,
+            valueFormatter: (params: any) => {
+                const val = typeof params === 'object' ? params?.value : params;
+                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
+            }
+        },
+        { field: 'lot_acres', headerName: 'Acres', width: 80, valueFormatter: (params: any) => params?.value ?? '-' },
+        {
+            field: 'assessed_value', headerName: 'Total Value', width: 110,
+            valueFormatter: (params: any) => {
+                const val = typeof params === 'object' ? params?.value : params;
+                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
+            }
+        },
+        {
+            field: 'land_value', headerName: 'Land', width: 100,
+            valueFormatter: (params: any) => {
+                const val = typeof params === 'object' ? params?.value : params;
+                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
+            }
+        },
+        {
+            field: 'improvement_value', headerName: 'Building', width: 100,
+            valueFormatter: (params: any) => {
+                const val = typeof params === 'object' ? params?.value : params;
+                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
+            }
+        },
         { field: 'property_type', headerName: 'Parcel Type', width: 140 },
         { field: 'address', headerName: 'Address', width: 180 },
         { field: 'auction_name', headerName: 'Next Auction', width: 220 },
@@ -108,8 +132,8 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
     ];
 
     return (
-        <Box sx={{ width: '100%', maxWidth: '100%', bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <Box p={2} display="flex" justifyContent="space-between" alignItems="center" borderBottom="1px solid #e2e8f0 flex-shrink-0">
+        <Box sx={{ width: '100%', height: '100%', bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <Box p={2} display="flex" justifyContent="space-between" alignItems="center" sx={{ borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
                 <Typography variant="h6" className="text-slate-800 dark:text-white font-semibold flex-1">
                     Properties Database
                 </Typography>
@@ -122,24 +146,27 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
                 </Button>
             </Box>
 
-            <Box sx={{ height: 600, width: '100%', overflowX: 'auto' }}>
-                <Box sx={{ minWidth: 2000 }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        loading={loading}
-                        initialState={{
-                            sorting: { sortModel: [{ field: 'auction_date', sort: 'asc' }] }
-                        }}
-                        pageSizeOptions={[20, 50, 100]}
-                        disableRowSelectionOnClick
-                        density="compact"
-                        sx={{
-                            '& .MuiDataGrid-main': { overflow: 'visible' },
-                            '& .MuiDataGrid-virtualScroller': { overflowX: 'visible' } // Fix white-screen rendering issue
-                        }}
-                    />
-                </Box>
+            <Box sx={{ flexGrow: 1, width: '100%', minHeight: 0 }}>
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    loading={loading}
+                    initialState={{
+                        sorting: { sortModel: [{ field: 'auction_date', sort: 'asc' }] }
+                    }}
+                    pageSizeOptions={[20, 50, 100]}
+                    disableRowSelectionOnClick
+                    density="compact"
+                    sx={{
+                        border: 'none',
+                        '& .MuiDataGrid-columnHeaders': {
+                            backgroundColor: 'rgba(248, 250, 252, 0.5)',
+                        },
+                        '& .MuiDataGrid-cell:focus': {
+                            outline: 'none',
+                        },
+                    }}
+                />
             </Box>
 
             <Dialog
