@@ -99,6 +99,5 @@ class PropertyDashboardSchema(BaseModel):
     improvement_value: Optional[float] = None
     property_type: Optional[str] = None
     address: Optional[str] = None
-    description: Optional[str] = None
     occupancy: Optional[str] = None
     purchase_option_type: Optional[str] = None

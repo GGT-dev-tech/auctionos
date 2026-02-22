@@ -83,16 +83,6 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
         { field: 'improvement_value', headerName: 'Building', width: 100, valueFormatter: (params: any) => params.value ? `$${params.value.toLocaleString()}` : '-' },
         { field: 'property_type', headerName: 'Parcel Type', width: 140 },
         { field: 'address', headerName: 'Address', width: 180 },
-        {
-            field: 'description',
-            headerName: 'Description',
-            width: 250,
-            renderCell: (params) => (
-                <div style={{ maxHeight: '100%', width: '100%', overflowY: 'auto', whiteSpace: 'normal', fontSize: '0.80rem', padding: '4px 0' }}>
-                    {params.value || '-'}
-                </div>
-            )
-        },
         { field: 'auction_name', headerName: 'Next Auction', width: 220 },
         { field: 'occupancy', headerName: 'Occupancy', width: 150 },
         {
@@ -118,8 +108,8 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
     ];
 
     return (
-        <Box sx={{ width: '100%', bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden' }}>
-            <Box p={2} display="flex" justifyContent="space-between" alignItems="center" borderBottom="1px solid #e2e8f0">
+        <Box sx={{ width: '100%', maxWidth: '100%', bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <Box p={2} display="flex" justifyContent="space-between" alignItems="center" borderBottom="1px solid #e2e8f0 flex-shrink-0">
                 <Typography variant="h6" className="text-slate-800 dark:text-white font-semibold flex-1">
                     Properties Database
                 </Typography>
@@ -132,18 +122,24 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
                 </Button>
             </Box>
 
-            <Box sx={{ height: 600, width: '100%' }}>
-                <DataGrid
-                    rows={rows}
-                    columns={columns}
-                    loading={loading}
-                    initialState={{
-                        sorting: { sortModel: [{ field: 'auction_date', sort: 'asc' }] }
-                    }}
-                    pageSizeOptions={[20, 50, 100]}
-                    disableRowSelectionOnClick
-                    density="compact"
-                />
+            <Box sx={{ height: 600, width: '100%', overflowX: 'auto' }}>
+                <Box sx={{ minWidth: 2000 }}>
+                    <DataGrid
+                        rows={rows}
+                        columns={columns}
+                        loading={loading}
+                        initialState={{
+                            sorting: { sortModel: [{ field: 'auction_date', sort: 'asc' }] }
+                        }}
+                        pageSizeOptions={[20, 50, 100]}
+                        disableRowSelectionOnClick
+                        density="compact"
+                        sx={{
+                            '& .MuiDataGrid-main': { overflow: 'visible' },
+                            '& .MuiDataGrid-virtualScroller': { overflowX: 'visible' } // Fix white-screen rendering issue
+                        }}
+                    />
+                </Box>
             </Box>
 
             <Dialog
