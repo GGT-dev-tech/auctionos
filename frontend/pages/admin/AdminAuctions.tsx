@@ -29,7 +29,7 @@ const AdminAuctions: React.FC = () => {
                 <div className="flex flex-col gap-4">
                     <AuctionFilters onFilterChange={setFilters} />
 
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                    <div className="flex flex-col gap-6">
                         <Box className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl">
                             <AuctionList filters={filters} />
                         </Box>
@@ -44,11 +44,11 @@ const AdminAuctions: React.FC = () => {
             {activeTab === 'properties' && (
                 <div className="space-y-6">
                     <PropertyFilters onFilterChange={setPropertyFilters} />
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-1">
+                    <div className="flex flex-col gap-8">
+                        <div className="w-full max-w-4xl mx-auto">
                             <PropertyForm onSuccess={() => { }} />
                         </div>
-                        <div className="lg:col-span-2">
+                        <div className="w-full">
                             <PropertyList filters={propertyFilters} />
                         </div>
                     </div>
