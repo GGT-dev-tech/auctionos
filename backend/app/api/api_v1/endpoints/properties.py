@@ -37,6 +37,7 @@ def read_properties(
             p.improvement_value,
             p.property_type,
             p.address,
+            p.description,
             p.occupancy,
             p.purchase_option_type
         FROM property_details p
@@ -79,8 +80,9 @@ def read_properties(
             "improvement_value": r[15],
             "property_type": r[16],
             "address": r[17],
-            "occupancy": r[18],
-            "purchase_option_type": r[19]
+            "description": r[18],
+            "occupancy": r[19],
+            "purchase_option_type": r[20]
         }
         for r in result
     ]

@@ -83,6 +83,16 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
         { field: 'improvement_value', headerName: 'Building', width: 100, valueFormatter: (params: any) => params.value ? `$${params.value.toLocaleString()}` : '-' },
         { field: 'property_type', headerName: 'Parcel Type', width: 140 },
         { field: 'address', headerName: 'Address', width: 180 },
+        {
+            field: 'description',
+            headerName: 'Description',
+            width: 250,
+            renderCell: (params) => (
+                <div style={{ maxHeight: '100%', width: '100%', overflowY: 'auto', whiteSpace: 'normal', fontSize: '0.80rem', padding: '4px 0' }}>
+                    {params.value || '-'}
+                </div>
+            )
+        },
         { field: 'auction_name', headerName: 'Next Auction', width: 220 },
         { field: 'occupancy', headerName: 'Occupancy', width: 150 },
         {
