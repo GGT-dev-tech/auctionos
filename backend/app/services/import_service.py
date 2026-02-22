@@ -29,121 +29,145 @@ redis = Redis.from_url(get_redis_url())
 
 class ImportService:
     @staticmethod
-    async def process_properties_csv(file_content: bytes, job_id: str):
+    def process_properties_csv(file_content: bytes, job_id: str):
+        # Wrapper to maintain existing interface but redirect to file-based processing
+        temp_path = f"/app/data/temp_imports/{job_id}.csv"
+        os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+        with open(temp_path, "wb") as f:
+            f.write(file_content)
+        
+        # We manually call the sync version for background_tasks or let Celery handle it
+        import asyncio
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(import_service.process_properties_csv_file(temp_path, job_id))
+        else:
+            asyncio.run(import_service.process_properties_csv_file(temp_path, job_id))
+
+    @staticmethod
+    async def process_properties_csv_file(file_path: str, job_id: str):
         try:
-            # Read CSV forcing all columns to string to prevent Pydantic Strict String validation crashes on inferred ints
-            df = pd.read_csv(io.BytesIO(file_content), dtype=str)
-            total_rows = len(df)
+            # Using chunksize to keep memory footprint low
+            chunk_size = 2000
+            total_rows = 0
             success_count = 0
             errors = []
 
+            # Headers and types mapping
+            def parse_auction_date(d_str):
+                if not d_str: return None
+                try: return datetime.strptime(d_str.strip(), "%m/%d/%Y").date()
+                except: pass
+                try: return datetime.strptime(d_str.strip(), "%Y-%m-%d").date()
+                except: return None
+
             with engine.begin() as conn:
-                for index, row in df.iterrows():
-                    try:
-                        # Validation via Pydantic
-                        # Replace NaN with None for Pydantic
-                        row_dict = row.where(pd.notnull(row), None).to_dict()
-                        
-                        # Handle potential alias mapping if CSV headers don't match exactly?
-                        # For now assume headers match expected aliases in Schema
-                        
-                        validated_data = PropertyCSVRow(**row_dict)
-                        # 1. Unified Upsert to PropertyDetails
-                        details_data = {
-                            "property_id": str(uuid.uuid4()), # Fallback UUID for new inserts
-                            "parcel_id": validated_data.parcel_id,
-                            "address": validated_data.address,
-                            "owner_address": validated_data.owner_address,
-                            "county": validated_data.county,
-                            "state": validated_data.state_code,
-                            "description": validated_data.description,
-                            "amount_due": validated_data.amount_due,
-                            "occupancy": validated_data.vacancy,
-                            "tax_year": int(float(validated_data.tax_sale_year)) if validated_data.tax_sale_year else None,
-                            "cs_number": validated_data.cs_number,
-                            "property_type": validated_data.type,
-                            "status": "active",
-                            "account_number": validated_data.account,
-                            "lot_acres": validated_data.acres,
-                            "estimated_value": validated_data.estimated_arv,
-                            "rental_value": validated_data.estimated_rent,
-                            "improvement_value": validated_data.improvements,
-                            "land_value": validated_data.land_value,
-                            "assessed_value": validated_data.total_value,
-                            "property_category": validated_data.property_category,
-                            "purchase_option_type": validated_data.purchase_option_type
-                        }
+                # 0. Count total rows for status? (Optional for progress tracking later)
+                # total_rows = sum(1 for line in open(file_path)) - 1
+                
+                # Iterate in chunks
+                for chunk in pd.read_csv(file_path, dtype=str, chunksize=chunk_size):
+                    total_rows += len(chunk)
+                    
+                    details_batch = []
+                    history_batch = []
+                    
+                    for _, row in chunk.iterrows():
+                        try:
+                            row_dict = row.where(pd.notnull(row), None).to_dict()
+                            validated_data = PropertyCSVRow(**row_dict)
+                            
+                            # Prepare PropertyDetails map
+                            d = {
+                                "property_id": str(uuid.uuid4()),
+                                "parcel_id": validated_data.parcel_id,
+                                "address": validated_data.address,
+                                "owner_address": validated_data.owner_address,
+                                "county": validated_data.county,
+                                "state": validated_data.state_code,
+                                "amount_due": validated_data.amount_due,
+                                "occupancy": validated_data.vacancy,
+                                "tax_year": int(float(validated_data.tax_sale_year)) if validated_data.tax_sale_year else None,
+                                "cs_number": validated_data.cs_number,
+                                "property_type": validated_data.type,
+                                "status": "active",
+                                "account_number": validated_data.account,
+                                "lot_acres": validated_data.acres,
+                                "estimated_value": validated_data.estimated_arv,
+                                "rental_value": validated_data.estimated_rent,
+                                "improvement_value": validated_data.improvements,
+                                "land_value": validated_data.land_value,
+                                "assessed_value": validated_data.total_value,
+                                "property_category": validated_data.property_category,
+                                "purchase_option_type": validated_data.purchase_option_type,
+                                "latitude": None,
+                                "longitude": None
+                            }
+                            
+                            if validated_data.coordinates:
+                                try:
+                                    clean_coords = validated_data.coordinates.replace(',', ' ').strip()
+                                    parts = clean_coords.split()
+                                    if len(parts) >= 2:
+                                        d["latitude"] = float(parts[0])
+                                        d["longitude"] = float(parts[1])
+                                except: pass
 
-                        # Handle Coordinates
-                        if validated_data.coordinates:
-                            try:
-                                clean_coords = validated_data.coordinates.replace(',', ' ').strip()
-                                parts = clean_coords.split()
-                                if len(parts) >= 2:
-                                    details_data["latitude"] = float(parts[0])
-                                    details_data["longitude"] = float(parts[1])
-                            except:
-                                pass
+                            details_batch.append(d)
 
-                        fields_pd = ", ".join(details_data.keys())
-                        placeholders_pd = ", ".join([f":{k}" for k in details_data.keys()])
-                        updates_pd = ", ".join([f"{k} = EXCLUDED.{k}" for k in details_data.keys() if k not in ["property_id", "parcel_id"]])
+                            # Prepare Auction History mapping
+                            if validated_data.auction_name and validated_data.auction_date:
+                                history_batch.append({
+                                    "parcel_id": validated_data.parcel_id, # Temporary ref to link to property
+                                    "auction_name": validated_data.auction_name,
+                                    "auction_date": parse_auction_date(validated_data.auction_date),
+                                    "taxes_due": validated_data.taxes_due_auction,
+                                    "info_link": validated_data.auction_info_link,
+                                    "list_link": validated_data.auction_list_link,
+                                    "created_at": datetime.utcnow()
+                                })
+
+                        except Exception as e:
+                            errors.append(f"Row {total_rows - chunk_size + _ + 2}: {str(e)}")
+
+                    # 1. Bulk Upsert PropertyDetails
+                    if details_batch:
+                        fields_pd = ", ".join(details_batch[0].keys())
+                        placeholders_pd = ", ".join([f":{k}" for k in details_batch[0].keys()])
+                        updates_pd = ", ".join([f"{k} = EXCLUDED.{k}" for k in details_batch[0].keys() if k not in ["property_id", "parcel_id"]])
                         
                         query_pd = text(f"""
                             INSERT INTO property_details ({fields_pd}) VALUES ({placeholders_pd})
                             ON CONFLICT (parcel_id) DO UPDATE SET {updates_pd}
-                            RETURNING property_id
                         """)
-                        res = conn.execute(query_pd, details_data)
-                        final_property_id = res.scalar()
+                        conn.execute(query_pd, details_batch)
 
-                        # 3. Upsert Property Auction History (Dynamic Context)
-                        if validated_data.auction_name and validated_data.auction_date:
-                            def parse_auction_date(d_str):
-                                try: return datetime.strptime(d_str.strip(), "%m/%d/%Y").date()
-                                except: pass
-                                try: return datetime.strptime(d_str.strip(), "%Y-%m-%d").date()
-                                except: return None
-                                
-                            parsed_date = parse_auction_date(validated_data.auction_date)
-                            
-                            history_data = {
-                                "property_id": final_property_id,
-                                "auction_name": validated_data.auction_name,
-                                "auction_date": parsed_date,
-                                "taxes_due": validated_data.taxes_due_auction,
-                                "info_link": validated_data.auction_info_link,
-                                "list_link": validated_data.auction_list_link,
-                                "created_at": datetime.utcnow()
-                            }
-                            
-                            # Determine if record exists
-                            existing_hist = conn.execute(
-                                text("SELECT id FROM property_auction_history WHERE property_id = :pid AND auction_name = :aname"),
-                                {"pid": str(final_property_id), "aname": validated_data.auction_name}
-                            ).fetchone()
-
-                            if existing_hist:
-                                updates_h = ", ".join([f"{k} = :{k}" for k in history_data.keys() if k not in ["property_id", "auction_name", "created_at"]])
-                                if updates_h:
-                                    query_h = text(f"UPDATE property_auction_history SET {updates_h} WHERE id = :hid")
-                                    conn.execute(query_h, {**history_data, "hid": existing_hist[0]})
-                            else:
-                                fields_h = ", ".join(history_data.keys())
-                                placeholders_h = ", ".join([f":{k}" for k in history_data.keys()])
-                                query_h = text(f"INSERT INTO property_auction_history ({fields_h}) VALUES ({placeholders_h})")
-                                conn.execute(query_h, history_data)
-
-                        success_count += 1
-                        
-                    except Exception as e:
-                        errors.append(f"Row {index + 2}: {str(e)}")
+                    # 2. Bulk Upsert Property Auction History (Linked by parcel_id -> property_id)
+                    if history_batch:
+                        # This part is slightly complex because history needs property_id.
+                        # We use a subquery or join to resolve parcel_id -> property_id during insert
+                        query_h = text("""
+                            INSERT INTO property_auction_history (property_id, auction_name, auction_date, taxes_due, info_link, list_link, created_at)
+                            SELECT p.property_id, :auction_name, :auction_date, :taxes_due, :info_link, :list_link, :created_at
+                            FROM property_details p
+                            WHERE p.parcel_id = :parcel_id
+                            ON CONFLICT (property_id, auction_name) DO UPDATE SET
+                                auction_date = EXCLUDED.auction_date,
+                                taxes_due = EXCLUDED.taxes_due,
+                                info_link = EXCLUDED.info_link,
+                                list_link = EXCLUDED.list_link
+                        """)
+                        # Note: We need to ensure there is a unique constraint on (property_id, auction_name) for this DO UPDATE to work.
+                        # If not, we just insert.
+                        conn.execute(query_h, history_batch)
+                    
+                    success_count += len(details_batch)
+                    logger.info(f"Job {job_id}: Processed {total_rows} rows...")
 
             # Final Status Update
             if errors:
-                status_msg = f"Completed with errors. Success: {success_count}/{total_rows}. Errors: {len(errors)}"
-                # Could store errors in Redis list for download
-                redis.set(f"import_errors:{job_id}", str(errors), ex=3600)
+                status_msg = f"Completed with errors. Success: {success_count}/{total_rows}. Errors: {len(errors[:100])}..."
+                redis.set(f"import_errors:{job_id}", str(errors[:500]), ex=3600)
             else:
                 status_msg = f"Success: {success_count} properties processed"
                 
@@ -153,9 +177,15 @@ class ImportService:
             from app.tasks import resolve_property_auction_links_task
             resolve_property_auction_links_task.delay(job_id)
             
+            # Cleanup temp file
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
         except Exception as e:
             logger.error(f"Import Job Failed: {e}")
             redis.set(f"import_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
     @staticmethod
     async def process_auctions_csv(file_content: bytes, job_id: str):

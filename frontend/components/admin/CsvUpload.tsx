@@ -17,32 +17,39 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ type, onSuccess }) => {
 
         try {
             setLoading(true);
-            setStatusMsg('Uploading file...');
+            setStatusMsg('Uploading file to server...');
             const result = type === 'properties'
                 ? await AdminService.importProperties(file)
                 : await AdminService.importAuctions(file);
 
             const jobId = result.job_id;
-            setStatusMsg('File uploaded. Processing in background...');
+            setStatusMsg('File received. Worker assigned. Processing 100k+ rows may take 2-5 minutes...');
 
             // Poll status
             const interval = setInterval(async () => {
                 try {
                     const statusRes = await AdminService.getImportStatus(jobId);
-                    setStatusMsg(statusRes.status);
 
-                    if (statusRes.status.toLowerCase().includes('success') || statusRes.status.toLowerCase().includes('error') || statusRes.status.toLowerCase().includes('failed')) {
+                    // If status is still 'pending' after upload, it might be waiting for worker
+                    if (statusRes.status === 'pending') {
+                        setStatusMsg('Worker in progress... please wait.');
+                    } else {
+                        setStatusMsg(statusRes.status);
+                    }
+
+                    const lowerStatus = statusRes.status.toLowerCase();
+                    if (lowerStatus.includes('success') || lowerStatus.includes('error') || lowerStatus.includes('failed') || lowerStatus.includes('critical')) {
                         clearInterval(interval);
                         setLoading(false);
                         if (fileInputRef.current) fileInputRef.current.value = '';
-                        if (statusRes.status.toLowerCase().includes('success')) {
+                        if (lowerStatus.includes('success')) {
                             onSuccess();
                         }
                     }
                 } catch (e) {
                     console.error("Polling error", e);
                 }
-            }, 2000);
+            }, 3000); // Slightly slower polling for long jobs
 
         } catch (e: any) {
             console.error(e);
