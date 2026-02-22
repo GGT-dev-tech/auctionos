@@ -27,3 +27,28 @@ def import_csv_task():
     """
     logger.info("CSV import task disabled during architecture simplification.")
     return {"status": "success"}
+
+@celery_app.task(acks_late=True)
+def resolve_property_auction_links_task(job_id: str):
+    """
+    Background trigger: Resolves loosely coupled text constraints into strong Foreign Key relations.
+    """
+    logger.info(f"Starting auction linkage resolution for job: {job_id}")
+    try:
+        from app.db.session import engine
+        from sqlalchemy import text
+        with engine.begin() as conn:
+            query = text("""
+                UPDATE property_auction_history pah
+                SET auction_id = ae.id
+                FROM auction_events ae
+                WHERE pah.auction_id IS NULL 
+                  AND pah.auction_name = ae.name 
+                  AND pah.auction_date = ae.auction_date;
+            """)
+            result = conn.execute(query)
+            logger.info(f"Linkage complete. Rows updated: {result.rowcount}")
+        return {"status": "success", "linked_rows": result.rowcount}
+    except Exception as e:
+        logger.error(f"Failed to resolve linkages: {e}")
+        return {"status": "error", "message": str(e)}

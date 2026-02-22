@@ -8,6 +8,7 @@ interface CsvUploadProps {
 
 const CsvUpload: React.FC<CsvUploadProps> = ({ type, onSuccess }) => {
     const [loading, setLoading] = useState(false);
+    const [statusMsg, setStatusMsg] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -16,20 +17,37 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ type, onSuccess }) => {
 
         try {
             setLoading(true);
+            setStatusMsg('Uploading file...');
             const result = type === 'properties'
                 ? await AdminService.importProperties(file)
                 : await AdminService.importAuctions(file);
 
-            alert(`Import started! Job ID: ${result.job_id}`);
-            onSuccess();
+            const jobId = result.job_id;
+            setStatusMsg('File uploaded. Processing in background...');
+
+            // Poll status
+            const interval = setInterval(async () => {
+                try {
+                    const statusRes = await AdminService.getImportStatus(jobId);
+                    setStatusMsg(statusRes.status);
+
+                    if (statusRes.status.toLowerCase().includes('success') || statusRes.status.toLowerCase().includes('error') || statusRes.status.toLowerCase().includes('failed')) {
+                        clearInterval(interval);
+                        setLoading(false);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                        if (statusRes.status.toLowerCase().includes('success')) {
+                            onSuccess();
+                        }
+                    }
+                } catch (e) {
+                    console.error("Polling error", e);
+                }
+            }, 2000);
+
         } catch (e: any) {
             console.error(e);
-            alert(`Import failed: ${e.message}`);
-        } finally {
+            setStatusMsg(`Upload failed: ${e.message}`);
             setLoading(false);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = ''; // Reset
-            }
         }
     };
 
@@ -45,17 +63,19 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ type, onSuccess }) => {
                     accept=".csv"
                     ref={fileInputRef}
                     onChange={handleFileChange}
+                    disabled={loading}
                     className="block w-full text-sm text-slate-500 dark:text-slate-400
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-full file:border-0
                         file:text-sm file:font-semibold
                         file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100 dark:file:bg-slate-700 dark:file:text-slate-200"
+                        hover:file:bg-blue-100 dark:file:bg-slate-700 dark:file:text-slate-200
+                        disabled:opacity-50"
                 />
 
-                {loading && (
-                    <div className="text-sm text-blue-600 animate-pulse">
-                        Uploading and processing...
+                {statusMsg && (
+                    <div className={`text-sm ${statusMsg.toLowerCase().includes('error') || statusMsg.toLowerCase().includes('failed') ? 'text-red-600' : 'text-blue-600'} ${loading ? 'animate-pulse' : 'font-semibold'}`}>
+                        {statusMsg}
                     </div>
                 )}
             </div>

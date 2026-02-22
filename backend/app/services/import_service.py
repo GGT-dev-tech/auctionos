@@ -36,9 +36,9 @@ class ImportService:
                         # For now assume headers match expected aliases in Schema
                         
                         validated_data = PropertyCSVRow(**row_dict)
-                        
-                        # 1. Upsert Property
-                        prop_data = {
+                        # 1. Unified Upsert to PropertyDetails
+                        details_data = {
+                            "property_id": str(uuid.uuid4()), # Fallback UUID for new inserts
                             "parcel_id": validated_data.parcel_id,
                             "address": validated_data.address,
                             "owner_address": validated_data.owner_address,
@@ -46,14 +46,20 @@ class ImportService:
                             "state": validated_data.state_code,
                             "description": validated_data.description,
                             "amount_due": validated_data.amount_due,
-                            # "next_auction_date": ... (parse from string if needed)
                             "occupancy": validated_data.vacancy,
-                            "tax_sale_year": int(validated_data.tax_sale_year) if validated_data.tax_sale_year else None,
+                            "tax_sale_year": int(float(validated_data.tax_sale_year)) if validated_data.tax_sale_year else None,
                             "cs_number": validated_data.cs_number,
-                            "parcel_code": validated_data.parcel_code,
-                            "map_link": validated_data.map_link,
                             "property_type": validated_data.type,
-                            "status": "active"
+                            "status": "active",
+                            "account_number": validated_data.account,
+                            "lot_acres": validated_data.acres,
+                            "estimated_arv": validated_data.estimated_arv,
+                            "estimated_rent": validated_data.estimated_rent,
+                            "improvement_value": validated_data.improvements,
+                            "land_value": validated_data.land_value,
+                            "assessed_value": validated_data.total_value,
+                            "property_category": validated_data.property_category,
+                            "purchase_option_type": validated_data.purchase_option_type
                         }
 
                         # Handle Coordinates
@@ -62,52 +68,59 @@ class ImportService:
                                 clean_coords = validated_data.coordinates.replace(',', ' ').strip()
                                 parts = clean_coords.split()
                                 if len(parts) >= 2:
-                                    prop_data["latitude"] = float(parts[0])
-                                    prop_data["longitude"] = float(parts[1])
+                                    details_data["latitude"] = float(parts[0])
+                                    details_data["longitude"] = float(parts[1])
                             except:
                                 pass
 
-                        # SQL Upsert Property
-                        fields = ", ".join(prop_data.keys())
-                        placeholders = ", ".join([f":{k}" for k in prop_data.keys()])
-                        updates = ", ".join([f"{k} = EXCLUDED.{k}" for k in prop_data.keys() if k != "parcel_id"])
-                        
-                        query_p = text(f"""
-                            INSERT INTO properties ({fields}) VALUES ({placeholders})
-                            ON CONFLICT (parcel_id) DO UPDATE SET {updates}
-                            RETURNING id
-                        """)
-                        res = conn.execute(query_p, prop_data)
-                        property_id = res.scalar()
-
-                        # 2. Upsert Property Details
-                        details_data = {
-                            "property_id": property_id,
-                            "account_number": validated_data.account,
-                            "lot_acres": validated_data.acres,
-                            "estimated_arv": validated_data.estimated_arv,
-                            "estimated_rent": validated_data.estimated_rent,
-                            "improvement_value": validated_data.improvements,
-                            "land_value": validated_data.land_value,
-                            "total_market_value": validated_data.total_value,
-                            "property_category": validated_data.property_category,
-                            "purchase_option_type": validated_data.purchase_option_type,
-                            "updated_at": datetime.utcnow()
-                        }
-                        
-                        # Check exist
-                        existing_pd = conn.execute(text("SELECT id FROM property_details WHERE property_id = :pid"), {"pid": property_id}).fetchone()
-                        
                         fields_pd = ", ".join(details_data.keys())
                         placeholders_pd = ", ".join([f":{k}" for k in details_data.keys()])
+                        updates_pd = ", ".join([f"{k} = EXCLUDED.{k}" for k in details_data.keys() if k not in ["property_id", "parcel_id"]])
                         
-                        if existing_pd:
-                            updates_pd = ", ".join([f"{k} = :{k}" for k in details_data.keys() if k != "property_id"])
-                            query_pd = text(f"UPDATE property_details SET {updates_pd} WHERE property_id = :property_id")
-                            conn.execute(query_pd, details_data)
-                        else:
-                            query_pd = text(f"INSERT INTO property_details ({fields_pd}) VALUES ({placeholders_pd})")
-                            conn.execute(query_pd, details_data)
+                        query_pd = text(f"""
+                            INSERT INTO property_details ({fields_pd}) VALUES ({placeholders_pd})
+                            ON CONFLICT (parcel_id) DO UPDATE SET {updates_pd}
+                            RETURNING property_id
+                        """)
+                        res = conn.execute(query_pd, details_data)
+                        final_property_id = res.scalar()
+
+                        # 3. Upsert Property Auction History (Dynamic Context)
+                        if validated_data.auction_name and validated_data.auction_date:
+                            def parse_auction_date(d_str):
+                                try: return datetime.strptime(d_str.strip(), "%m/%d/%Y").date()
+                                except: pass
+                                try: return datetime.strptime(d_str.strip(), "%Y-%m-%d").date()
+                                except: return None
+                                
+                            parsed_date = parse_auction_date(validated_data.auction_date)
+                            
+                            history_data = {
+                                "property_id": final_property_id,
+                                "auction_name": validated_data.auction_name,
+                                "auction_date": parsed_date,
+                                "taxes_due": validated_data.taxes_due_auction,
+                                "info_link": validated_data.auction_info_link,
+                                "list_link": validated_data.auction_list_link,
+                                "created_at": datetime.utcnow()
+                            }
+                            
+                            # Determine if record exists
+                            existing_hist = conn.execute(
+                                text("SELECT id FROM property_auction_history WHERE property_id = :pid AND auction_name = :aname"),
+                                {"pid": str(final_property_id), "aname": validated_data.auction_name}
+                            ).fetchone()
+
+                            if existing_hist:
+                                updates_h = ", ".join([f"{k} = :{k}" for k in history_data.keys() if k not in ["property_id", "auction_name", "created_at"]])
+                                if updates_h:
+                                    query_h = text(f"UPDATE property_auction_history SET {updates_h} WHERE id = :hid")
+                                    conn.execute(query_h, {**history_data, "hid": existing_hist[0]})
+                            else:
+                                fields_h = ", ".join(history_data.keys())
+                                placeholders_h = ", ".join([f":{k}" for k in history_data.keys()])
+                                query_h = text(f"INSERT INTO property_auction_history ({fields_h}) VALUES ({placeholders_h})")
+                                conn.execute(query_h, history_data)
 
                         success_count += 1
                         
@@ -121,8 +134,12 @@ class ImportService:
                 redis.set(f"import_errors:{job_id}", str(errors), ex=3600)
             else:
                 status_msg = f"Success: {success_count} properties processed"
-            
+                
             redis.set(f"import_status:{job_id}", status_msg, ex=3600)
+            
+            # TRIGGER EVENT: Link imported properties to their auctions automatically
+            from app.tasks import resolve_property_auction_links_task
+            resolve_property_auction_links_task.delay(job_id)
             
         except Exception as e:
             logger.error(f"Import Job Failed: {e}")

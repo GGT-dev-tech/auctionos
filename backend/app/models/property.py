@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, date
-from sqlalchemy import Column, String, Integer, Float, Boolean, Text, Date, DateTime
+from sqlalchemy import Column, String, Integer, Float, Boolean, Text, Date, DateTime, ForeignKey
 from app.db.base_class import Base
 
 class PropertyDetails(Base):
@@ -8,6 +8,20 @@ class PropertyDetails(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     property_id = Column(String(36), nullable=False)
+    parcel_id = Column(String(100), unique=True, index=True, nullable=True)
+    address = Column(String(255), nullable=True)
+    owner_address = Column(String(255), nullable=True)
+    county = Column(String(100), nullable=True)
+    state = Column(String(100), nullable=True)
+    description = Column(Text, nullable=True)
+    amount_due = Column(Float, nullable=True)
+    occupancy = Column(String(100), nullable=True)
+    cs_number = Column(String(100), nullable=True)
+    property_type = Column(String(100), nullable=True)
+    status = Column(String(100), nullable=True, default="active")
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    
     bedrooms = Column(Integer, nullable=True)
     bathrooms = Column(Float, nullable=True)
     sqft = Column(Integer, nullable=True)
@@ -49,6 +63,8 @@ class PropertyDetails(Base):
     gsi_url = Column(String(500), nullable=True)
     gsi_data = Column(Text, nullable=True)
     max_bid = Column(Float, nullable=True)
+    property_category = Column(String(255), nullable=True)
+    purchase_option_type = Column(String(255), nullable=True)
 
 
 class PropertyAuctionHistory(Base):
@@ -56,6 +72,7 @@ class PropertyAuctionHistory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     property_id = Column(String(36), nullable=False)
+    auction_id = Column(Integer, ForeignKey("auction_events.id", ondelete="SET NULL"), nullable=True, index=True)
     auction_name = Column(String(255), nullable=True)
     auction_date = Column(Date, nullable=True)
     location = Column(String(255), nullable=True)

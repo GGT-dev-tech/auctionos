@@ -11,6 +11,7 @@ import { Box } from '@mui/material';
 const AdminAuctions: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'auctions' | 'properties' | 'import_props' | 'import_auctions'>('auctions');
     const [filters, setFilters] = useState<AuctionFilterParams>({});
+    const [propertyFilters, setPropertyFilters] = useState<any>({});
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -40,9 +41,8 @@ const AdminAuctions: React.FC = () => {
             )}
 
             {activeTab === 'properties' && (
-                <div className="space-y-8">
-                    <PropertyForm onSuccess={() => { }} />
-                    <PropertyList />
+                <div className="space-y-4">
+                    <PropertyList filters={propertyFilters} />
                 </div>
             )}
 

@@ -13,11 +13,18 @@ def parse_date(v):
     except:
         return None
 
+import re
+
 def parse_float(v):
     if v is None or pd.isna(v) or v == '':
         return None
     if isinstance(v, str):
-        return float(v.replace('$', '').replace(',', '').strip())
+        # Extract the first numeric match (handles "$1,500.00" -> 1500.00 or "0.19 acres" -> 0.19)
+        clean_str = v.replace(',', '')
+        match = re.search(r'[-+]?\d*\.?\d+', clean_str)
+        if match:
+            return float(match.group())
+        return None
     return float(v)
 
 class PropertyCSVRow(BaseModel):

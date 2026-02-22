@@ -1,15 +1,29 @@
-
 import React, { useEffect, useState } from 'react';
+import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { AdminService } from '../../services/admin.service';
+import { Box, Typography, Button } from '@mui/material';
 
-const PropertyList: React.FC = () => {
-    const [properties, setProperties] = useState<any[]>([]);
+interface PropertyListProps {
+    filters?: any;
+}
+
+const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
+    const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchProperties = async () => {
+        setLoading(true);
         try {
-            const data = await AdminService.listProperties();
-            setProperties(data);
+            const params = { ...filters, limit: 100, skip: 0 };
+            const data = await AdminService.listProperties(params);
+
+            // Map the data to have an `id` field required by DataGrid
+            const mappedData = data.map((item: any) => ({
+                ...item,
+                id: item.parcel_id
+            }));
+
+            setRows(mappedData);
         } catch (err) {
             console.error(err);
         } finally {
@@ -19,58 +33,103 @@ const PropertyList: React.FC = () => {
 
     useEffect(() => {
         fetchProperties();
-    }, []);
+    }, [filters]);
+
+    const handleEditClick = (row: any) => {
+        alert("Edit Property functionality coming soon!");
+    };
+
+    const columns: GridColDef[] = [
+        { field: 'parcel_id', headerName: 'Parcel ID', width: 140 },
+        { field: 'county', headerName: 'County', width: 130 },
+        { field: 'state_code', headerName: 'State', width: 70 },
+        {
+            field: 'status', headerName: 'Status', width: 100,
+            renderCell: (params) => {
+                const status = params.value || 'active';
+                const colors: any = {
+                    'active': 'bg-green-100 text-green-700',
+                    'sold': 'bg-red-100 text-red-700',
+                    'pending': 'bg-yellow-100 text-yellow-700'
+                };
+                return (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100 text-gray-700'}`}>
+                        {status.toUpperCase()}
+                    </span>
+                );
+            }
+        },
+        { field: 'auction_name', headerName: 'Linked Auction', width: 220 },
+        {
+            field: 'auction_date', headerName: 'Auction Date', width: 120,
+            valueFormatter: (params: any) => {
+                const val = (params && typeof params === 'object' && 'value' in params) ? params.value : params;
+                if (!val) return '';
+                const date = new Date(val);
+                return date.toLocaleDateString();
+            }
+        },
+        {
+            field: 'amount_due', headerName: 'Taxes', width: 100,
+            valueFormatter: (params: any) => {
+                const val = (params && typeof params === 'object' && 'value' in params) ? params.value : params;
+                if (val !== undefined && val !== null) return `$${val.toLocaleString()}`;
+                return '-';
+            }
+        },
+        {
+            field: 'assessed_value', headerName: 'Value', width: 100,
+            valueFormatter: (params: any) => {
+                const val = (params && typeof params === 'object' && 'value' in params) ? params.value : params;
+                if (val !== undefined && val !== null) return `$${val.toLocaleString()}`;
+                return '-';
+            }
+        },
+        {
+            field: 'actions',
+            type: 'actions',
+            headerName: 'Actions',
+            width: 80,
+            getActions: ({ id, row }) => [
+                <GridActionsCellItem
+                    key={`edit-${id}`}
+                    icon={<span className="material-symbols-outlined text-blue-600">edit</span>}
+                    label="Edit"
+                    onClick={() => handleEditClick(row)}
+                />,
+            ],
+        },
+    ];
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-700">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                <h3 className="font-bold text-lg text-slate-800 dark:text-white">All Properties</h3>
-                <button onClick={fetchProperties} className="text-sm text-blue-600 hover:text-blue-700">Refresh</button>
-            </div>
+        <Box sx={{ width: '100%', bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden' }}>
+            <Box p={2} display="flex" justifyContent="space-between" alignItems="center" borderBottom="1px solid #e2e8f0">
+                <Typography variant="h6" className="text-slate-800 dark:text-white font-semibold flex-1">
+                    Properties Database
+                </Typography>
+                <Button
+                    onClick={fetchProperties}
+                    startIcon={<span className="material-symbols-outlined">refresh</span>}
+                    sx={{ textTransform: 'none' }}
+                >
+                    Refresh
+                </Button>
+            </Box>
 
-            <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
-                    <thead className="bg-slate-50 dark:bg-slate-700/50 uppercase text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        <tr>
-                            <th className="px-4 py-3">Parcel ID</th>
-                            <th className="px-4 py-3">County</th>
-                            <th className="px-4 py-3">State</th>
-                            <th className="px-4 py-3">Status</th>
-                            <th className="px-4 py-3">Auction Date</th>
-                            <th className="px-4 py-3">Amount Due</th>
-                            <th className="px-4 py-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                        {loading ? (
-                            <tr><td colSpan={7} className="px-4 py-8 text-center">Loading...</td></tr>
-                        ) : properties.length === 0 ? (
-                            <tr><td colSpan={7} className="px-4 py-8 text-center">No properties found.</td></tr>
-                        ) : (
-                            properties.map((prop) => (
-                                <tr key={prop.parcel_id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                                    <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{prop.parcel_id}</td>
-                                    <td className="px-4 py-3">{prop.county}</td>
-                                    <td className="px-4 py-3">{prop.state_code}</td>
-                                    <td className="px-4 py-3">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium 
-                                            ${prop.status === 'sold' ? 'bg-red-100 text-red-700' :
-                                                prop.status === 'available' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                            {prop.status || 'Unknown'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3">{prop.auction_date || '-'}</td>
-                                    <td className="px-4 py-3">${prop.amount_due}</td>
-                                    <td className="px-4 py-3">
-                                        <button className="text-blue-600 hover:underline">Edit</button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            <Box sx={{ height: 600, width: '100%' }}>
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    loading={loading}
+                    initialState={{
+                        sorting: { sortModel: [{ field: 'auction_date', sort: 'asc' }] }
+                    }}
+                    pageSizeOptions={[20, 50, 100]}
+                    disableRowSelectionOnClick
+                    density="compact"
+                />
+            </Box>
+        </Box>
     );
 };
 

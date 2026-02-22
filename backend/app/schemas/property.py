@@ -78,3 +78,14 @@ class PropertyAuctionHistory(PropertyAuctionHistoryBase):
     id: int
     created_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+
+# Extended unified view for the Frontend DataGrid
+class PropertyDashboardSchema(BaseModel):
+    parcel_id: str
+    county: Optional[str] = None
+    state_code: Optional[str] = None
+    status: Optional[str] = None
+    auction_date: Optional[date] = None
+    auction_name: Optional[str] = None
+    amount_due: Optional[float] = None
+    assessed_value: Optional[float] = None
