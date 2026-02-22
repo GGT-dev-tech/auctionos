@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, date
-from sqlalchemy import Column, String, Integer, Float, Boolean, Text, Date, DateTime, ForeignKey
+from sqlalchemy import Column, String, Integer, Float, Boolean, Text, Date, DateTime, ForeignKey, UniqueConstraint
 from app.db.base_class import Base
 
 class PropertyDetails(Base):
@@ -55,12 +55,12 @@ class PropertyDetails(Base):
     flood_zone_code = Column(String(20), nullable=True)
     is_qoz = Column(Boolean, nullable=True)
     legal_tags = Column(String(500), nullable=True)
-    market_value_url = Column(String(500), nullable=True)
+    market_value_url = Column(String(2048), nullable=True)
     appraisal_desc = Column(Text, nullable=True)
-    regrid_url = Column(String(500), nullable=True)
-    fema_url = Column(String(500), nullable=True)
-    zillow_url = Column(String(500), nullable=True)
-    gsi_url = Column(String(500), nullable=True)
+    regrid_url = Column(String(2048), nullable=True)
+    fema_url = Column(String(2048), nullable=True)
+    zillow_url = Column(String(2048), nullable=True)
+    gsi_url = Column(String(2048), nullable=True)
     gsi_data = Column(Text, nullable=True)
     max_bid = Column(Float, nullable=True)
     property_category = Column(String(255), nullable=True)
@@ -69,6 +69,9 @@ class PropertyDetails(Base):
 
 class PropertyAuctionHistory(Base):
     __tablename__ = "property_auction_history"
+    __table_args__ = (
+        UniqueConstraint('property_id', 'auction_name', name='uq_property_auction_history_property_id_name'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     property_id = Column(String(36), nullable=False)
@@ -78,6 +81,6 @@ class PropertyAuctionHistory(Base):
     location = Column(String(255), nullable=True)
     listed_as = Column(String(255), nullable=True)
     taxes_due = Column(Float, nullable=True)
-    info_link = Column(String(500), nullable=True)
-    list_link = Column(String(500), nullable=True)
+    info_link = Column(String(2048), nullable=True)
+    list_link = Column(String(2048), nullable=True)
     created_at = Column(DateTime, nullable=True)

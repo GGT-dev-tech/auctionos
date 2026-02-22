@@ -19,11 +19,11 @@ class AuctionEvent(Base):
     notes = Column(Text, nullable=True)
     
     # Links
-    search_link = Column(String(500), nullable=True)
+    search_link = Column(String(2048), nullable=True)
     register_date = Column(Date, nullable=True)
-    register_link = Column(String(500), nullable=True)
-    list_link = Column(String(500), nullable=True)
-    purchase_info_link = Column(String(500), nullable=True)
+    register_link = Column(String(2048), nullable=True)
+    list_link = Column(String(2048), nullable=True)
+    purchase_info_link = Column(String(2048), nullable=True)
     
     # Metadata
     created_at = Column(DateTime, nullable=True)
