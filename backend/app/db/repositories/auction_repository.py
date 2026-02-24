@@ -35,9 +35,12 @@ class AuctionRepository:
             query = query.filter(AuctionEvent.county.ilike(f"%{county}%"))
         if is_presential is not None:
             if is_presential:
-                query = query.filter(AuctionEvent.location != "Online")
+                query = query.filter(or_(
+                    ~AuctionEvent.location.ilike("%online%"),
+                    AuctionEvent.location.is_(None)
+                ))
             else:
-                query = query.filter(AuctionEvent.location == "Online")
+                query = query.filter(AuctionEvent.location.ilike("%online%"))
         if start_date:
             query = query.filter(AuctionEvent.auction_date >= start_date)
         if end_date:
@@ -78,9 +81,9 @@ class AuctionRepository:
             params['county'] = f"%{county}%"
         if is_presential is not None:
             if is_presential:
-                where_clauses.append("location != 'Online'")
+                where_clauses.append("(location NOT ILIKE '%online%' OR location IS NULL)")
             else:
-                where_clauses.append("location = 'Online'")
+                where_clauses.append("location ILIKE '%online%'")
         if start_date:
             where_clauses.append("auction_date >= :start_date")
             params['start_date'] = start_date
