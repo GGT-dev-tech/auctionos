@@ -45,13 +45,6 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {} }) => {
         setSelectedEvent(null);
     };
 
-    const handleViewProperties = (auctionName: string) => {
-        // This is a placeholder for the next phase. It will navigate to the properties view with a filter.
-        // navigate(`/admin/properties?auction=${encodeURIComponent(auctionName)}`);
-        handleCloseModal();
-        alert(`Navigating to Properties List filtered by Auction: ${auctionName} (Coming in next iteration)`);
-    };
-
     return (
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm h-[600px] relative">
             <FullCalendar
@@ -78,7 +71,6 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {} }) => {
                 open={!!selectedEvent}
                 onClose={handleCloseModal}
                 eventData={selectedEvent}
-                onViewProperties={handleViewProperties}
             />
         </div>
     );
