@@ -3,13 +3,13 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
 from app.api import deps
-from app.schemas.auction_event import AuctionEvent as AuctionEventSchema, AuctionEventCreate, AuctionEventUpdate
+from app.schemas.auction_event import AuctionEvent as AuctionEventSchema, AuctionEventCreate, AuctionEventUpdate, PaginatedAuctionResponse
 from app.db.repositories.auction_repository import auction_repo
 from app.models.user import User
 
 router = APIRouter()
 
-@router.get("/", response_model=List[AuctionEventSchema])
+@router.get("/", response_model=PaginatedAuctionResponse)
 def read_auctions(
     db: Session = Depends(deps.get_db),
     name: Optional[str] = Query(None, description="Filtro por nome"),
@@ -24,7 +24,7 @@ def read_auctions(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
 ) -> Any:
-    return auction_repo.get_multi(
+    items, total = auction_repo.get_multi(
         db, 
         skip=skip, 
         limit=limit,
@@ -38,6 +38,7 @@ def read_auctions(
         max_parcels=max_parcels,
         sort_by_date=sort_by_date
     )
+    return {"items": items, "total": total}
 
 @router.get("/calendar")
 def get_auction_calendar(

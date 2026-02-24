@@ -19,12 +19,19 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters }) => {
     const [formOpen, setFormOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<AuctionEvent | null>(null);
 
+    // Pagination State
+    const [rowCount, setRowCount] = useState<number>(0);
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 50 });
+
     const fetchAuctions = async () => {
         setLoading(true);
         try {
-            const params = { ...filters, sort_by_date: true, limit: 100, skip: 0 };
-            const data = await AuctionService.getAuctionEvents(params);
-            setRows(data);
+            const skip = paginationModel.page * paginationModel.pageSize;
+            const limit = paginationModel.pageSize;
+            const params = { ...filters, sort_by_date: true, limit, skip };
+            const { items, total } = await AuctionService.getAuctionEvents(params);
+            setRows(items);
+            setRowCount(total);
         } catch (error) {
             console.error('Failed to fetch auctions for list', error);
         } finally {
@@ -34,7 +41,7 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters }) => {
 
     useEffect(() => {
         fetchAuctions();
-    }, [filters]);
+    }, [filters, paginationModel]);
 
     const handleEditClick = (event: AuctionEvent) => {
         setEditingEvent(event);
@@ -131,6 +138,10 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters }) => {
                         rows={rows}
                         columns={columns}
                         loading={loading}
+                        rowCount={rowCount}
+                        paginationMode="server"
+                        paginationModel={paginationModel}
+                        onPaginationModelChange={setPaginationModel}
                         initialState={{
                             sorting: { sortModel: [{ field: 'auction_date', sort: 'asc' }] }
                         }}

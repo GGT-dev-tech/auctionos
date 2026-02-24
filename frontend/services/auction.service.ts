@@ -2,7 +2,7 @@ import { API_URL, getHeaders } from './httpClient';
 import { AuctionEvent } from '../types';
 
 export const AuctionService = {
-    getAuctionEvents: async (filters: any = {}): Promise<AuctionEvent[]> => {
+    getAuctionEvents: async (filters: any = {}): Promise<{ items: AuctionEvent[], total: number }> => {
         const queryParams = new URLSearchParams();
         if (filters.name) queryParams.append('name', filters.name);
         if (filters.state) queryParams.append('state', filters.state);

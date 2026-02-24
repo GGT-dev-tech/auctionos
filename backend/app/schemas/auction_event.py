@@ -33,3 +33,7 @@ class AuctionEvent(AuctionEventBase):
 
     class Config:
         from_attributes = True
+
+class PaginatedAuctionResponse(BaseModel):
+    items: list[AuctionEvent]
+    total: int

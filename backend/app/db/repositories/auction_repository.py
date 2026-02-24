@@ -21,7 +21,7 @@ class AuctionRepository:
         min_parcels: Optional[int] = None,
         max_parcels: Optional[int] = None,
         sort_by_date: bool = True
-    ) -> List[AuctionEvent]:
+    ) -> tuple[List[AuctionEvent], int]:
         query = db.query(AuctionEvent)
 
         if name:
@@ -50,7 +50,9 @@ class AuctionRepository:
         if sort_by_date:
             query = query.order_by(asc(AuctionEvent.auction_date))
 
-        return query.offset(skip).limit(limit).all()
+        total = query.count()
+        items = query.offset(skip).limit(limit).all()
+        return items, total
 
     def get_calendar_events(
         self, db: Session,
