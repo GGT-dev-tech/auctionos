@@ -73,7 +73,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
         {
             field: 'availability_status', headerName: 'Status', width: 110,
             renderCell: (params) => {
-                const status = (params.value || 'not available').toLowerCase();
+                const status = (params.value || 'unknown').toLowerCase();
                 const isAvail = status === 'available';
                 return (
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${isAvail ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
