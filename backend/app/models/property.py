@@ -65,6 +65,7 @@ class PropertyDetails(Base):
     max_bid = Column(Float, nullable=True)
     property_category = Column(String(255), nullable=True)
     purchase_option_type = Column(String(255), nullable=True)
+    availability_status = Column(String(50), nullable=True, default="not available")
 
 
 class PropertyAuctionHistory(Base):
@@ -84,3 +85,14 @@ class PropertyAuctionHistory(Base):
     info_link = Column(String(2048), nullable=True)
     list_link = Column(String(2048), nullable=True)
     created_at = Column(DateTime, nullable=True)
+
+class PropertyAvailabilityHistory(Base):
+    __tablename__ = "property_availability_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(String(36), nullable=False, index=True)
+    previous_status = Column(String(50), nullable=True)
+    new_status = Column(String(50), nullable=False)
+    change_source = Column(String(100), nullable=True) # e.g., 'batch_import', 'manual_update'
+    changed_at = Column(DateTime, default=datetime.utcnow)
+

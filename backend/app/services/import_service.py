@@ -73,7 +73,15 @@ class ImportService:
                         row_dict = row.where(pd.notnull(row), None).to_dict()
                         validated_data = PropertyCSVRow(**row_dict)
                         
+                        
+                        def parse_availability(raw_val):
+                            if not raw_val or pd.isna(raw_val): return "not available"
+                            s = str(raw_val).lower().strip()
+                            return "available" if s == "available" else "not available"
+
                         # Prepare PropertyDetails map
+                        new_avail_status = parse_availability(validated_data.availability)
+                        
                         d = {
                             "property_id": str(uuid.uuid4()),
                             "parcel_id": validated_data.parcel_id,
@@ -87,6 +95,7 @@ class ImportService:
                             "cs_number": validated_data.cs_number,
                             "property_type": validated_data.type,
                             "status": "active",
+                            "availability_status": new_avail_status,
                             "account_number": validated_data.account,
                             "lot_acres": validated_data.acres,
                             "estimated_value": validated_data.estimated_arv,
@@ -130,6 +139,44 @@ class ImportService:
                 with engine.begin() as conn:
                     # 1. Bulk Upsert PropertyDetails
                     if details_batch:
+                        # Extract parcel IDs to check current status for History tracking
+                        parcel_ids = [d["parcel_id"] for d in details_batch if d["parcel_id"]]
+                        existing_status_map = {}
+                        if parcel_ids:
+                            existing_rows = conn.execute(
+                                text("SELECT parcel_id, property_id, availability_status FROM property_details WHERE parcel_id = ANY(:parcel_ids)"),
+                                {"parcel_ids": parcel_ids}
+                            ).fetchall()
+                            for r in existing_rows:
+                                existing_status_map[r[0]] = (r[1], r[2]) # (property_id, availability_status)
+
+                        availability_history_batch = []
+                        
+                        # Process existing ID mappings for updates and detect changes
+                        for d in details_batch:
+                            pid = d["parcel_id"]
+                            if pid in existing_status_map:
+                                db_prop_id, old_status = existing_status_map[pid]
+                                d["property_id"] = db_prop_id # Keep the same UUID
+                                # Check if status changed
+                                if (old_status or "not available") != d["availability_status"]:
+                                    availability_history_batch.append({
+                                        "property_id": db_prop_id,
+                                        "previous_status": old_status or "not available",
+                                        "new_status": d["availability_status"],
+                                        "change_source": "batch_import",
+                                        "changed_at": datetime.utcnow()
+                                    })
+                            else:
+                                # New property, defaults to whatever is in d["availability_status"]
+                                availability_history_batch.append({
+                                    "property_id": d["property_id"],
+                                    "previous_status": None,
+                                    "new_status": d["availability_status"],
+                                    "change_source": "batch_import",
+                                    "changed_at": datetime.utcnow()
+                                })
+
                         fields_pd = ", ".join(details_batch[0].keys())
                         placeholders_pd = ", ".join([f":{k}" for k in details_batch[0].keys()])
                         updates_pd = ", ".join([f"{k} = EXCLUDED.{k}" for k in details_batch[0].keys() if k not in ["property_id", "parcel_id"]])
@@ -139,8 +186,17 @@ class ImportService:
                             ON CONFLICT (parcel_id) DO UPDATE SET {updates_pd}
                         """)
                         conn.execute(query_pd, details_batch)
+                        
+                        # 2. Bulk Insert Availability History
+                        if availability_history_batch:
+                            fields_ah = ", ".join(availability_history_batch[0].keys())
+                            placeholders_ah = ", ".join([f":{k}" for k in availability_history_batch[0].keys()])
+                            query_ah = text(f"""
+                                INSERT INTO property_availability_history ({fields_ah}) VALUES ({placeholders_ah})
+                            """)
+                            conn.execute(query_ah, availability_history_batch)
 
-                    # 2. Bulk Upsert Property Auction History
+                    # 3. Bulk Upsert Property Auction History
                     if history_batch:
                         query_h = text("""
                             INSERT INTO property_auction_history (property_id, auction_name, auction_date, taxes_due, info_link, list_link, created_at)

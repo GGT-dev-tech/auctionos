@@ -28,7 +28,8 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
         land_value: initialData?.land_value || '',
         improvement_value: initialData?.improvement_value || '',
         estimated_arv: initialData?.estimated_value || '', // Mapping from DB estimated_value
-        estimated_rent: initialData?.rental_value || ''    // Mapping from DB rental_value
+        estimated_rent: initialData?.rental_value || '',   // Mapping from DB rental_value
+        availability_status: initialData?.availability_status || 'not available'
     });
     const [status, setStatus] = useState('');
 
@@ -53,6 +54,7 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                 land_value: formData.land_value ? parseFloat(formData.land_value) : null,
                 improvement_value: formData.improvement_value ? parseFloat(formData.improvement_value) : null,
                 amount_due: formData.amount_due ? parseFloat(formData.amount_due) : null,
+                availability_status: formData.availability_status
             };
 
             if (initialData?.parcel_id) {
@@ -66,7 +68,7 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                     county: '', description: '', owner_name: '', owner_address: '', parcel_address: '', state_code: '',
                     tax_sale_year: '', taxes_due_auction: '', total_value: '', property_category: '', purchase_option_type: '',
                     map_link: '', cs_number: '', parcel_code: '', occupancy: '', land_value: '', improvement_value: '',
-                    estimated_arv: '', estimated_rent: ''
+                    estimated_arv: '', estimated_rent: '', availability_status: 'not available'
                 });
             }
             if (onSuccess) onSuccess();
@@ -126,6 +128,13 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                         <option value="occupied">Occupied</option>
                         <option value="vacant">Vacant</option>
                         <option value="unknown">Unknown</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="label">Availability Status</label>
+                    <select name="availability_status" className="input" value={formData.availability_status} onChange={handleChange as any}>
+                        <option value="available">Available</option>
+                        <option value="not available">Not Available</option>
                     </select>
                 </div>
                 <div>

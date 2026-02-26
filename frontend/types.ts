@@ -60,6 +60,18 @@ export interface PropertyAuctionHistory {
   created_at?: string;
 }
 
+// Property Availability History
+export interface PropertyAvailabilityHistory {
+  id: number;
+  property_id: string;
+  parcel_id: string;
+  address?: string;
+  previous_status?: string;
+  new_status: string;
+  change_source?: string;
+  changed_at: string;
+}
+
 // Property Main Model
 export interface Property {
   id: string | number;
@@ -80,6 +92,7 @@ export interface Property {
   cs_number?: string;
   parcel_code?: string;
   description?: string;
+  availability_status?: string;
   created_at?: string;
   updated_at?: string;
   auction_id?: number | null;
@@ -142,4 +155,5 @@ export interface PropertyDetails {
   gsi_url?: string;
   gsi_data?: string;
   max_bid?: number;
+  availability_status?: string;
 }

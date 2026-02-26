@@ -28,6 +28,14 @@ export const PropertyService = {
         }
     },
 
+    getAvailabilityHistory: async (limit: number = 100): Promise<any[]> => {
+        const response = await fetch(`${API_URL}/properties/availability-history?limit=${limit}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch availability history');
+        return await response.json();
+    },
+
     bulkUpdate: async (ids: string[], action: 'update_status' | 'delete', status?: string): Promise<any> => {
         const response = await fetch(`${API_URL}/properties/bulk-update`, {
             method: 'POST',

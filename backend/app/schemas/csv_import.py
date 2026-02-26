@@ -65,6 +65,7 @@ class PropertyCSVRow(BaseModel):
     purchase_option_type: Optional[str] = None
     vacancy: Optional[str] = None
     owner_address: Optional[str] = None
+    availability: Optional[str] = Field(None, alias="Availability")
 
     @validator('amount_due', 'total_value', 'land_value', 'improvements', 'estimated_arv', 'estimated_rent', 'taxes_due_auction', 'acres', pre=True)
     def clean_floats(cls, v):

@@ -3,6 +3,7 @@ import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { AdminService } from '../../services/admin.service';
 import { Box, Typography, Button, Dialog, DialogContent, IconButton } from '@mui/material';
 import PropertyForm from './PropertyForm';
+import AvailabilityHistoryDashboard from './AvailabilityHistoryDashboard';
 
 interface PropertyListProps {
     filters?: any;
@@ -12,6 +13,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [editRow, setEditRow] = useState<any | null>(null);
+    const [showHistory, setShowHistory] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [paginationModel, setPaginationModel] = useState({
         page: 0,
@@ -69,7 +71,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
         { field: 'county', headerName: 'County', width: 130 },
         { field: 'state_code', headerName: 'State', width: 70 },
         {
-            field: 'status', headerName: 'Availability', width: 110,
+            field: 'status', headerName: 'Status', width: 110,
             renderCell: (params) => {
                 const status = (params.value || 'active').toLowerCase();
                 const colors: any = {
@@ -79,6 +81,18 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
                 };
                 return (
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100 text-gray-700'}`}>
+                        {status.toUpperCase()}
+                    </span>
+                );
+            }
+        },
+        {
+            field: 'availability_status', headerName: 'Availability', width: 110,
+            renderCell: (params) => {
+                const status = (params.value || 'not available').toLowerCase();
+                const isAvail = status === 'available';
+                return (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${isAvail ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {status.toUpperCase()}
                     </span>
                 );
@@ -147,6 +161,15 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
                     Properties Database
                 </Typography>
                 <Button
+                    onClick={() => setShowHistory(true)}
+                    startIcon={<span className="material-symbols-outlined">history</span>}
+                    sx={{ textTransform: 'none', mr: 2 }}
+                    color="secondary"
+                    variant="outlined"
+                >
+                    View Flow History
+                </Button>
+                <Button
                     onClick={fetchProperties}
                     startIcon={<span className="material-symbols-outlined">refresh</span>}
                     sx={{ textTransform: 'none' }}
@@ -206,6 +229,25 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
                             />
                         </div>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={showHistory}
+                onClose={() => setShowHistory(false)}
+                maxWidth="lg"
+                fullWidth
+            >
+                <DialogContent className="bg-slate-50 dark:bg-slate-900 p-0">
+                    <div className="relative">
+                        <IconButton
+                            onClick={() => setShowHistory(false)}
+                            className="absolute right-4 top-4 z-10 bg-white shadow-sm hover:bg-slate-100"
+                        >
+                            <span className="material-symbols-outlined">close</span>
+                        </IconButton>
+                        <AvailabilityHistoryDashboard />
+                    </div>
                 </DialogContent>
             </Dialog>
         </Box>

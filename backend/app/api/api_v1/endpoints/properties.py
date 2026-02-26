@@ -83,7 +83,8 @@ def read_properties(
             p.property_type,
             p.address,
             p.occupancy,
-            p.purchase_option_type
+            p.purchase_option_type,
+            p.availability_status
         FROM property_details p
         LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
         WHERE {where_str}
@@ -114,7 +115,8 @@ def read_properties(
             "property_type": r[16],
             "address": r[17],
             "occupancy": r[18],
-            "purchase_option_type": r[19]
+            "purchase_option_type": r[19],
+            "availability_status": r[20]
         }
         for r in result
     ]
@@ -141,6 +143,7 @@ class PropertyUpdateRequest(BaseModel):
     property_type: Optional[str] = None
     address: Optional[str] = None
     occupancy: Optional[str] = None
+    availability_status: Optional[str] = None
 
 @router.put("/{parcel_id}", response_model=dict)
 def update_property(
@@ -153,6 +156,24 @@ def update_property(
     if not update_data:
         raise HTTPException(status_code=400, detail="No updates provided")
         
+    if "availability_status" in update_data:
+        old_prop = db.execute(
+            text("SELECT property_id, availability_status FROM property_details WHERE parcel_id = :parcel_id"),
+            {"parcel_id": parcel_id}
+        ).fetchone()
+        
+        if not old_prop:
+            raise HTTPException(status_code=404, detail="Property not found")
+            
+        old_status = old_prop[1] or "not available"
+        new_status = update_data["availability_status"]
+        
+        if old_status != new_status:
+            db.execute(
+                text("INSERT INTO property_availability_history (property_id, previous_status, new_status, change_source) VALUES (:prop_id, :prev, :new, 'manual_update')"),
+                {"prop_id": old_prop[0], "prev": old_status, "new": new_status}
+            )
+
     set_clause = ", ".join([f"{k} = :{k}" for k in update_data.keys()])
     query = text(f"UPDATE property_details SET {set_clause} WHERE parcel_id = :parcel_id RETURNING property_id")
     params = {**update_data, "parcel_id": parcel_id}
@@ -183,3 +204,28 @@ def delete_property(
     db.commit()
     
     return {"message": "Property deleted successfully", "parcel_id": parcel_id}
+
+@router.get("/availability-history")
+def get_availability_history(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_superuser),
+    limit: int = 100
+) -> Any:
+    # Busca o histórico de alterações de disponibilidade das propriedades.
+    history_query = text(f"""
+        SELECT 
+            h.id,
+            h.property_id,
+            p.parcel_id,
+            p.address,
+            h.previous_status,
+            h.new_status,
+            h.change_source,
+            h.changed_at
+        FROM property_availability_history h
+        JOIN property_details p ON p.property_id = h.property_id
+        ORDER BY h.changed_at DESC
+        LIMIT :limit
+    """)
+    results = db.execute(history_query, {"limit": limit}).fetchall()
+    return [dict(r._mapping) for r in results]
