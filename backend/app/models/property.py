@@ -65,7 +65,7 @@ class PropertyDetails(Base):
     max_bid = Column(Float, nullable=True)
     property_category = Column(String(255), nullable=True)
     purchase_option_type = Column(String(255), nullable=True)
-    availability_status = Column(String(50), nullable=True, default="not available")
+    availability_status = Column(String(50), nullable=True, default="available")
 
 
 class PropertyAuctionHistory(Base):

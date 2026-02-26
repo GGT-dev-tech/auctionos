@@ -75,9 +75,9 @@ class ImportService:
                         
                         
                         def parse_availability(raw_val):
-                            if not raw_val or pd.isna(raw_val): return "not available"
+                            if not raw_val or pd.isna(raw_val): return "available"
                             s = str(raw_val).lower().strip()
-                            return "available" if s == "available" else "not available"
+                            return "not available" if s == "not available" else "available"
 
                         # Prepare PropertyDetails map
                         new_avail_status = parse_availability(validated_data.availability)

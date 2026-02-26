@@ -29,7 +29,7 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
         improvement_value: initialData?.improvement_value || '',
         estimated_arv: initialData?.estimated_value || '', // Mapping from DB estimated_value
         estimated_rent: initialData?.rental_value || '',   // Mapping from DB rental_value
-        availability_status: initialData?.availability_status || 'not available'
+        availability_status: initialData?.availability_status || 'available'
     });
     const [status, setStatus] = useState('');
 
@@ -68,7 +68,7 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                     county: '', description: '', owner_name: '', owner_address: '', parcel_address: '', state_code: '',
                     tax_sale_year: '', taxes_due_auction: '', total_value: '', property_category: '', purchase_option_type: '',
                     map_link: '', cs_number: '', parcel_code: '', occupancy: '', land_value: '', improvement_value: '',
-                    estimated_arv: '', estimated_rent: '', availability_status: 'not available'
+                    estimated_arv: '', estimated_rent: '', availability_status: 'available'
                 });
             }
             if (onSuccess) onSuccess();
