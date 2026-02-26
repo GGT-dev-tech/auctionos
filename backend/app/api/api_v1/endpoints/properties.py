@@ -25,7 +25,7 @@ def read_properties(
 ) -> Any:
     
     # 1. Build Base Filter Query
-    where_clauses = ["p.status != 'deleted'"]
+    where_clauses = ["1=1"]
     params = {"skip": skip, "limit": limit}
 
     if county:
@@ -68,7 +68,6 @@ def read_properties(
             p.parcel_id, 
             p.county, 
             p.state as state_code, 
-            p.status, 
             p.amount_due, 
             p.assessed_value,
             pah.auction_date, 
@@ -100,24 +99,23 @@ def read_properties(
             "parcel_id": r[0] if r[0] else "",
             "county": r[1],
             "state_code": r[2],
-            "status": r[3],
-            "amount_due": r[4],
-            "assessed_value": r[5],
-            "auction_date": r[6],
-            "auction_name": r[7],
-            "cs_number": r[8],
-            "account_number": r[9],
-            "owner_address": r[10],
-            "tax_year": r[11],
-            "lot_acres": r[12],
-            "estimated_value": r[13],
-            "land_value": r[14],
-            "improvement_value": r[15],
-            "property_type": r[16],
-            "address": r[17],
-            "occupancy": r[18],
-            "purchase_option_type": r[19],
-            "availability_status": r[20]
+            "amount_due": r[3],
+            "assessed_value": r[4],
+            "auction_date": r[5],
+            "auction_name": r[6],
+            "cs_number": r[7],
+            "account_number": r[8],
+            "owner_address": r[9],
+            "tax_year": r[10],
+            "lot_acres": r[11],
+            "estimated_value": r[12],
+            "land_value": r[13],
+            "improvement_value": r[14],
+            "property_type": r[15],
+            "address": r[16],
+            "occupancy": r[17],
+            "purchase_option_type": r[18],
+            "availability_status": r[19]
         }
         for r in result
     ]
@@ -130,7 +128,6 @@ from pydantic import BaseModel
 class PropertyUpdateRequest(BaseModel):
     county: Optional[str] = None
     state: Optional[str] = None
-    status: Optional[str] = None
     amount_due: Optional[float] = None
     assessed_value: Optional[float] = None
     cs_number: Optional[str] = None

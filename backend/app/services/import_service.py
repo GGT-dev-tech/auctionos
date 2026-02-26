@@ -94,7 +94,6 @@ class ImportService:
                             "tax_year": int(float(validated_data.tax_sale_year)) if validated_data.tax_sale_year else None,
                             "cs_number": validated_data.cs_number,
                             "property_type": validated_data.type,
-                            "status": "active",
                             "availability_status": new_avail_status,
                             "account_number": validated_data.account,
                             "lot_acres": validated_data.acres,

@@ -71,23 +71,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
         { field: 'county', headerName: 'County', width: 130 },
         { field: 'state_code', headerName: 'State', width: 70 },
         {
-            field: 'status', headerName: 'Status', width: 110,
-            renderCell: (params) => {
-                const status = (params.value || 'active').toLowerCase();
-                const colors: any = {
-                    'active': 'bg-green-100 text-green-700',
-                    'sold': 'bg-red-100 text-red-700',
-                    'pending': 'bg-yellow-100 text-yellow-700'
-                };
-                return (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100 text-gray-700'}`}>
-                        {status.toUpperCase()}
-                    </span>
-                );
-            }
-        },
-        {
-            field: 'availability_status', headerName: 'Availability', width: 110,
+            field: 'availability_status', headerName: 'Status', width: 110,
             renderCell: (params) => {
                 const status = (params.value || 'not available').toLowerCase();
                 const isAvail = status === 'available';

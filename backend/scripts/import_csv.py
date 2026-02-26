@@ -79,7 +79,7 @@ def parse_csv_row(row):
         "state": state or "FL",
         "zip_code": zip_code,
         "price": opening_bid,
-        "status": "draft", # Import as draft
+        "availability_status": "not available", # Default to not available
         "property_type": "residential",
         "description": f"Imported from {row.get('scraped_file', 'CSV')}. \n\n{raw_text[:500]}...",
         "parcel_id": extract(r'Parcel ID:\s*(.*)'),

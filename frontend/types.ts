@@ -81,7 +81,6 @@ export interface Property {
   city?: string;
   state?: string;
   zip_code?: string;
-  status: string;
   smart_tag?: string;
   price?: number;
   amount_due?: number;
