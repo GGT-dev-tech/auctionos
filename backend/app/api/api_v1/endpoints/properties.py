@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.api import deps
 from app.schemas.property import PropertyDashboardSchema, PaginatedPropertyResponse
+from app.models.user import User
 
 router = APIRouter()
 
