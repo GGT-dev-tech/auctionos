@@ -137,6 +137,9 @@ export interface PropertyDetails {
   tax_amount?: number;
   tax_year?: number;
   homestead_exemption?: boolean;
+  state?: string;
+  county?: string;
+  owner_address?: string;
 
   last_sale_date?: string;
   last_sale_price?: number;

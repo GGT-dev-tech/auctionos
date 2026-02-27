@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PropertyService } from '../../services/property.service';
+import { countyService, CountyContact } from '../../services/county.service';
 import { PropertyDetails } from '../../types';
 import { Button, CircularProgress, Chip, Divider } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -11,6 +12,7 @@ const PropertyDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [property, setProperty] = useState<any>(null);
+    const [countyContacts, setCountyContacts] = useState<CountyContact[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +26,13 @@ const PropertyDetailPage: React.FC = () => {
             setLoading(true);
             const data = await PropertyService.getProperty(propertyId);
             setProperty(data);
+
+            // Dynamically load county contacts based on property state and county
+            if (data.state && data.county) {
+                const contacts = await countyService.getContacts(data.state, data.county);
+                setCountyContacts(contacts);
+            }
+
             setError(null);
         } catch (err: any) {
             setError(err.message || 'Error loading property details');
@@ -64,22 +73,29 @@ const PropertyDetailPage: React.FC = () => {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Main Stats Card */}
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-primary-600 text-white p-3 text-center font-bold">
-                            {property.county} County, {property.state} : {property.parcel_id}
+                        <div className="bg-primary-600 text-white p-3 text-center font-bold text-lg">
+                            {property.county}, {property.state}: {property.parcel_id}
                         </div>
                         <div className="p-6">
-                            <div className="text-center mb-6">
-                                <h2 className="text-xl font-bold text-green-600 dark:text-green-400">
-                                    • {property.availability_status === 'available' ? 'Available' : 'Unavailable'}
+                            <div className="mb-6 space-y-1">
+                                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">
+                                    {ownerNameFallback}
+                                </h1>
+                                <h2 className="text-lg font-bold text-slate-600 dark:text-slate-400">
+                                    • {property.property_type || 'parcel type'}
                                 </h2>
+                                <h3 className="text-md text-slate-500 font-semibold">{property.lot_acres || 'N/A'} acres</h3>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm mt-4">
                                 <div>
-                                    <div className="text-2xl font-bold text-primary-600 dark:text-primary-400 mb-4">{property.lot_acres || 'N/A'} acres</div>
                                     <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
                                         <span className="font-semibold">Tax Sale Year:</span>
                                         <span>{property.tax_year || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
+                                        <span className="font-semibold text-red-600 dark:text-red-400">Tax Delinquent:</span>
+                                        <span>{property.availability_status === 'available' ? 'Yes' : 'No'}</span>
                                     </div>
                                     <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
                                         <span className="font-semibold">C/S Number:</span>
@@ -91,7 +107,7 @@ const PropertyDetailPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-2xl font-bold text-primary-600 dark:text-primary-400 mb-4">{property.property_type || 'Land Only'}</div>
+                                    <div className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">Land Only</div>
                                     <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
                                         <span className="font-semibold">Amount Due:</span>
                                         <span>${property.amount_due?.toLocaleString()}</span>
@@ -139,7 +155,7 @@ const PropertyDetailPage: React.FC = () => {
 
                     <div className="flex gap-4">
                         <Button variant="contained" color="success" startIcon={<MapIcon />}>View on Map</Button>
-                        <Button variant="outlined" startIcon={<FavoriteBorderIcon />}>Add Favorite</Button>
+                        <Button variant="outlined" startIcon={<FavoriteBorderIcon />} color="inherit">Add Favorite</Button>
                     </div>
 
                     {/* Auction History */}
@@ -232,23 +248,39 @@ const PropertyDetailPage: React.FC = () => {
                         ></iframe>
                     </div>
 
-                    {/* Actions Box */}
-                    <div className="bg-green-500 text-white rounded-lg p-4 text-center cursor-pointer hover:bg-green-600 transition shadow">
-                        <h3 className="font-bold text-lg">Purchase Online</h3>
-                        <p className="text-sm opacity-90">Click to purchase from {property.county} County OTC Liens</p>
+                    {/* Purchase Online Actions Box */}
+                    <div className="bg-green-600 text-white rounded-lg p-6 text-center shadow-lg hover:bg-green-700 transition cursor-pointer">
+                        <h3 className="font-bold text-xl mb-1">Purchase Online</h3>
+                        <p className="text-sm opacity-90">{property.county} County-Held Certificates</p>
+                        <p className="text-xs font-semibold mt-2 underline">click to purchase from {property.county} County OTC Liens</p>
                     </div>
 
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-primary-600 text-white p-3 font-bold">Recommended Next Steps</div>
-                        <div className="p-4 space-y-3">
-                            <Button fullWidth variant="outlined" color="success">Investment Property Funding</Button>
-                            <Button fullWidth variant="outlined" color="warning">Title Report: Nationwide Searches</Button>
-                            <Button fullWidth variant="outlined" color="info">Clear Title: Free Consultation</Button>
+                        <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
+                            • Recommended Next Steps
+                        </div>
+                        <div className="p-4 space-y-4">
+                            <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
+                                <h4 className="font-bold text-blue-800 dark:text-blue-300">Investment Property Funding: Free Consultation</h4>
+                                <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
+                            </div>
+                            <Divider />
+                            <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
+                                <h4 className="font-bold text-blue-800 dark:text-blue-300">Title Report: Nationwide Title Searches</h4>
+                                <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
+                            </div>
+                            <Divider />
+                            <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
+                                <h4 className="font-bold text-blue-800 dark:text-blue-300">Clear Title: Free Online Consultation</h4>
+                                <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
+                            </div>
                         </div>
                     </div>
 
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-sky-100 dark:bg-sky-900/30 font-bold p-3 text-sky-800 dark:text-sky-300">Contact Information & Location</div>
+                        <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
+                            * Contact Information & Location
+                        </div>
                         <div className="p-4 text-sm space-y-4">
                             <div>
                                 <strong className="block text-slate-500 uppercase text-xs mb-1">Owner Address</strong>
@@ -275,44 +307,65 @@ const PropertyDetailPage: React.FC = () => {
                     </div>
 
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-sky-100 dark:bg-sky-900/30 font-bold p-3 text-sky-800 dark:text-sky-300">Research Links</div>
+                        <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
+                            Research Links
+                        </div>
                         <div className="p-4 text-sm space-y-4">
-                            <div>
-                                <strong className="block text-slate-700 dark:text-slate-300 mb-1">{property.county} County Links:</strong>
-                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs">
-                                    <li><a href={`https://www.google.com/search?q=${property.county}+County+Property+Appraiser`} target="_blank" rel="noreferrer" className="hover:underline">Property Appraiser</a></li>
-                                    <li><a href={`https://www.google.com/search?q=${property.county}+County+Tax+Collector`} target="_blank" rel="noreferrer" className="hover:underline">Tax Collector</a></li>
-                                    <li><a href={`https://www.google.com/search?q=${property.county}+County+Comptroller`} target="_blank" rel="noreferrer" className="hover:underline">Comptroller</a></li>
-                                    <li><a href={`https://www.google.com/search?q=${property.county}+County+Lien+Auction+Site`} target="_blank" rel="noreferrer" className="hover:underline">Lien Auction Site</a></li>
-                                </ul>
-                            </div>
+                            {countyContacts.length > 0 && (
+                                <div>
+                                    <strong className="block text-slate-700 dark:text-slate-300 mb-1">{property.county} County Links:</strong>
+                                    <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
+                                        {countyContacts.map((contact, idx) => (
+                                            <li key={idx}>
+                                                <a href={contact.url} target="_blank" rel="noreferrer" className="hover:underline">
+                                                    {contact.name} {contact.phone ? `(${contact.phone})` : ''}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {/* Standard Static Links Fallback or Additions */}
                             <div>
                                 <strong className="block text-slate-700 dark:text-slate-300 mb-1">Owner Research:</strong>
-                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs">
+                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
                                     <li><a href={`https://www.google.com/search?q=${encodeURIComponent(ownerNameFallback)}`} target="_blank" rel="noreferrer" className="hover:underline">Google Search</a></li>
+                                    <li><a href={`https://news.google.com/search?q=${encodeURIComponent(ownerNameFallback)}`} target="_blank" rel="noreferrer" className="hover:underline">Google News</a></li>
                                     <li><a href={`https://www.google.com/search?q=${encodeURIComponent(ownerNameFallback + ' obituary')}`} target="_blank" rel="noreferrer" className="hover:underline">Obituary Search</a></li>
                                 </ul>
                             </div>
                             <div>
                                 <strong className="block text-slate-700 dark:text-slate-300 mb-1">Owner Skip Trace:</strong>
-                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs">
+                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
                                     <li><a href={`https://www.fastpeoplesearch.com/name/${encodeURIComponent(ownerNameFallback)}`} target="_blank" rel="noreferrer" className="hover:underline">Fast People Search</a></li>
                                     <li><a href={`https://www.truepeoplesearch.com/results?name=${encodeURIComponent(ownerNameFallback)}`} target="_blank" rel="noreferrer" className="hover:underline">True People Search</a></li>
+                                    <li><a href={`https://www.cyberbackgroundchecks.com/people/${encodeURIComponent(ownerNameFallback.replace(/ /g, '-'))}`} target="_blank" rel="noreferrer" className="hover:underline">Cyber Background Checks</a></li>
                                 </ul>
                             </div>
                             <div>
                                 <strong className="block text-slate-700 dark:text-slate-300 mb-1">Property Research:</strong>
-                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs">
+                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
                                     <li><a href={`https://www.zillow.com/homes/${encodeURIComponent(property.address || '')}_rb`} target="_blank" rel="noreferrer" className="hover:underline">Zillow Property Report</a></li>
-                                    <li><a href={`https://msc.fema.gov/portal/search?AddressQuery=${encodeURIComponent(property.address || '')}`} target="_blank" rel="noreferrer" className="hover:underline">FEMA Flood Map Details</a></li>
                                     <li><a href={`https://www.epa.gov/enviro/myenvironment`} target="_blank" rel="noreferrer" className="hover:underline">EPA Report</a></li>
+                                    <li><a href={`https://news.google.com/search?q=${encodeURIComponent(property.address || property.parcel_id)}`} target="_blank" rel="noreferrer" className="hover:underline">Google News</a></li>
+                                    <li><a href={`https://msc.fema.gov/portal/search?AddressQuery=${encodeURIComponent(property.address || '')}`} target="_blank" rel="noreferrer" className="hover:underline">FEMA Flood Map Details</a></li>
                                 </ul>
                             </div>
                             <div>
                                 <strong className="block text-slate-700 dark:text-slate-300 mb-1">Research Comparables:</strong>
-                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs">
+                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
                                     <li><a href={`https://www.realtor.com/realestateandhomes-search/${encodeURIComponent(property.zip_code || property.city || '')}`} target="_blank" rel="noreferrer" className="hover:underline">Realtor.com Comps</a></li>
                                     <li><a href={`https://www.redfin.com/city/${encodeURIComponent(property.city || '')}/${property.state}`} target="_blank" rel="noreferrer" className="hover:underline">Redfin Comps</a></li>
+                                    <li><a href={`https://www.trulia.com/${property.state}/${encodeURIComponent(property.city || '')}/`} target="_blank" rel="noreferrer" className="hover:underline">Trulia Comps</a></li>
+                                    <li><a href={`https://www.zillow.com/homes/${encodeURIComponent(property.zip_code || property.city || '')}_rb/`} target="_blank" rel="noreferrer" className="hover:underline">Zillow Comps</a></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <strong className="block text-slate-700 dark:text-slate-300 mb-1">Research Local Housing Market:</strong>
+                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
+                                    <li><a href={`https://www.realtor.com/realestateandhomes-search/${encodeURIComponent(property.zip_code || property.city || '')}/overview`} target="_blank" rel="noreferrer" className="hover:underline">Realtor.com Market Report</a></li>
+                                    <li><a href={`https://www.redfin.com/city/${encodeURIComponent(property.city || '')}/${property.state}/housing-market`} target="_blank" rel="noreferrer" className="hover:underline">Redfin Market Report</a></li>
+                                    <li><a href={`https://www.zillow.com/home-values/`} target="_blank" rel="noreferrer" className="hover:underline">Zillow Property Value Report</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -336,11 +389,19 @@ const PropertyDetailPage: React.FC = () => {
                         </div>
                     )}
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-sky-100 dark:bg-sky-900/30 font-bold p-3 text-sky-800 dark:text-sky-300">Personal Tools</div>
-                        <div className="p-4 space-y-3">
-                            <Button fullWidth variant="outlined" size="small">Create New List</Button>
-                            <Button fullWidth variant="outlined" size="small">Edit Notes</Button>
-                            <Button fullWidth variant="outlined" size="small">Add Attachments</Button>
+                        <div className="p-4 space-y-4">
+                            <div className="flex items-center justify-between border-b pb-2">
+                                <span className="font-bold text-slate-700 dark:text-slate-300">My Lists:</span>
+                                <Button variant="outlined" size="small" onClick={() => alert('Coming soon')}>Create New List</Button>
+                            </div>
+                            <div className="flex items-center justify-between border-b pb-2">
+                                <span className="font-bold text-slate-700 dark:text-slate-300">My Notes:</span>
+                                <Button variant="outlined" size="small" onClick={() => alert('Coming soon')}>Edit Notes</Button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="font-bold text-slate-700 dark:text-slate-300">My Attachments:</span>
+                                <Button variant="outlined" size="small" onClick={() => alert('Coming soon')}>Add Attachments</Button>
+                            </div>
                         </div>
                     </div>
                 </div>
