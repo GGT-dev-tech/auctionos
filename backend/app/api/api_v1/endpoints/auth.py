@@ -44,6 +44,7 @@ def register_user(
         email=user_in.email,
         hashed_password=security.get_password_hash(user_in.password),
         is_superuser=user_in.is_superuser,
+        role=user_in.role,
     )
     db.add(user)
     db.commit()

@@ -5,8 +5,9 @@ import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { Dashboard } from './pages/Dashboard';
+import { Landing } from './pages/Landing';
+import { Signup } from './pages/Signup';
 import { AuctionList } from './pages/AuctionList';
-
 import { AuthService } from './services/auth.service';
 import PropertyManualEntry from './pages/PropertyManualEntry';
 import PropertyDetails from './pages/PropertyDetails';
@@ -37,21 +38,22 @@ const App: React.FC = () => {
     <AuthProvider>
       <HashRouter>
         <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Protected Routes */}
-          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-            <Route index element={<Dashboard />} />
+          {/* Protected Routes (Admin/Agent) */}
+          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/auctions" element={<AuctionList filters={{}} />} />
             <Route path="/admin/auctions" element={<AdminAuctions />} />
             <Route path="/admin/properties/:id" element={<PropertyDetailPage />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="properties/new" element={<PropertyManualEntry />} />
-            <Route path="properties/:id" element={<PropertyDetails />} />
-            {/* <Route path="properties/:id/edit" element={<PropertyWizard />} /> */}
-            <Route path="profile" element={<Profile />} />
-            <Route path="*" element={<div className="p-8 text-center text-slate-500">Page under construction</div>} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/properties/new" element={<PropertyManualEntry />} />
+            <Route path="/properties/:id" element={<PropertyDetails />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
 
           {/* Client Portal Routes */}

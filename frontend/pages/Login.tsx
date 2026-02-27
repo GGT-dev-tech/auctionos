@@ -27,7 +27,7 @@ export const Login: React.FC = () => {
       if (user.role === 'client') {
         navigate('/client');
       } else {
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (err) {
       console.error(err);
@@ -99,6 +99,11 @@ export const Login: React.FC = () => {
               <span>{isLoading ? 'Logging in...' : 'Log In'}</span>
               {!isLoading && <span className="material-symbols-outlined text-[18px]">arrow_forward</span>}
             </button>
+
+            <div className="text-center mt-2">
+              <span className="text-slate-600 dark:text-slate-400 text-sm">Don't have an account? </span>
+              <Link to="/signup" className="text-primary text-sm font-bold hover:underline">Sign up</Link>
+            </div>
           </form>
 
           <div className="relative flex py-4 items-center">

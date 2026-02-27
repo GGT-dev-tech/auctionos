@@ -13,7 +13,7 @@ export const Layout: React.FC = () => {
   };
 
   const navItems = [
-    { icon: 'dashboard', label: 'Dashboard', path: '/' },
+    { icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
     { icon: 'gavel', label: 'Auctions', path: '/admin/auctions' },
     { icon: 'settings', label: 'Settings', path: '/settings' },
   ];
@@ -25,7 +25,7 @@ export const Layout: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
-              <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+              <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
                 <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">A</div>
                 <span className="text-[#0d131b] dark:text-white text-lg font-bold hidden md:block">AuctionOS</span>
               </div>
