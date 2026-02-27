@@ -7,10 +7,11 @@ import CsvUpload from '../../components/admin/CsvUpload';
 import PropertyForm from '../../components/admin/PropertyForm';
 import PropertyList from '../../components/admin/PropertyList';
 import PropertyFilters, { PropertyFilterParams } from '../../components/admin/PropertyFilters';
+import SystemAnnouncementForm from '../../components/admin/SystemAnnouncementForm';
 import { Box } from '@mui/material';
 
 const AdminAuctions: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'auctions' | 'properties' | 'import_props' | 'import_auctions'>('auctions');
+    const [activeTab, setActiveTab] = useState<'auctions' | 'properties' | 'import_props' | 'import_auctions' | 'broadcasts'>('auctions');
     const [filters, setFilters] = useState<AuctionFilterParams>({});
     const [propertyFilters, setPropertyFilters] = useState<PropertyFilterParams>({});
 
@@ -23,6 +24,7 @@ const AdminAuctions: React.FC = () => {
                 <TabButton active={activeTab === 'properties'} onClick={() => setActiveTab('properties')} label="Property Manager" />
                 <TabButton active={activeTab === 'import_props'} onClick={() => setActiveTab('import_props')} label="Import Properties (CSV)" />
                 <TabButton active={activeTab === 'import_auctions'} onClick={() => setActiveTab('import_auctions')} label="Import Auctions (CSV)" />
+                <TabButton active={activeTab === 'broadcasts'} onClick={() => setActiveTab('broadcasts')} label="System Broadcasts" />
             </div>
 
             {activeTab === 'auctions' && (
@@ -52,6 +54,12 @@ const AdminAuctions: React.FC = () => {
                             <PropertyList filters={propertyFilters} />
                         </div>
                     </div>
+                </div>
+            )}
+
+            {activeTab === 'broadcasts' && (
+                <div className="max-w-3xl mx-auto">
+                    <SystemAnnouncementForm />
                 </div>
             )}
 

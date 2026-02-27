@@ -81,6 +81,11 @@ async def log_requests(request: Request, call_next):
 # Mount static files
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+# Mount client upload files
+uploads_dir = "/app/uploads"
+os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")

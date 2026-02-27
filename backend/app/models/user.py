@@ -9,7 +9,4 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
-
-    @property
-    def role(self) -> str:
-        return "admin" if self.is_superuser else "agent"
+    role = Column(String(50), default="agent")  # 'admin', 'agent', 'client'
