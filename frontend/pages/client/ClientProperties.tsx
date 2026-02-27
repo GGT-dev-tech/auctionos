@@ -13,8 +13,7 @@ const ClientProperties: React.FC = () => {
             </Typography>
             <PropertyFilters onFilterChange={setFilters} />
             <div className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl">
-                {/* TODO: Pass a prop like isClient={true} to disable row editing later */}
-                <PropertyList filters={filters} />
+                <PropertyList filters={filters} readOnly={true} />
             </div>
         </div>
     );

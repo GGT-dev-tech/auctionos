@@ -9,9 +9,10 @@ import { AuctionForm } from './AuctionForm';
 
 interface AuctionListProps {
     filters: any;
+    readOnly?: boolean;
 }
 
-const AuctionList: React.FC<AuctionListProps> = ({ filters }) => {
+const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) => {
     const [rows, setRows] = useState<AuctionEvent[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
 
@@ -66,7 +67,7 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters }) => {
         setFormOpen(true);
     };
 
-    const columns: GridColDef[] = [
+    const baseColumns: GridColDef[] = [
         { field: 'name', headerName: 'Name', width: 250, flex: 1 },
         {
             field: 'auction_date', headerName: 'Date', width: 120,
@@ -83,6 +84,9 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters }) => {
         { field: 'location', headerName: 'Location', width: 150 },
         { field: 'tax_status', headerName: 'Tax Status', width: 150 },
         { field: 'parcels_count', headerName: 'Parcels', type: 'number', width: 100 },
+    ];
+
+    const actionColumn: GridColDef[] = [
         {
             field: 'actions',
             type: 'actions',
@@ -95,7 +99,6 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters }) => {
                         key={`edit-${id}`}
                         icon={<span className="material-symbols-outlined text-blue-600">edit</span>}
                         label="Edit"
-                        className="textPrimary"
                         onClick={() => handleEditClick(row as AuctionEvent)}
                         color="inherit"
                     />,
@@ -111,21 +114,25 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters }) => {
         },
     ];
 
+    const displayColumns = readOnly ? baseColumns : [...baseColumns, ...actionColumn];
+
     return (
         <Box sx={{ width: '100%', bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden' }}>
             <Box p={2} display="flex" justifyContent="space-between" alignItems="center" borderBottom="1px solid #e2e8f0">
                 <Typography variant="h6" className="text-slate-800 dark:text-white font-semibold flex-1">
                     Auction Events
                 </Typography>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<span className="material-symbols-outlined">add</span>}
-                    onClick={handleCreateClick}
-                    sx={{ textTransform: 'none', borderRadius: 2, px: 3, fontWeight: 'bold' }}
-                >
-                    Add Auction
-                </Button>
+                {!readOnly && (
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<span className="material-symbols-outlined">add</span>}
+                        onClick={handleCreateClick}
+                        sx={{ textTransform: 'none', borderRadius: 2, px: 3, fontWeight: 'bold' }}
+                    >
+                        Add Auction
+                    </Button>
+                )}
             </Box>
 
             <Box sx={{ height: 600, width: '100%' }}>
@@ -136,7 +143,7 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters }) => {
                 ) : (
                     <DataGrid
                         rows={rows}
-                        columns={columns}
+                        columns={displayColumns}
                         loading={loading}
                         rowCount={rowCount}
                         paginationMode="server"

@@ -8,7 +8,11 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MapIcon from '@mui/icons-material/Map';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 
-const PropertyDetailPage: React.FC = () => {
+interface PropertyDetailPageProps {
+    readOnly?: boolean;
+}
+
+const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = false }) => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [property, setProperty] = useState<any>(null);
@@ -163,7 +167,9 @@ const PropertyDetailPage: React.FC = () => {
 
                     <div className="flex gap-4">
                         <Button variant="contained" color="success" startIcon={<MapIcon />}>View on Map</Button>
-                        <Button variant="outlined" startIcon={<FavoriteBorderIcon />} color="inherit">Add Favorite</Button>
+                        {!readOnly && (
+                            <Button variant="outlined" startIcon={<FavoriteBorderIcon />} color="inherit">Add Favorite</Button>
+                        )}
                     </div>
 
                     {/* Auction History */}
@@ -256,34 +262,39 @@ const PropertyDetailPage: React.FC = () => {
                         ></iframe>
                     </div>
 
-                    {/* Purchase Online Actions Box */}
-                    <div className="bg-green-600 text-white rounded-lg p-6 text-center shadow-lg hover:bg-green-700 transition cursor-pointer">
-                        <h3 className="font-bold text-xl mb-1">Purchase Online</h3>
-                        <p className="text-sm opacity-90">{property.county} County-Held Certificates</p>
-                        <p className="text-xs font-semibold mt-2 underline">click to purchase from {property.county} County OTC Liens</p>
-                    </div>
+                    {/* Purchase Online Actions Box (Hidden for Clients) */}
+                    {!readOnly && (
+                        <div className="bg-green-600 text-white rounded-lg p-6 text-center shadow-lg hover:bg-green-700 transition cursor-pointer">
+                            <h3 className="font-bold text-xl mb-1">Purchase Online</h3>
+                            <p className="text-sm opacity-90">{property.county} County-Held Certificates</p>
+                            <p className="text-xs font-semibold mt-2 underline">click to purchase from {property.county} County OTC Liens</p>
+                        </div>
+                    )}
 
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
-                            • Recommended Next Steps
+                    {/* Recommended Next Steps (Hidden for Clients) */}
+                    {!readOnly && (
+                        <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
+                                • Recommended Next Steps
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
+                                    <h4 className="font-bold text-blue-800 dark:text-blue-300">Investment Property Funding: Free Consultation</h4>
+                                    <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
+                                </div>
+                                <Divider />
+                                <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
+                                    <h4 className="font-bold text-blue-800 dark:text-blue-300">Title Report: Nationwide Title Searches</h4>
+                                    <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
+                                </div>
+                                <Divider />
+                                <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
+                                    <h4 className="font-bold text-blue-800 dark:text-blue-300">Clear Title: Free Online Consultation</h4>
+                                    <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="p-4 space-y-4">
-                            <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
-                                <h4 className="font-bold text-blue-800 dark:text-blue-300">Investment Property Funding: Free Consultation</h4>
-                                <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
-                            </div>
-                            <Divider />
-                            <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
-                                <h4 className="font-bold text-blue-800 dark:text-blue-300">Title Report: Nationwide Title Searches</h4>
-                                <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
-                            </div>
-                            <Divider />
-                            <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
-                                <h4 className="font-bold text-blue-800 dark:text-blue-300">Clear Title: Free Online Consultation</h4>
-                                <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
-                            </div>
-                        </div>
-                    </div>
+                    )}
 
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">

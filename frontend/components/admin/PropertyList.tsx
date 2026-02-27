@@ -8,9 +8,10 @@ import AvailabilityHistoryDashboard from './AvailabilityHistoryDashboard';
 
 interface PropertyListProps {
     filters?: any;
+    readOnly?: boolean;
 }
 
-const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
+const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }) => {
     const navigate = useNavigate();
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -123,26 +124,34 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
             type: 'actions',
             headerName: 'Actions',
             width: 80,
-            getActions: ({ id, row }) => [
-                <GridActionsCellItem
-                    key={`view-${id}`}
-                    icon={<span className="material-symbols-outlined text-green-600">visibility</span>}
-                    label="View Details"
-                    onClick={() => navigate(`/admin/properties/${id}`)}
-                />,
-                <GridActionsCellItem
-                    key={`edit-${id}`}
-                    icon={<span className="material-symbols-outlined text-blue-600">edit</span>}
-                    label="Edit"
-                    onClick={() => handleEditClick(row)}
-                />,
-                <GridActionsCellItem
-                    key={`delete-${id}`}
-                    icon={<span className="material-symbols-outlined text-red-600">delete</span>}
-                    label="Delete"
-                    onClick={() => handleDeleteClick(id as string)}
-                />,
-            ],
+            getActions: ({ id, row }) => {
+                const actions = [
+                    <GridActionsCellItem
+                        key={`view-${id}`}
+                        icon={<span className="material-symbols-outlined text-green-600">visibility</span>}
+                        label="View Details"
+                        onClick={() => navigate(readOnly ? `/client/properties/${id}` : `/admin/properties/${id}`)}
+                    />
+                ];
+
+                if (!readOnly) {
+                    actions.push(
+                        <GridActionsCellItem
+                            key={`edit-${id}`}
+                            icon={<span className="material-symbols-outlined text-blue-600">edit</span>}
+                            label="Edit"
+                            onClick={() => handleEditClick(row)}
+                        />,
+                        <GridActionsCellItem
+                            key={`delete-${id}`}
+                            icon={<span className="material-symbols-outlined text-red-600">delete</span>}
+                            label="Delete"
+                            onClick={() => handleDeleteClick(id as string)}
+                        />
+                    );
+                }
+                return actions;
+            },
         },
     ];
 
@@ -152,15 +161,17 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
                 <Typography variant="h6" className="text-slate-800 dark:text-white font-semibold flex-1">
                     Properties Database
                 </Typography>
-                <Button
-                    onClick={() => setShowHistory(true)}
-                    startIcon={<span className="material-symbols-outlined">history</span>}
-                    sx={{ textTransform: 'none', mr: 2 }}
-                    color="secondary"
-                    variant="outlined"
-                >
-                    View Flow History
-                </Button>
+                {!readOnly && (
+                    <Button
+                        onClick={() => setShowHistory(true)}
+                        startIcon={<span className="material-symbols-outlined">history</span>}
+                        sx={{ textTransform: 'none', mr: 2 }}
+                        color="secondary"
+                        variant="outlined"
+                    >
+                        View Flow History
+                    </Button>
+                )}
                 <Button
                     onClick={fetchProperties}
                     startIcon={<span className="material-symbols-outlined">refresh</span>}

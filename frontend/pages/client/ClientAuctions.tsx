@@ -15,8 +15,7 @@ const ClientAuctions: React.FC = () => {
             <AuctionFilters onFilterChange={setFilters} />
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 <Box className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl">
-                    {/* TODO: Pass a prop like isClient={true} to hide Edit/Delete actions later */}
-                    <AuctionList filters={filters} />
+                    <AuctionList filters={filters} readOnly={true} />
                 </Box>
                 <Box className="w-full">
                     <AuctionCalendar filters={filters} />

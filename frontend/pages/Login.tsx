@@ -23,7 +23,12 @@ export const Login: React.FC = () => {
       const user = await AuthService.getMe();
       localStorage.setItem('user', JSON.stringify(user));
 
-      navigate('/');
+      // 3. Route based on role
+      if (user.role === 'client') {
+        navigate('/client');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       console.error(err);
       setError('Invalid credentials. Please check your email and password.');

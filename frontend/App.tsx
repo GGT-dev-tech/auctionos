@@ -43,7 +43,7 @@ const App: React.FC = () => {
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
             <Route index element={<Dashboard />} />
-            <Route path="/auctions" element={<AuctionList />} />
+            <Route path="/auctions" element={<AuctionList filters={{}} />} />
             <Route path="/admin/auctions" element={<AdminAuctions />} />
             <Route path="/admin/properties/:id" element={<PropertyDetailPage />} />
             <Route path="settings" element={<Settings />} />
@@ -61,7 +61,7 @@ const App: React.FC = () => {
             <Route path="properties" element={<ClientProperties />} />
             <Route path="lists" element={<ClientLists />} />
             {/* Target same detail page internally handling client view restrictions */}
-            <Route path="properties/:id" element={<PropertyDetailPage />} />
+            <Route path="properties/:id" element={<PropertyDetailPage readOnly={true} />} />
           </Route>
         </Routes>
       </HashRouter>
