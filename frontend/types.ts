@@ -155,4 +155,15 @@ export interface PropertyDetails {
   gsi_data?: string;
   max_bid?: number;
   availability_status?: string;
+
+  // Extended Details
+  alternate_owner_address?: string;
+  state_inventory_entered_date?: string;
+  qoz_description?: string;
+  parcel_shape_data?: string;
+  pin_ppin?: string;
+  raw_parcel_number?: string;
+  county_fips?: string;
+  additional_parcel_numbers?: string;
+  occupancy_checked_date?: string;
 }

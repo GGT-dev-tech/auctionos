@@ -66,6 +66,17 @@ class PropertyDetails(Base):
     property_category = Column(String(255), nullable=True)
     purchase_option_type = Column(String(255), nullable=True)
     availability_status = Column(String(50), nullable=True, default="available")
+    
+    # New Fields for Extended Detail View
+    alternate_owner_address = Column(String(255), nullable=True)
+    state_inventory_entered_date = Column(Date, nullable=True)
+    qoz_description = Column(String(255), nullable=True)
+    parcel_shape_data = Column(Text, nullable=True)
+    pin_ppin = Column(String(100), nullable=True)
+    raw_parcel_number = Column(String(100), nullable=True)
+    county_fips = Column(String(20), nullable=True)
+    additional_parcel_numbers = Column(Text, nullable=True)
+    occupancy_checked_date = Column(Date, nullable=True)
 
 
 class PropertyAuctionHistory(Base):

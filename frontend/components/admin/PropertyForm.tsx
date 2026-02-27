@@ -29,7 +29,18 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
         improvement_value: initialData?.improvement_value || '',
         estimated_arv: initialData?.estimated_value || '', // Mapping from DB estimated_value
         estimated_rent: initialData?.rental_value || '',   // Mapping from DB rental_value
-        availability_status: initialData?.availability_status || 'available'
+        availability_status: initialData?.availability_status || 'available',
+
+        // Extended Details
+        alternate_owner_address: initialData?.alternate_owner_address || '',
+        state_inventory_entered_date: initialData?.state_inventory_entered_date || '',
+        qoz_description: initialData?.qoz_description || '',
+        parcel_shape_data: initialData?.parcel_shape_data || '',
+        pin_ppin: initialData?.pin_ppin || '',
+        raw_parcel_number: initialData?.raw_parcel_number || '',
+        county_fips: initialData?.county_fips || '',
+        additional_parcel_numbers: initialData?.additional_parcel_numbers || '',
+        occupancy_checked_date: initialData?.occupancy_checked_date || ''
     });
     const [status, setStatus] = useState('');
 
@@ -54,7 +65,18 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                 land_value: formData.land_value ? parseFloat(formData.land_value) : null,
                 improvement_value: formData.improvement_value ? parseFloat(formData.improvement_value) : null,
                 amount_due: formData.amount_due ? parseFloat(formData.amount_due) : null,
-                availability_status: formData.availability_status
+                availability_status: formData.availability_status,
+
+                // Extended Details
+                alternate_owner_address: formData.alternate_owner_address,
+                state_inventory_entered_date: formData.state_inventory_entered_date || null,
+                qoz_description: formData.qoz_description,
+                parcel_shape_data: formData.parcel_shape_data,
+                pin_ppin: formData.pin_ppin,
+                raw_parcel_number: formData.raw_parcel_number,
+                county_fips: formData.county_fips,
+                additional_parcel_numbers: formData.additional_parcel_numbers,
+                occupancy_checked_date: formData.occupancy_checked_date || null
             };
 
             if (initialData?.parcel_id) {
@@ -68,7 +90,9 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                     county: '', description: '', owner_name: '', owner_address: '', parcel_address: '', state_code: '',
                     tax_sale_year: '', taxes_due_auction: '', total_value: '', property_category: '', purchase_option_type: '',
                     map_link: '', cs_number: '', parcel_code: '', occupancy: '', land_value: '', improvement_value: '',
-                    estimated_arv: '', estimated_rent: '', availability_status: 'available'
+                    estimated_arv: '', estimated_rent: '', availability_status: 'available',
+                    alternate_owner_address: '', state_inventory_entered_date: '', qoz_description: '', parcel_shape_data: '',
+                    pin_ppin: '', raw_parcel_number: '', county_fips: '', additional_parcel_numbers: '', occupancy_checked_date: ''
                 });
             }
             if (onSuccess) onSuccess();
@@ -138,6 +162,14 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                     </select>
                 </div>
                 <div>
+                    <label className="label">State Inv. Entered Date</label>
+                    <input name="state_inventory_entered_date" type="date" className="input" value={formData.state_inventory_entered_date} onChange={handleChange} />
+                </div>
+                <div>
+                    <label className="label">Occupancy Checked Date</label>
+                    <input name="occupancy_checked_date" type="date" className="input" value={formData.occupancy_checked_date} onChange={handleChange} />
+                </div>
+                <div>
                     <label className="label">Acres</label>
                     <input name="acres" type="number" step="0.01" className="input" value={formData.acres} onChange={handleChange} />
                 </div>
@@ -195,6 +227,42 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                 <div className="md:col-span-3">
                     <label className="label">Description / Notes</label>
                     <textarea name="description" className="input h-24" value={formData.description} onChange={handleChange} />
+                </div>
+
+                <div className="col-span-1 md:col-span-3 border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Extended Identifiers & Data</h4>
+                </div>
+
+                <div className="md:col-span-2">
+                    <label className="label">Alternate Owner Address</label>
+                    <input name="alternate_owner_address" className="input" value={formData.alternate_owner_address} onChange={handleChange} />
+                </div>
+                <div>
+                    <label className="label">QOZ Description</label>
+                    <input name="qoz_description" className="input" value={formData.qoz_description!} onChange={handleChange} placeholder="Opportunity Zone Details" />
+                </div>
+
+                <div>
+                    <label className="label">PIN/PPIN</label>
+                    <input name="pin_ppin" className="input" value={formData.pin_ppin} onChange={handleChange} />
+                </div>
+                <div>
+                    <label className="label">Raw Parcel Number</label>
+                    <input name="raw_parcel_number" className="input" value={formData.raw_parcel_number} onChange={handleChange} />
+                </div>
+                <div>
+                    <label className="label">County FIPS</label>
+                    <input name="county_fips" className="input" value={formData.county_fips} onChange={handleChange} />
+                </div>
+
+                <div className="md:col-span-3">
+                    <label className="label">Additional Parcel Numbers (Line Separated)</label>
+                    <textarea name="additional_parcel_numbers" className="input h-20" value={formData.additional_parcel_numbers} onChange={handleChange} />
+                </div>
+
+                <div className="md:col-span-3">
+                    <label className="label">Parcel Shape Data (Raw Text/JSON)</label>
+                    <textarea name="parcel_shape_data" className="input h-32 font-mono text-xs" value={formData.parcel_shape_data} onChange={handleChange} />
                 </div>
             </div>
 

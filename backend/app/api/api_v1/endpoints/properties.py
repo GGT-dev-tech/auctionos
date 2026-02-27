@@ -133,7 +133,16 @@ def read_properties(
             p.address,
             p.occupancy,
             p.purchase_option_type,
-            p.availability_status
+            p.availability_status,
+            p.alternate_owner_address,
+            p.state_inventory_entered_date,
+            p.qoz_description,
+            p.parcel_shape_data,
+            p.pin_ppin,
+            p.raw_parcel_number,
+            p.county_fips,
+            p.additional_parcel_numbers,
+            p.occupancy_checked_date
         FROM property_details p
         LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
         WHERE {where_str}
@@ -164,7 +173,16 @@ def read_properties(
             "address": r[16],
             "occupancy": r[17],
             "purchase_option_type": r[18],
-            "availability_status": r[19]
+            "availability_status": r[19],
+            "alternate_owner_address": r[20],
+            "state_inventory_entered_date": r[21],
+            "qoz_description": r[22],
+            "parcel_shape_data": r[23],
+            "pin_ppin": r[24],
+            "raw_parcel_number": r[25],
+            "county_fips": r[26],
+            "additional_parcel_numbers": r[27],
+            "occupancy_checked_date": r[28]
         }
         for r in result
     ]
@@ -191,6 +209,17 @@ class PropertyUpdateRequest(BaseModel):
     address: Optional[str] = None
     occupancy: Optional[str] = None
     availability_status: Optional[str] = None
+    
+    # New Extended Detail Fields
+    alternate_owner_address: Optional[str] = None
+    state_inventory_entered_date: Optional[date] = None
+    qoz_description: Optional[str] = None
+    parcel_shape_data: Optional[str] = None
+    pin_ppin: Optional[str] = None
+    raw_parcel_number: Optional[str] = None
+    county_fips: Optional[str] = None
+    additional_parcel_numbers: Optional[str] = None
+    occupancy_checked_date: Optional[date] = None
 
 @router.put("/{parcel_id}", response_model=dict)
 def update_property(

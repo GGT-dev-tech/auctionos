@@ -47,6 +47,17 @@ class PropertyDetailsBase(BaseModel):
     gsi_data: Optional[str] = None
     max_bid: Optional[float] = None
 
+    # New Extended Detail Fields
+    alternate_owner_address: Optional[str] = None
+    state_inventory_entered_date: Optional[date] = None
+    qoz_description: Optional[str] = None
+    parcel_shape_data: Optional[str] = None
+    pin_ppin: Optional[str] = None
+    raw_parcel_number: Optional[str] = None
+    county_fips: Optional[str] = None
+    additional_parcel_numbers: Optional[str] = None
+    occupancy_checked_date: Optional[date] = None
+
 class PropertyDetailsCreate(PropertyDetailsBase):
     pass
 
@@ -101,6 +112,17 @@ class PropertyDashboardSchema(BaseModel):
     occupancy: Optional[str] = None
     purchase_option_type: Optional[str] = None
     availability_status: Optional[str] = None
+    
+    # New Extended Detail Fields from Dashboard view perspective
+    alternate_owner_address: Optional[str] = None
+    state_inventory_entered_date: Optional[date] = None
+    qoz_description: Optional[str] = None
+    parcel_shape_data: Optional[str] = None
+    pin_ppin: Optional[str] = None
+    raw_parcel_number: Optional[str] = None
+    county_fips: Optional[str] = None
+    additional_parcel_numbers: Optional[str] = None
+    occupancy_checked_date: Optional[date] = None
 
 class PaginatedPropertyResponse(BaseModel):
     items: List[PropertyDashboardSchema]
