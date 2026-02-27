@@ -69,7 +69,7 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
                 <IconButton
                     size="small"
                     component="a"
-                    href={`#/properties/${params.row.parcel_id}`}
+                    href={`#/admin/properties/${params.row.parcel_id}`}
                     target="_blank"
                     title="Open Details"
                 >
