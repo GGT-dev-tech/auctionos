@@ -135,6 +135,14 @@ const PropertyDetailPage: React.FC = () => {
                         </div>
                     </div>
 
+                    <div className="bg-orange-50 dark:bg-orange-900/20 p-4 border border-orange-100 dark:border-orange-800 rounded-lg text-center">
+                        <span className="text-orange-800 dark:text-orange-300 font-bold">Tax history: </span>
+                        <span>{property.availability_status === 'available' ? 'Tax Lien Available' : 'Tax Lien Unavailable'} ({property.tax_year || new Date().getFullYear()}) </span>
+                        <a href={`https://www.google.com/search?q=${property.county}+County+Tax+Collector`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline ml-2 text-sm italic">
+                            click for tax lien details
+                        </a>
+                    </div>
+
                     <div className="bg-sky-50 dark:bg-sky-900/20 p-4 border border-sky-100 dark:border-sky-800 rounded-lg text-center">
                         <span className="text-sky-800 dark:text-sky-300 font-bold">Occupant Status: </span>
                         {property.occupancy || 'Unknown'}
