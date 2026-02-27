@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import { AdminService } from '../../services/admin.service';
 import { Box, Typography, Button, Dialog, DialogContent, IconButton } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import PropertyForm from './PropertyForm';
 import AvailabilityHistoryDashboard from './AvailabilityHistoryDashboard';
 
@@ -10,6 +11,7 @@ interface PropertyListProps {
 }
 
 const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
+    const navigate = useNavigate();
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [editRow, setEditRow] = useState<any | null>(null);
@@ -122,6 +124,12 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters }) => {
             headerName: 'Actions',
             width: 80,
             getActions: ({ id, row }) => [
+                <GridActionsCellItem
+                    key={`view-${id}`}
+                    icon={<span className="material-symbols-outlined text-green-600">visibility</span>}
+                    label="View Details"
+                    onClick={() => navigate(`/admin/properties/${id}`)}
+                />,
                 <GridActionsCellItem
                     key={`edit-${id}`}
                     icon={<span className="material-symbols-outlined text-blue-600">edit</span>}

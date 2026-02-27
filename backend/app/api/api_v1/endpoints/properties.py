@@ -21,7 +21,21 @@ def read_properties(
     property_category: Optional[str] = None,
     occupancy: Optional[str] = None,
     tax_year: Optional[int] = None,
-    property_type: Optional[str] = None
+    property_type: Optional[str] = None,
+    # New Optional Filters
+    inventory: Optional[str] = None,
+    min_improvements: Optional[float] = None,
+    max_improvements: Optional[float] = None,
+    availability: Optional[str] = None,
+    min_county_appraisal: Optional[float] = None,
+    max_county_appraisal: Optional[float] = None,
+    min_acreage: Optional[float] = None,
+    max_acreage: Optional[float] = None,
+    owner_location: Optional[str] = None,
+    keyword: Optional[str] = None,
+    # Advanced Filters
+    added_since: Optional[str] = None,
+    is_unavailable: Optional[bool] = None
 ) -> Any:
     
     # 1. Build Base Filter Query
@@ -55,6 +69,41 @@ def read_properties(
     if property_type:
         where_clauses.append("p.property_type ILIKE :property_type")
         params["property_type"] = f"%{property_type}%"
+        
+    # Apply New Filters
+    if inventory:
+        where_clauses.append("p.purchase_option_type ILIKE :inventory")
+        params["inventory"] = f"%{inventory}%"
+    if min_improvements is not None:
+        where_clauses.append("p.improvement_value >= :min_improvements")
+        params["min_improvements"] = min_improvements
+    if max_improvements is not None:
+        where_clauses.append("p.improvement_value <= :max_improvements")
+        params["max_improvements"] = max_improvements
+    if availability:
+        where_clauses.append("p.availability_status ILIKE :availability")
+        params["availability"] = f"%{availability}%"
+    if min_county_appraisal is not None:
+        where_clauses.append("p.assessed_value >= :min_county_appraisal")
+        params["min_county_appraisal"] = min_county_appraisal
+    if max_county_appraisal is not None:
+        where_clauses.append("p.assessed_value <= :max_county_appraisal")
+        params["max_county_appraisal"] = max_county_appraisal
+    if min_acreage is not None:
+        where_clauses.append("p.lot_acres >= :min_acreage")
+        params["min_acreage"] = min_acreage
+    if max_acreage is not None:
+        where_clauses.append("p.lot_acres <= :max_acreage")
+        params["max_acreage"] = max_acreage
+    if owner_location:
+        where_clauses.append("p.owner_address ILIKE :owner_location")
+        params["owner_location"] = f"%{owner_location}%"
+    if keyword:
+        # Keyword searches parcel_id, address, zip (assumed in address)
+        where_clauses.append("(p.parcel_id ILIKE :keyword OR p.address ILIKE :keyword)")
+        params["keyword"] = f"%{keyword}%"
+    if is_unavailable is True:
+        where_clauses.append("p.availability_status = 'not available'")
 
     where_str = " AND ".join(where_clauses)
 
@@ -227,3 +276,36 @@ def get_availability_history(
     """)
     results = db.execute(history_query, {"limit": limit}).fetchall()
     return [dict(r._mapping) for r in results]
+
+@router.get("/{parcel_id}")
+def get_property(
+    parcel_id: str,
+    db: Session = Depends(deps.get_db)
+) -> Any:
+    query = text("""
+        SELECT 
+            p.*,
+            pah.auction_name as current_auction_name, 
+            pah.auction_date as current_auction_date
+        FROM property_details p
+        LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
+        WHERE p.parcel_id = :parcel_id
+        ORDER BY pah.auction_date DESC
+        LIMIT 1
+    """)
+    result = db.execute(query, {"parcel_id": parcel_id}).fetchone()
+    if not result:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    history_query = text("""
+        SELECT *
+        FROM property_auction_history
+        WHERE property_id = :property_id
+        ORDER BY auction_date DESC
+    """)
+    history_results = db.execute(history_query, {"property_id": result.property_id}).fetchall()
+    
+    data = dict(result._mapping)
+    data["auction_history"] = [dict(h._mapping) for h in history_results]
+    
+    return data

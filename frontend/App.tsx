@@ -14,6 +14,7 @@ import PropertyDetails from './pages/PropertyDetails';
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 import AdminAuctions from './pages/admin/AdminAuctions';
+import PropertyDetailPage from './pages/admin/PropertyDetailPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ... existing protected route logic
@@ -37,6 +38,7 @@ const App: React.FC = () => {
             <Route index element={<Dashboard />} />
             <Route path="/auctions" element={<AuctionList />} />
             <Route path="/admin/auctions" element={<AdminAuctions />} />
+            <Route path="/admin/properties/:id" element={<PropertyDetailPage />} />
             <Route path="settings" element={<Settings />} />
             <Route path="properties/new" element={<PropertyManualEntry />} />
             <Route path="properties/:id" element={<PropertyDetails />} />
