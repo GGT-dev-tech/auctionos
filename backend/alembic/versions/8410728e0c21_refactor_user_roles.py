@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Set default admin
-    op.execute("UPDATE users SET role = 'admin', is_superuser = 1 WHERE email = 'admin@auctionpro.com'")
+    op.execute("UPDATE users SET role = 'admin', is_superuser = TRUE WHERE email = 'admin@auctionpro.com'")
     # Convert all remaining agents to clients
     op.execute("UPDATE users SET role = 'client' WHERE role = 'agent'")
 
@@ -27,4 +27,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     # Revert client back to agent (lossy, but best effort)
     op.execute("UPDATE users SET role = 'agent' WHERE role = 'client'")
-    op.execute("UPDATE users SET role = 'agent', is_superuser = 0 WHERE email = 'admin@auctionpro.com'")
+    op.execute("UPDATE users SET role = 'agent', is_superuser = FALSE WHERE email = 'admin@auctionpro.com'")

@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Add column with server default
-    op.add_column('client_lists', sa.Column('is_favorite_list', sa.Boolean(), nullable=True, server_default='0'))
+    op.add_column('client_lists', sa.Column('is_favorite_list', sa.Boolean(), nullable=True, server_default=sa.text('false')))
 
 
 def downgrade() -> None:
