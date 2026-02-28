@@ -1,30 +1,86 @@
-import React, { useState } from 'react';
-import { Typography, Paper, Box, Button, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Chip } from '@mui/material';
-import { FolderPlusIcon, SearchIcon, ShareIcon, CopyIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Typography, Paper, Box, Button, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Chip, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { FolderPlusIcon, SearchIcon, ShareIcon, CopyIcon, Trash2Icon, Edit2Icon, TagIcon } from 'lucide-react';
+import { ClientDataService } from '../../services/property.service';
 
 interface CustomList {
-    id: string;
+    id: number;
     name: string;
-    propertyCount: number;
-    isBroadcasted: boolean;
+    property_count: number;
+    is_broadcasted: boolean;
+    is_favorite_list: boolean;
+    tags?: string | null;
 }
 
 const AdminLists: React.FC = () => {
-    const [lists, setLists] = useState<CustomList[]>([
-        { id: '1', name: 'High ROI Florida Liens', propertyCount: 12, isBroadcasted: false },
-        { id: '2', name: 'Premium Arkansas Selection', propertyCount: 5, isBroadcasted: true }
-    ]);
-    const [selectedListId, setSelectedListId] = useState<string | null>(null);
+    const [lists, setLists] = useState<CustomList[]>([]);
+    const [selectedListId, setSelectedListId] = useState<number | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [openModal, setOpenModal] = useState(false);
+    const [newListName, setNewListName] = useState('');
 
-    const handleBroadcastToggle = (listId: string) => {
-        setLists(lists.map(list => {
-            if (list.id === listId) {
-                const newStatus = !list.isBroadcasted;
-                alert(newStatus ? `List '${list.name}' is now broadcasted to all Clients.` : `List '${list.name}' broadcast revoked.`);
-                return { ...list, isBroadcasted: newStatus };
+    useEffect(() => {
+        loadLists();
+    }, []);
+
+    const loadLists = async () => {
+        try {
+            setLoading(true);
+            const data = await ClientDataService.getLists();
+            setLists(data);
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateList = async () => {
+        if (!newListName) return;
+        try {
+            await ClientDataService.createList(newListName);
+            setNewListName('');
+            setOpenModal(false);
+            loadLists();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleDeleteList = async (id: number) => {
+        if (!window.confirm("Are you sure you want to delete this list?")) return;
+        try {
+            await ClientDataService.deleteList(id);
+            loadLists();
+            if (selectedListId === id) setSelectedListId(null);
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleBroadcastToggle = async (listId: number) => {
+        const list = lists.find(l => l.id === listId);
+        if (!list) return;
+        try {
+            await ClientDataService.updateList(listId, { is_broadcasted: !list.is_broadcasted } as any);
+            loadLists();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleRenameList = async (id: number) => {
+        const list = lists.find(l => l.id === id);
+        if (!list) return;
+        const newName = window.prompt("Enter new name:", list.name);
+        if (newName && newName !== list.name) {
+            try {
+                await ClientDataService.updateList(id, { name: newName });
+                loadLists();
+            } catch (err: any) {
+                alert(err.message);
             }
-            return list;
-        }));
+        }
     };
 
     const selectedList = lists.find(l => l.id === selectedListId);
@@ -35,7 +91,7 @@ const AdminLists: React.FC = () => {
             <div className="w-1/3 border-r border-slate-200 dark:border-slate-700 flex flex-col bg-slate-50 dark:bg-slate-800/50">
                 <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                     <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">Admin Lists</Typography>
-                    <Button size="small" startIcon={<FolderPlusIcon size={16} />} onClick={() => alert("List creation modal triggered")}>New List</Button>
+                    <Button size="small" startIcon={<FolderPlusIcon size={16} />} onClick={() => setOpenModal(true)}>New List</Button>
                 </div>
                 <div className="p-0 flex-1 overflow-y-auto">
                     {lists.length === 0 ? (
@@ -56,14 +112,30 @@ const AdminLists: React.FC = () => {
                                         primary={
                                             <div className="flex items-center gap-2">
                                                 <span className="font-semibold text-slate-700 dark:text-slate-300">{list.name}</span>
-                                                {list.isBroadcasted && <Chip label="Broadcasted" size="small" color="primary" className="h-5 text-[10px]" />}
+                                                {list.is_broadcasted && <Chip label="Broadcasted" size="small" color="primary" className="h-5 text-[10px]" />}
+                                                {list.is_favorite_list && <Chip label="Auto-Favorites" size="small" color="error" variant="outlined" className="h-5 text-[10px]" />}
                                             </div>
                                         }
-                                        secondary={`${list.propertyCount} properties`}
+                                        secondary={
+                                            <div className="flex items-center gap-4 mt-1">
+                                                <span>{list.property_count} properties</span>
+                                                {list.tags && <span className="text-xs text-slate-400 flex items-center gap-1"><TagIcon size={10} /> {list.tags}</span>}
+                                            </div>
+                                        }
                                     />
-                                    <ListItemSecondaryAction>
-                                        <IconButton edge="end" aria-label="broadcast" onClick={() => handleBroadcastToggle(list.id)} title={list.isBroadcasted ? "Revoke Broadcast" : "Broadcast to Clients"}>
-                                            <ShareIcon size={18} className={list.isBroadcasted ? "text-primary-600" : "text-slate-400"} />
+                                    <ListItemSecondaryAction className="flex gap-1">
+                                        {!list.is_favorite_list && (
+                                            <>
+                                                <IconButton size="small" onClick={() => handleRenameList(list.id)} title="Rename">
+                                                    <Edit2Icon size={14} />
+                                                </IconButton>
+                                                <IconButton size="small" color="error" onClick={() => handleDeleteList(list.id)} title="Delete">
+                                                    <Trash2Icon size={14} />
+                                                </IconButton>
+                                            </>
+                                        )}
+                                        <IconButton size="small" onClick={() => handleBroadcastToggle(list.id)} title={list.is_broadcasted ? "Revoke Broadcast" : "Broadcast to Clients"}>
+                                            <ShareIcon size={16} className={list.is_broadcasted ? "text-primary-600" : "text-slate-400"} />
                                         </IconButton>
                                     </ListItemSecondaryAction>
                                 </ListItem>
@@ -106,13 +178,24 @@ const AdminLists: React.FC = () => {
                             <div className="mb-4 flex gap-4">
                                 <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex-1">
                                     <h3 className="font-bold text-slate-700 dark:text-slate-300 text-sm uppercase tracking-wider mb-1">List Size</h3>
-                                    <p className="text-2xl text-slate-900 dark:text-white font-light">{selectedList.propertyCount} Properties</p>
+                                    <p className="text-2xl text-slate-900 dark:text-white font-light">{selectedList.property_count} Properties</p>
                                 </div>
-                                <div className={`p-4 rounded-lg shadow-sm border flex-1 ${selectedList.isBroadcasted ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                                <div className={`p-4 rounded-lg shadow-sm border flex-1 ${selectedList.is_broadcasted ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
                                     <h3 className="font-bold text-sm uppercase tracking-wider mb-1">Broadcast Status</h3>
-                                    <p className="text-2xl font-light">{selectedList.isBroadcasted ? 'Active on Client Dashboards' : 'Private to Admins'}</p>
+                                    <p className="text-2xl font-light">{selectedList.is_broadcasted ? 'Active on Client Dashboards' : 'Private to Admins'}</p>
                                 </div>
                             </div>
+                            {selectedList.tags && (
+                                <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+                                    <span className="text-xs font-bold text-slate-500 uppercase">Tags:</span>
+                                    <div className="mt-1 flex gap-2">
+                                        {selectedList.tags.split(',').map(tag => (
+                                            <Chip key={tag} label={tag.trim()} size="small" />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-center border-dashed">
                                 <p className="text-slate-400 italic">Property datagrid rendering engine (Mock)</p>
                             </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PropertyService } from '../../services/property.service';
+import { PropertyService, ClientDataService } from '../../services/property.service';
 import { countyService, CountyContact } from '../../services/county.service';
 import { PropertyDetails } from '../../types';
 import { Button, CircularProgress, Chip, Divider } from '@mui/material';
@@ -33,6 +33,12 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
             const data = await PropertyService.getProperty(propertyId);
             setProperty(data);
 
+            // Check if favorited
+            const favorites = await PropertyService.getFavorites();
+            if (data.id && favorites.includes(data.id)) {
+                setIsFavorite(true);
+            }
+
             // Dynamically load county contacts based on property state and county
             if (data.state && data.county) {
                 const contacts = await countyService.getContacts(data.state, data.county);
@@ -61,6 +67,18 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     }
 
     const handlePurchaseOnline = async () => {
+        // Redirection logic first
+        try {
+            const { url } = await PropertyService.getAuctionRedirect(property.parcel_id);
+            if (url && window.confirm(`Redirecting to official auction site: ${url}\n\nDo you want to proceed?`)) {
+                await PropertyService.logAction(property.parcel_id, 'purchase_redirect');
+                window.open(url, '_blank');
+                return;
+            }
+        } catch (e) {
+            console.log("No dynamic link found, falling back to simulation.");
+        }
+
         if (!window.confirm(`Are you sure you want to purchase the lien for ${property.parcel_id}? This is a simulated transaction.`)) {
             return;
         }
@@ -87,9 +105,13 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     };
 
 
-    const handleToggleFavorite = () => {
-        setIsFavorite(!isFavorite);
-        // Call backend (mocked for now until list engine is ready)
+    const handleToggleFavorite = async () => {
+        try {
+            const res = await PropertyService.toggleFavorite(property.id);
+            setIsFavorite(res.is_favorite);
+        } catch (err: any) {
+            alert(err.message);
+        }
     };
 
     const handleAddressVerification = () => {
@@ -333,18 +355,25 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                                 • Recommended Next Steps
                             </div>
                             <div className="p-4 space-y-4">
+                                {property.recommended_next_steps && property.recommended_next_steps.length > 0 ? (
+                                    property.recommended_next_steps.map((step: any, idx: number) => (
+                                        <div key={idx} className="flex items-center justify-between p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                                            <div>
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-100">{step.action}</h4>
+                                                <span className={`text-xs px-2 py-0.5 rounded ${step.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                    {step.priority} Priority
+                                                </span>
+                                            </div>
+                                            <Button size="small" variant="text" onClick={() => PropertyService.logAction(property.parcel_id, `step_${idx}`)}>Clear</Button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-slate-500 italic text-center">No recommendations at this time.</p>
+                                )}
+
+                                <Divider />
                                 <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
                                     <h4 className="font-bold text-blue-800 dark:text-blue-300">Investment Property Funding: Free Consultation</h4>
-                                    <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
-                                </div>
-                                <Divider />
-                                <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
-                                    <h4 className="font-bold text-blue-800 dark:text-blue-300">Title Report: Nationwide Title Searches</h4>
-                                    <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
-                                </div>
-                                <Divider />
-                                <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
-                                    <h4 className="font-bold text-blue-800 dark:text-blue-300">Clear Title: Free Online Consultation</h4>
                                     <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
                                 </div>
                             </div>
@@ -464,17 +493,43 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                     )}
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <div className="p-4 space-y-4">
-                            <div className="flex items-center justify-between border-b pb-2">
-                                <span className="font-bold text-slate-700 dark:text-slate-300">My Lists:</span>
-                                <Button variant="outlined" size="small" onClick={() => alert('Client Lists & Export interface will open here (Sprint 33 Step 4)')}>Manage Lists</Button>
-                            </div>
-                            <div className="flex items-center justify-between border-b pb-2">
+                            <div className="flex flex-col gap-2 border-b pb-2">
                                 <span className="font-bold text-slate-700 dark:text-slate-300">My Notes:</span>
-                                <Button variant="outlined" size="small" onClick={() => alert('Notes Editor overlay triggered')}>Edit Notes</Button>
+                                <textarea
+                                    className="w-full p-2 text-sm border rounded dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+                                    placeholder="Add private Markdown notes..."
+                                    defaultValue={property.notes || ""}
+                                    onBlur={(e) => {
+                                        if (e.target.value) ClientDataService.createNote(property.id, e.target.value);
+                                    }}
+                                />
+                                <p className="text-[10px] text-slate-400 italic">Auto-saves on blur. Supports Markdown formatting.</p>
                             </div>
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col gap-2">
                                 <span className="font-bold text-slate-700 dark:text-slate-300">My Attachments:</span>
-                                <Button variant="outlined" size="small" onClick={() => alert('Attachment upload dialog triggered')}>View / Add Attachments</Button>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="file"
+                                        className="text-xs"
+                                        onChange={async (e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                                try {
+                                                    await ClientDataService.uploadAttachment(property.id, e.target.files[0]);
+                                                    alert("Attachment uploaded successfully");
+                                                } catch (err: any) {
+                                                    alert(err.message);
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                <div className="text-xs space-y-1">
+                                    {property.attachments?.map((att: any, idx: number) => (
+                                        <div key={idx} className="flex justify-between text-blue-600 hover:underline cursor-pointer">
+                                            <a href={`http://localhost:8000${att.file_path}`} target="_blank" rel="noreferrer">{att.filename}</a>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>

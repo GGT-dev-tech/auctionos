@@ -1,6 +1,6 @@
 from typing import List, Any, Optional
 from datetime import date
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.api import deps
@@ -394,4 +394,67 @@ def get_property(
     data = dict(result._mapping)
     data["auction_history"] = [dict(h._mapping) for h in history_results]
     
+    # Calculate Recommended Next Steps
+    next_steps = []
+    if data.get("availability_status") == "available":
+        next_steps.append({"action": "Review Auction Details", "priority": "high", "type": "info"})
+    if data.get("amount_due", 0) > 0:
+        next_steps.append({"action": "Calculate ROI with Taxes", "priority": "medium", "type": "calculate"})
+    if not data.get("occupancy"):
+        next_steps.append({"action": "Verify Occupancy", "priority": "medium", "type": "verify"})
+    
+    data["recommended_next_steps"] = next_steps
+    
     return data
+
+@router.get("/{parcel_id}/redirect/auction")
+def get_auction_redirect(
+    parcel_id: str,
+    db: Session = Depends(deps.get_db),
+    # current_user = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Resolves the auction link, logs the redirection effort, and returns the URL.
+    """
+    query = text("""
+        SELECT pah.info_link, pah.list_link, p.property_id
+        FROM property_details p
+        LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
+        WHERE p.parcel_id = :parcel_id
+        ORDER BY pah.auction_date DESC
+        LIMIT 1
+    """)
+    res = db.execute(query, {"parcel_id": parcel_id}).fetchone()
+    if not res:
+        raise HTTPException(status_code=404, detail="Property or Auction history not found")
+    
+    url = res[0] or res[1]
+    if not url:
+        raise HTTPException(status_code=400, detail="No auction link associated with this property")
+    
+    # Log action for audit
+    db.execute(
+        text("INSERT INTO property_availability_history (property_id, previous_status, new_status, change_source) VALUES (:prop_id, :status, :status, 'auction_redirect_click')"),
+        {"prop_id": res[2], "status": "available"} # dummy status check for logging
+    )
+    db.commit()
+    
+    return {"url": url}
+
+@router.post("/{parcel_id}/log-action")
+def log_property_action(
+    parcel_id: str,
+    action: str = Form(...),
+    db: Session = Depends(deps.get_db),
+) -> Any:
+    """Log generic user actions on a property for audit."""
+    prop = db.execute(text("SELECT property_id FROM property_details WHERE parcel_id = :parcel_id"), {"parcel_id": parcel_id}).fetchone()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+        
+    db.execute(
+        text("INSERT INTO property_availability_history (property_id, previous_status, new_status, change_source) VALUES (:prop_id, 'audit', 'audit', :action)"),
+        {"prop_id": prop[0], "action": f"user_action_{action}"}
+    )
+    db.commit()
+    return {"ok": True}

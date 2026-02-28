@@ -9,4 +9,4 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
-    role = Column(String(50), default="agent")  # 'admin', 'agent', 'client'
+    role = Column(String(50), default="client")  # 'admin', 'client'

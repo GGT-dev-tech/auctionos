@@ -14,11 +14,12 @@ def ensure_admin():
         user = db.query(User).filter(User.email == "admin@auctionpro.com").first()
         if user:
             print(f"Found user {user.email}. Superuser: {user.is_superuser}")
-            if not user.is_superuser:
+            if not user.is_superuser or user.role != "admin":
                 user.is_superuser = True
+                user.role = "admin"
                 db.add(user)
                 db.commit()
-                print(f"Updated user {user.email} to Superuser: True")
+                print(f"Updated user {user.email} to Superuser: True and Role: admin")
             else:
                 print("User already has correct permissions.")
         else:
@@ -28,7 +29,8 @@ def ensure_admin():
                 email="admin@auctionpro.com",
                 hashed_password=get_password_hash("password"),
                 is_superuser=True,
-                is_active=True
+                is_active=True,
+                role="admin"
             )
             db.add(new_user)
             db.commit()

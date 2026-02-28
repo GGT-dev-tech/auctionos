@@ -146,6 +146,139 @@ export const PropertyService = {
         });
         if (!response.ok) throw new Error('GSI Validation failed');
         return response.json();
+    },
+
+    toggleFavorite: async (propertyId: number): Promise<{ is_favorite: boolean }> => {
+        const response = await fetch(`${API_URL}/client-data/favorites/toggle/${propertyId}`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to toggle favorite');
+        return response.json();
+    },
+
+    getFavorites: async (): Promise<number[]> => {
+        const response = await fetch(`${API_URL}/client-data/favorites`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch favorites');
+        return response.json();
+    },
+
+    getAuctionRedirect: async (parcelId: string): Promise<{ url: string }> => {
+        const response = await fetch(`${API_URL}/properties/${parcelId}/redirect/auction`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to get auction link');
+        return response.json();
+    },
+
+    logAction: async (parcelId: string, action: string): Promise<void> => {
+        const formData = new FormData();
+        formData.append('action', action);
+        await fetch(`${API_URL}/properties/${parcelId}/log-action`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            body: formData
+        });
+    }
+};
+
+export const ClientDataService = {
+    getLists: async (): Promise<any[]> => {
+        const response = await fetch(`${API_URL}/client-data/lists`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch lists');
+        return response.json();
+    },
+
+    createList: async (name: string): Promise<any> => {
+        const response = await fetch(`${API_URL}/client-data/lists`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ name })
+        });
+        if (!response.ok) throw new Error('Failed to create list');
+        return response.json();
+    },
+
+    updateList: async (id: number, data: { name?: string; tags?: string }): Promise<any> => {
+        const response = await fetch(`${API_URL}/client-data/lists/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to update list');
+        return response.json();
+    },
+
+    deleteList: async (id: number): Promise<void> => {
+        const response = await fetch(`${API_URL}/client-data/lists/${id}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to delete list');
+    },
+
+    addPropertyToList: async (listId: number, propertyId: number): Promise<void> => {
+        const response = await fetch(`${API_URL}/client-data/lists/${listId}/properties/${propertyId}`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to add property to list');
+    },
+
+    removePropertyFromList: async (listId: number, propertyId: number): Promise<void> => {
+        const response = await fetch(`${API_URL}/client-data/lists/${listId}/properties/${propertyId}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to remove property from list');
+    },
+
+    getBroadcastedLists: async (): Promise<any[]> => {
+        const response = await fetch(`${API_URL}/client-data/broadcasted`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch broadcasted lists');
+        return response.json();
+    },
+
+    importBroadcastedList: async (listId: number): Promise<any> => {
+        const response = await fetch(`${API_URL}/client-data/broadcasted/${listId}/import`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to import broadcasted list');
+        return response.json();
+    },
+
+    createNote: async (propertyId: number, noteText: string): Promise<any> => {
+        const response = await fetch(`${API_URL}/client-data/notes`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ property_id: propertyId, note_text: noteText })
+        });
+        if (!response.ok) throw new Error('Failed to create note');
+        return response.json();
+    },
+
+    uploadAttachment: async (propertyId: number, file: File): Promise<any> => {
+        const formData = new FormData();
+        formData.append('property_id', propertyId.toString());
+        formData.append('file', file);
+
+        const response = await fetch(`${API_URL}/client-data/attachments`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            body: formData
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Upload failed');
+        }
+        return response.json();
     }
 };
 
