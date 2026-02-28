@@ -8,9 +8,12 @@ def get_dashboard_init() -> Any:
     # Providing the mocked structure expected by the React Dashboard
     return {
         "quick_stats": {
-            "total_value": 0,
-            "active_count": 0,
-            "pending_count": 0
+            "total_value": 3450000,
+            "total_value_trend": "+12.5%",
+            "active_count": 42,
+            "active_count_trend": "+4",
+            "pending_count": 18,
+            "pending_count_trend": "-2"
         },
         "county_stats": [],
         "analytics": {

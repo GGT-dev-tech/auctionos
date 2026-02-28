@@ -20,6 +20,7 @@ class AuctionRepository:
         end_date: Optional[date] = None,
         min_parcels: Optional[int] = None,
         max_parcels: Optional[int] = None,
+        q: Optional[str] = None,
         sort_by_date: bool = True
     ) -> tuple[List[AuctionEvent], int]:
         query = db.query(AuctionEvent)
@@ -49,6 +50,17 @@ class AuctionRepository:
             query = query.filter(AuctionEvent.parcels_count >= min_parcels)
         if max_parcels is not None:
             query = query.filter(AuctionEvent.parcels_count <= max_parcels)
+            
+        if q:
+            search_param = f"%{q}%"
+            query = query.filter(or_(
+                AuctionEvent.name.ilike(search_param),
+                AuctionEvent.short_name.ilike(search_param),
+                AuctionEvent.county.ilike(search_param),
+                AuctionEvent.state.ilike(search_param),
+                AuctionEvent.notes.ilike(search_param),
+                AuctionEvent.location.ilike(search_param)
+            ))
 
         if sort_by_date:
             query = query.order_by(asc(AuctionEvent.auction_date))
@@ -65,6 +77,7 @@ class AuctionRepository:
         is_presential: Optional[bool] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
+        q: Optional[str] = None,
     ) -> List[Any]:
         # Build dynamic WHERE clause
         where_clauses = []
@@ -90,6 +103,10 @@ class AuctionRepository:
         if end_date:
             where_clauses.append("auction_date <= :end_date")
             params['end_date'] = end_date
+            
+        if q:
+            where_clauses.append("(name ILIKE :q OR short_name ILIKE :q OR county ILIKE :q OR state ILIKE :q OR location ILIKE :q OR notes ILIKE :q)")
+            params['q'] = f"%{q}%"
 
         where_sql = ""
         if where_clauses:

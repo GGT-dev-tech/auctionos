@@ -20,6 +20,7 @@ def read_auctions(
     end_date: Optional[date] = Query(None, description="Data final do leilão"),
     min_parcels: Optional[int] = Query(None, description="Mínimo de parcelas (imóveis)"),
     max_parcels: Optional[int] = Query(None, description="Máximo de parcelas (imóveis)"),
+    q: Optional[str] = Query(None, description="Busca textual genérica avançada"),
     sort_by_date: bool = Query(True, description="Ordenar por auction_date ascendente"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -36,6 +37,7 @@ def read_auctions(
         end_date=end_date,
         min_parcels=min_parcels,
         max_parcels=max_parcels,
+        q=q,
         sort_by_date=sort_by_date
     )
     return {"items": items, "total": total}
@@ -49,6 +51,7 @@ def get_auction_calendar(
     is_presential: Optional[bool] = Query(None, description="True para presencial, False para online"),
     start_date: Optional[date] = Query(None, description="Data inicial"),
     end_date: Optional[date] = Query(None, description="Data final"),
+    q: Optional[str] = Query(None, description="Busca textual genérica avançada"),
 ) -> Any:
     return auction_repo.get_calendar_events(
         db,
@@ -57,7 +60,8 @@ def get_auction_calendar(
         county=county,
         is_presential=is_presential,
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
+        q=q
     )
 
 @router.post("/", response_model=AuctionEventSchema)

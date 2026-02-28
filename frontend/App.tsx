@@ -16,6 +16,8 @@ import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
 import AdminAuctions from './pages/admin/AdminAuctions';
 import PropertyDetailPage from './pages/admin/PropertyDetailPage';
+import AdminLists from './pages/admin/AdminLists';
+import AdminResearch from './pages/admin/AdminResearch';
 
 // Client Portal Pages
 import ClientLayout from './layouts/ClientLayout';
@@ -50,6 +52,8 @@ const App: React.FC = () => {
             <Route path="/auctions" element={<AuctionList filters={{}} />} />
             <Route path="/admin/auctions" element={<AdminAuctions />} />
             <Route path="/admin/properties/:id" element={<PropertyDetailPage />} />
+            <Route path="/admin/lists" element={<AdminLists />} />
+            <Route path="/admin/research" element={<AdminResearch />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/properties/new" element={<PropertyManualEntry />} />
             <Route path="/properties/:id" element={<PropertyDetails />} />

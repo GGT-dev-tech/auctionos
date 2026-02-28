@@ -282,6 +282,62 @@ def delete_property(
     
     return {"message": "Property deleted successfully", "parcel_id": parcel_id}
 
+@router.post("/{parcel_id}/purchase", response_model=dict)
+def purchase_property_action(
+    parcel_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Executes an atomic transaction that validates state transitions 
+    and reserves/purchases the property, auditing the action.
+    """
+    try:
+        # 1. Start explicit transaction block
+        with db.begin_nested():
+            # Apply row-level SELECT FOR UPDATE to ensure concurrency safety
+            sel_query = text("SELECT property_id, availability_status FROM property_details WHERE parcel_id = :parcel_id FOR UPDATE")
+            prop = db.execute(sel_query, {"parcel_id": parcel_id}).fetchone()
+            
+            if not prop:
+                raise HTTPException(status_code=404, detail="Property not found")
+                
+            prop_id = prop[0]
+            current_status = prop[1] or "not available"
+            
+            # State Transition Validation
+            if current_status != "available":
+                raise HTTPException(status_code=400, detail=f"Cannot purchase property. Current state is '{current_status}'. Must be 'available'.")
+                
+            # Perform atomic update
+            new_status = "purchased"
+            update_q = text("UPDATE property_details SET availability_status = :new_status WHERE property_id = :prop_id")
+            db.execute(update_q, {"new_status": new_status, "prop_id": prop_id})
+            
+            # Write Audit Trail History
+            audit_q = text(
+                "INSERT INTO property_availability_history (property_id, previous_status, new_status, change_source) "
+                "VALUES (:prop_id, :prev, :new, 'purchase_transaction')"
+            )
+            db.execute(audit_q, {"prop_id": prop_id, "prev": current_status, "new": new_status})
+            
+        # Commit the transaction block completely
+        db.commit()
+    except HTTPException:
+        # Allow intentional HTTP validations to rise through gracefully
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Transaction completely failed due to concurrent modification or database error")
+        
+    return {
+        "message": "Property Successfully Transacted",
+        "parcel_id": parcel_id,
+        "new_status": "purchased"
+    }
+
+
 @router.get("/availability-history")
 def get_availability_history(
     db: Session = Depends(deps.get_db),
