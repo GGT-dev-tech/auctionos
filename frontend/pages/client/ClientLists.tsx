@@ -273,11 +273,14 @@ const ClientLists: React.FC = () => {
                                     key={prop.id}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, prop.id)}
-                                    className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-grab active:cursor-grabbing flex items-center gap-4"
+                                    onClick={() => navigate(`/client/properties/${prop.parcel_id || prop.id}`)}
+                                    className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-pointer flex items-center gap-4"
                                 >
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{prop.title}</h4>
+                                            <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">
+                                                {prop.owner_address ? prop.owner_address.split('\n')[0] : (prop.title || 'Untitled Property')}
+                                            </h4>
                                             <Chip
                                                 label={prop.availability_status || 'Unknown'}
                                                 size="small"
@@ -290,26 +293,34 @@ const ClientLists: React.FC = () => {
                                             <span className="opacity-30">|</span>
                                             <span className="truncate">{prop.address || 'No Address Listed'}</span>
                                         </div>
-                                        <div className="mt-2 flex items-center gap-4">
+
+                                        {/* Description Field Requested by User */}
+                                        {prop.description && (
+                                            <p className="mt-2 text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 italic leading-relaxed">
+                                                {prop.description}
+                                            </p>
+                                        )}
+
+                                        <div className="mt-3 flex items-center gap-4">
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Amount Due</span>
-                                                <span className="text-sm font-bold text-slate-700 dark:text-white">${prop.amount_due?.toLocaleString() || '0'}</span>
+                                                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Amount Due</span>
+                                                <span className="text-xs font-bold text-slate-700 dark:text-white">${prop.amount_due?.toLocaleString() || '0'}</span>
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Acres</span>
-                                                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{prop.lot_acres || 'N/A'}</span>
+                                                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Acres</span>
+                                                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{prop.lot_acres || 'N/A'}</span>
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Improvements</span>
-                                                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">${prop.improvement_value?.toLocaleString() || '0'}</span>
+                                                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Improvements</span>
+                                                <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">${prop.improvement_value?.toLocaleString() || '0'}</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="flex flex-col items-end gap-2">
-                                        <IconButton size="small" onClick={() => navigate(`/client/properties/${prop.id}`)} className="bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600">
+                                        <div className="bg-slate-50 dark:bg-slate-800 p-1.5 rounded-lg text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                             <ExternalLinkIcon size={16} />
-                                        </IconButton>
+                                        </div>
                                         <div className="opacity-0 group-hover:opacity-40 transition-opacity">
                                             <span className="material-symbols-outlined text-[18px]">drag_indicator</span>
                                         </div>
