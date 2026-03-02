@@ -184,6 +184,50 @@ def add_property_to_list(
         db.commit()
     return {"ok": True}
 
+@router.get("/lists/{list_id}/properties")
+def get_list_properties(
+    *,
+    db: Session = Depends(deps.get_db),
+    list_id: int,
+    current_user = Depends(deps.get_current_active_user)
+) -> Any:
+    """Get all properties in a specific list."""
+    lst = db.query(ClientList).filter(ClientList.id == list_id).first()
+    if not lst:
+        raise HTTPException(status_code=404, detail="List not found")
+    
+    # Check ownership or broadcast status
+    if lst.user_id != current_user.id and not lst.is_broadcasted:
+        raise HTTPException(status_code=403, detail="Not authorized to view this list")
+    
+    return [p for p in lst.properties]
+
+@router.post("/lists/{list_id}/move/{property_id}")
+def move_property_between_lists(
+    *,
+    db: Session = Depends(deps.get_db),
+    list_id: int,
+    property_id: int,
+    target_list_id: int,
+    current_user = Depends(deps.get_current_active_user)
+) -> Any:
+    """Move a property from one list to another."""
+    source_list = db.query(ClientList).filter(ClientList.id == list_id, ClientList.user_id == current_user.id).first()
+    target_list = db.query(ClientList).filter(ClientList.id == target_list_id, ClientList.user_id == current_user.id).first()
+    prop = db.query(PropertyDetails).filter(PropertyDetails.id == property_id).first()
+
+    if not source_list or not target_list or not prop:
+        raise HTTPException(status_code=404, detail="Source, Target list or Property not found")
+    
+    if prop in source_list.properties:
+        source_list.properties.remove(prop)
+    
+    if prop not in target_list.properties:
+        target_list.properties.append(prop)
+    
+    db.commit()
+    return {"ok": True}
+
 @router.delete("/lists/{list_id}/properties/{property_id}")
 def remove_property_from_list(
     *,

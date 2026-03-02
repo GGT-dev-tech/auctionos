@@ -12,4 +12,4 @@ api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboar
 api_router.include_router(gis.router, prefix="/gis", tags=["gis"])
 api_router.include_router(counties.router, prefix="/counties", tags=["counties"])
 api_router.include_router(announcements.router, prefix="/admin/announcements", tags=["announcements"])
-api_router.include_router(client_data.router, prefix="/client", tags=["client_portal"])
+api_router.include_router(client_data.router, prefix="/client-data", tags=["client_portal"])

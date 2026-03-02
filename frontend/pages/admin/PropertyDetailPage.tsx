@@ -32,24 +32,38 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
             setLoading(true);
             const data = await PropertyService.getProperty(propertyId);
             setProperty(data);
+            setLoading(false); // Render the main UI as soon as we have data
 
-            // Check if favorited
-            const favorites = await PropertyService.getFavorites();
-            if (data.id && favorites.includes(data.id)) {
-                setIsFavorite(true);
-            }
-
-            // Dynamically load county contacts based on property state and county
-            if (data.state && data.county) {
-                const contacts = await countyService.getContacts(data.state, data.county);
-                setCountyContacts(contacts);
-            }
-
+            // Secondary background loads - non-blocking
+            fetchSecondaryData(data);
             setError(null);
         } catch (err: any) {
             setError(err.message || 'Error loading property details');
-        } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchSecondaryData = async (data: any) => {
+        // Check if favorited (Gracefully handle failures silently)
+        if (!readOnly && localStorage.getItem('token')) {
+            try {
+                const favorites = await PropertyService.getFavorites();
+                if (data.id && favorites.includes(data.id)) {
+                    setIsFavorite(true);
+                }
+            } catch (favErr) {
+                // Silently ignore favorites load failure to keep page functional
+            }
+        }
+
+        // Dynamically load county contacts based on property state and county
+        if (data.state && data.county) {
+            try {
+                const contacts = await countyService.getContacts(data.state, data.county);
+                setCountyContacts(contacts);
+            } catch (contactErr) {
+                // Silently ignore contacts failure
+            }
         }
     };
 

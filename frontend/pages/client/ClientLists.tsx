@@ -1,37 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Box, Button, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from '@mui/material';
-import { FolderPlusIcon, SearchIcon, DownloadCloudIcon, Trash2Icon, Edit2Icon } from 'lucide-react';
+import { Typography, IconButton, TextField, Dialog, Button, CircularProgress, Chip } from '@mui/material';
+import { FolderPlusIcon, Trash2Icon, Edit2Icon, ExternalLinkIcon } from 'lucide-react';
 import { ClientDataService } from '../../services/property.service';
+import { useNavigate } from 'react-router-dom';
 
-interface ClientList {
+interface CustomList {
     id: number;
     name: string;
     property_count: number;
     is_favorite_list: boolean;
+    is_broadcasted: boolean;
 }
 
 const ClientLists: React.FC = () => {
-    const [lists, setLists] = useState<ClientList[]>([]);
-    const [broadcastedLists, setBroadcastedLists] = useState<any[]>([]);
+    const navigate = useNavigate();
+    const [lists, setLists] = useState<CustomList[]>([]);
     const [selectedListId, setSelectedListId] = useState<number | null>(null);
-    const [openModal, setOpenModal] = useState(false);
-    const [openImportModal, setOpenImportModal] = useState(false);
-    const [newListName, setNewListName] = useState('');
+    const [selectedListProperties, setSelectedListProperties] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [propsLoading, setPropsLoading] = useState(false);
+    const [openModal, setOpenModal] = useState(false);
+    const [newListName, setNewListName] = useState('');
+    const [editingListId, setEditingListId] = useState<number | null>(null);
+    const [editName, setEditName] = useState('');
+    const [dragOverListId, setDragOverListId] = useState<number | null>(null);
 
     useEffect(() => {
         loadLists();
     }, []);
+
+    useEffect(() => {
+        if (selectedListId) {
+            loadListProperties(selectedListId);
+        } else {
+            setSelectedListProperties([]);
+        }
+    }, [selectedListId]);
 
     const loadLists = async () => {
         try {
             setLoading(true);
             const data = await ClientDataService.getLists();
             setLists(data);
+            if (data.length > 0 && !selectedListId) {
+                // Select favorites by default if available
+                const fav = data.find(l => l.is_favorite_list);
+                setSelectedListId(fav ? fav.id : data[0].id);
+            }
         } catch (err: any) {
-            alert(err.message);
+            console.error('Error loading lists:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadListProperties = async (listId: number) => {
+        try {
+            setPropsLoading(true);
+            const data = await ClientDataService.getListProperties(listId);
+            setSelectedListProperties(data);
+        } catch (err) {
+            console.error('Error loading properties:', err);
+        } finally {
+            setPropsLoading(false);
         }
     };
 
@@ -48,7 +79,7 @@ const ClientLists: React.FC = () => {
     };
 
     const handleDeleteList = async (id: number) => {
-        if (!window.confirm("Are you sure?")) return;
+        if (!window.confirm("Are you sure you want to delete this folder?")) return;
         try {
             await ClientDataService.deleteList(id);
             loadLists();
@@ -58,22 +89,41 @@ const ClientLists: React.FC = () => {
         }
     };
 
-    const handleOpenImport = async () => {
+    const handleStartRename = (list: CustomList) => {
+        setEditingListId(list.id);
+        setEditName(list.name);
+    };
+
+    const handleRename = async () => {
+        if (!editingListId || !editName) return;
         try {
-            const data = await ClientDataService.getBroadcastedLists();
-            setBroadcastedLists(data);
-            setOpenImportModal(true);
+            await ClientDataService.updateList(editingListId, { name: editName });
+            setEditingListId(null);
+            loadLists();
         } catch (err: any) {
             alert(err.message);
         }
     };
 
-    const handleImportBroadcast = async (listId: number) => {
+    const handleDragStart = (e: React.DragEvent, propertyId: number) => {
+        e.dataTransfer.setData("propertyId", propertyId.toString());
+        e.dataTransfer.setData("sourceListId", selectedListId?.toString() || "");
+    };
+
+    const handleDrop = async (e: React.DragEvent, targetListId: number) => {
+        e.preventDefault();
+        setDragOverListId(null);
+        const propertyId = parseInt(e.dataTransfer.getData("propertyId"));
+        const sourceListId = parseInt(e.dataTransfer.getData("sourceListId"));
+
+        if (sourceListId === targetListId) return;
+
         try {
-            await ClientDataService.importBroadcastedList(listId);
-            alert("Successfully imported Admin broadcasted list as a personal, isolated copy.");
-            setOpenImportModal(false);
+            await ClientDataService.moveProperty(sourceListId, propertyId, targetListId);
             loadLists();
+            if (selectedListId === sourceListId) {
+                loadListProperties(sourceListId);
+            }
         } catch (err: any) {
             alert(err.message);
         }
@@ -81,114 +131,195 @@ const ClientLists: React.FC = () => {
 
     const selectedList = lists.find(l => l.id === selectedListId);
 
+    if (loading && !lists.length) {
+        return (
+            <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                <CircularProgress size={24} />
+            </div>
+        );
+    }
+
     return (
-        <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto overflow-hidden bg-white dark:bg-slate-900 border-x border-slate-200 dark:border-slate-800">
-            {/* Left Pane: Folders/Lists */}
-            <div className="w-1/3 border-r border-slate-200 dark:border-slate-700 flex flex-col bg-slate-50 dark:bg-slate-800/50">
-                <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex flex-col gap-2">
-                    <div className="flex justify-between items-center">
-                        <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">My Lists</Typography>
-                        <Button size="small" startIcon={<FolderPlusIcon size={16} />} onClick={() => setOpenModal(true)}>New List</Button>
-                    </div>
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        color="secondary"
-                        startIcon={<DownloadCloudIcon size={16} />}
-                        fullWidth
-                        onClick={handleOpenImport}
-                    >
-                        Import Broadcasted List
-                    </Button>
+        <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 border-x border-slate-200 dark:border-slate-800">
+            {/* Left Sidebar */}
+            <div className="w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                <div className="p-4 flex justify-between items-center">
+                    <Typography variant="h6" className="font-bold text-slate-800 dark:text-white tracking-tight">Folders</Typography>
+                    <IconButton size="small" onClick={() => setOpenModal(true)} className="hover:bg-slate-200 dark:hover:bg-slate-800">
+                        <FolderPlusIcon size={18} className="text-blue-600" />
+                    </IconButton>
                 </div>
-                <div className="p-0 flex-1 overflow-y-auto">
-                    {lists.length === 0 ? (
-                        <Typography variant="body2" className="text-slate-500 italic text-center mt-10 p-4">
-                            No personal lists yet. Create a new one or import an Admin Broadcast.
-                        </Typography>
-                    ) : (
-                        <List component="nav" className="p-0">
-                            {lists.map(list => (
-                                <ListItem
-                                    button
-                                    key={list.id}
-                                    selected={selectedListId === list.id}
-                                    onClick={() => setSelectedListId(list.id)}
-                                    className={`border-b border-slate-100 dark:border-slate-800 ${selectedListId === list.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
-                                >
-                                    <ListItemText
-                                        primary={
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-slate-700 dark:text-slate-300">{list.name}</span>
-                                                {list.is_favorite_list && <Chip label="Favorites" size="small" color="error" variant="outlined" className="h-5 text-[10px]" />}
-                                            </div>
-                                        }
-                                        secondary={`${list.property_count} properties`}
-                                    />
-                                    {!list.is_favorite_list && (
-                                        <ListItemSecondaryAction>
-                                            <IconButton edge="end" size="small" onClick={() => handleDeleteList(list.id)}>
-                                                <Trash2Icon size={14} className="text-slate-400 hover:text-red-600" />
-                                            </IconButton>
-                                        </ListItemSecondaryAction>
-                                    )}
-                                </ListItem>
-                            ))}
-                        </List>
-                    )}
+
+                <div className="flex-1 overflow-y-auto px-2 pb-4">
+                    <div className="space-y-6">
+                        {/* smart lists / favorites */}
+                        {lists.some(l => l.is_favorite_list) && (
+                            <div>
+                                <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Smart Lists</Typography>
+                                <div className="mt-1 space-y-0.5">
+                                    {lists.filter(l => l.is_favorite_list).map(list => (
+                                        <div
+                                            key={list.id}
+                                            onClick={() => setSelectedListId(list.id)}
+                                            onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
+                                            onDragLeave={() => setDragOverListId(null)}
+                                            onDrop={(e) => handleDrop(e, list.id)}
+                                            className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
+                                                ${selectedListId === list.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
+                                                ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
+                                        >
+                                            <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-red-500'}`}>favorite</span>
+                                            <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
+                                            <span className={`text-xs ${selectedListId === list.id ? 'text-blue-100' : 'text-slate-400'}`}>{list.property_count}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* custom folders */}
+                        <div>
+                            <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Folders</Typography>
+                            <div className="mt-1 space-y-0.5">
+                                {lists.filter(l => !l.is_favorite_list).map(list => (
+                                    <div
+                                        key={list.id}
+                                        onClick={() => setSelectedListId(list.id)}
+                                        onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
+                                        onDragLeave={() => setDragOverListId(null)}
+                                        onDrop={(e) => handleDrop(e, list.id)}
+                                        className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
+                                            ${selectedListId === list.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
+                                            ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
+                                    >
+                                        <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-blue-500'}`}>folder</span>
+                                        {editingListId === list.id ? (
+                                            <input
+                                                autoFocus
+                                                className="flex-1 bg-transparent border-none outline-none text-sm text-inherit p-0"
+                                                value={editName}
+                                                onChange={(e) => setEditName(e.target.value)}
+                                                onBlur={handleRename}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        ) : (
+                                            <>
+                                                <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <IconButton
+                                                        size="small"
+                                                        className="p-0.5"
+                                                        onClick={(e) => { e.stopPropagation(); handleStartRename(list); }}
+                                                    >
+                                                        <Edit2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        size="small"
+                                                        className="p-0.5"
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
+                                                    >
+                                                        <Trash2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
+                                                    </IconButton>
+                                                </div>
+                                                <span className={`text-xs ${selectedListId === list.id ? 'text-blue-100' : 'text-slate-400'}`}>{list.property_count}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2">
+                    <IconButton size="small" onClick={() => setOpenModal(true)} className="text-blue-600">
+                        <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                    </IconButton>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-tighter">New Folder</span>
                 </div>
             </div>
 
-            {/* Right Pane: Property Contents */}
-            <div className="w-2/3 flex flex-col bg-white dark:bg-slate-900">
-                <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-800">
-                    <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">
-                        {selectedList ? selectedList.name : 'List Contents'}
-                    </Typography>
-                    <Button disabled={!selectedList} startIcon={<SearchIcon size={16} />}>Search in List</Button>
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex justify-between items-center">
+                    <div>
+                        <Typography variant="h5" className="font-bold text-slate-900 dark:text-white capitalize leading-tight">
+                            {selectedList?.name || 'Select a Folder'}
+                        </Typography>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{selectedListProperties.length} Properties</span>
+                            <div className="h-1 w-1 bg-slate-300 rounded-full"></div>
+                            <span className="text-xs text-slate-400">Synced to iCloud</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex-1 p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/10">
-                    {!selectedList ? (
-                        <Box className="text-center text-slate-400">
-                            <FolderPlusIcon size={48} className="mx-auto mb-4 opacity-50 text-slate-300" />
-                            <Typography variant="h6" className="font-semibold text-slate-500">Select a list</Typography>
-                            <Typography variant="body2" className="mt-2 text-slate-400">Choose a list from the sidebar to view saved properties.</Typography>
-                        </Box>
+
+                <div className="flex-1 overflow-y-auto p-6">
+                    {propsLoading ? (
+                        <div className="h-full flex items-center justify-center">
+                            <CircularProgress size={24} />
+                        </div>
+                    ) : selectedListProperties.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
+                            <span className="material-symbols-outlined text-[64px] text-slate-300 mb-4">folder_open</span>
+                            <Typography className="text-slate-500 text-sm font-medium">No Properties in this folder</Typography>
+                            <Typography className="text-slate-400 text-xs mt-1">Drag and drop properties here from search or other lists.</Typography>
+                        </div>
                     ) : (
-                        <div className="w-full h-full flex flex-col">
-                            <div className="mb-4 bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 w-fit">
-                                <h3 className="font-bold text-slate-700 dark:text-slate-300 text-sm uppercase tracking-wider mb-1">List Size</h3>
-                                <p className="text-2xl text-slate-900 dark:text-white font-light">{selectedList.property_count} Properties</p>
-                            </div>
-                            <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-center border-dashed">
-                                <p className="text-slate-400 italic">Pre-filtered Property View Component (Mock)</p>
-                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {selectedListProperties.map((prop: any) => (
+                                <div
+                                    key={prop.id}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, prop.id)}
+                                    className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-grab active:cursor-grabbing"
+                                >
+                                    <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{prop.title}</h4>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">{prop.parcel_id}</p>
+
+                                    <div className="mt-4 flex items-center justify-between">
+                                        <Chip
+                                            label={prop.availability_status || 'Unknown'}
+                                            size="small"
+                                            className={`h-5 text-[9px] font-bold uppercase transition-colors 
+                                                ${prop.availability_status === 'available' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'}`}
+                                        />
+                                        <IconButton size="small" onClick={() => navigate(`/client/properties/${prop.id}`)} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <ExternalLinkIcon size={14} className="text-slate-400" />
+                                        </IconButton>
+                                    </div>
+
+                                    {/* Drag indicator in corner */}
+                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-40 transition-opacity">
+                                        <span className="material-symbols-outlined text-[14px]">drag_indicator</span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Create Modal */}
-            <Dialog open={openModal} onClose={() => setOpenModal(false)}>
-                <DialogTitle>New List</DialogTitle>
-                <DialogContent><TextField label="Name" fullWidth value={newListName} onChange={e => setNewListName(e.target.value)} /></DialogContent>
-                <DialogActions><Button onClick={() => setOpenModal(false)}>Cancel</Button><Button variant="contained" onClick={handleCreateList}>Create</Button></DialogActions>
-            </Dialog>
-
-            {/* Import Modal */}
-            <Dialog open={openImportModal} onClose={() => setOpenImportModal(false)}>
-                <DialogTitle>Import Broadcasted Lists</DialogTitle>
-                <DialogContent>
-                    <List>
-                        {broadcastedLists.length === 0 && <Typography>No broadcasted lists available.</Typography>}
-                        {broadcastedLists.map(bl => (
-                            <ListItem key={bl.id}>
-                                <ListItemText primary={bl.name} secondary={`${bl.property_count} properties`} />
-                                <Button size="small" variant="contained" onClick={() => handleImportBroadcast(bl.id)}>Import</Button>
-                            </ListItem>
-                        ))}
-                    </List>
-                </DialogContent>
+            {/* Create Folder Modal */}
+            <Dialog open={openModal} onClose={() => setOpenModal(false)} PaperProps={{ className: "rounded-2xl dark:bg-slate-900" }}>
+                <div className="p-6 min-w-[320px]">
+                    <Typography variant="h6" className="font-bold mb-4 dark:text-white">New Folder</Typography>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        placeholder="Name of your new folder..."
+                        variant="outlined"
+                        value={newListName}
+                        onChange={(e) => setNewListName(e.target.value)}
+                        className="mb-4"
+                        onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
+                    />
+                    <div className="flex justify-end gap-3 mt-4">
+                        <Button color="inherit" onClick={() => setOpenModal(false)}>Cancel</Button>
+                        <Button variant="contained" onClick={handleCreateList} disabled={!newListName} className="bg-blue-600 rounded-lg">Create</Button>
+                    </div>
+                </div>
             </Dialog>
         </div>
     );

@@ -1,37 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Box, Button, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Chip, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { FolderPlusIcon, SearchIcon, ShareIcon, CopyIcon, Trash2Icon, Edit2Icon, TagIcon } from 'lucide-react';
+import { Typography, IconButton, TextField, Dialog, Button, CircularProgress, Chip, Tooltip } from '@mui/material';
+import { FolderPlusIcon, Trash2Icon, Edit2Icon, ExternalLinkIcon, ShareIcon, TagIcon } from 'lucide-react';
 import { ClientDataService } from '../../services/property.service';
+import { useNavigate } from 'react-router-dom';
 
 interface CustomList {
     id: number;
     name: string;
     property_count: number;
-    is_broadcasted: boolean;
     is_favorite_list: boolean;
+    is_broadcasted: boolean;
     tags?: string | null;
 }
 
 const AdminLists: React.FC = () => {
+    const navigate = useNavigate();
     const [lists, setLists] = useState<CustomList[]>([]);
     const [selectedListId, setSelectedListId] = useState<number | null>(null);
+    const [selectedListProperties, setSelectedListProperties] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [propsLoading, setPropsLoading] = useState(false);
     const [openModal, setOpenModal] = useState(false);
     const [newListName, setNewListName] = useState('');
+    const [editingListId, setEditingListId] = useState<number | null>(null);
+    const [editName, setEditName] = useState('');
+    const [dragOverListId, setDragOverListId] = useState<number | null>(null);
 
     useEffect(() => {
         loadLists();
     }, []);
+
+    useEffect(() => {
+        if (selectedListId) {
+            loadListProperties(selectedListId);
+        } else {
+            setSelectedListProperties([]);
+        }
+    }, [selectedListId]);
 
     const loadLists = async () => {
         try {
             setLoading(true);
             const data = await ClientDataService.getLists();
             setLists(data);
+            if (data.length > 0 && !selectedListId) {
+                const fav = data.find(l => l.is_favorite_list);
+                setSelectedListId(fav ? fav.id : data[0].id);
+            }
         } catch (err: any) {
-            alert(err.message);
+            console.error('Error loading lists:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadListProperties = async (listId: number) => {
+        try {
+            setPropsLoading(true);
+            const data = await ClientDataService.getListProperties(listId);
+            setSelectedListProperties(data);
+        } catch (err) {
+            console.error('Error loading properties:', err);
+        } finally {
+            setPropsLoading(false);
         }
     };
 
@@ -48,7 +79,7 @@ const AdminLists: React.FC = () => {
     };
 
     const handleDeleteList = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this list?")) return;
+        if (!window.confirm("Are you sure you want to delete this folder?")) return;
         try {
             await ClientDataService.deleteList(id);
             loadLists();
@@ -58,7 +89,24 @@ const AdminLists: React.FC = () => {
         }
     };
 
-    const handleBroadcastToggle = async (listId: number) => {
+    const handleStartRename = (list: CustomList) => {
+        setEditingListId(list.id);
+        setEditName(list.name);
+    };
+
+    const handleRename = async () => {
+        if (!editingListId || !editName) return;
+        try {
+            await ClientDataService.updateList(editingListId, { name: editName });
+            setEditingListId(null);
+            loadLists();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleBroadcastToggle = async (e: React.MouseEvent, listId: number) => {
+        e.stopPropagation();
         const list = lists.find(l => l.id === listId);
         if (!list) return;
         try {
@@ -69,140 +117,257 @@ const AdminLists: React.FC = () => {
         }
     };
 
-    const handleRenameList = async (id: number) => {
-        const list = lists.find(l => l.id === id);
-        if (!list) return;
-        const newName = window.prompt("Enter new name:", list.name);
-        if (newName && newName !== list.name) {
-            try {
-                await ClientDataService.updateList(id, { name: newName });
-                loadLists();
-            } catch (err: any) {
-                alert(err.message);
+    const handleDragStart = (e: React.DragEvent, propertyId: number) => {
+        e.dataTransfer.setData("propertyId", propertyId.toString());
+        e.dataTransfer.setData("sourceListId", selectedListId?.toString() || "");
+    };
+
+    const handleDrop = async (e: React.DragEvent, targetListId: number) => {
+        e.preventDefault();
+        setDragOverListId(null);
+        const propertyId = parseInt(e.dataTransfer.getData("propertyId"));
+        const sourceListId = parseInt(e.dataTransfer.getData("sourceListId"));
+
+        if (sourceListId === targetListId) return;
+
+        try {
+            await ClientDataService.moveProperty(sourceListId, propertyId, targetListId);
+            loadLists();
+            if (selectedListId === sourceListId) {
+                loadListProperties(sourceListId);
             }
+        } catch (err: any) {
+            alert(err.message);
         }
     };
 
     const selectedList = lists.find(l => l.id === selectedListId);
 
+    if (loading && !lists.length) {
+        return (
+            <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                <CircularProgress size={24} />
+            </div>
+        );
+    }
+
     return (
-        <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto overflow-hidden bg-white dark:bg-slate-900 border-x border-slate-200 dark:border-slate-800">
-            {/* Left Pane: Folders/Lists */}
-            <div className="w-1/3 border-r border-slate-200 dark:border-slate-700 flex flex-col bg-slate-50 dark:bg-slate-800/50">
-                <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                    <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">Admin Lists</Typography>
-                    <Button size="small" startIcon={<FolderPlusIcon size={16} />} onClick={() => setOpenModal(true)}>New List</Button>
+        <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 border-x border-slate-200 dark:border-slate-800">
+            {/* Left Sidebar */}
+            <div className="w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-xl">
+                <div className="p-4 flex justify-between items-center bg-transparent">
+                    <Typography variant="h6" className="font-bold text-slate-800 dark:text-white tracking-tight">Admin Folders</Typography>
+                    <IconButton size="small" onClick={() => setOpenModal(true)} className="hover:bg-slate-200 dark:hover:bg-slate-800">
+                        <FolderPlusIcon size={18} className="text-blue-600" />
+                    </IconButton>
                 </div>
-                <div className="p-0 flex-1 overflow-y-auto">
-                    {lists.length === 0 ? (
-                        <Typography variant="body2" className="text-slate-500 italic text-center mt-10">
-                            No lists created yet. Click 'New List' to start organizing properties.
-                        </Typography>
-                    ) : (
-                        <List component="nav" className="p-0">
-                            {lists.map(list => (
-                                <ListItem
-                                    button
-                                    key={list.id}
-                                    selected={selectedListId === list.id}
-                                    onClick={() => setSelectedListId(list.id)}
-                                    className={`border-b border-slate-100 dark:border-slate-800 ${selectedListId === list.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
-                                >
-                                    <ListItemText
-                                        primary={
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-slate-700 dark:text-slate-300">{list.name}</span>
-                                                {list.is_broadcasted && <Chip label="Broadcasted" size="small" color="primary" className="h-5 text-[10px]" />}
-                                                {list.is_favorite_list && <Chip label="Auto-Favorites" size="small" color="error" variant="outlined" className="h-5 text-[10px]" />}
-                                            </div>
-                                        }
-                                        secondary={
-                                            <div className="flex items-center gap-4 mt-1">
-                                                <span>{list.property_count} properties</span>
-                                                {list.tags && <span className="text-xs text-slate-400 flex items-center gap-1"><TagIcon size={10} /> {list.tags}</span>}
-                                            </div>
-                                        }
-                                    />
-                                    <ListItemSecondaryAction className="flex gap-1">
-                                        {!list.is_favorite_list && (
+
+                <div className="flex-1 overflow-y-auto px-2 pb-4">
+                    <div className="space-y-6">
+                        {/* smart lists / favorites */}
+                        {lists.some(l => l.is_favorite_list) && (
+                            <div>
+                                <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Smart Lists</Typography>
+                                <div className="mt-1 space-y-0.5">
+                                    {lists.filter(l => l.is_favorite_list).map(list => (
+                                        <div
+                                            key={list.id}
+                                            onClick={() => setSelectedListId(list.id)}
+                                            onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
+                                            onDragLeave={() => setDragOverListId(null)}
+                                            onDrop={(e) => handleDrop(e, list.id)}
+                                            className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
+                                                ${selectedListId === list.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
+                                                ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
+                                        >
+                                            <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-red-500'}`}>favorite</span>
+                                            <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
+                                            <span className={`text-xs ${selectedListId === list.id ? 'text-blue-100' : 'text-slate-400'}`}>{list.property_count}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* custom folders */}
+                        <div>
+                            <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Lists & Broadcasts</Typography>
+                            <div className="mt-1 space-y-0.5">
+                                {lists.filter(l => !l.is_favorite_list).map(list => (
+                                    <div
+                                        key={list.id}
+                                        onClick={() => setSelectedListId(list.id)}
+                                        onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
+                                        onDragLeave={() => setDragOverListId(null)}
+                                        onDrop={(e) => handleDrop(e, list.id)}
+                                        className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
+                                            ${selectedListId === list.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
+                                            ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
+                                    >
+                                        <div className="relative">
+                                            <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-blue-500'}`}>folder</span>
+                                            {list.is_broadcasted && (
+                                                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full" />
+                                            )}
+                                        </div>
+
+                                        {editingListId === list.id ? (
+                                            <input
+                                                autoFocus
+                                                className="flex-1 bg-transparent border-none outline-none text-sm text-inherit p-0"
+                                                value={editName}
+                                                onChange={(e) => setEditName(e.target.value)}
+                                                onBlur={handleRename}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        ) : (
                                             <>
-                                                <IconButton size="small" onClick={() => handleRenameList(list.id)} title="Rename">
-                                                    <Edit2Icon size={14} />
-                                                </IconButton>
-                                                <IconButton size="small" color="error" onClick={() => handleDeleteList(list.id)} title="Delete">
-                                                    <Trash2Icon size={14} />
-                                                </IconButton>
+                                                <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Tooltip title={list.is_broadcasted ? "Revoke Broadcast" : "Broadcast to Clients"}>
+                                                        <IconButton size="small" className="p-0.5" onClick={(e) => handleBroadcastToggle(e, list.id)}>
+                                                            <ShareIcon size={12} className={list.is_broadcasted ? 'text-green-500' : 'text-slate-400'} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <IconButton
+                                                        size="small"
+                                                        className="p-0.5"
+                                                        onClick={(e) => { e.stopPropagation(); handleStartRename(list); }}
+                                                    >
+                                                        <Edit2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        size="small"
+                                                        className="p-0.5"
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
+                                                    >
+                                                        <Trash2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
+                                                    </IconButton>
+                                                </div>
+                                                <span className={`text-xs ${selectedListId === list.id ? 'text-blue-100' : 'text-slate-400'}`}>{list.property_count}</span>
                                             </>
                                         )}
-                                        <IconButton size="small" onClick={() => handleBroadcastToggle(list.id)} title={list.is_broadcasted ? "Revoke Broadcast" : "Broadcast to Clients"}>
-                                            <ShareIcon size={16} className={list.is_broadcasted ? "text-primary-600" : "text-slate-400"} />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))}
-                        </List>
-                    )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-transparent flex items-center gap-2">
+                    <IconButton size="small" onClick={() => setOpenModal(true)} className="text-blue-600">
+                        <span className="material-symbols-outlined text-[20px]">add_circle</span>
+                    </IconButton>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-tighter">New Admin List</span>
                 </div>
             </div>
 
-            {/* Right Pane: Property Contents */}
-            <div className="w-2/3 flex flex-col bg-white dark:bg-slate-900">
-                <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-800">
-                    <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">
-                        {selectedList ? selectedList.name : 'List Contents'}
-                    </Typography>
-                    <div className="flex gap-2">
-                        {selectedList && (
-                            <Button
-                                variant={selectedList.isBroadcasted ? "contained" : "outlined"}
-                                size="small"
-                                startIcon={<ShareIcon size={16} />}
-                                onClick={() => handleBroadcastToggle(selectedList.id)}
-                            >
-                                {selectedList.isBroadcasted ? 'Revoke Broadcast' : 'Broadcast to Clients'}
-                            </Button>
-                        )}
-                        <Button disabled={!selectedList} startIcon={<SearchIcon size={16} />}>Search in List</Button>
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex justify-between items-center">
+                    <div>
+                        <div className="flex items-center gap-3">
+                            <Typography variant="h5" className="font-bold text-slate-900 dark:text-white capitalize leading-tight">
+                                {selectedList?.name || 'Select a Folder'}
+                            </Typography>
+                            {selectedList?.is_broadcasted && (
+                                <Chip
+                                    label="BROADCASTED"
+                                    size="small"
+                                    className="bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 font-bold text-[9px]"
+                                />
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{selectedListProperties.length} Properties</span>
+                            {selectedList?.tags && (
+                                <>
+                                    <div className="h-1 w-1 bg-slate-300 rounded-full"></div>
+                                    <span className="text-xs text-slate-400 flex items-center gap-1"><TagIcon size={10} /> {selectedList.tags}</span>
+                                </>
+                            )}
+                        </div>
                     </div>
+                    {selectedList && (
+                        <Button
+                            variant={selectedList.is_broadcasted ? "contained" : "outlined"}
+                            size="small"
+                            color={selectedList.is_broadcasted ? "success" : "primary"}
+                            startIcon={<ShareIcon size={16} />}
+                            onClick={(e) => handleBroadcastToggle(e, selectedList.id)}
+                            className="rounded-xl font-bold"
+                        >
+                            {selectedList.is_broadcasted ? 'Revoke Broadcast' : 'Broadcast to Clients'}
+                        </Button>
+                    )}
                 </div>
-                <div className="flex-1 p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/10">
-                    {!selectedList ? (
-                        <Box className="text-center text-slate-400">
-                            <FolderPlusIcon size={48} className="mx-auto mb-4 opacity-50 text-slate-300" />
-                            <Typography variant="h6" className="font-semibold text-slate-500">Select an Admin List</Typography>
-                            <Typography variant="body2" className="mt-2 text-slate-400 max-w-sm">Choose a list from the sidebar to view saved properties or broadcast the collection to all client dashboards.</Typography>
-                        </Box>
+
+                <div className="flex-1 overflow-y-auto p-6">
+                    {propsLoading ? (
+                        <div className="h-full flex items-center justify-center">
+                            <CircularProgress size={24} />
+                        </div>
+                    ) : selectedListProperties.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
+                            <span className="material-symbols-outlined text-[64px] text-slate-300 mb-4">admin_panel_settings</span>
+                            <Typography className="text-slate-500 text-sm font-medium">Empty List</Typography>
+                            <Typography className="text-slate-400 text-xs mt-1">Add properties to this list to share with your clients.</Typography>
+                        </div>
                     ) : (
-                        <div className="w-full h-full flex flex-col">
-                            {/* Render property list table/cards here in the future */}
-                            <div className="mb-4 flex gap-4">
-                                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex-1">
-                                    <h3 className="font-bold text-slate-700 dark:text-slate-300 text-sm uppercase tracking-wider mb-1">List Size</h3>
-                                    <p className="text-2xl text-slate-900 dark:text-white font-light">{selectedList.property_count} Properties</p>
-                                </div>
-                                <div className={`p-4 rounded-lg shadow-sm border flex-1 ${selectedList.is_broadcasted ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
-                                    <h3 className="font-bold text-sm uppercase tracking-wider mb-1">Broadcast Status</h3>
-                                    <p className="text-2xl font-light">{selectedList.is_broadcasted ? 'Active on Client Dashboards' : 'Private to Admins'}</p>
-                                </div>
-                            </div>
-                            {selectedList.tags && (
-                                <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
-                                    <span className="text-xs font-bold text-slate-500 uppercase">Tags:</span>
-                                    <div className="mt-1 flex gap-2">
-                                        {selectedList.tags.split(',').map(tag => (
-                                            <Chip key={tag} label={tag.trim()} size="small" />
-                                        ))}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {selectedListProperties.map((prop: any) => (
+                                <div
+                                    key={prop.id}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, prop.id)}
+                                    className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-grab active:cursor-grabbing"
+                                >
+                                    <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{prop.title}</h4>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">{prop.parcel_id}</p>
+
+                                    <div className="mt-4 flex items-center justify-between">
+                                        <Chip
+                                            label={prop.availability_status || 'Unknown'}
+                                            size="small"
+                                            className={`h-5 text-[9px] font-bold uppercase transition-colors 
+                                                ${prop.availability_status === 'available' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'}`}
+                                        />
+                                        <IconButton size="small" onClick={() => navigate(`/admin/properties/${prop.id}`)} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <ExternalLinkIcon size={14} className="text-slate-400" />
+                                        </IconButton>
+                                    </div>
+
+                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-40 transition-opacity">
+                                        <span className="material-symbols-outlined text-[14px]">drag_indicator</span>
                                     </div>
                                 </div>
-                            )}
-
-                            <div className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-center border-dashed">
-                                <p className="text-slate-400 italic">Property datagrid rendering engine (Mock)</p>
-                            </div>
+                            ))}
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Create Folder Modal */}
+            <Dialog open={openModal} onClose={() => setOpenModal(false)} PaperProps={{ className: "rounded-2xl dark:bg-slate-900" }}>
+                <div className="p-6 min-w-[320px]">
+                    <Typography variant="h6" className="font-bold mb-4 dark:text-white">New Admin List</Typography>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        placeholder="Project name or client segment..."
+                        variant="outlined"
+                        value={newListName}
+                        onChange={(e) => setNewListName(e.target.value)}
+                        className="mb-4"
+                        onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
+                    />
+                    <div className="flex justify-end gap-3 mt-4">
+                        <Button color="inherit" onClick={() => setOpenModal(false)}>Cancel</Button>
+                        <Button variant="contained" onClick={handleCreateList} disabled={!newListName} className="bg-blue-600 rounded-lg">Create List</Button>
+                    </div>
+                </div>
+            </Dialog>
         </div>
     );
 };

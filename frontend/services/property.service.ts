@@ -279,6 +279,22 @@ export const ClientDataService = {
             throw new Error(err.detail || 'Upload failed');
         }
         return response.json();
+    },
+
+    getListProperties: async (listId: number): Promise<any[]> => {
+        const response = await fetch(`${API_URL}/client-data/lists/${listId}/properties`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch list properties');
+        return response.json();
+    },
+
+    moveProperty: async (sourceListId: number, propertyId: number, targetListId: number): Promise<void> => {
+        const response = await fetch(`${API_URL}/client-data/lists/${sourceListId}/move/${propertyId}?target_list_id=${targetListId}`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to move property');
     }
 };
 
