@@ -331,7 +331,20 @@ def create_client_note(
     note_in: ClientNoteCreate,
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
-    """Write a private note on a property."""
+    """Write or update a private note on a property."""
+    # Check for existing note to perform an 'upsert'
+    existing_note = db.query(ClientNote).filter(
+        ClientNote.user_id == current_user.id,
+        ClientNote.property_id == note_in.property_id
+    ).first()
+    
+    if existing_note:
+        existing_note.note_text = note_in.note_text
+        existing_note.created_at = datetime.now()
+        db.commit()
+        db.refresh(existing_note)
+        return existing_note
+    
     note = ClientNote(user_id=current_user.id, property_id=note_in.property_id, note_text=note_in.note_text)
     db.add(note)
     db.commit()

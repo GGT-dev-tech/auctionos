@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PropertyService, ClientDataService } from '../../services/property.service';
+import { API_BASE_URL } from '../../services/httpClient';
 import { countyService, CountyContact } from '../../services/county.service';
 import { PropertyDetails } from '../../types';
 import { Button, CircularProgress, Chip, Divider } from '@mui/material';
@@ -615,8 +616,16 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                                     className="w-full p-2 text-sm border rounded dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                                     placeholder="Add private Markdown notes..."
                                     defaultValue={property.notes || ""}
-                                    onBlur={(e) => {
-                                        if (e.target.value) ClientDataService.createNote(property.id, e.target.value);
+                                    onBlur={async (e) => {
+                                        const noteText = e.target.value;
+                                        if (noteText !== property.notes) {
+                                            try {
+                                                await ClientDataService.createNote(property.id, noteText);
+                                                // Optional: update local state if needed, but the current value is already in the textarea
+                                            } catch (err) {
+                                                console.error("Failed to save note", err);
+                                            }
+                                        }
                                     }}
                                 />
                                 <p className="text-[10px] text-slate-400 italic">Auto-saves on blur. Supports Markdown formatting.</p>
@@ -632,6 +641,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                                                 try {
                                                     await ClientDataService.uploadAttachment(property.id, e.target.files[0]);
                                                     alert("Attachment uploaded successfully");
+                                                    loadProperty(property.parcel_id); // Refresh to show new attachment
                                                 } catch (err: any) {
                                                     alert(err.message);
                                                 }
@@ -641,8 +651,16 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                                 </div>
                                 <div className="text-xs space-y-1">
                                     {property.attachments?.map((att: any, idx: number) => (
-                                        <div key={idx} className="flex justify-between text-blue-600 hover:underline cursor-pointer">
-                                            <a href={`http://localhost:8000${att.file_path}`} target="_blank" rel="noreferrer">{att.filename}</a>
+                                        <div key={idx} className="flex justify-between text-blue-600 hover:underline cursor-pointer py-1 border-b border-slate-50 dark:border-slate-800 last:border-0">
+                                            <a
+                                                href={att.file_path.startsWith('http') ? att.file_path : `${API_BASE_URL}${att.file_path}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="flex items-center gap-2"
+                                            >
+                                                <span className="material-symbols-outlined text-[16px]">description</span>
+                                                {att.filename}
+                                            </a>
                                         </div>
                                     ))}
                                 </div>
