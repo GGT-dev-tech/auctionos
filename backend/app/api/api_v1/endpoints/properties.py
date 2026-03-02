@@ -369,6 +369,7 @@ def get_property(
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
+    # Use explicit columns to avoid ambiguity and facilitate dict conversion
     query = text("""
         SELECT 
             p.*,
@@ -384,7 +385,10 @@ def get_property(
     if not result:
         raise HTTPException(status_code=404, detail="Property not found")
     
-    prop_id_int = result.id
+    # Use mapping for safe access
+    row_map = result._mapping
+    data = dict(row_map)
+    prop_id_int = row_map.get('id')
     
     # Fetch History
     history_query = text("""
@@ -393,33 +397,42 @@ def get_property(
         WHERE property_id = :property_id
         ORDER BY auction_date DESC
     """)
-    history_results = db.execute(history_query, {"property_id": result.property_id}).fetchall()
-    
-    # Fetch Notes (Latest/Single per user)
-    notes_query = text("""
-        SELECT note_text FROM client_notes 
-        WHERE user_id = :user_id AND property_id = :prop_id 
-        ORDER BY created_at DESC LIMIT 1
-    """)
-    note_row = db.execute(notes_query, {"user_id": current_user.id, "prop_id": prop_id_int}).fetchone()
-    
-    # Fetch Attachments
-    att_query = text("""
-        SELECT filename, file_path FROM client_attachments 
-        WHERE user_id = :user_id AND property_id = :prop_id
-    """)
-    att_rows = db.execute(att_query, {"user_id": current_user.id, "prop_id": prop_id_int}).fetchall()
-    
-    data = dict(result._mapping)
+    history_results = db.execute(history_query, {"property_id": data.get('property_id')}).fetchall()
     data["auction_history"] = [dict(h._mapping) for h in history_results]
-    data["notes"] = note_row[0] if note_row else ""
-    data["attachments"] = [dict(a._mapping) for a in att_rows]
+    
+    # Initialize defaults for resilience
+    data["notes"] = ""
+    data["attachments"] = []
+
+    # Fetch Notes and Attachments only if we have a valid int ID and user
+    if prop_id_int and current_user:
+        try:
+            # Fetch Notes (Latest/Single per user)
+            notes_query = text("""
+                SELECT note_text FROM client_notes 
+                WHERE user_id = :user_id AND property_id = :prop_id 
+                ORDER BY created_at DESC LIMIT 1
+            """)
+            note_row = db.execute(notes_query, {"user_id": current_user.id, "prop_id": prop_id_int}).fetchone()
+            if note_row:
+                data["notes"] = note_row[0]
+            
+            # Fetch Attachments
+            att_query = text("""
+                SELECT filename, file_path FROM client_attachments 
+                WHERE user_id = :user_id AND property_id = :prop_id
+            """)
+            att_rows = db.execute(att_query, {"user_id": current_user.id, "prop_id": prop_id_int}).fetchall()
+            data["attachments"] = [dict(a._mapping) for a in att_rows]
+        except Exception as e:
+            # Log error but don't fail the whole request
+            print(f"Error fetching notes/attachments: {e}")
     
     # Calculate Recommended Next Steps
     next_steps = []
     if data.get("availability_status") == "available":
         next_steps.append({"action": "Review Auction Details", "priority": "high", "type": "info"})
-    if data.get("amount_due", 0) > 0:
+    if data.get("amount_due") and data.get("amount_due") > 0:
         next_steps.append({"action": "Calculate ROI with Taxes", "priority": "medium", "type": "calculate"})
     if not data.get("occupancy"):
         next_steps.append({"action": "Verify Occupancy", "priority": "medium", "type": "verify"})
