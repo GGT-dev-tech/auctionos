@@ -267,32 +267,52 @@ const ClientLists: React.FC = () => {
                             <Typography className="text-slate-400 text-xs mt-1">Drag and drop properties here from search or other lists.</Typography>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="space-y-3">
                             {selectedListProperties.map((prop: any) => (
                                 <div
                                     key={prop.id}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, prop.id)}
-                                    className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-grab active:cursor-grabbing"
+                                    className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-grab active:cursor-grabbing flex items-center gap-4"
                                 >
-                                    <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{prop.title}</h4>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">{prop.parcel_id}</p>
-
-                                    <div className="mt-4 flex items-center justify-between">
-                                        <Chip
-                                            label={prop.availability_status || 'Unknown'}
-                                            size="small"
-                                            className={`h-5 text-[9px] font-bold uppercase transition-colors 
-                                                ${prop.availability_status === 'available' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'}`}
-                                        />
-                                        <IconButton size="small" onClick={() => navigate(`/client/properties/${prop.id}`)} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <ExternalLinkIcon size={14} className="text-slate-400" />
-                                        </IconButton>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{prop.title}</h4>
+                                            <Chip
+                                                label={prop.availability_status || 'Unknown'}
+                                                size="small"
+                                                className={`h-4 text-[8px] font-bold uppercase transition-colors px-0
+                                                    ${prop.availability_status === 'available' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'}`}
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+                                            <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{prop.parcel_id}</span>
+                                            <span className="opacity-30">|</span>
+                                            <span className="truncate">{prop.address || 'No Address Listed'}</span>
+                                        </div>
+                                        <div className="mt-2 flex items-center gap-4">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Amount Due</span>
+                                                <span className="text-sm font-bold text-slate-700 dark:text-white">${prop.amount_due?.toLocaleString() || '0'}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Acres</span>
+                                                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{prop.lot_acres || 'N/A'}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Improvements</span>
+                                                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">${prop.improvement_value?.toLocaleString() || '0'}</span>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    {/* Drag indicator in corner */}
-                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-40 transition-opacity">
-                                        <span className="material-symbols-outlined text-[14px]">drag_indicator</span>
+                                    <div className="flex flex-col items-end gap-2">
+                                        <IconButton size="small" onClick={() => navigate(`/client/properties/${prop.id}`)} className="bg-slate-50 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600">
+                                            <ExternalLinkIcon size={16} />
+                                        </IconButton>
+                                        <div className="opacity-0 group-hover:opacity-40 transition-opacity">
+                                            <span className="material-symbols-outlined text-[18px]">drag_indicator</span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}

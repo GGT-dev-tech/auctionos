@@ -7,6 +7,8 @@ import { Button, CircularProgress, Chip, Divider } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MapIcon from '@mui/icons-material/Map';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import { Menu, MenuItem, Tooltip } from '@mui/material';
+import { FolderPlusIcon, PlusIcon } from 'lucide-react';
 
 interface PropertyDetailPageProps {
     readOnly?: boolean;
@@ -21,11 +23,23 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [lists, setLists] = useState<any[]>([]);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     useEffect(() => {
         if (!id) return;
         loadProperty(id);
-    }, [id]);
+        if (!readOnly) loadLists();
+    }, [id, readOnly]);
+
+    const loadLists = async () => {
+        try {
+            const data = await ClientDataService.getLists();
+            setLists(data);
+        } catch (err) {
+            console.error("Error loading lists", err);
+        }
+    };
 
     const loadProperty = async (propertyId: string) => {
         try {
@@ -130,6 +144,38 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
 
     const handleAddressVerification = () => {
         alert("Address validation matrix initiated. Fetching latest postal data for " + property.address);
+    };
+
+    const handleOpenListMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleCloseListMenu = () => {
+        setAnchorEl(null);
+    };
+
+    const handleAddToList = async (listId: number) => {
+        try {
+            await ClientDataService.addPropertyToList(listId, property.id);
+            alert(`Property added to list!`);
+            handleCloseListMenu();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleCreateAndAdd = async () => {
+        const name = window.prompt("Enter name for new list:");
+        if (!name) return;
+        try {
+            const newList = await ClientDataService.createList(name);
+            await ClientDataService.addPropertyToList(newList.id, property.id);
+            alert(`List created and property added!`);
+            loadLists();
+            handleCloseListMenu();
+        } catch (err: any) {
+            alert(err.message);
+        }
     };
 
     // Attempt to extract owner name from address block (rudimentary approach)
@@ -242,14 +288,50 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                     <div className="flex gap-4">
                         <Button variant="contained" color="success" startIcon={<MapIcon />}>View on Map</Button>
                         {!readOnly && (
-                            <Button
-                                variant={isFavorite ? "contained" : "outlined"}
-                                color={isFavorite ? "error" : "inherit"}
-                                startIcon={<FavoriteBorderIcon />}
-                                onClick={handleToggleFavorite}
-                            >
-                                {isFavorite ? 'Favorited' : 'Add Favorite'}
-                            </Button>
+                            <>
+                                <Button
+                                    variant={isFavorite ? "contained" : "outlined"}
+                                    color={isFavorite ? "error" : "inherit"}
+                                    startIcon={<FavoriteBorderIcon />}
+                                    onClick={handleToggleFavorite}
+                                >
+                                    {isFavorite ? 'Favorited' : 'Add Favorite'}
+                                </Button>
+
+                                <Button
+                                    variant="outlined"
+                                    color="primary"
+                                    startIcon={<FolderPlusIcon size={18} />}
+                                    onClick={handleOpenListMenu}
+                                >
+                                    Add to List
+                                </Button>
+                                <Menu
+                                    anchorEl={anchorEl}
+                                    open={Boolean(anchorEl)}
+                                    onClose={handleCloseListMenu}
+                                    PaperProps={{ className: "mt-1 shadow-lg rounded-xl border border-slate-100 dark:border-slate-800 dark:bg-slate-900" }}
+                                >
+                                    <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Folder</div>
+                                    {lists.map(list => (
+                                        <MenuItem
+                                            key={list.id}
+                                            onClick={() => handleAddToList(list.id)}
+                                            className="text-sm py-2 px-4 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                        >
+                                            <span className="material-symbols-outlined text-[18px] mr-3 text-blue-500">folder</span>
+                                            {list.name}
+                                        </MenuItem>
+                                    ))}
+                                    <Divider className="my-1" />
+                                    <MenuItem
+                                        onClick={handleCreateAndAdd}
+                                        className="text-sm py-2 px-4 text-blue-600 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                    >
+                                        <PlusIcon size={16} className="mr-3" /> New List...
+                                    </MenuItem>
+                                </Menu>
+                            </>
                         )}
                     </div>
 
