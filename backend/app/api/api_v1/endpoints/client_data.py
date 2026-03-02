@@ -1,6 +1,7 @@
 from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 import os
 import shutil
 from datetime import datetime
@@ -200,7 +201,41 @@ def get_list_properties(
     if lst.user_id != current_user.id and not lst.is_broadcasted:
         raise HTTPException(status_code=403, detail="Not authorized to view this list")
     
-    return [p for p in lst.properties]
+    # We want the same detailed view as the properties database
+    results = []
+    for p in lst.properties:
+        # Get latest auction info if available
+        auction_query = text("""
+            SELECT auction_name, auction_date 
+            FROM property_auction_history 
+            WHERE property_id = :prop_id 
+            ORDER BY auction_date DESC LIMIT 1
+        """)
+        auction = db.execute(auction_query, {"prop_id": p.property_id}).fetchone()
+        
+        # Build dict matching PropertyDashboardSchema/Frontend expectations
+        prop_dict = {
+            "id": p.id,
+            "parcel_id": p.parcel_id,
+            "address": p.address,
+            "owner_address": p.owner_address,
+            "county": p.county,
+            "state": p.state,
+            "state_code": p.state, # compatibility for some views
+            "description": p.description or p.legal_description,
+            "amount_due": p.amount_due,
+            "lot_acres": p.lot_acres,
+            "improvement_value": p.improvement_value,
+            "assessed_value": p.assessed_value,
+            "availability_status": p.availability_status,
+            "auction_name": auction[0] if auction else None,
+            "auction_date": auction[1] if auction else None,
+            "property_type": p.property_type,
+            "occupancy": p.occupancy
+        }
+        results.append(prop_dict)
+        
+    return results
 
 @router.post("/lists/{list_id}/move/{property_id}")
 def move_property_between_lists(
