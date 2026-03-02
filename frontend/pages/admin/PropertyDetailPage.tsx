@@ -155,26 +155,46 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     };
 
     const handleAddToList = async (listId: number) => {
+        if (!property?.id) {
+            alert("Error: Property ID missing. Try refreshing the page.");
+            return;
+        }
         try {
+            setActionLoading(true);
             await ClientDataService.addPropertyToList(listId, property.id);
-            alert(`Property added to list!`);
+            alert(`Property added to list successfully!`);
             handleCloseListMenu();
         } catch (err: any) {
-            alert(err.message);
+            console.error("Failed to add property to list:", err);
+            alert(`Error: ${err.message || 'Failed to add property to list'}`);
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleCreateAndAdd = async () => {
         const name = window.prompt("Enter name for new list:");
         if (!name) return;
+
+        if (!property?.id) {
+            alert("Error: Property ID missing. Try refreshing the page.");
+            return;
+        }
+
         try {
+            setActionLoading(true);
+            console.log("Creating list:", name);
             const newList = await ClientDataService.createList(name);
+            console.log("Adding property to new list:", newList.id, property.id);
             await ClientDataService.addPropertyToList(newList.id, property.id);
-            alert(`List created and property added!`);
+            alert(`List "${name}" created and property added!`);
             loadLists();
             handleCloseListMenu();
         } catch (err: any) {
-            alert(err.message);
+            console.error("Failed to create list and add property:", err);
+            alert(`Error: ${err.message || 'Failed to create list'}`);
+        } finally {
+            setActionLoading(false);
         }
     };
 

@@ -127,11 +127,12 @@ def update_client_list(
     db: Session = Depends(deps.get_db),
     list_id: int,
     list_in: ClientListUpdate,
+    current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Update a list's name."""
-    lst = db.query(ClientList).filter(ClientList.id == list_id).first()
+    lst = db.query(ClientList).filter(ClientList.id == list_id, ClientList.user_id == current_user.id).first()
     if not lst:
-        raise HTTPException(status_code=404, detail="List not found")
+        raise HTTPException(status_code=404, detail="List not found or not owned by you")
     if lst.is_favorite_list and list_in.name:
         raise HTTPException(status_code=400, detail="Cannot rename the Favorites list")
     
@@ -140,8 +141,6 @@ def update_client_list(
     if list_in.tags is not None:
         lst.tags = list_in.tags
     if list_in.is_broadcasted is not None:
-        # Check if user is admin or it's their list (Admin/Superuser only for broadcasting)
-        # For simplicity, we check if current_user is admin
         if current_user.role not in ['admin', 'superuser']:
              raise HTTPException(status_code=403, detail="Only admins can broadcast lists")
         lst.is_broadcasted = list_in.is_broadcasted
@@ -155,11 +154,12 @@ def delete_client_list(
     *,
     db: Session = Depends(deps.get_db),
     list_id: int,
+    current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Delete a client list."""
-    lst = db.query(ClientList).filter(ClientList.id == list_id).first()
+    lst = db.query(ClientList).filter(ClientList.id == list_id, ClientList.user_id == current_user.id).first()
     if not lst:
-        raise HTTPException(status_code=404, detail="List not found")
+        raise HTTPException(status_code=404, detail="List not found or not owned by you")
     if lst.is_favorite_list:
         raise HTTPException(status_code=400, detail="Cannot delete the Favorites list")
     
@@ -173,12 +173,13 @@ def add_property_to_list(
     db: Session = Depends(deps.get_db),
     list_id: int,
     property_id: int,
+    current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Add a scraped property to a specific client list."""
-    lst = db.query(ClientList).filter(ClientList.id == list_id).first()
+    lst = db.query(ClientList).filter(ClientList.id == list_id, ClientList.user_id == current_user.id).first()
     prop = db.query(PropertyDetails).filter(PropertyDetails.id == property_id).first()
     if not lst or not prop:
-        raise HTTPException(status_code=404, detail="List or Property not found")
+        raise HTTPException(status_code=404, detail="List (owned by you) or Property not found")
     
     if prop not in lst.properties:
         lst.properties.append(prop)
@@ -269,12 +270,13 @@ def remove_property_from_list(
     db: Session = Depends(deps.get_db),
     list_id: int,
     property_id: int,
+    current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Remove a property from a specific client list."""
-    lst = db.query(ClientList).filter(ClientList.id == list_id).first()
+    lst = db.query(ClientList).filter(ClientList.id == list_id, ClientList.user_id == current_user.id).first()
     prop = db.query(PropertyDetails).filter(PropertyDetails.id == property_id).first()
     if not lst or not prop:
-        raise HTTPException(status_code=404, detail="List or Property not found")
+        raise HTTPException(status_code=404, detail="List (owned by you) or Property not found")
     
     if prop in lst.properties:
         lst.properties.remove(prop)
