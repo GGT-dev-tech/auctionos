@@ -66,3 +66,17 @@ async def get_import_status(
         raise HTTPException(status_code=404, detail="Job not found")
         
     return {"job_id": job_id, "status": status.decode('utf-8')}
+
+@router.post("/trigger-auto-transition")
+async def trigger_auto_transition(
+    current_user: User = Depends(get_current_active_user)
+) -> Any:
+    """
+    Manually triggers the background task that transitions properties from 
+    past auctions to 'sold'. This is useful for testing and debugging.
+    """
+    from app.services.status_updater import transition_past_auctions
+    result = transition_past_auctions()
+    if result.get("status") == "error":
+        raise HTTPException(status_code=500, detail=result.get("message"))
+    return result

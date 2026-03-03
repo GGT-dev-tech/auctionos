@@ -18,7 +18,6 @@ def transition_past_auctions():
         today = datetime.now().date()
         
         # 1. Find eligible properties
-        # Added broad try/except to handle schema differences (especially locally)
         try:
             query = text("""
                 SELECT p.property_id, pah.auction_date 
@@ -29,12 +28,12 @@ def transition_past_auctions():
             """)
             results = db.execute(query, {"today": today}).fetchall()
         except Exception as query_err:
-            logger.warning(f"Auto-Transition: Could not execute query, possibly missing column. Error: {query_err}")
-            return
+            logger.error(f"Auto-Transition: Could not execute query: {query_err}")
+            return {"status": "error", "message": f"Query Error: {str(query_err)}"}
         
         if not results:
             logger.info("Auto-Transition: No past auction properties to transition today.")
-            return
+            return {"status": "success", "processed": 0, "message": "No eligible properties found."}
 
         count = 0
         for row in results:
@@ -60,9 +59,11 @@ def transition_past_auctions():
             
         db.commit()
         logger.info(f"Auto-Transition: Successfully transitioned {count} properties to 'sold' status.")
+        return {"status": "success", "processed": count}
         
     except Exception as e:
         db.rollback()
         logger.error(f"Auto-Transition: Failed with error: {str(e)}")
+        return {"status": "error", "message": f"Transaction Error: {str(e)}"}
     finally:
         db.close()
