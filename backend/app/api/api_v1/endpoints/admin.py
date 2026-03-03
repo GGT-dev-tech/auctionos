@@ -80,3 +80,24 @@ async def trigger_auto_transition(
     if result.get("status") == "error":
         raise HTTPException(status_code=500, detail=result.get("message"))
     return result
+
+@router.get("/debug-auto-transition")
+def debug_auto_transition(
+    limit: int = 5,
+    db: Session = Depends(deps.get_db)
+):
+    from sqlalchemy import text
+    query = text("""
+        WITH latest_auctions AS (
+            SELECT property_id, MAX(auction_date) as max_date
+            FROM property_auction_history
+            GROUP BY property_id
+        )
+        SELECT p.property_id, p.availability_status, la.max_date
+        FROM property_details p
+        LEFT JOIN latest_auctions la ON p.property_id = la.property_id
+        WHERE p.availability_status ILIKE '%available%'
+        LIMIT :limit
+    """)
+    results = db.execute(query, {"limit": limit}).fetchall()
+    return [{"property_id": r[0], "status": r[1], "max_date": r[2]} for r in results]
