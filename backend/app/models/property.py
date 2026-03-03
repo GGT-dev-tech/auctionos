@@ -65,7 +65,7 @@ class PropertyDetails(Base):
     max_bid = Column(Float, nullable=True)
     property_category = Column(String(255), nullable=True)
     purchase_option_type = Column(String(255), nullable=True)
-    availability_status = Column(String(50), nullable=True, default="available")
+    availability_status = Column(String(50), nullable=True, default="available", index=True)
     
     # New Fields for Extended Detail View
     alternate_owner_address = Column(String(255), nullable=True)
@@ -86,10 +86,10 @@ class PropertyAuctionHistory(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
-    property_id = Column(String(36), nullable=False)
+    property_id = Column(String(36), nullable=False, index=True)
     auction_id = Column(Integer, ForeignKey("auction_events.id", ondelete="SET NULL"), nullable=True, index=True)
     auction_name = Column(String(255), nullable=True)
-    auction_date = Column(Date, nullable=True)
+    auction_date = Column(Date, nullable=True, index=True)
     location = Column(String(255), nullable=True)
     listed_as = Column(String(255), nullable=True)
     taxes_due = Column(Float, nullable=True)
