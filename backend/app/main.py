@@ -14,6 +14,7 @@ from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 from contextlib import asynccontextmanager
 
+import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from app.services.status_updater import transition_past_auctions
@@ -26,8 +27,9 @@ async def lifespan(app: FastAPI):
     redis = aioredis.from_url(settings.REDIS_URL)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
     
-    # Run the transition job once immediately on startup to catch up
-    transition_past_auctions()
+    # Run the transition job once immediately on startup to catch up (in a separate thread to avoid blocking loop)
+    # create_task ensures it doesn't block the ASGI application from finishing startup
+    asyncio.create_task(asyncio.to_thread(transition_past_auctions))
     
     # Schedule the job to run daily at 00:05 AM
     scheduler.add_job(
@@ -103,7 +105,7 @@ async def log_requests(request: Request, call_next):
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Mount client upload files
-uploads_dir = "/app/uploads"
+uploads_dir = os.path.join(os.getcwd(), "uploads")
 os.makedirs(uploads_dir, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 

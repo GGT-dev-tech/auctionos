@@ -18,15 +18,19 @@ def transition_past_auctions():
         today = datetime.now().date()
         
         # 1. Find eligible properties
-        query = text("""
-            SELECT p.property_id, pah.auction_date 
-            FROM property_details p
-            JOIN property_auction_history pah ON p.property_id = pah.property_id
-            WHERE p.availability_status = 'available' 
-              AND pah.auction_date < :today
-        """)
-        
-        results = db.execute(query, {"today": today}).fetchall()
+        # Added broad try/except to handle schema differences (especially locally)
+        try:
+            query = text("""
+                SELECT p.property_id, pah.auction_date 
+                FROM property_details p
+                JOIN property_auction_history pah ON p.property_id = pah.property_id
+                WHERE p.availability_status = 'available' 
+                  AND pah.auction_date < :today
+            """)
+            results = db.execute(query, {"today": today}).fetchall()
+        except Exception as query_err:
+            logger.warning(f"Auto-Transition: Could not execute query, possibly missing column. Error: {query_err}")
+            return
         
         if not results:
             logger.info("Auto-Transition: No past auction properties to transition today.")
