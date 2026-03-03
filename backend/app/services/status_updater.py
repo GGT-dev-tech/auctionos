@@ -20,17 +20,16 @@ def transition_past_auctions():
         # 1. Find eligible properties
         try:
             query = text("""
+                WITH latest_auctions AS (
+                    SELECT property_id, MAX(auction_date) as max_date
+                    FROM property_auction_history
+                    GROUP BY property_id
+                )
                 SELECT p.property_id
                 FROM property_details p
-                JOIN property_auction_history pah ON p.property_id = pah.property_id
-                WHERE LOWER(p.availability_status) = 'available' 
-                  AND pah.auction_date < :today
-                  AND NOT EXISTS (
-                      SELECT 1 FROM property_auction_history future_pah
-                      WHERE future_pah.property_id = p.property_id 
-                        AND future_pah.auction_date >= :today
-                  )
-                GROUP BY p.property_id
+                JOIN latest_auctions la ON p.property_id = la.property_id
+                WHERE p.availability_status IN ('available', 'Available', 'AVAILABLE')
+                  AND la.max_date < :today
             """)
             results = db.execute(query, {"today": today}).fetchall()
         except Exception as query_err:
