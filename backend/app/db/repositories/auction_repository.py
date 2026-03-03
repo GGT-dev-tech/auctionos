@@ -65,7 +65,7 @@ class AuctionRepository:
         if sort_by_date:
             query = query.order_by(asc(AuctionEvent.auction_date))
         else:
-            query = query.order_by(asc(AuctionEvent.auction_date).desc()) # desc by default
+            query = query.order_by(AuctionEvent.auction_date.desc()) # desc by default
 
         total = query.count()
         items = query.offset(skip).limit(limit).all()
