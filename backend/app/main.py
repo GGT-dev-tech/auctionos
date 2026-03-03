@@ -15,33 +15,31 @@ from redis import asyncio as aioredis
 from contextlib import asynccontextmanager
 
 import asyncio
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 from app.services.status_updater import transition_past_auctions
 
-# Initialize scheduler
-scheduler = AsyncIOScheduler()
+async def run_daily_task():
+    while True:
+        try:
+            # Run the transition task in a separate thread so it doesn't block
+            await asyncio.to_thread(transition_past_auctions)
+        except Exception as e:
+            print(f"Error in daily background task: {e}")
+            
+        # Sleep for 12 hours before checking again
+        await asyncio.sleep(12 * 3600)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     redis = aioredis.from_url(settings.REDIS_URL)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
     
-    # Run the transition job once immediately on startup to catch up (in a separate thread to avoid blocking loop)
-    # create_task ensures it doesn't block the ASGI application from finishing startup
-    asyncio.create_task(asyncio.to_thread(transition_past_auctions))
-    
-    # Schedule the job to run daily at 00:05 AM
-    scheduler.add_job(
-        transition_past_auctions, 
-        CronTrigger(hour=0, minute=5),
-        id="auto_transition_sold_properties"
-    )
-    scheduler.start()
+    # Start the background task loop
+    task = asyncio.create_task(run_daily_task())
     
     yield
     
-    scheduler.shutdown()
+    # Cancel the task when shutting down
+    task.cancel()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
