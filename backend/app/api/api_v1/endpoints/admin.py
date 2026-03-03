@@ -69,53 +69,14 @@ async def get_import_status(
 
 @router.post("/trigger-auto-transition")
 async def trigger_auto_transition(
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(deps.get_db)
+    current_user: User = Depends(get_current_active_user)
 ) -> Any:
-    from sqlalchemy import text
-    try:
-        # Check if there are any properties past auction_date at all
-        query = text("""
-            WITH latest_auctions AS (
-                SELECT property_id, MAX(auction_date) as max_date
-                FROM property_auction_history
-                GROUP BY property_id
-            )
-            SELECT COUNT(*), MIN(la.max_date), MAX(la.max_date)
-            FROM property_details p
-            JOIN latest_auctions la ON p.property_id = la.property_id
-            WHERE p.availability_status IN ('available', 'Available', 'AVAILABLE')
-        """)
-        results = db.execute(query).fetchone()
-        
-        return {
-            "status": "success",
-            "debug": True,
-            "total_available_properties_with_history": results[0] if results else 0,
-            "min_auction_date": str(results[1]) if results and results[1] else None,
-            "max_auction_date": str(results[2]) if results and results[2] else None,
-            "today_date": str(datetime.now().date())
-        }
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-@router.get("/debug-auto-transition")
-def debug_auto_transition(
-    limit: int = 5,
-    db: Session = Depends(deps.get_db)
-):
-    from sqlalchemy import text
-    query = text("""
-        WITH latest_auctions AS (
-            SELECT property_id, MAX(auction_date) as max_date
-            FROM property_auction_history
-            GROUP BY property_id
-        )
-        SELECT p.property_id, p.availability_status, la.max_date
-        FROM property_details p
-        LEFT JOIN latest_auctions la ON p.property_id = la.property_id
-        WHERE p.availability_status ILIKE '%available%'
-        LIMIT :limit
-    """)
-    results = db.execute(query, {"limit": limit}).fetchall()
-    return [{"property_id": r[0], "status": r[1], "max_date": r[2]} for r in results]
+    """
+    Manually triggers the background task that transitions properties from 
+    past auctions to 'sold'. This is useful for testing and debugging.
+    """
+    from app.services.status_updater import transition_past_auctions
+    result = transition_past_auctions()
+    if result.get("status") == "error":
+        raise HTTPException(status_code=500, detail=result.get("message"))
+    return result
