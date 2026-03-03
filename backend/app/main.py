@@ -14,11 +14,32 @@ from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 from contextlib import asynccontextmanager
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from app.services.status_updater import transition_past_auctions
+
+# Initialize scheduler
+scheduler = AsyncIOScheduler()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     redis = aioredis.from_url(settings.REDIS_URL)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+    
+    # Run the transition job once immediately on startup to catch up
+    transition_past_auctions()
+    
+    # Schedule the job to run daily at 00:05 AM
+    scheduler.add_job(
+        transition_past_auctions, 
+        CronTrigger(hour=0, minute=5),
+        id="auto_transition_sold_properties"
+    )
+    scheduler.start()
+    
     yield
+    
+    scheduler.shutdown()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

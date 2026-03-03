@@ -21,7 +21,7 @@ def read_auctions(
     min_parcels: Optional[int] = Query(None, description="Mínimo de parcelas (imóveis)"),
     max_parcels: Optional[int] = Query(None, description="Máximo de parcelas (imóveis)"),
     q: Optional[str] = Query(None, description="Busca textual genérica avançada"),
-    sort_by_date: bool = Query(True, description="Ordenar por auction_date ascendente"),
+    sort_by_date: bool = Query(False, description="Ordernar por auction_date descendente (False) ou ascendente (True)"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
 ) -> Any:

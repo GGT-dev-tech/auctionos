@@ -3,6 +3,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+import re
 from app.api import deps
 from app.schemas.property import PropertyDashboardSchema, PaginatedPropertyResponse
 from app.models.user import User
@@ -99,10 +100,51 @@ def read_properties(
     if owner_location:
         where_clauses.append("p.owner_address ILIKE :owner_location")
         params["owner_location"] = f"%{owner_location}%"
+    
+    # Phase 36: Intelligent Search & Fuzzy Matching
     if keyword:
-        # Keyword searches parcel_id, address, zip (assumed in address)
-        where_clauses.append("(p.parcel_id ILIKE :keyword OR p.address ILIKE :keyword)")
-        params["keyword"] = f"%{keyword}%"
+        k = keyword.strip()
+        
+        # 1. Detect 5-digit ZIP Codes
+        if re.fullmatch(r'\d{5}', k):
+            where_clauses.append("p.address ILIKE :zip_keyword")
+            params["zip_keyword"] = f"%{k}%"
+            
+        # 2. Detect Parcel IDs (digits and dashes, typical formats)
+        elif re.match(r'^[\d\-A-Z]+$', k.upper()) and len(k) > 4:
+            # Strip dashes for a "clean" search if the user included them
+            clean_k = k.replace('-', '')
+            
+            where_clauses.append('''
+                (
+                    REPLACE(p.parcel_id, '-', '') ILIKE :clean_k OR 
+                    REPLACE(p.pin_ppin, '-', '') ILIKE :clean_k OR
+                    REPLACE(p.raw_parcel_number, '-', '') ILIKE :clean_k OR
+                    p.parcel_id ILIKE :keyword OR
+                    p.pin_ppin ILIKE :keyword
+                )
+            ''')
+            params["clean_k"] = f"%{clean_k}%"
+            params["keyword"] = f"%{k}%"
+            
+        # 3. Default "Fuzzy" / Broad Match (Addresses, Counties, etc.)
+        else:
+            # Replace spaces with wildcards to handle slight typos (e.g., "123Main" -> "123%Main")
+            fuzzy_k = "%".join(k.split()) 
+            
+            where_clauses.append('''
+                (
+                    p.address ILIKE :fuzzy_k OR 
+                    p.county ILIKE :fuzzy_k OR
+                    p.owner_address ILIKE :fuzzy_k OR
+                    p.description ILIKE :fuzzy_k OR
+                    p.legal_description ILIKE :fuzzy_k OR
+                    p.parcel_id ILIKE :keyword
+                )
+            ''')
+            params["fuzzy_k"] = f"%{fuzzy_k}%"
+            params["keyword"] = f"%{k}%"
+
     if is_unavailable is True:
         where_clauses.append("p.availability_status = 'not available'")
 

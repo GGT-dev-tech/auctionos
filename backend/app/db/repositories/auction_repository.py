@@ -64,6 +64,8 @@ class AuctionRepository:
 
         if sort_by_date:
             query = query.order_by(asc(AuctionEvent.auction_date))
+        else:
+            query = query.order_by(asc(AuctionEvent.auction_date).desc()) # desc by default
 
         total = query.count()
         items = query.offset(skip).limit(limit).all()
@@ -128,7 +130,7 @@ class AuctionRepository:
                 list_link
             FROM auction_events
             {where_sql}
-            ORDER BY auction_date ASC
+            ORDER BY auction_date DESC
         """)
         
         results = db.execute(query, params).fetchall()
