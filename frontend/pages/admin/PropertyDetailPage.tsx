@@ -30,8 +30,8 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     useEffect(() => {
         if (!id) return;
         loadProperty(id);
-        if (!readOnly) loadLists();
-    }, [id, readOnly]);
+        loadLists();
+    }, [id]);
 
     const loadLists = async () => {
         try {
@@ -60,7 +60,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
 
     const fetchSecondaryData = async (data: any) => {
         // Check if favorited (Gracefully handle failures silently)
-        if (!readOnly && localStorage.getItem('token')) {
+        if (localStorage.getItem('token')) {
             try {
                 const favorites = await PropertyService.getFavorites();
                 if (data.id && favorites.includes(data.id)) {
@@ -308,52 +308,48 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
 
                     <div className="flex gap-4">
                         <Button variant="contained" color="success" startIcon={<MapIcon />}>View on Map</Button>
-                        {!readOnly && (
-                            <>
-                                <Button
-                                    variant={isFavorite ? "contained" : "outlined"}
-                                    color={isFavorite ? "error" : "inherit"}
-                                    startIcon={<FavoriteBorderIcon />}
-                                    onClick={handleToggleFavorite}
-                                >
-                                    {isFavorite ? 'Favorited' : 'Add Favorite'}
-                                </Button>
+                        <Button
+                            variant={isFavorite ? "contained" : "outlined"}
+                            color={isFavorite ? "error" : "inherit"}
+                            startIcon={<FavoriteBorderIcon />}
+                            onClick={handleToggleFavorite}
+                        >
+                            {isFavorite ? 'Favorited' : 'Add Favorite'}
+                        </Button>
 
-                                <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    startIcon={<FolderPlusIcon size={18} />}
-                                    onClick={handleOpenListMenu}
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<FolderPlusIcon size={18} />}
+                            onClick={handleOpenListMenu}
+                        >
+                            Add to List
+                        </Button>
+                        <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleCloseListMenu}
+                            PaperProps={{ className: "mt-1 shadow-lg rounded-xl border border-slate-100 dark:border-slate-800 dark:bg-slate-900" }}
+                        >
+                            <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Folder</div>
+                            {lists.map(list => (
+                                <MenuItem
+                                    key={list.id}
+                                    onClick={() => handleAddToList(list.id)}
+                                    className="text-sm py-2 px-4 hover:bg-slate-50 dark:hover:bg-slate-800"
                                 >
-                                    Add to List
-                                </Button>
-                                <Menu
-                                    anchorEl={anchorEl}
-                                    open={Boolean(anchorEl)}
-                                    onClose={handleCloseListMenu}
-                                    PaperProps={{ className: "mt-1 shadow-lg rounded-xl border border-slate-100 dark:border-slate-800 dark:bg-slate-900" }}
-                                >
-                                    <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Folder</div>
-                                    {lists.map(list => (
-                                        <MenuItem
-                                            key={list.id}
-                                            onClick={() => handleAddToList(list.id)}
-                                            className="text-sm py-2 px-4 hover:bg-slate-50 dark:hover:bg-slate-800"
-                                        >
-                                            <span className="material-symbols-outlined text-[18px] mr-3 text-blue-500">folder</span>
-                                            {list.name}
-                                        </MenuItem>
-                                    ))}
-                                    <Divider className="my-1" />
-                                    <MenuItem
-                                        onClick={handleCreateAndAdd}
-                                        className="text-sm py-2 px-4 text-blue-600 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                                    >
-                                        <PlusIcon size={16} className="mr-3" /> New List...
-                                    </MenuItem>
-                                </Menu>
-                            </>
-                        )}
+                                    <span className="material-symbols-outlined text-[18px] mr-3 text-blue-500">folder</span>
+                                    {list.name}
+                                </MenuItem>
+                            ))}
+                            <Divider className="my-1" />
+                            <MenuItem
+                                onClick={handleCreateAndAdd}
+                                className="text-sm py-2 px-4 text-blue-600 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            >
+                                <PlusIcon size={16} className="mr-3" /> New List...
+                            </MenuItem>
+                        </Menu>
                     </div>
 
                     {/* Auction History */}
