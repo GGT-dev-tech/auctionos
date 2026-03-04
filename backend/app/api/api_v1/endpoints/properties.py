@@ -264,6 +264,51 @@ class PropertyUpdateRequest(BaseModel):
     additional_parcel_numbers: Optional[str] = None
     occupancy_checked_date: Optional[date] = None
 
+class PropertyCreateRequest(PropertyUpdateRequest):
+    parcel_id: str  # Required for creation
+
+@router.post("/", response_model=dict)
+def create_property(
+    property_in: PropertyCreateRequest,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+) -> Any:
+    import uuid
+    
+    # Check if parcel_id already exists
+    exists = db.execute(text("SELECT 1 FROM property_details WHERE parcel_id = :parcel_id"), {"parcel_id": property_in.parcel_id}).fetchone()
+    if exists:
+        raise HTTPException(status_code=400, detail="A property with this Parcel ID already exists.")
+        
+    create_data = property_in.dict(exclude_unset=True)
+    prop_id = str(uuid.uuid4())
+    create_data["property_id"] = prop_id
+    
+    if "availability_status" not in create_data:
+        create_data["availability_status"] = "available"
+        
+    keys = list(create_data.keys())
+    columns = ", ".join(keys)
+    values_placeholders = ", ".join([f":{k}" for k in keys])
+    
+    query = text(f"INSERT INTO property_details ({columns}) VALUES ({values_placeholders})")
+    
+    try:
+        db.execute(query, create_data)
+        
+        # Log creation
+        db.execute(
+            text("INSERT INTO property_availability_history (property_id, previous_status, new_status, change_source) VALUES (:prop_id, 'new_entry', :status, 'manual_creation')"),
+            {"prop_id": prop_id, "status": create_data["availability_status"]}
+        )
+        
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    return {"message": "Property created successfully", "parcel_id": property_in.parcel_id}
+
 @router.put("/{parcel_id}", response_model=dict)
 def update_property(
     parcel_id: str,
