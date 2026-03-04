@@ -26,12 +26,21 @@ import ClientAuctions from './pages/client/ClientAuctions';
 import ClientProperties from './pages/client/ClientProperties';
 import ClientLists from './pages/client/ClientLists';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // ... existing protected route logic
+const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: string[] }> = ({ children, allowedRoles }) => {
   const user = AuthService.getCurrentUser();
   if (!user) {
     return <Navigate to="/login" replace />;
   }
+
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    // Redirect to appropriate dashboard if they try to access a route they shouldn't
+    if (user.role === 'client') {
+      return <Navigate to="/client" replace />;
+    } else {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
   return <>{children}</>;
 };
 
@@ -47,7 +56,7 @@ const App: React.FC = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Protected Routes (Admin/Agent) */}
-          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route element={<ProtectedRoute allowedRoles={['admin', 'superuser', 'agent']}><Layout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/auctions" element={<AuctionList filters={{}} />} />
             <Route path="/admin/auctions" element={<AdminAuctions />} />
@@ -61,7 +70,7 @@ const App: React.FC = () => {
           </Route>
 
           {/* Client Portal Routes */}
-          <Route path="/client" element={<ProtectedRoute><ClientLayout /></ProtectedRoute>}>
+          <Route path="/client" element={<ProtectedRoute allowedRoles={['client']}><ClientLayout /></ProtectedRoute>}>
             <Route index element={<ClientDashboard />} />
             <Route path="auctions" element={<ClientAuctions />} />
             <Route path="properties" element={<ClientProperties />} />
