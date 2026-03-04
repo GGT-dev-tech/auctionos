@@ -25,3 +25,26 @@ export const getMultiPartHeaders = () => {
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
 };
+
+// Global Fetch Interceptor to handle 401 Unauthorized (Token Expiration)
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+    const response = await originalFetch(...args);
+
+    try {
+        const url = typeof args[0] === 'string' ? args[0] : (args[0] instanceof Request ? args[0].url : '');
+        const isApiRequest = url.includes(API_URL) || url.includes('/api/v1');
+        const isLoginRequest = url.includes('/auth/login');
+
+        if (isApiRequest && !isLoginRequest && response.status === 401) {
+            console.warn('Authentication token expired or invalid. Redirecting to login.');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/#/login';
+        }
+    } catch (e) {
+        console.error('Error in fetch interceptor', e);
+    }
+
+    return response;
+};
