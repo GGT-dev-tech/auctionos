@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/auth.service';
+import { API_URL } from '../services/httpClient';
 
 export const Signup: React.FC = () => {
     const navigate = useNavigate();
@@ -34,8 +35,6 @@ export const Signup: React.FC = () => {
         try {
             // Assuming register endpoint exists. Adjust according to actual backend API route for registration.
             // Usually, this would hit POST /api/v1/users (or auth/register) and return the new user or a standard token payload
-            // For now, simulating API call logic that forces 'client' role mapping on backend:
-
             const payload = {
                 email: formData.email,
                 password: formData.password,
@@ -43,7 +42,7 @@ export const Signup: React.FC = () => {
                 role: "client" // Enforce client role on signup
             };
 
-            const response = await fetch('/api/v1/auth/register', {
+            const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
