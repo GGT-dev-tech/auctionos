@@ -3,6 +3,7 @@ from typing import Any
 import uuid
 import os
 from app.services.import_service import import_service
+from app.api import deps
 from app.api.deps import get_current_active_user
 from app.models.user import User
 
