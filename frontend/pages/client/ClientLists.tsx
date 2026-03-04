@@ -24,6 +24,8 @@ const ClientLists: React.FC = () => {
     const [editingListId, setEditingListId] = useState<number | null>(null);
     const [editName, setEditName] = useState('');
     const [dragOverListId, setDragOverListId] = useState<number | null>(null);
+    const [broadcastedLists, setBroadcastedLists] = useState<CustomList[]>([]);
+    const [importing, setImporting] = useState<number | null>(null);
 
     useEffect(() => {
         loadLists();
@@ -51,6 +53,13 @@ const ClientLists: React.FC = () => {
             console.error('Error loading lists:', err);
         } finally {
             setLoading(false);
+        }
+
+        try {
+            const bData = await ClientDataService.getBroadcastedLists();
+            setBroadcastedLists(bData);
+        } catch (err: any) {
+            console.error('Error loading broadcasted lists:', err);
         }
     };
 
@@ -129,9 +138,22 @@ const ClientLists: React.FC = () => {
         }
     };
 
-    const selectedList = lists.find(l => l.id === selectedListId);
+    const handleImportBroadcasted = async (listId: number) => {
+        setImporting(listId);
+        try {
+            const newList = await ClientDataService.importBroadcastedList(listId);
+            await loadLists();
+            setSelectedListId(newList.id);
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setImporting(null);
+        }
+    };
 
-    if (loading && !lists.length) {
+    const selectedList = lists.find(l => l.id === selectedListId) || broadcastedLists.find(l => l.id === selectedListId);
+
+    if (loading && !lists.length && !broadcastedLists.length) {
         return (
             <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-950">
                 <CircularProgress size={24} />
@@ -229,6 +251,35 @@ const ClientLists: React.FC = () => {
                                 ))}
                             </div>
                         </div>
+
+                        {/* broadcasted folders */}
+                        {broadcastedLists.length > 0 && (
+                            <div>
+                                <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">From Admin</Typography>
+                                <div className="mt-1 space-y-0.5">
+                                    {broadcastedLists.map(list => (
+                                        <div
+                                            key={list.id}
+                                            onClick={() => setSelectedListId(list.id)}
+                                            className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
+                                                ${selectedListId === list.id ? 'bg-green-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
+                                        >
+                                            <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-green-500'}`}>campaign</span>
+                                            <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
+
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button size="small" variant="contained" color="success" className="text-[10px] py-0 min-w-0 px-2" onClick={(e) => { e.stopPropagation(); handleImportBroadcasted(list.id); }} disabled={importing === list.id}>
+                                                    {importing === list.id ? '...' : 'Save'}
+                                                </Button>
+                                            </div>
+                                            {importing !== list.id && (
+                                                <span className={`text-xs ${selectedListId === list.id ? 'text-green-100' : 'text-slate-400'}`}>{list.property_count}</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
