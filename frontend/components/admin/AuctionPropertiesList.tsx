@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridFilterModel } from '@mui/x-data-grid';
 import { AdminService } from '../../services/admin.service';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -17,6 +17,7 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
         page: 0,
         pageSize: 10,
     });
+    const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
 
     const fetchProperties = async () => {
         setLoading(true);
@@ -25,7 +26,28 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
             const limit = paginationModel.pageSize;
 
             // Fetch properties specifically for this auction
-            const params = { auction_name: auctionName, limit, skip };
+            const params: any = { auction_name: auctionName, limit, skip };
+
+            filterModel.items.forEach(item => {
+                if (item.value === undefined || item.value === null || item.value === '') return;
+
+                const f = item.field;
+                const v = item.value;
+                const op = item.operator;
+
+                if (f === 'parcel_id' || f === 'address') params.keyword = params.keyword ? `${params.keyword} ${v}` : v;
+                else if (f === 'amount_due') {
+                    if (op === '>' || op === '>=' || op === '!=') params.min_amount_due = v;
+                    else if (op === '<' || op === '<=') params.max_amount_due = v;
+                    else {
+                        params.min_amount_due = v;
+                        params.max_amount_due = v;
+                    }
+                } else {
+                    params[f] = v;
+                }
+            });
+
             const { items, total } = await AdminService.listProperties(params);
 
             const mappedData = items.map((item: any) => ({
@@ -46,7 +68,7 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
         if (auctionName) {
             fetchProperties();
         }
-    }, [auctionName, paginationModel]);
+    }, [auctionName, paginationModel, filterModel]);
 
     const columns: GridColDef[] = [
         { field: 'parcel_id', headerName: 'Parcel Number', width: 140 },
@@ -108,8 +130,11 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
                     loading={loading}
                     rowCount={rowCount}
                     paginationMode="server"
+                    filterMode="server"
                     paginationModel={paginationModel}
                     onPaginationModelChange={setPaginationModel}
+                    filterModel={filterModel}
+                    onFilterModelChange={setFilterModel}
                     pageSizeOptions={[10, 20]}
                     disableRowSelectionOnClick
                     density="compact"

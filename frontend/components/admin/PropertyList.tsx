@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridActionsCellItem, GridFilterModel } from '@mui/x-data-grid';
 import { AdminService } from '../../services/admin.service';
 import { Box, Typography, Button, Dialog, DialogContent, IconButton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +22,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
         page: 0,
         pageSize: 50,
     });
+    const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
 
     const fetchProperties = async () => {
         setLoading(true);
@@ -29,7 +30,39 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
             const skip = paginationModel.page * paginationModel.pageSize;
             const limit = paginationModel.pageSize;
 
-            const params = { ...filters, limit, skip };
+            const params: any = { ...filters, limit, skip };
+
+            // Apply DataGrid server-side column filters
+            filterModel.items.forEach(item => {
+                if (item.value === undefined || item.value === null || item.value === '') return;
+
+                const f = item.field;
+                const v = item.value;
+                const op = item.operator;
+
+                if (f === 'availability_status') params.availability = v;
+                else if (f === 'state_code') params.state = v;
+                else if (f === 'owner_address') params.owner_location = v;
+                else if (f === 'parcel_id' || f === 'address') params.keyword = params.keyword ? `${params.keyword} ${v}` : v;
+                else if (['amount_due', 'assessed_value', 'improvement_value', 'lot_acres'].includes(f)) {
+                    const prefixMap: Record<string, string> = {
+                        'amount_due': 'amount_due',
+                        'assessed_value': 'county_appraisal',
+                        'improvement_value': 'improvements',
+                        'lot_acres': 'acreage'
+                    };
+                    const p = prefixMap[f];
+                    if (op === '>' || op === '>=' || op === '!=') params[`min_${p}`] = v;
+                    else if (op === '<' || op === '<=') params[`max_${p}`] = v;
+                    else {
+                        params[`min_${p}`] = v;
+                        params[`max_${p}`] = v; // Exact match
+                    }
+                } else if (f === 'tax_year' || f === 'county' || f === 'property_type' || f === 'auction_name' || f === 'occupancy') {
+                    params[f] = v;
+                }
+            });
+
             const { items, total } = await AdminService.listProperties(params);
 
             // Map the data to have an `id` field required by DataGrid
@@ -49,7 +82,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
 
     useEffect(() => {
         fetchProperties();
-    }, [filters, paginationModel]);
+    }, [filters, paginationModel, filterModel]);
 
     const handleEditClick = (row: any) => {
         setEditRow(row);
@@ -190,8 +223,11 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
                     loading={loading}
                     rowCount={rowCount}
                     paginationMode="server"
+                    filterMode="server"
                     paginationModel={paginationModel}
                     onPaginationModelChange={setPaginationModel}
+                    filterModel={filterModel}
+                    onFilterModelChange={setFilterModel}
                     initialState={{
                         sorting: { sortModel: [{ field: 'auction_date', sort: 'asc' }] }
                     }}
