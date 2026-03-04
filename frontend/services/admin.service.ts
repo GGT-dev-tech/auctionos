@@ -45,17 +45,15 @@ export const AdminService = {
 
     listProperties: async (filters: any = {}): Promise<{ items: any[], total: number }> => {
         const queryParams = new URLSearchParams();
-        if (filters.skip !== undefined) queryParams.append('skip', String(filters.skip));
-        if (filters.limit !== undefined) queryParams.append('limit', String(filters.limit));
-        if (filters.county) queryParams.append('county', filters.county);
-        if (filters.state) queryParams.append('state', filters.state);
-        if (filters.auction_name) queryParams.append('auction_name', filters.auction_name);
-        if (filters.min_amount_due) queryParams.append('min_amount_due', String(filters.min_amount_due));
-        if (filters.max_amount_due) queryParams.append('max_amount_due', String(filters.max_amount_due));
-        if (filters.property_category) queryParams.append('property_category', filters.property_category);
-        if (filters.occupancy) queryParams.append('occupancy', filters.occupancy);
-        if (filters.tax_year) queryParams.append('tax_year', String(filters.tax_year));
-        if (filters.property_type) queryParams.append('property_type', filters.property_type);
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                if (Array.isArray(value)) {
+                    value.forEach(v => queryParams.append(key, v));
+                } else {
+                    queryParams.append(key, String(value));
+                }
+            }
+        });
 
         const response = await fetch(`${API_URL}/properties/?${queryParams.toString()}`, {
             headers: getHeaders()

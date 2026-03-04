@@ -11,7 +11,7 @@ const ClientProperties: React.FC = () => {
             <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
                 Property Search
             </Typography>
-            <PropertyFilters onFilterChange={setFilters} />
+            <PropertyFilters onFilterChange={setFilters} readOnly={true} />
             <div className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl">
                 <PropertyList filters={filters} readOnly={true} />
             </div>

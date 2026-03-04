@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Select, MenuItem, Button, FormControl, InputLabel, Divider, Checkbox, FormControlLabel, Tooltip } from '@mui/material';
+import { TextField, Select, MenuItem, Button, FormControl, InputLabel, Divider, Checkbox, FormControlLabel, Tooltip, Autocomplete, CircularProgress } from '@mui/material';
 import { useDebounce } from 'use-debounce';
 import SearchIcon from '@mui/icons-material/Search';
+import { PropertyService } from '../../services/property.service';
+import { useNavigate } from 'react-router-dom';
 
 export interface PropertyFilterParams {
     county?: string;
@@ -35,12 +37,48 @@ export interface PropertyFilterParams {
 
 interface PropertyFiltersProps {
     onFilterChange: (filters: PropertyFilterParams) => void;
+    readOnly?: boolean;
 }
 
-const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange }) => {
+const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readOnly = false }) => {
+    const navigate = useNavigate();
     const [filters, setFilters] = useState<PropertyFilterParams>({});
     const [showFilters, setShowFilters] = useState(false);
     const [debouncedFilters] = useDebounce(filters, 500);
+
+    // Autocomplete state
+    const [open, setOpen] = useState(false);
+    const [options, setOptions] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [inputValue, setInputValue] = useState(filters.keyword || '');
+
+    useEffect(() => {
+        let active = true;
+        if (inputValue === '') {
+            setOptions(open ? [] : options);
+            return undefined;
+        }
+
+        setLoading(true);
+        const timeout = setTimeout(async () => {
+            try {
+                // Fetch up to 10 predictive search options
+                const res: any = await PropertyService.getProperties({ keyword: inputValue, limit: 10 });
+                if (active) {
+                    setOptions(res.items || res || []);
+                }
+            } catch (e) {
+                console.error("Autocomplete fetch error", e);
+            } finally {
+                setLoading(false);
+            }
+        }, 400); // 400ms debounce on API call
+
+        return () => {
+            active = false;
+            clearTimeout(timeout);
+        };
+    }, [inputValue]);
 
     useEffect(() => {
         onFilterChange(debouncedFilters);
@@ -52,23 +90,68 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange }) => 
 
     const handleClear = () => {
         setFilters({});
+        setInputValue('');
     };
 
     return (
         <div className="flex flex-col gap-4 mb-6 p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 w-full transition-all">
             {/* Primary Search Row */}
             <div className="flex flex-wrap gap-4 items-center w-full">
-                <TextField
-                    label="Keyword Search"
-                    variant="outlined"
-                    size="small"
-                    value={filters.keyword || ''}
-                    onChange={(e) => handleChange('keyword', e.target.value)}
-                    placeholder="Parcel ID, Zip, Address..."
-                    className="bg-white dark:bg-slate-900 flex-grow min-w-[250px]"
-                    InputProps={{
-                        startAdornment: <SearchIcon className="text-slate-400 mr-2" fontSize="small" />
+                <Autocomplete
+                    freeSolo
+                    id="keyword-search-autocomplete"
+                    sx={{ minWidth: 250, flexGrow: 1 }}
+                    open={open}
+                    onOpen={() => setOpen(true)}
+                    onClose={() => setOpen(false)}
+                    inputValue={inputValue}
+                    onInputChange={(event, newInputValue) => {
+                        setInputValue(newInputValue);
+                        handleChange('keyword', newInputValue);
                     }}
+                    onChange={(event, newValue: any) => {
+                        if (typeof newValue === 'string') {
+                            handleChange('keyword', newValue);
+                        } else if (newValue && newValue.parcel_id) {
+                            navigate(readOnly ? `/client/properties/${newValue.parcel_id}` : `/admin/properties/${newValue.parcel_id}`);
+                        }
+                    }}
+                    options={options}
+                    getOptionLabel={(option: any) => typeof option === 'string' ? option : `${option.parcel_id || 'Unknown'} - ${option.address || option.county || ''}`}
+                    renderOption={(props, option: any) => (
+                        <li {...props} key={option.parcel_id}>
+                            <div className="flex flex-col">
+                                <span className="font-semibold text-sm">{option.parcel_id}</span>
+                                <span className="text-xs text-slate-500">{option.address} • {option.county} County</span>
+                            </div>
+                        </li>
+                    )}
+                    filterOptions={(x) => x} // Disable built-in filtering, server-side taking over
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Keyword Search"
+                            variant="outlined"
+                            size="small"
+                            placeholder="Parcel ID, Zip, Address..."
+                            className="bg-white dark:bg-slate-900"
+                            InputProps={{
+                                ...params.InputProps,
+                                startAdornment: (
+                                    <React.Fragment>
+                                        <SearchIcon className="text-slate-400 ml-2" fontSize="small" />
+                                        {params.InputProps.startAdornment}
+                                    </React.Fragment>
+                                ),
+                                endAdornment: (
+                                    <React.Fragment>
+                                        {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </React.Fragment>
+                                ),
+                            }}
+                        />
+                    )}
                 />
                 <TextField
                     label="County"

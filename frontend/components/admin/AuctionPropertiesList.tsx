@@ -53,13 +53,13 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
         { field: 'address', headerName: 'Address', width: 200 },
         { field: 'county', headerName: 'County', width: 120 },
         {
-            field: 'amount_due', headerName: 'Amount Due', width: 110,
+            field: 'amount_due', headerName: 'Amount Due', width: 110, type: 'number',
             valueFormatter: (params: any) => {
                 const val = typeof params === 'object' ? params?.value : params;
                 return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
             }
         },
-        { field: 'property_type', headerName: 'Type', width: 130 },
+        { field: 'property_type', headerName: 'Type', width: 130, type: 'singleSelect', valueOptions: ['Vacant Land', 'Single Family', 'Multi-Family', 'Commercial', 'Agricultural', 'Industrial', 'Other'] },
         {
             field: 'actions',
             headerName: '',
