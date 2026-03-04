@@ -150,7 +150,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
                 return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
             }
         },
-        { field: 'property_type', headerName: 'Parcel Type', width: 140, type: 'singleSelect', valueOptions: ['Vacant Land', 'Single Family', 'Multi-Family', 'Commercial', 'Agricultural', 'Industrial', 'Other'] },
+        { field: 'property_type', headerName: 'Parcel Type', width: 140, type: 'singleSelect', valueOptions: ['Vacant Land', 'Single Family', 'Multi-Family', 'Commercial', 'Agricultural', 'Industrial', 'Tax Sale', 'Over the Counter', 'Sealed Bid', 'Public Outcry', 'Tax Deed', 'Tax Lien', 'Foreclosure', 'Other'] },
         { field: 'address', headerName: 'Address', width: 180 },
         { field: 'auction_name', headerName: 'Next Auction', width: 220 },
         { field: 'occupancy', headerName: 'Occupancy', width: 150, type: 'singleSelect', valueOptions: ['Occupied', 'Vacant', 'Unknown'] },

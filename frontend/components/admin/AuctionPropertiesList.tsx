@@ -81,7 +81,7 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
                 return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
             }
         },
-        { field: 'property_type', headerName: 'Type', width: 130, type: 'singleSelect', valueOptions: ['Vacant Land', 'Single Family', 'Multi-Family', 'Commercial', 'Agricultural', 'Industrial', 'Other'] },
+        { field: 'property_type', headerName: 'Type', width: 130, type: 'singleSelect', valueOptions: ['Vacant Land', 'Single Family', 'Multi-Family', 'Commercial', 'Agricultural', 'Industrial', 'Tax Sale', 'Over the Counter', 'Sealed Bid', 'Public Outcry', 'Tax Deed', 'Tax Lien', 'Foreclosure', 'Other'] },
         {
             field: 'actions',
             headerName: '',

@@ -227,6 +227,31 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readO
                                     </Select>
                                 </FormControl>
 
+                                <FormControl size="small" fullWidth>
+                                    <InputLabel>Parcel Type</InputLabel>
+                                    <Select
+                                        label="Parcel Type"
+                                        value={filters.property_type || ''}
+                                        onChange={(e) => handleChange('property_type', e.target.value)}
+                                    >
+                                        <MenuItem value=""><em>Any</em></MenuItem>
+                                        <MenuItem value="Vacant Land">Vacant Land</MenuItem>
+                                        <MenuItem value="Single Family">Single Family</MenuItem>
+                                        <MenuItem value="Multi-Family">Multi-Family</MenuItem>
+                                        <MenuItem value="Commercial">Commercial</MenuItem>
+                                        <MenuItem value="Agricultural">Agricultural</MenuItem>
+                                        <MenuItem value="Industrial">Industrial</MenuItem>
+                                        <MenuItem value="Tax Sale">Tax Sale</MenuItem>
+                                        <MenuItem value="Tax Deed">Tax Deed</MenuItem>
+                                        <MenuItem value="Tax Lien">Tax Lien</MenuItem>
+                                        <MenuItem value="Foreclosure">Foreclosure</MenuItem>
+                                        <MenuItem value="Over the Counter">Over the Counter</MenuItem>
+                                        <MenuItem value="Sealed Bid">Sealed Bid</MenuItem>
+                                        <MenuItem value="Public Outcry">Public Outcry</MenuItem>
+                                        <MenuItem value="Other">Other</MenuItem>
+                                    </Select>
+                                </FormControl>
+
                                 <TextField
                                     label="Owner Location"
                                     size="small"
