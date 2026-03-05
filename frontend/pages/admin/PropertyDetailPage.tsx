@@ -173,6 +173,24 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
         }
     };
 
+    const handleAddToStandardList = async () => {
+        if (!property?.id) {
+            alert("Error: Property ID missing. Try refreshing the page.");
+            return;
+        }
+        try {
+            setActionLoading(true);
+            await ClientDataService.addPropertyToStandardList(property.id);
+            alert(`Property added to Standard List (${property.state} - ${property.county}) successfully!`);
+            handleCloseListMenu();
+        } catch (err: any) {
+            console.error("Failed to add property to standard list:", err);
+            alert(`Error: ${err.message || 'Failed to add property to standard list'}`);
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleCreateAndAdd = async () => {
         const name = window.prompt("Enter name for new list:");
         if (!name) return;
@@ -331,8 +349,15 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                             onClose={handleCloseListMenu}
                             PaperProps={{ className: "mt-1 shadow-lg rounded-xl border border-slate-100 dark:border-slate-800 dark:bg-slate-900" }}
                         >
-                            <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Folder</div>
-                            {lists.map(list => (
+                            <MenuItem
+                                onClick={handleAddToStandardList}
+                                className="text-sm py-2 px-4 text-emerald-600 font-medium hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                            >
+                                <span className="material-symbols-outlined text-[18px] mr-3">auto_awesome</span> Standard List
+                            </MenuItem>
+                            <Divider className="my-1" />
+                            <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Custom Folders</div>
+                            {lists.filter(l => l.tags !== 'STANDARD').map(list => (
                                 <MenuItem
                                     key={list.id}
                                     onClick={() => handleAddToList(list.id)}

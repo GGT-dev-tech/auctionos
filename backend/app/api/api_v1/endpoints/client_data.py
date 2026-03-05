@@ -186,6 +186,43 @@ def add_property_to_list(
         db.commit()
     return {"ok": True}
 
+@router.post("/lists/standard/add/{property_id}")
+def add_property_to_standard_list(
+    *,
+    db: Session = Depends(deps.get_db),
+    property_id: int,
+    current_user = Depends(deps.get_current_active_user)
+) -> Any:
+    """Add a property to an auto-managed State/County Standard List."""
+    prop = db.query(PropertyDetails).filter(PropertyDetails.id == property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+    
+    state = prop.state or "Unknown State"
+    county = prop.county or "Unknown County"
+    list_name = f"{state} - {county}"
+
+    # Find or create the standard list
+    lst = db.query(ClientList).filter(
+        ClientList.user_id == current_user.id,
+        ClientList.name == list_name,
+        ClientList.tags == "STANDARD"
+    ).first()
+
+    if not lst:
+        lst = ClientList(name=list_name, user_id=current_user.id, is_favorite_list=False, is_broadcasted=False, tags="STANDARD")
+        db.add(lst)
+        db.commit()
+        db.refresh(lst)
+
+    if prop not in lst.properties:
+        lst.properties.append(prop)
+        db.commit()
+    
+    # Return the new list info so frontend can react if needed
+    count = db.query(client_list_property).filter(client_list_property.c.list_id == lst.id).count()
+    return {"ok": True, "list": {"id": lst.id, "name": lst.name, "property_count": count, "tags": lst.tags}}
+
 @router.get("/lists/{list_id}/properties")
 def get_list_properties(
     *,

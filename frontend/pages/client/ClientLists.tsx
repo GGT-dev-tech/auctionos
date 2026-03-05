@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Typography, IconButton, TextField, Dialog, Button, CircularProgress, Chip } from '@mui/material';
 import { FolderPlusIcon, Trash2Icon, Edit2Icon, ExternalLinkIcon } from 'lucide-react';
 import { ClientDataService } from '../../services/property.service';
+import { countyService, CountyContact } from '../../services/county.service';
 import { useNavigate } from 'react-router-dom';
 
 interface CustomList {
@@ -10,6 +11,7 @@ interface CustomList {
     property_count: number;
     is_favorite_list: boolean;
     is_broadcasted: boolean;
+    tags?: string;
 }
 
 const ClientLists: React.FC = () => {
@@ -26,6 +28,7 @@ const ClientLists: React.FC = () => {
     const [dragOverListId, setDragOverListId] = useState<number | null>(null);
     const [broadcastedLists, setBroadcastedLists] = useState<CustomList[]>([]);
     const [importing, setImporting] = useState<number | null>(null);
+    const [countyContacts, setCountyContacts] = useState<CountyContact[]>([]);
 
     useEffect(() => {
         loadLists();
@@ -34,10 +37,20 @@ const ClientLists: React.FC = () => {
     useEffect(() => {
         if (selectedListId) {
             loadListProperties(selectedListId);
+            const selList = lists.find(l => l.id === selectedListId) || broadcastedLists.find(l => l.id === selectedListId);
+            if (selList?.tags === 'STANDARD') {
+                const parts = selList.name.split(' - ');
+                if (parts.length === 2) {
+                    countyService.getContacts(parts[0], parts[1]).then(setCountyContacts).catch(() => setCountyContacts([]));
+                }
+            } else {
+                setCountyContacts([]);
+            }
         } else {
             setSelectedListProperties([]);
+            setCountyContacts([]);
         }
-    }, [selectedListId]);
+    }, [selectedListId, lists, broadcastedLists]);
 
     const loadLists = async () => {
         try {
@@ -199,11 +212,45 @@ const ClientLists: React.FC = () => {
                             </div>
                         )}
 
+                        {/* standard folders */}
+                        {lists.some(l => l.tags === 'STANDARD') && (
+                            <div>
+                                <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Standard Folders</Typography>
+                                <div className="mt-1 space-y-0.5">
+                                    {lists.filter(l => l.tags === 'STANDARD').map(list => (
+                                        <div
+                                            key={list.id}
+                                            onClick={() => setSelectedListId(list.id)}
+                                            onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
+                                            onDragLeave={() => setDragOverListId(null)}
+                                            onDrop={(e) => handleDrop(e, list.id)}
+                                            className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
+                                                ${selectedListId === list.id ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
+                                                ${dragOverListId === list.id ? 'ring-2 ring-emerald-400 ring-inset scale-[1.02]' : ''}`}
+                                        >
+                                            <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-emerald-500'}`}>auto_awesome</span>
+                                            <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <IconButton
+                                                    size="small"
+                                                    className="p-0.5"
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
+                                                >
+                                                    <Trash2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
+                                                </IconButton>
+                                            </div>
+                                            <span className={`text-xs ${selectedListId === list.id ? 'text-emerald-100' : 'text-slate-400'}`}>{list.property_count}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* custom folders */}
                         <div>
-                            <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Folders</Typography>
+                            <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Custom Folders</Typography>
                             <div className="mt-1 space-y-0.5">
-                                {lists.filter(l => !l.is_favorite_list).map(list => (
+                                {lists.filter(l => !l.is_favorite_list && l.tags !== 'STANDARD').map(list => (
                                     <div
                                         key={list.id}
                                         onClick={() => setSelectedListId(list.id)}
@@ -293,17 +340,42 @@ const ClientLists: React.FC = () => {
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex justify-between items-center">
-                    <div>
-                        <Typography variant="h5" className="font-bold text-slate-900 dark:text-white capitalize leading-tight">
-                            {selectedList?.name || 'Select a Folder'}
-                        </Typography>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{selectedListProperties.length} Properties</span>
-                            <div className="h-1 w-1 bg-slate-300 rounded-full"></div>
-                            <span className="text-xs text-slate-400">Synced to iCloud</span>
+                <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex flex-col gap-4">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <Typography variant="h5" className="font-bold text-slate-900 dark:text-white capitalize leading-tight">
+                                {selectedList?.name || 'Select a Folder'}
+                            </Typography>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{selectedListProperties.length} Properties</span>
+                                <div className="h-1 w-1 bg-slate-300 rounded-full"></div>
+                                <span className="text-xs text-slate-400">Synced to iCloud</span>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Contact Links rendering for STANDARD lists */}
+                    {selectedList?.tags === 'STANDARD' && countyContacts.length > 0 && (
+                        <div className="bg-sky-50 dark:bg-sky-900/20 p-3 rounded-lg border border-sky-100 dark:border-sky-800/50">
+                            <span className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-wider block mb-2">County Contacts</span>
+                            <div className="flex flex-wrap gap-2">
+                                {countyContacts.map((contact, idx) => (
+                                    <Button
+                                        key={idx}
+                                        variant="outlined"
+                                        size="small"
+                                        href={contact.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-[11px] rounded-full border-sky-200 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-800 normal-case"
+                                    >
+                                        <span className="material-symbols-outlined text-[14px] mr-1">link</span>
+                                        {contact.name}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6">

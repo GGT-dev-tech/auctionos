@@ -229,6 +229,15 @@ export const ClientDataService = {
         if (!response.ok) throw new Error('Failed to add property to list');
     },
 
+    addPropertyToStandardList: async (propertyId: number): Promise<any> => {
+        const response = await fetch(`${API_URL}/client-data/lists/standard/add/${propertyId}`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to add property to standard list');
+        return response.json();
+    },
+
     removePropertyFromList: async (listId: number, propertyId: number): Promise<void> => {
         const response = await fetch(`${API_URL}/client-data/lists/${listId}/properties/${propertyId}`, {
             method: 'DELETE',
