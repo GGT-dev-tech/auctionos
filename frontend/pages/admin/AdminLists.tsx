@@ -27,6 +27,11 @@ const AdminLists: React.FC = () => {
     const [editName, setEditName] = useState('');
     const [dragOverListId, setDragOverListId] = useState<number | null>(null);
     const [countyContacts, setCountyContacts] = useState<CountyContact[]>([]);
+    const [expandedStates, setExpandedStates] = useState<Record<string, boolean>>({});
+
+    const toggleState = (stateName: string) => {
+        setExpandedStates(prev => ({ ...prev, [stateName]: !prev[stateName] }));
+    };
 
     useEffect(() => {
         loadLists();
@@ -202,43 +207,82 @@ const AdminLists: React.FC = () => {
                         )}
 
                         {/* standard folders */}
-                        {lists.some(l => l.tags === 'STANDARD') && (
-                            <div>
-                                <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Standard Folders</Typography>
-                                <div className="mt-1 space-y-0.5">
-                                    {lists.filter(l => l.tags === 'STANDARD').map(list => (
-                                        <div
-                                            key={list.id}
-                                            onClick={() => setSelectedListId(list.id)}
-                                            onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
-                                            onDragLeave={() => setDragOverListId(null)}
-                                            onDrop={(e) => handleDrop(e, list.id)}
-                                            className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
-                                                ${selectedListId === list.id ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
-                                                ${dragOverListId === list.id ? 'ring-2 ring-emerald-400 ring-inset scale-[1.02]' : ''}`}
-                                        >
-                                            <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-emerald-500'}`}>auto_awesome</span>
-                                            <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Tooltip title={list.is_broadcasted ? "Revoke Broadcast" : "Broadcast to Clients"}>
-                                                    <IconButton size="small" className="p-0.5" onClick={(e) => handleBroadcastToggle(e, list.id)}>
-                                                        <ShareIcon size={12} className={list.is_broadcasted ? 'text-green-500' : 'text-slate-400'} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <IconButton
-                                                    size="small"
-                                                    className="p-0.5"
-                                                    onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
+                        {lists.some(l => l.tags === 'STANDARD') && (() => {
+                            const standardLists = lists.filter(l => l.tags === 'STANDARD');
+                            const statesMap: Record<string, typeof standardLists> = {};
+                            standardLists.forEach(list => {
+                                const parts = list.name.split(' - ');
+                                const state = parts.length === 2 ? parts[0] : 'Other';
+                                if (!statesMap[state]) statesMap[state] = [];
+                                statesMap[state].push(list);
+                            });
+
+                            return (
+                                <div>
+                                    <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Standard Folders</Typography>
+                                    <div className="mt-1 space-y-1">
+                                        {Object.entries(statesMap).map(([state, stateLists]) => (
+                                            <div key={state} className="flex flex-col">
+                                                {/* State Header (Click to expand) */}
+                                                <div
+                                                    onClick={() => toggleState(state)}
+                                                    className="group flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-800/50"
                                                 >
-                                                    <Trash2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
-                                                </IconButton>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${expandedStates[state] ? 'rotate-90 text-blue-500' : 'text-slate-400'}`}>
+                                                            chevron_right
+                                                        </span>
+                                                        <span className="text-sm font-bold truncate tracking-tight">{state}</span>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-slate-400 bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded-md">
+                                                        {stateLists.reduce((acc, curr) => acc + curr.property_count, 0)} Props
+                                                    </span>
+                                                </div>
+
+                                                {/* Expanded County Lists */}
+                                                {expandedStates[state] && (
+                                                    <div className="mt-1 ml-4 border-l-2 border-slate-200 dark:border-slate-800 pl-2 space-y-0.5">
+                                                        {stateLists.map(list => {
+                                                            const countyName = list.name.split(' - ')[1] || list.name;
+                                                            return (
+                                                                <div
+                                                                    key={list.id}
+                                                                    onClick={() => setSelectedListId(list.id)}
+                                                                    onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
+                                                                    onDragLeave={() => setDragOverListId(null)}
+                                                                    onDrop={(e) => handleDrop(e, list.id)}
+                                                                    className={`group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 
+                                                                        ${selectedListId === list.id ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
+                                                                        ${dragOverListId === list.id ? 'ring-2 ring-emerald-400 ring-inset scale-[1.02]' : ''}`}
+                                                                >
+                                                                    <span className={`material-symbols-outlined text-[16px] ${selectedListId === list.id ? 'text-white' : 'text-emerald-500'}`}>map</span>
+                                                                    <span className="flex-1 text-sm font-medium truncate">{countyName}</span>
+                                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <Tooltip title={list.is_broadcasted ? "Revoke Broadcast" : "Broadcast to Clients"}>
+                                                                            <IconButton size="small" className="p-0.5" onClick={(e) => handleBroadcastToggle(e, list.id)}>
+                                                                                <ShareIcon size={12} className={list.is_broadcasted ? 'text-green-500' : 'text-slate-400'} />
+                                                                            </IconButton>
+                                                                        </Tooltip>
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            className="p-0.5"
+                                                                            onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
+                                                                        >
+                                                                            <Trash2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
+                                                                        </IconButton>
+                                                                    </div>
+                                                                    <span className={`text-xs ${selectedListId === list.id ? 'text-emerald-100' : 'text-slate-400'}`}>{list.property_count}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <span className={`text-xs ${selectedListId === list.id ? 'text-emerald-100' : 'text-slate-400'}`}>{list.property_count}</span>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {/* custom folders */}
                         <div>
