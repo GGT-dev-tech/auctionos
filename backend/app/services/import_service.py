@@ -320,4 +320,88 @@ class ImportService:
             logger.error(f"Auctions Import Job Failed: {e}")
             redis.set(f"import_auctions_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
 
+    @staticmethod
+    async def process_shape_data_csv_file(file_path: str, job_id: str):
+        try:
+            chunk_size = 5000
+            total_rows = 0
+            success_count = 0
+            errors = []
+
+            for chunk in pd.read_csv(file_path, dtype=str, chunksize=chunk_size):
+                total_rows += len(chunk)
+                batch = []
+                
+                # Normalize column names for flexible matching
+                chunk.columns = chunk.columns.str.lower().str.strip()
+                
+                parcel_col = next((c for c in chunk.columns if 'parcel' in c), None)
+                cat_col = next((c for c in chunk.columns if 'catego' in c), None)
+                subcat_col = next((c for c in chunk.columns if 'subcate' in c), None)
+                val_col = next((c for c in chunk.columns if 'val' in c or 'detal' in c), None)
+                
+                if not all([parcel_col, cat_col, subcat_col]):
+                    raise ValueError(f"Missing required columns (parcel_id, category, subcategory). Found: {chunk.columns.tolist()}")
+
+                with engine.begin() as conn:
+                    # Fast resolve parcel_ids to property_ids in bulk
+                    parcel_ids = chunk[parcel_col].dropna().unique().tolist()
+                    if not parcel_ids:
+                        continue
+                        
+                    pid_map_rows = conn.execute(
+                        text("SELECT parcel_id, property_id FROM property_details WHERE parcel_id = ANY(:pids)"),
+                        {"pids": parcel_ids}
+                    ).fetchall()
+                    pid_map = {r[0]: r[1] for r in pid_map_rows}
+                    
+                    for _, row in chunk.iterrows():
+                        pid = str(row.get(parcel_col, '')).strip()
+                        if not pid or pid not in pid_map:
+                            errors.append(f"Row {total_rows - len(chunk) + _ + 2}: Parcel ID not found in database ({pid})")
+                            continue
+                            
+                        prop_id = pid_map[pid]
+                        cat = str(row.get(cat_col, '')).strip()
+                        subcat = str(row.get(subcat_col, '')).strip()
+                        val = row.get(val_col) if pd.notna(row.get(val_col)) else None
+                        
+                        if not cat or not subcat:
+                            continue
+                            
+                        batch.append({
+                            "property_id": prop_id,
+                            "category": cat,
+                            "subcategory": subcat,
+                            "value": val if val else None
+                        })
+                        
+                    if batch:
+                        query = text("""
+                            INSERT INTO property_shape_data (property_id, category, subcategory, value)
+                            VALUES (:property_id, :category, :subcategory, :value)
+                            ON CONFLICT (property_id, category, subcategory) DO UPDATE SET
+                                value = EXCLUDED.value
+                        """)
+                        conn.execute(query, batch)
+                        success_count += len(batch)
+                        
+            if errors:
+                status_msg = f"Completed with errors. Success: {success_count} attributes. Errors: {len(errors[:100])}..."
+                redis.set(f"import_errors:{job_id}", str(errors[:500]), ex=3600)
+            else:
+                status_msg = f"Success: {success_count} attributes imported"
+                
+            redis.set(f"import_status:{job_id}", status_msg, ex=3600)
+            
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
+        except Exception as e:
+            logger.error(f"Shape Data Import Job Failed: {e}")
+            redis.set(f"import_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            raise e
+
 import_service = ImportService()

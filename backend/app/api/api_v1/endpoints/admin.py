@@ -37,6 +37,30 @@ async def import_properties(
     
     return {"message": "Import started", "job_id": job_id}
 
+@router.post("/import/shape-data")
+async def import_shape_data(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_active_user)
+) -> Any:
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Must be a CSV file")
+        
+    job_id = str(uuid.uuid4())
+    temp_dir = "/app/data/temp_imports"
+    os.makedirs(temp_dir, exist_ok=True)
+    file_path = f"{temp_dir}/{job_id}.csv"
+    
+    # Save file to shared volume for worker access
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
+    
+    redis_client.set(f"import_status:{job_id}", "pending", ex=3600)
+    
+    from app.tasks import import_shape_data_celery_task
+    import_shape_data_celery_task.delay(file_path, job_id)
+    
+    return {"message": "Import started", "job_id": job_id}
+
 @router.post("/import/auctions")
 async def import_auctions(
     background_tasks: BackgroundTasks,

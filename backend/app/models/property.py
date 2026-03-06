@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, date
 from sqlalchemy import Column, String, Integer, Float, Boolean, Text, Date, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
 class PropertyDetails(Base):
@@ -77,6 +78,22 @@ class PropertyDetails(Base):
     county_fips = Column(String(20), nullable=True)
     additional_parcel_numbers = Column(Text, nullable=True)
     occupancy_checked_date = Column(Date, nullable=True)
+
+    shape_data = relationship("PropertyShapeData", back_populates="property", cascade="all, delete-orphan")
+
+class PropertyShapeData(Base):
+    __tablename__ = "property_shape_data"
+    __table_args__ = (
+        UniqueConstraint('property_id', 'category', 'subcategory', name='uq_property_shape_data_cat_subcat'),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    property_id = Column(String(36), ForeignKey("property_details.property_id", ondelete="CASCADE"), nullable=False, index=True)
+    category = Column(String(255), nullable=False, index=True)
+    subcategory = Column(String(255), nullable=False)
+    value = Column(Text, nullable=True)
+
+    property = relationship("PropertyDetails", back_populates="shape_data")
 
 
 class PropertyAuctionHistory(Base):

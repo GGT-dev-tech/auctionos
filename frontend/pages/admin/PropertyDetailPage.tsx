@@ -220,6 +220,16 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     // Attempt to extract owner name from address block (rudimentary approach)
     const ownerNameFallback = property.owner_address ? property.owner_address.split('\n')[0] : 'UNKNOWN OWNER';
 
+    const groupedShapeData: Record<string, any[]> = {};
+    if (property?.shape_data && Array.isArray(property.shape_data)) {
+        property.shape_data.forEach((item: any) => {
+            if (!groupedShapeData[item.category]) {
+                groupedShapeData[item.category] = [];
+            }
+            groupedShapeData[item.category].push(item);
+        });
+    }
+
     return (
         <div className="p-6 max-w-7xl mx-auto mb-20">
             {/* Header */}
@@ -407,8 +417,34 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                         <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
                             Source: Parcel Shape Data
                         </div>
-                        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 text-xs font-mono text-slate-600 dark:text-slate-400 max-h-48 overflow-y-auto whitespace-pre-wrap">
-                            {property.parcel_shape_data || 'No raw shape data available.'}
+                        <div className="p-4">
+                            {Object.keys(groupedShapeData).length > 0 ? (
+                                <div className="space-y-6">
+                                    {Object.entries(groupedShapeData).map(([category, items]) => (
+                                        <div key={category}>
+                                            <h5 className="font-semibold text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-1 mb-2">
+                                                {category}
+                                            </h5>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                                                {items.map((item: any, idx: number) => (
+                                                    <div key={idx} className="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-900/50 px-1 rounded transition-colors">
+                                                        <span className="font-medium text-slate-600 dark:text-slate-400">{item.subcategory}:</span>
+                                                        <span className="text-slate-800 dark:text-slate-300 text-right ms-2">{item.value || '-'}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="bg-slate-50 dark:bg-slate-900/50 text-xs font-mono text-slate-600 dark:text-slate-400 p-3 rounded">
+                                    {property.parcel_shape_data ? (
+                                        <div className="whitespace-pre-wrap">{property.parcel_shape_data}</div>
+                                    ) : (
+                                        <span className="italic text-slate-400">No dynamic shape data available.</span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 

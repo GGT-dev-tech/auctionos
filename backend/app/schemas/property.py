@@ -2,6 +2,13 @@ from typing import Optional, List
 from datetime import datetime, date
 from pydantic import BaseModel, ConfigDict
 
+# Property Shape Data (EAV)
+class PropertyShapeDataSchema(BaseModel):
+    category: str
+    subcategory: str
+    value: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
 # Property Details
 class PropertyDetailsBase(BaseModel):
     property_id: str
@@ -57,6 +64,7 @@ class PropertyDetailsBase(BaseModel):
     county_fips: Optional[str] = None
     additional_parcel_numbers: Optional[str] = None
     occupancy_checked_date: Optional[date] = None
+    shape_data: List[PropertyShapeDataSchema] = []
 
 class PropertyDetailsCreate(PropertyDetailsBase):
     pass
@@ -123,6 +131,7 @@ class PropertyDashboardSchema(BaseModel):
     county_fips: Optional[str] = None
     additional_parcel_numbers: Optional[str] = None
     occupancy_checked_date: Optional[date] = None
+    shape_data: List[PropertyShapeDataSchema] = []
 
 class PaginatedPropertyResponse(BaseModel):
     items: List[PropertyDashboardSchema]

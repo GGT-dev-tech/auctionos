@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { AdminService } from '../../services/admin.service';
 
 interface CsvUploadProps {
-    type: 'properties' | 'auctions';
+    type: 'properties' | 'auctions' | 'shape_data';
     onSuccess: () => void;
 }
 
@@ -18,9 +18,11 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ type, onSuccess }) => {
         try {
             setLoading(true);
             setStatusMsg('Uploading file to server...');
-            const result = type === 'properties'
-                ? await AdminService.importProperties(file)
-                : await AdminService.importAuctions(file);
+            let result;
+            if (type === 'properties') result = await AdminService.importProperties(file);
+            else if (type === 'auctions') result = await AdminService.importAuctions(file);
+            else if (type === 'shape_data') result = await AdminService.importShapeData(file);
+            else throw new Error('Invalid type');
 
             const jobId = result.job_id;
             setStatusMsg('File received. Worker assigned. Processing 100k+ rows may take 2-5 minutes...');
@@ -61,7 +63,7 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ type, onSuccess }) => {
     return (
         <div className="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
             <h3 className="text-lg font-bold mb-4 text-slate-800 dark:text-white">
-                Upload {type === 'properties' ? 'Properties' : 'Auctions'} CSV
+                Upload {type === 'properties' ? 'Properties' : type === 'auctions' ? 'Auctions' : 'Shape Data'} CSV
             </h3>
 
             <div className="flex flex-col gap-4">

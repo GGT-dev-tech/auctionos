@@ -1,6 +1,13 @@
 
 import React, { useState } from 'react';
 import { AdminService } from '../../services/admin.service';
+import { PlusIcon, TrashIcon } from 'lucide-react';
+
+const PREDEFINED_CATEGORIES = [
+    "General Information", "Building Details", "Land Details", "Extra Features",
+    "Assessed Values (History)", "Taxable Information", "Benefits",
+    "Sales History", "Additional Information", "Notes", "Source", "Other"
+];
 
 const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({ onSuccess, initialData }) => {
     const [formData, setFormData] = useState({
@@ -42,7 +49,18 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
         additional_parcel_numbers: initialData?.additional_parcel_numbers || '',
         occupancy_checked_date: initialData?.occupancy_checked_date || ''
     });
+
+    // EAV Array state
+    const [shapeData, setShapeData] = useState<any[]>(initialData?.shape_data || []);
     const [status, setStatus] = useState('');
+
+    const handleAddShapeData = () => setShapeData([...shapeData, { category: 'General Information', subcategory: '', value: '' }]);
+    const handleRemoveShapeData = (index: number) => setShapeData(shapeData.filter((_, i) => i !== index));
+    const handleShapeDataChange = (index: number, field: string, val: string) => {
+        const newData = [...shapeData];
+        newData[index][field] = val;
+        setShapeData(newData);
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -76,7 +94,8 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                 raw_parcel_number: formData.raw_parcel_number,
                 county_fips: formData.county_fips,
                 additional_parcel_numbers: formData.additional_parcel_numbers,
-                occupancy_checked_date: formData.occupancy_checked_date || null
+                occupancy_checked_date: formData.occupancy_checked_date || null,
+                shape_data: shapeData
             };
 
             if (initialData?.parcel_id) {
@@ -260,9 +279,55 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                     <textarea name="additional_parcel_numbers" className="input h-20" value={formData.additional_parcel_numbers} onChange={handleChange} />
                 </div>
 
-                <div className="md:col-span-3">
-                    <label className="label">Parcel Shape Data (Raw Text/JSON)</label>
-                    <textarea name="parcel_shape_data" className="input h-32 font-mono text-xs" value={formData.parcel_shape_data} onChange={handleChange} />
+                {/* Parcel Shape Data EAV Array */}
+                <div className="col-span-1 md:col-span-3 border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
+                    <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Parcel Shape Data (Dynamic Attributes)</h4>
+                        <button
+                            type="button"
+                            onClick={handleAddShapeData}
+                            className="flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 px-3 py-1.5 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/60"
+                        >
+                            <PlusIcon size={14} /> Add Trait
+                        </button>
+                    </div>
+
+                    <div className="space-y-2">
+                        {shapeData.length === 0 && (
+                            <div className="text-sm text-slate-400 italic py-2">No dynamic shape data added yet.</div>
+                        )}
+                        {shapeData.map((item, index) => (
+                            <div key={index} className="flex flex-col md:flex-row items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <select
+                                    className="input py-1.5 text-sm md:w-1/4"
+                                    value={item.category}
+                                    onChange={(e) => handleShapeDataChange(index, 'category', e.target.value)}
+                                >
+                                    {PREDEFINED_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                </select>
+                                <input
+                                    placeholder="Subcategory (e.g. Year Built)"
+                                    className="input py-1.5 text-sm md:w-1/4"
+                                    value={item.subcategory}
+                                    onChange={(e) => handleShapeDataChange(index, 'subcategory', e.target.value)}
+                                    required
+                                />
+                                <input
+                                    placeholder="Value"
+                                    className="input py-1.5 text-sm md:w-2/4"
+                                    value={item.value}
+                                    onChange={(e) => handleShapeDataChange(index, 'value', e.target.value)}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveShapeData(index)}
+                                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
+                                >
+                                    <TrashIcon size={16} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 

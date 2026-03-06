@@ -11,7 +11,7 @@ import SystemAnnouncementForm from '../../components/admin/SystemAnnouncementFor
 import { Box } from '@mui/material';
 
 const AdminAuctions: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'auctions' | 'properties' | 'import_props' | 'import_auctions' | 'broadcasts'>('auctions');
+    const [activeTab, setActiveTab] = useState<'auctions' | 'properties' | 'import_props' | 'import_auctions' | 'import_shape_data' | 'broadcasts'>('auctions');
     const [filters, setFilters] = useState<AuctionFilterParams>({});
     const [propertyFilters, setPropertyFilters] = useState<PropertyFilterParams>({});
 
@@ -24,6 +24,7 @@ const AdminAuctions: React.FC = () => {
                 <TabButton active={activeTab === 'properties'} onClick={() => setActiveTab('properties')} label="Property Manager" />
                 <TabButton active={activeTab === 'import_props'} onClick={() => setActiveTab('import_props')} label="Import Properties (CSV)" />
                 <TabButton active={activeTab === 'import_auctions'} onClick={() => setActiveTab('import_auctions')} label="Import Auctions (CSV)" />
+                <TabButton active={activeTab === 'import_shape_data'} onClick={() => setActiveTab('import_shape_data')} label="Import Shape Data (CSV)" />
                 <TabButton active={activeTab === 'broadcasts'} onClick={() => setActiveTab('broadcasts')} label="System Broadcasts" />
             </div>
 
@@ -74,6 +75,17 @@ const AdminAuctions: React.FC = () => {
                 <div className="max-w-2xl">
                     <h2 className="text-xl font-semibold mb-4 text-slate-700 dark:text-slate-200">Import Auctions CSV</h2>
                     <CsvUpload type="auctions" onSuccess={() => setActiveTab('auctions')} />
+                </div>
+            )}
+
+            {activeTab === 'import_shape_data' && (
+                <div className="max-w-2xl">
+                    <h2 className="text-xl font-semibold mb-4 text-slate-700 dark:text-slate-200">Import Parcel Shape Data CSV</h2>
+                    <p className="text-sm text-slate-500 mb-4 dark:text-slate-400">
+                        Upload a CSV containing dynamic property attributes ("Parcel Shape Data").
+                        Required columns: <strong>parcel_id</strong>, <strong>Categoria</strong>, <strong>Subcategoria</strong>, <strong>Valor</strong>.
+                    </p>
+                    <CsvUpload type="shape_data" onSuccess={() => setActiveTab('properties')} />
                 </div>
             )}
         </div>

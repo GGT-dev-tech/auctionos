@@ -61,3 +61,12 @@ def import_properties_celery_task(file_path: str, job_id: str):
     logger.info(f"Worker starting import task {job_id} for file {file_path}")
     from app.services.import_service import import_service
     return run_async(import_service.process_properties_csv_file(file_path, job_id))
+
+@celery_app.task(acks_late=True, name="app.tasks.import_shape_data_celery_task")
+def import_shape_data_celery_task(file_path: str, job_id: str):
+    """
+    Worker task to process dynamic EAV Parcel Shape Data CSV imports.
+    """
+    logger.info(f"Worker starting shape data import task {job_id} for file {file_path}")
+    from app.services.import_service import import_service
+    return run_async(import_service.process_shape_data_csv_file(file_path, job_id))

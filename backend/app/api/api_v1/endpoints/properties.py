@@ -263,6 +263,7 @@ class PropertyUpdateRequest(BaseModel):
     county_fips: Optional[str] = None
     additional_parcel_numbers: Optional[str] = None
     occupancy_checked_date: Optional[date] = None
+    shape_data: List[Any] = [] # accepts dicts matching PropertyShapeDataSchema
 
 class PropertyCreateRequest(PropertyUpdateRequest):
     parcel_id: str  # Required for creation
@@ -284,6 +285,8 @@ def create_property(
     prop_id = str(uuid.uuid4())
     create_data["property_id"] = prop_id
     
+    shape_data_payload = create_data.pop("shape_data", [])
+    
     if "availability_status" not in create_data:
         create_data["availability_status"] = "available"
         
@@ -302,6 +305,14 @@ def create_property(
             {"prop_id": prop_id, "status": create_data["availability_status"]}
         )
         
+        # Insert shape data
+        if shape_data_payload:
+            for item in shape_data_payload:
+                db.execute(
+                    text("INSERT INTO property_shape_data (property_id, category, subcategory, value) VALUES (:prop_id, :cat, :subcat, :val)"),
+                    {"prop_id": prop_id, "cat": item["category"], "subcat": item["subcategory"], "val": item.get("value")}
+                )
+        
         db.commit()
     except Exception as e:
         db.rollback()
@@ -317,9 +328,21 @@ def update_property(
 ) -> Any:
     # Build dynamic update query
     update_data = property_in.dict(exclude_unset=True)
-    if not update_data:
+    shape_data_payload = update_data.pop("shape_data", None)
+    
+    if not update_data and shape_data_payload is None:
         raise HTTPException(status_code=400, detail="No updates provided")
         
+    old_prop = db.execute(
+        text("SELECT property_id, availability_status FROM property_details WHERE parcel_id = :parcel_id"),
+        {"parcel_id": parcel_id}
+    ).fetchone()
+    
+    if not old_prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+        
+    prop_id = old_prop[0]
+
     if "availability_status" in update_data:
         old_prop = db.execute(
             text("SELECT property_id, availability_status FROM property_details WHERE parcel_id = :parcel_id"),
@@ -338,13 +361,19 @@ def update_property(
                 {"prop_id": old_prop[0], "prev": old_status, "new": new_status}
             )
 
-    set_clause = ", ".join([f"{k} = :{k}" for k in update_data.keys()])
-    query = text(f"UPDATE property_details SET {set_clause} WHERE parcel_id = :parcel_id RETURNING property_id")
-    params = {**update_data, "parcel_id": parcel_id}
-    
-    result = db.execute(query, params).fetchone()
-    if not result:
-        raise HTTPException(status_code=404, detail="Property not found")
+    if update_data:
+        set_clause = ", ".join([f"{k} = :{k}" for k in update_data.keys()])
+        query = text(f"UPDATE property_details SET {set_clause} WHERE parcel_id = :parcel_id RETURNING property_id")
+        params = {**update_data, "parcel_id": parcel_id}
+        db.execute(query, params)
+        
+    if shape_data_payload is not None:
+        db.execute(text("DELETE FROM property_shape_data WHERE property_id = :prop_id"), {"prop_id": prop_id})
+        for item in shape_data_payload:
+            db.execute(
+                text("INSERT INTO property_shape_data (property_id, category, subcategory, value) VALUES (:prop_id, :cat, :subcat, :val)"),
+                {"prop_id": prop_id, "cat": item["category"], "subcat": item["subcategory"], "val": item.get("value")}
+            )
         
     db.commit()
     return {"message": "Property updated successfully", "parcel_id": parcel_id}
@@ -486,6 +515,16 @@ def get_property(
     """)
     history_results = db.execute(history_query, {"property_id": data.get('property_id')}).fetchall()
     data["auction_history"] = [dict(h._mapping) for h in history_results]
+    
+    # Fetch Shape Data
+    shape_query = text("""
+        SELECT category, subcategory, value
+        FROM property_shape_data
+        WHERE property_id = :property_id
+        ORDER BY category ASC, subcategory ASC
+    """)
+    shape_results = db.execute(shape_query, {"property_id": data.get('property_id')}).fetchall()
+    data["shape_data"] = [dict(s._mapping) for s in shape_results]
     
     # Initialize defaults for resilience
     data["notes"] = ""

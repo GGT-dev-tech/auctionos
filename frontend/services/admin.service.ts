@@ -25,6 +25,18 @@ export const AdminService = {
         return response.json();
     },
 
+    importShapeData: async (file: File): Promise<{ job_id: string, status: string }> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch(`${API_URL}/admin/import/shape-data`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            body: formData
+        });
+        if (!response.ok) throw new Error('Import failed');
+        return response.json();
+    },
+
     getImportStatus: async (jobId: string): Promise<{ status: string }> => {
         const response = await fetch(`${API_URL}/admin/import/status/${jobId}`, {
             headers: getHeaders()
