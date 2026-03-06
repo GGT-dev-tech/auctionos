@@ -79,7 +79,13 @@ class PropertyDetails(Base):
     additional_parcel_numbers = Column(Text, nullable=True)
     occupancy_checked_date = Column(Date, nullable=True)
 
-    shape_data = relationship("PropertyShapeData", back_populates="property", cascade="all, delete-orphan")
+    shape_data = relationship(
+        "PropertyShapeData",
+        primaryjoin="PropertyDetails.property_id == PropertyShapeData.property_id",
+        foreign_keys="[PropertyShapeData.property_id]",
+        back_populates="property",
+        cascade="all, delete-orphan"
+    )
 
 class PropertyShapeData(Base):
     __tablename__ = "property_shape_data"
@@ -88,12 +94,17 @@ class PropertyShapeData(Base):
     )
 
     id = Column(Integer, primary_key=True, index=True)
-    property_id = Column(String(36), ForeignKey("property_details.property_id", ondelete="CASCADE"), nullable=False, index=True)
+    property_id = Column(String(36), nullable=False, index=True)
     category = Column(String(255), nullable=False, index=True)
     subcategory = Column(String(255), nullable=False)
     value = Column(Text, nullable=True)
 
-    property = relationship("PropertyDetails", back_populates="shape_data")
+    property = relationship(
+        "PropertyDetails",
+        primaryjoin="PropertyShapeData.property_id == PropertyDetails.property_id",
+        foreign_keys="[PropertyShapeData.property_id]",
+        back_populates="shape_data"
+    )
 
 
 class PropertyAuctionHistory(Base):

@@ -26,7 +26,6 @@ def upgrade() -> None:
     sa.Column('category', sa.String(length=255), nullable=False),
     sa.Column('subcategory', sa.String(length=255), nullable=False),
     sa.Column('value', sa.Text(), nullable=True),
-    sa.ForeignKeyConstraint(['property_id'], ['property_details.property_id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('property_id', 'category', 'subcategory', name='uq_property_shape_data_cat_subcat')
     )
