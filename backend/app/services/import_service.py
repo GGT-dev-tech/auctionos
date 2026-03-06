@@ -349,10 +349,13 @@ class ImportService:
                     if not parcel_ids:
                         continue
                         
-                    pid_map_rows = conn.execute(
-                        text("SELECT parcel_id, property_id FROM property_details WHERE parcel_id = ANY(:pids)"),
-                        {"pids": parcel_ids}
-                    ).fetchall()
+                    from sqlalchemy import select
+                    from app.models.property import PropertyDetails
+                    
+                    stmt = select(PropertyDetails.parcel_id, PropertyDetails.property_id).where(
+                        PropertyDetails.parcel_id.in_(parcel_ids)
+                    )
+                    pid_map_rows = conn.execute(stmt).fetchall()
                     pid_map = {r[0]: r[1] for r in pid_map_rows}
                     
                     for _, row in chunk.iterrows():
@@ -388,18 +391,21 @@ class ImportService:
                         
             if errors:
                 status_msg = f"Completed with errors. Success: {success_count} attributes. Errors: {len(errors[:100])}..."
-                redis.set(f"import_errors:{job_id}", str(errors[:500]), ex=3600)
+                try: redis.set(f"import_errors:{job_id}", str(errors[:500]), ex=3600)
+                except: pass
             else:
                 status_msg = f"Success: {success_count} attributes imported"
                 
-            redis.set(f"import_status:{job_id}", status_msg, ex=3600)
+            try: redis.set(f"import_status:{job_id}", status_msg, ex=3600)
+            except: pass
             
             if os.path.exists(file_path):
                 os.remove(file_path)
 
         except Exception as e:
             logger.error(f"Shape Data Import Job Failed: {e}")
-            redis.set(f"import_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
+            try: redis.set(f"import_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
+            except: pass
             if os.path.exists(file_path):
                 os.remove(file_path)
             raise e
