@@ -21,6 +21,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # --- Schemas ---
 class ClientListCreate(BaseModel):
     name: str
+    tags: str | None = None
 
 class ClientListResponse(BaseModel):
     id: int
@@ -62,7 +63,7 @@ def create_client_list(
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Create a new List folder for the client."""
-    new_list = ClientList(name=list_in.name, user_id=current_user.id, is_favorite_list=False, is_broadcasted=False, tags=None)
+    new_list = ClientList(name=list_in.name, user_id=current_user.id, is_favorite_list=False, is_broadcasted=False, tags=list_in.tags)
     db.add(new_list)
     db.commit()
     db.refresh(new_list)

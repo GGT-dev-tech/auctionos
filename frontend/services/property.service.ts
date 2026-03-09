@@ -193,11 +193,11 @@ export const ClientDataService = {
         return response.json();
     },
 
-    createList: async (name: string): Promise<any> => {
+    createList: async (name: string, tags?: string): Promise<any> => {
         const response = await fetch(`${API_URL}/client-data/lists`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ name })
+            body: JSON.stringify({ name, tags })
         });
         if (!response.ok) throw new Error('Failed to create list');
         return response.json();
