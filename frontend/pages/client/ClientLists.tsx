@@ -363,6 +363,8 @@ const ClientLists: React.FC = () => {
                                                                 key={`${list.id}-${county}`}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
+                                                                    setSelectedListId(null);
+                                                                    setSelectedStateName(list.name);
                                                                     setSelectedCountyName(county);
                                                                 }}
                                                                 className={`group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 
@@ -530,27 +532,31 @@ const ClientLists: React.FC = () => {
                                             </Button>
                                         )}
                                     </div>
-                                ) : countyContacts.length > 0 ? (
+                                ) : (
                                     <div className="p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 mt-0">
-                                        <span className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-wider block mb-2">{selectedCountyName} County Contacts</span>
+                                        <span className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-wider block mb-2">{selectedCountyName} County Information</span>
                                         <div className="flex flex-wrap gap-2">
-                                            {countyContacts.map((contact, idx) => (
-                                                <Button
-                                                    key={idx}
-                                                    variant="outlined"
-                                                    size="small"
-                                                    href={contact.url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="text-[11px] rounded-full border-sky-200 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-800 normal-case"
-                                                >
-                                                    <span className="material-symbols-outlined text-[14px] mr-1">link</span>
-                                                    {contact.name}
-                                                </Button>
-                                            ))}
+                                            {countyContacts.length > 0 ? (
+                                                countyContacts.map((contact, idx) => (
+                                                    <Button
+                                                        key={idx}
+                                                        variant="outlined"
+                                                        size="small"
+                                                        href={contact.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-[11px] rounded-full border-sky-200 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-800 normal-case"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[14px] mr-1">link</span>
+                                                        {contact.name}
+                                                    </Button>
+                                                ))
+                                            ) : (
+                                                <span className="text-[10px] text-slate-400 italic">No research links available for this county yet.</span>
+                                            )}
                                         </div>
                                     </div>
-                                ) : null}
+                                )}
 
                                 {/* Leaflet Map */}
                                 <div className="h-48 w-full bg-slate-200 dark:bg-slate-800 relative z-[1]">
