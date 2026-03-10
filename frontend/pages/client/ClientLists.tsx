@@ -366,6 +366,10 @@ const ClientLists: React.FC = () => {
                                                                     setSelectedListId(null);
                                                                     setSelectedStateName(list.name);
                                                                     setSelectedCountyName(county);
+                                                                    // Fetch county contacts using the existing service logic
+                                                                    countyService.getContacts(list.name, county)
+                                                                        .then(setCountyContacts)
+                                                                        .catch(() => setCountyContacts([]));
                                                                 }}
                                                                 className={`group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 
                                                                     ${selectedCountyName === county ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
