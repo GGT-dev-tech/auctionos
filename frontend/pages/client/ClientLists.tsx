@@ -4,6 +4,7 @@ import { FolderPlusIcon, Trash2Icon, Edit2Icon, ExternalLinkIcon } from 'lucide-
 import { ClientDataService } from '../../services/property.service';
 import { countyService, CountyContact } from '../../services/county.service';
 import { StatesService, StateContact } from '../../services/states.service';
+import { geocodeAddress } from '../../services/geocoding.service';
 import { useNavigate } from 'react-router-dom';
 import { SwipeToDeleteItem } from '../../components/SwipeToDeleteItem';
 import { PropertyPreviewDrawer } from '../../components/PropertyPreviewDrawer';
@@ -52,6 +53,7 @@ const ClientLists: React.FC = () => {
     const [selectedStateName, setSelectedStateName] = useState<string | null>(null);
     const [selectedCountyName, setSelectedCountyName] = useState<string | null>(null);
     const [previewPropertyId, setPreviewPropertyId] = useState<number | string | null>(null);
+    const [geocodedProperties, setGeocodedProperties] = useState<Record<number, { lat: number, lng: number }>>({});
 
     const toggleState = (stateName: string) => {
         setExpandedStates(prev => ({ ...prev, [stateName]: !prev[stateName] }));
@@ -142,6 +144,21 @@ const ClientLists: React.FC = () => {
             }
             const data = await ClientDataService.getListProperties(stateList.id);
             setSelectedListProperties(data);
+
+            // Geocode properties missing coordinates
+            const missingCoords = data.filter((p: any) => (!p.latitude || !p.longitude) && p.address);
+            if (missingCoords.length > 0) {
+                // To avoid rate limiting from Nominatim, process sequentially with a small delay
+                for (const prop of missingCoords) {
+                    if (geocodedProperties[prop.id]) continue; // Already geocoded locally
+                    const coords = await geocodeAddress(prop.address);
+                    if (coords) {
+                        setGeocodedProperties(prev => ({ ...prev, [prop.id]: coords }));
+                    }
+                    // Prevent spamming the API
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+            }
         } catch (err) {
             console.error('Error loading state properties:', err);
         } finally {
@@ -574,28 +591,35 @@ const ClientLists: React.FC = () => {
                                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                             />
-                                            {selectedListProperties.filter(p => p.latitude && p.longitude).map((prop, idx) => (
-                                                <Marker key={idx} position={[parseFloat(prop.latitude), parseFloat(prop.longitude)]}>
-                                                    <Popup>
-                                                        <div className="text-xs flex flex-col gap-1">
-                                                            <strong className="block mb-1 text-blue-600">{prop.parcel_id}</strong>
-                                                            <span className="truncate max-w-[150px]">{prop.address || 'Address Unavailable'}</span>
-                                                            <strong>Due:</strong> ${prop.amount_due?.toLocaleString()}
-                                                            <Button
-                                                                size="small"
-                                                                variant="contained"
-                                                                className="mt-2 text-[10px] py-0.5"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setPreviewPropertyId(prop.parcel_id || prop.id);
-                                                                }}
-                                                            >
-                                                                View Details
-                                                            </Button>
-                                                        </div>
-                                                    </Popup>
-                                                </Marker>
-                                            ))}
+                                            {selectedListProperties
+                                                .filter(p => (p.latitude && p.longitude) || geocodedProperties[p.id])
+                                                .map((prop, idx) => {
+                                                    const lat = prop.latitude ? parseFloat(prop.latitude) : geocodedProperties[prop.id].lat;
+                                                    const lng = prop.longitude ? parseFloat(prop.longitude) : geocodedProperties[prop.id].lng;
+
+                                                    return (
+                                                        <Marker key={idx} position={[lat, lng]}>
+                                                            <Popup>
+                                                                <div className="text-xs flex flex-col gap-1">
+                                                                    <strong className="block mb-1 text-blue-600">{prop.parcel_id}</strong>
+                                                                    <span className="truncate max-w-[150px]">{prop.address || 'Address Unavailable'}</span>
+                                                                    <strong>Due:</strong> ${prop.amount_due?.toLocaleString()}
+                                                                    <Button
+                                                                        size="small"
+                                                                        variant="contained"
+                                                                        className="mt-2 text-[10px] py-0.5"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setPreviewPropertyId(prop.parcel_id || prop.id);
+                                                                        }}
+                                                                    >
+                                                                        View Details
+                                                                    </Button>
+                                                                </div>
+                                                            </Popup>
+                                                        </Marker>
+                                                    );
+                                                })}
                                         </MapContainer>
                                     </div>
                                 )}
