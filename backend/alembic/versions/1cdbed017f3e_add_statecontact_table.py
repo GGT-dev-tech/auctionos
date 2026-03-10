@@ -19,13 +19,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Drop rolled back tables
-    with op.batch_alter_table('property_shape_data', schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f('ix_property_shape_data_category'))
-        batch_op.drop_index(batch_op.f('ix_property_shape_data_id'))
-        batch_op.drop_index(batch_op.f('ix_property_shape_data_property_id'))
-    op.drop_table('property_shape_data')
-
     # Create State Contacts Table
     state_contacts_table = op.create_table('state_contacts',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -96,17 +89,3 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_state_contacts_state'))
         batch_op.drop_index(batch_op.f('ix_state_contacts_id'))
     op.drop_table('state_contacts')
-
-    op.create_table('property_shape_data',
-    sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('property_id', sa.VARCHAR(length=36), nullable=False),
-    sa.Column('category', sa.VARCHAR(length=255), nullable=False),
-    sa.Column('subcategory', sa.VARCHAR(length=255), nullable=False),
-    sa.Column('value', sa.TEXT(), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('property_id', 'category', 'subcategory', name=op.f('uq_property_shape_data_cat_subcat'))
-    )
-    with op.batch_alter_table('property_shape_data', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_property_shape_data_property_id'), ['property_id'], unique=False)
-        batch_op.create_index(batch_op.f('ix_property_shape_data_id'), ['id'], unique=False)
-        batch_op.create_index(batch_op.f('ix_property_shape_data_category'), ['category'], unique=False)
