@@ -43,8 +43,10 @@ def seed_county_contacts(db: Session):
 
             for row in reader:
                 name = row.get('Name', '')
-                # Filter out NETR
-                if "NETR Mapping and GIS" not in name:
+                name_lower = name.lower()
+                # Filter out NETR and Historic Aerials
+                if "netr mapping" not in name_lower and "historic aerials" not in name_lower:
+
                     state = row.get('State', '').lower().strip()
                     county = row.get('County', '').lower().strip()
                     phone = row.get('Phone', '').strip()

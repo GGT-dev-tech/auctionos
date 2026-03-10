@@ -619,7 +619,10 @@ const AdminLists: React.FC = () => {
                                             <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
                                                 <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{prop.parcel_id}</span>
                                                 <span className="opacity-30">|</span>
-                                                <span className="truncate">{prop.address || 'No Address Listed'}</span>
+                                                <div className="flex items-center gap-1">
+                                                    <span className="material-symbols-outlined text-[14px] text-red-500">location_on</span>
+                                                    <span className="truncate">{prop.address || 'No Address Listed'}</span>
+                                                </div>
                                             </div>
 
                                             {/* Description Field Requested by User */}
