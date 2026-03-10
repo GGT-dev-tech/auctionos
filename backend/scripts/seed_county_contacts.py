@@ -81,7 +81,11 @@ def seed_county_contacts(db: Session):
         logger.error(f"Failed during seeding: {e}")
         db.rollback()
 
+from app.db.session import SessionLocal, engine
+
 if __name__ == "__main__":
+    # Ensure table exists before seeding
+    CountyContact.__table__.create(bind=engine, checkfirst=True)
     db = SessionLocal()
     try:
         seed_county_contacts(db)

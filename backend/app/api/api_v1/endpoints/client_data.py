@@ -307,7 +307,9 @@ def get_list_properties(
             "auction_name": auction[0] if auction else None,
             "auction_date": auction[1] if auction else None,
             "property_type": p.property_type,
-            "occupancy": p.occupancy
+            "occupancy": p.occupancy,
+            "latitude": p.latitude,
+            "longitude": p.longitude
         }
         results.append(prop_dict)
         
