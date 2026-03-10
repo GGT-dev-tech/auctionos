@@ -89,7 +89,15 @@ const AdminLists: React.FC = () => {
                 // 3. Geocode on-the-fly and update map instantly
                 if ((!newProperty.latitude || !newProperty.longitude) && newProperty.address) {
                     try {
-                        const coords = await geocodeAddress(newProperty.address);
+                        let coords = await geocodeAddress(newProperty.address);
+                        if (!coords && (newProperty.county || newProperty.state)) {
+                            const fallback = `${newProperty.county || ''} County, ${newProperty.state || ''}`;
+                            coords = await geocodeAddress(fallback);
+                        }
+                        if (!coords && newProperty.state) {
+                            coords = await geocodeAddress(newProperty.state);
+                        }
+
                         if (coords) {
                             setGeocodedProperties(prev => ({ ...prev, [newProperty.id]: coords }));
                         }
@@ -191,7 +199,16 @@ const AdminLists: React.FC = () => {
                         try {
                             if (geocodedProperties[prop.id]) continue;
 
-                            const coords = await geocodeAddress(prop.address);
+                            let coords = await geocodeAddress(prop.address);
+                            if (!coords && (prop.county || prop.state)) {
+                                const fallback = `${prop.county || ''} County, ${prop.state || ''}`;
+                                console.log(`Fallback geocoding for property ${prop.id}: ${fallback}`);
+                                coords = await geocodeAddress(fallback);
+                            }
+                            if (!coords && prop.state) {
+                                coords = await geocodeAddress(prop.state);
+                            }
+
                             if (coords) {
                                 setGeocodedProperties(prev => ({ ...prev, [prop.id]: coords }));
                             }
