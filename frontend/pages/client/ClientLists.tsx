@@ -211,12 +211,19 @@ const ClientLists: React.FC = () => {
 
             // Geocode properties missing coordinates without blocking the UI
             const missingCoords = data.filter((p: any) => (!p.latitude || !p.longitude) && p.address);
+            console.log(`Map debug: Found ${missingCoords.length} missing coords in state ${stateName}`);
             if (missingCoords.length > 0) {
                 (async () => {
+                    console.log("Map debug: Starting async geocoding loop for items:", missingCoords.map(m => m.id));
                     for (const prop of missingCoords) {
                         try {
-                            if (geocodedProperties[prop.id]) continue;
+                            console.log(`Map debug: Checking property ${prop.id}, current geocoded state keys:`, Object.keys(geocodedProperties));
+                            if (geocodedProperties[prop.id]) {
+                                console.log(`Map debug: Skipping property ${prop.id}, already geocoded.`);
+                                continue;
+                            }
 
+                            console.log(`Map debug: Calling geocodeAddress for ${prop.address}`);
                             let coords = await geocodeAddress(prop.address);
                             if (!coords && (prop.county || prop.state)) {
                                 const fallback = `${prop.county || ''} County, ${prop.state || ''}`;
