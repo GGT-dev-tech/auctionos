@@ -39,6 +39,7 @@ const AdminLists: React.FC = () => {
     const [newListName, setNewListName] = useState('');
     const [editingListId, setEditingListId] = useState<number | null>(null);
     const [editName, setEditName] = useState('');
+    const [newCountyName, setNewCountyName] = useState('');
     const [dragOverListId, setDragOverListId] = useState<number | null>(null);
     const [broadcastedLists, setBroadcastedLists] = useState<CustomList[]>([]);
     const [importing, setImporting] = useState<number | null>(null);
@@ -162,10 +163,11 @@ const AdminLists: React.FC = () => {
                 if (!newListName) return;
                 await ClientDataService.createList(newListName);
             } else {
-                if (!selectedState) return;
-                await ClientDataService.createList(`${selectedState.state} - All`, 'STANDARD');
+                if (!selectedState || !newCountyName) return;
+                await ClientDataService.createList(`${selectedState.state} - ${newCountyName.trim()}`, 'STANDARD');
             }
             setNewListName('');
+            setNewCountyName('');
             setSelectedState(null);
             setOpenModal(false);
             loadLists();
@@ -664,17 +666,28 @@ const AdminLists: React.FC = () => {
                             onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
                         />
                     ) : (
-                        <Autocomplete
-                            options={stateContacts}
-                            getOptionLabel={(option) => option.state}
-                            value={selectedState}
-                            onChange={(_, newValue) => setSelectedState(newValue)}
-                            renderInput={(params) => (
-                                <TextField {...params} variant="outlined" placeholder="Select a US State..." autoFocus className="mb-4 bg-white dark:bg-slate-800 rounded-lg" />
-                            )}
-                            fullWidth
-                            disablePortal
-                        />
+                        <div className="flex flex-col gap-3 mb-4">
+                            <Autocomplete
+                                options={stateContacts}
+                                getOptionLabel={(option) => option.state}
+                                value={selectedState}
+                                onChange={(_, newValue) => setSelectedState(newValue)}
+                                renderInput={(params) => (
+                                    <TextField {...params} variant="outlined" placeholder="Select a US State..." autoFocus className="bg-white dark:bg-slate-800 rounded-lg" />
+                                )}
+                                fullWidth
+                                disablePortal
+                            />
+                            <TextField
+                                fullWidth
+                                placeholder="County Name (e.g., Harris)"
+                                variant="outlined"
+                                value={newCountyName}
+                                onChange={(e) => setNewCountyName(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && selectedState && newCountyName && handleCreateList()}
+                                className="bg-white dark:bg-slate-800 rounded-lg"
+                            />
+                        </div>
                     )}
 
                     <div className="flex justify-end gap-3 mt-6">
@@ -682,7 +695,7 @@ const AdminLists: React.FC = () => {
                         <Button
                             variant="contained"
                             onClick={handleCreateList}
-                            disabled={creationMode === 'custom' ? !newListName : !selectedState}
+                            disabled={creationMode === 'custom' ? !newListName : (!selectedState || !newCountyName.trim())}
                             className="bg-blue-600 rounded-lg shadow-none"
                         >
                             Create
