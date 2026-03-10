@@ -8,7 +8,7 @@ import { geocodeAddress } from '../../services/geocoding.service';
 import { useNavigate } from 'react-router-dom';
 import { SwipeToDeleteItem } from '../../components/SwipeToDeleteItem';
 import { PropertyPreviewDrawer } from '../../components/PropertyPreviewDrawer';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -28,6 +28,18 @@ interface CustomList {
     is_broadcasted: boolean;
     tags?: string;
 }
+
+// Automatically fits the map to show all rendered markers
+const BoundsFitter = ({ markers }: { markers: { lat: number, lng: number }[] }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (markers.length > 0) {
+            const bounds = L.latLngBounds(markers.map(m => [m.lat, m.lng]));
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 8 });
+        }
+    }, [markers, map]);
+    return null;
+};
 
 const ClientLists: React.FC = () => {
     const navigate = useNavigate();
@@ -54,6 +66,43 @@ const ClientLists: React.FC = () => {
     const [selectedCountyName, setSelectedCountyName] = useState<string | null>(null);
     const [previewPropertyId, setPreviewPropertyId] = useState<number | string | null>(null);
     const [geocodedProperties, setGeocodedProperties] = useState<Record<number, { lat: number, lng: number }>>({});
+
+    // Global listener for dynamic property additions
+    useEffect(() => {
+        const handlePropertyAdded = async (event: any) => {
+            const newProperty = event.detail;
+            if (!newProperty) return;
+
+            // 1. Refresh list data implicitly to update counts
+            loadLists();
+
+            // 2. If we are currently viewing the folder this property belongs to, inject it into the UI
+            if (
+                (selectedListId && newProperty.list_id === selectedListId) ||
+                (selectedStateName && newProperty.state && newProperty.state.toLowerCase() === selectedStateName.toLowerCase())
+            ) {
+                setSelectedListProperties(prev => {
+                    if (prev.find(p => p.id === newProperty.id)) return prev;
+                    return [newProperty, ...prev];
+                });
+
+                // 3. Geocode on-the-fly and update map instantly
+                if ((!newProperty.latitude || !newProperty.longitude) && newProperty.address) {
+                    try {
+                        const coords = await geocodeAddress(newProperty.address);
+                        if (coords) {
+                            setGeocodedProperties(prev => ({ ...prev, [newProperty.id]: coords }));
+                        }
+                    } catch (err) {
+                        console.error('Dynamic geocoding error', err);
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('propertyAdded', handlePropertyAdded);
+        return () => window.removeEventListener('propertyAdded', handlePropertyAdded);
+    }, [selectedListId, selectedStateName]);
 
     const toggleState = (stateName: string) => {
         setExpandedStates(prev => ({ ...prev, [stateName]: !prev[stateName] }));
@@ -600,35 +649,46 @@ const ClientLists: React.FC = () => {
                                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                             />
-                                            {selectedListProperties
-                                                .filter(p => (p.latitude && p.longitude) || geocodedProperties[p.id])
-                                                .map((prop, idx) => {
-                                                    const lat = prop.latitude ? parseFloat(prop.latitude) : geocodedProperties[prop.id].lat;
-                                                    const lng = prop.longitude ? parseFloat(prop.longitude) : geocodedProperties[prop.id].lng;
+                                            {(() => {
+                                                const visibleProps = selectedListProperties.filter(p => (p.latitude && p.longitude) || geocodedProperties[p.id]);
+                                                const markersForBounds = visibleProps.map(p => ({
+                                                    lat: p.latitude ? parseFloat(p.latitude) : geocodedProperties[p.id].lat,
+                                                    lng: p.longitude ? parseFloat(p.longitude) : geocodedProperties[p.id].lng
+                                                }));
 
-                                                    return (
-                                                        <Marker key={idx} position={[lat, lng]}>
-                                                            <Popup>
-                                                                <div className="text-xs flex flex-col gap-1">
-                                                                    <strong className="block mb-1 text-blue-600">{prop.parcel_id}</strong>
-                                                                    <span className="truncate max-w-[150px]">{prop.address || 'Address Unavailable'}</span>
-                                                                    <strong>Due:</strong> ${prop.amount_due?.toLocaleString()}
-                                                                    <Button
-                                                                        size="small"
-                                                                        variant="contained"
-                                                                        className="mt-2 text-[10px] py-0.5"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setPreviewPropertyId(prop.parcel_id || prop.id);
-                                                                        }}
-                                                                    >
-                                                                        View Details
-                                                                    </Button>
-                                                                </div>
-                                                            </Popup>
-                                                        </Marker>
-                                                    );
-                                                })}
+                                                return (
+                                                    <>
+                                                        <BoundsFitter markers={markersForBounds} />
+                                                        {visibleProps.map((prop, idx) => {
+                                                            const lat = prop.latitude ? parseFloat(prop.latitude) : geocodedProperties[prop.id].lat;
+                                                            const lng = prop.longitude ? parseFloat(prop.longitude) : geocodedProperties[prop.id].lng;
+
+                                                            return (
+                                                                <Marker key={idx} position={[lat, lng]}>
+                                                                    <Popup>
+                                                                        <div className="text-xs flex flex-col gap-1">
+                                                                            <strong className="block mb-1 text-blue-600">{prop.parcel_id}</strong>
+                                                                            <span className="truncate max-w-[150px]">{prop.address || 'Address Unavailable'}</span>
+                                                                            <strong>Due:</strong> ${prop.amount_due?.toLocaleString()}
+                                                                            <Button
+                                                                                size="small"
+                                                                                variant="contained"
+                                                                                className="mt-2 text-[10px] py-0.5"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setPreviewPropertyId(prop.parcel_id || prop.id);
+                                                                                }}
+                                                                            >
+                                                                                View Details
+                                                                            </Button>
+                                                                        </div>
+                                                                    </Popup>
+                                                                </Marker>
+                                                            );
+                                                        })}
+                                                    </>
+                                                );
+                                            })()}
                                         </MapContainer>
                                     </div>
                                 )}
