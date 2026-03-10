@@ -78,25 +78,39 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number, ln
 
     // 2. Add to throttling queue
     return geocoderQueue.add(async () => {
-        return new Promise((resolve) => {
-            try {
-                // @ts-ignore - plugin extension
-                const geocoder = L.Control.Geocoder.nominatim();
-                geocoder.geocode(address, (results: any[]) => {
-                    if (results && results.length > 0) {
-                        const coords = { lat: results[0].center.lat, lng: results[0].center.lng };
-                        setCache(address, coords);
-                        console.log('Geocoded fresh address:', address, coords);
-                        resolve(coords);
-                    } else {
-                        console.warn('Nominatim returned no results for:', address);
-                        resolve(null);
-                    }
-                });
-            } catch (error) {
-                console.error('Geocoding error:', error);
-                resolve(null);
+        try {
+            console.log('Geocoding fresh address via fetch:', address);
+            const encodedAddr = encodeURIComponent(address);
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddr}&limit=1`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                    'User-Agent': 'AuctionOS-App/1.0'
+                }
+            });
+
+            if (!response.ok) {
+                console.error('Nominatim API error:', response.status, response.statusText);
+                return null;
             }
-        });
+
+            const data = await response.json();
+            if (data && data.length > 0) {
+                const coords = {
+                    lat: parseFloat(data[0].lat),
+                    lng: parseFloat(data[0].lon)
+                };
+                setCache(address, coords);
+                console.log('Geocoded successfully:', address, coords);
+                return coords;
+            } else {
+                console.warn('Nominatim returned no results for:', address);
+                return null;
+            }
+        } catch (error) {
+            console.error('Geocoding exception:', error);
+            return null;
+        }
     });
 };

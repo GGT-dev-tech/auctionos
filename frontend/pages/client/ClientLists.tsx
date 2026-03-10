@@ -228,6 +228,7 @@ const ClientLists: React.FC = () => {
                             }
 
                             if (coords) {
+                                console.log(`Map debug: Setting geocoded coords for property ${prop.id}`, coords);
                                 setGeocodedProperties(prev => ({ ...prev, [prop.id]: coords }));
                             }
                         } catch (e) {
