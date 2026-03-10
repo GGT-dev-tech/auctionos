@@ -8,9 +8,10 @@ interface PropertyPreviewDrawerProps {
     open: boolean;
     propertyId: string | number | null;
     onClose: () => void;
+    basePath?: string;
 }
 
-export const PropertyPreviewDrawer: React.FC<PropertyPreviewDrawerProps> = ({ open, propertyId, onClose }) => {
+export const PropertyPreviewDrawer: React.FC<PropertyPreviewDrawerProps> = ({ open, propertyId, onClose, basePath = '/client' }) => {
     const [property, setProperty] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -53,7 +54,7 @@ export const PropertyPreviewDrawer: React.FC<PropertyPreviewDrawerProps> = ({ op
                         <IconButton
                             onClick={() => {
                                 if (property?.parcel_id || property?.id) {
-                                    navigate(`/client/properties/${property.parcel_id || property.id}`);
+                                    navigate(`${basePath}/properties/${property.parcel_id || property.id}`);
                                 }
                             }}
                             className="bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700"
