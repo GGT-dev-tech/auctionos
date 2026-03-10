@@ -145,19 +145,26 @@ const ClientLists: React.FC = () => {
             const data = await ClientDataService.getListProperties(stateList.id);
             setSelectedListProperties(data);
 
-            // Geocode properties missing coordinates
+            // Geocode properties missing coordinates without blocking the UI
             const missingCoords = data.filter((p: any) => (!p.latitude || !p.longitude) && p.address);
             if (missingCoords.length > 0) {
-                // To avoid rate limiting from Nominatim, process sequentially with a small delay
-                for (const prop of missingCoords) {
-                    if (geocodedProperties[prop.id]) continue; // Already geocoded locally
-                    const coords = await geocodeAddress(prop.address);
-                    if (coords) {
-                        setGeocodedProperties(prev => ({ ...prev, [prop.id]: coords }));
+                (async () => {
+                    for (const prop of missingCoords) {
+                        try {
+                            // Check if previously geocoded to avoid re-fetching
+                            if (geocodedProperties[prop.id]) continue;
+
+                            const coords = await geocodeAddress(prop.address);
+                            if (coords) {
+                                setGeocodedProperties(prev => ({ ...prev, [prop.id]: coords }));
+                            }
+                        } catch (e) {
+                            console.error('Geocoding error for', prop.id, e);
+                        }
+                        // Small delay to prevent API rate limiting
+                        await new Promise(r => setTimeout(r, 1000));
                     }
-                    // Prevent spamming the API
-                    await new Promise(r => setTimeout(r, 1000));
-                }
+                })();
             }
         } catch (err) {
             console.error('Error loading state properties:', err);
@@ -554,30 +561,32 @@ const ClientLists: React.FC = () => {
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 mt-0">
-                                        <span className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-wider block mb-2">{selectedCountyName} County Information</span>
-                                        <div className="flex flex-col gap-2">
+                                    <div className="p-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 mt-0">
+                                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">{selectedCountyName} County Links</h3>
+                                        <div className="space-y-3">
                                             {countyContacts.length > 0 ? (
                                                 countyContacts.map((contact, idx) => (
-                                                    <div key={idx} className="flex items-center gap-2">
-                                                        <Button
-                                                            variant="outlined"
-                                                            size="small"
-                                                            href={contact.url}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="text-[11px] rounded-full border-sky-200 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-800 normal-case"
-                                                        >
-                                                            <span className="material-symbols-outlined text-[14px] mr-1">link</span>
-                                                            {contact.name}
-                                                        </Button>
-                                                        {contact.phone && (
-                                                            <span className="text-[11px] text-slate-500 font-medium">({contact.phone})</span>
-                                                        )}
-                                                    </div>
+                                                    <a
+                                                        key={idx}
+                                                        href={contact.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-slate-300"
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <ExternalLinkIcon size={16} className="text-blue-500" />
+                                                            <span className="font-medium text-sm">{contact.name}</span>
+                                                            {contact.phone && (
+                                                                <span className="text-xs text-slate-500 ml-2">({contact.phone})</span>
+                                                            )}
+                                                        </div>
+                                                        <ExternalLinkIcon size={14} className="opacity-50" />
+                                                    </a>
                                                 ))
                                             ) : (
-                                                <span className="text-[10px] text-slate-400 italic">No research links available for this county yet.</span>
+                                                <div className="text-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                    <span className="text-sm text-slate-500">No research links available for this county yet.</span>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
