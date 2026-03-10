@@ -73,7 +73,6 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number, ln
     // 1. Check persistent cache
     const cache = getCache();
     if (cache[address]) {
-        console.log('Map debug: Returning cached coords for:', address, cache[address]);
         return cache[address];
     }
 

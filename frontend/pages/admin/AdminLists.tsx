@@ -210,7 +210,6 @@ const AdminLists: React.FC = () => {
                             }
 
                             if (coords) {
-                                console.log(`Map debug: Setting geocoded coords for property ${prop.id}`, coords);
                                 setGeocodedProperties(prev => ({ ...prev, [prop.id]: coords }));
                             }
                         } catch (e) {
@@ -657,26 +656,15 @@ const AdminLists: React.FC = () => {
                                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                         />
                                         {(() => {
-                                            if (selectedListProperties.length > 0) {
-                                                console.log("Map debug: Processing selectedListProperties count:", selectedListProperties.length);
-                                                console.log("Map debug: geocodedProperties keys:", Object.keys(geocodedProperties));
-                                            }
                                             const validMarkers = selectedListProperties
                                                 .map(p => {
                                                     const lat = p.latitude ? parseFloat(p.latitude) : geocodedProperties[p.id]?.lat;
                                                     const lng = p.longitude ? parseFloat(p.longitude) : geocodedProperties[p.id]?.lng;
-
-                                                    if (selectedListProperties.length > 0 && selectedListProperties.length < 20) {
-                                                        console.log(`Map debug: Property ID ${p.id} - Result lat: ${lat} (native: ${p.latitude}, geocoded: ${geocodedProperties[p.id]?.lat}), lng: ${lng} (native: ${p.longitude}, geocoded: ${geocodedProperties[p.id]?.lng})`);
-                                                    }
-
                                                     return { prop: p, lat, lng };
                                                 })
                                                 .filter(m => m.lat !== undefined && m.lng !== undefined && !isNaN(m.lat as number) && !isNaN(m.lng as number));
 
-                                            if (selectedListProperties.length > 0 && validMarkers.length === 0) {
-                                                console.warn("Map debug: Properties exist but no valid coordinates found. Geocoding might be failing or pending.");
-                                            } else if (validMarkers.length > 0) {
+                                            if (selectedListProperties.length > 0 && validMarkers.length > 0) {
                                                 console.log(`Map debug: Rendering ${validMarkers.length} valid markers.`);
                                             }
 

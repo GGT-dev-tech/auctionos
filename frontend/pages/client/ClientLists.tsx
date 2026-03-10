@@ -211,19 +211,12 @@ const ClientLists: React.FC = () => {
 
             // Geocode properties missing coordinates without blocking the UI
             const missingCoords = data.filter((p: any) => (!p.latitude || !p.longitude) && p.address);
-            console.log(`Map debug: Found ${missingCoords.length} missing coords in state ${stateName}`);
             if (missingCoords.length > 0) {
                 (async () => {
-                    console.log("Map debug: Starting async geocoding loop for items:", missingCoords.map(m => m.id));
                     for (const prop of missingCoords) {
                         try {
-                            console.log(`Map debug: Checking property ${prop.id}, current geocoded state keys:`, Object.keys(geocodedProperties));
-                            if (geocodedProperties[prop.id]) {
-                                console.log(`Map debug: Skipping property ${prop.id}, already geocoded.`);
-                                continue;
-                            }
+                            if (geocodedProperties[prop.id]) continue;
 
-                            console.log(`Map debug: Calling geocodeAddress for ${prop.address}`);
                             let coords = await geocodeAddress(prop.address);
                             if (!coords && (prop.county || prop.state)) {
                                 const fallback = `${prop.county || ''} County, ${prop.state || ''}`;
@@ -681,26 +674,15 @@ const ClientLists: React.FC = () => {
                                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                             />
                                             {(() => {
-                                                if (selectedListProperties.length > 0) {
-                                                    console.log("Map debug: Processing selectedListProperties count:", selectedListProperties.length);
-                                                    console.log("Map debug: geocodedProperties keys:", Object.keys(geocodedProperties));
-                                                }
                                                 const validMarkers = selectedListProperties
                                                     .map(p => {
                                                         const lat = p.latitude ? parseFloat(p.latitude) : geocodedProperties[p.id]?.lat;
                                                         const lng = p.longitude ? parseFloat(p.longitude) : geocodedProperties[p.id]?.lng;
-
-                                                        if (selectedListProperties.length > 0 && selectedListProperties.length < 20) {
-                                                            console.log(`Map debug: Property ID ${p.id} - Result lat: ${lat} (native: ${p.latitude}, geocoded: ${geocodedProperties[p.id]?.lat}), lng: ${lng} (native: ${p.longitude}, geocoded: ${geocodedProperties[p.id]?.lng})`);
-                                                        }
-
                                                         return { prop: p, lat, lng };
                                                     })
                                                     .filter(m => m.lat !== undefined && m.lng !== undefined && !isNaN(m.lat as number) && !isNaN(m.lng as number));
 
-                                                if (selectedListProperties.length > 0 && validMarkers.length === 0) {
-                                                    console.warn("Map debug: Properties exist but no valid coordinates found. Geocoding might be failing or pending.");
-                                                } else if (validMarkers.length > 0) {
+                                                if (selectedListProperties.length > 0 && validMarkers.length > 0) {
                                                     console.log(`Map debug: Rendering ${validMarkers.length} valid markers.`);
                                                 }
 
