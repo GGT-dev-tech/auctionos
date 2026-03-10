@@ -32,12 +32,19 @@ interface CustomList {
 // Automatically fits the map to show all rendered markers
 const BoundsFitter = ({ markers }: { markers: { lat: number, lng: number }[] }) => {
     const map = useMap();
+    const markersStr = JSON.stringify(markers);
     useEffect(() => {
         if (markers.length > 0) {
-            const bounds = L.latLngBounds(markers.map(m => [m.lat, m.lng]));
-            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 8 });
+            try {
+                const bounds = L.latLngBounds(markers.map(m => [m.lat, m.lng]));
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 8 });
+                }
+            } catch (e) {
+                console.error("BoundsFitter error:", e);
+            }
         }
-    }, [markers, map]);
+    }, [markersStr, map]);
     return null;
 };
 
@@ -650,42 +657,47 @@ const ClientLists: React.FC = () => {
                                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                             />
                                             {(() => {
-                                                const visibleProps = selectedListProperties.filter(p => (p.latitude && p.longitude) || geocodedProperties[p.id]);
-                                                const markersForBounds = visibleProps.map(p => ({
-                                                    lat: p.latitude ? parseFloat(p.latitude) : geocodedProperties[p.id].lat,
-                                                    lng: p.longitude ? parseFloat(p.longitude) : geocodedProperties[p.id].lng
-                                                }));
+                                                const validMarkers = selectedListProperties
+                                                    .map(p => {
+                                                        const lat = p.latitude ? parseFloat(p.latitude) : geocodedProperties[p.id]?.lat;
+                                                        const lng = p.longitude ? parseFloat(p.longitude) : geocodedProperties[p.id]?.lng;
+                                                        return { prop: p, lat, lng };
+                                                    })
+                                                    .filter(m => m.lat !== undefined && m.lng !== undefined && !isNaN(m.lat as number) && !isNaN(m.lng as number));
+
+                                                if (selectedListProperties.length > 0 && validMarkers.length === 0) {
+                                                    console.warn("Map debug: Properties exist but no valid coordinates found. Geocoding might be failing or pending.");
+                                                } else if (validMarkers.length > 0) {
+                                                    console.log(`Map debug: Rendering ${validMarkers.length} valid markers.`);
+                                                }
+
+                                                const markersForBounds = validMarkers.map(m => ({ lat: m.lat as number, lng: m.lng as number }));
 
                                                 return (
                                                     <>
                                                         <BoundsFitter markers={markersForBounds} />
-                                                        {visibleProps.map((prop, idx) => {
-                                                            const lat = prop.latitude ? parseFloat(prop.latitude) : geocodedProperties[prop.id].lat;
-                                                            const lng = prop.longitude ? parseFloat(prop.longitude) : geocodedProperties[prop.id].lng;
-
-                                                            return (
-                                                                <Marker key={idx} position={[lat, lng]}>
-                                                                    <Popup>
-                                                                        <div className="text-xs flex flex-col gap-1">
-                                                                            <strong className="block mb-1 text-blue-600">{prop.parcel_id}</strong>
-                                                                            <span className="truncate max-w-[150px]">{prop.address || 'Address Unavailable'}</span>
-                                                                            <strong>Due:</strong> ${prop.amount_due?.toLocaleString()}
-                                                                            <Button
-                                                                                size="small"
-                                                                                variant="contained"
-                                                                                className="mt-2 text-[10px] py-0.5"
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    setPreviewPropertyId(prop.parcel_id || prop.id);
-                                                                                }}
-                                                                            >
-                                                                                View Details
-                                                                            </Button>
-                                                                        </div>
-                                                                    </Popup>
-                                                                </Marker>
-                                                            );
-                                                        })}
+                                                        {validMarkers.map(({ prop, lat, lng }, idx) => (
+                                                            <Marker key={prop.id || idx} position={[lat as number, lng as number]}>
+                                                                <Popup>
+                                                                    <div className="text-xs flex flex-col gap-1">
+                                                                        <strong className="block mb-1 text-blue-600">{prop.parcel_id}</strong>
+                                                                        <span className="truncate max-w-[150px]">{prop.address || 'Address Unavailable'}</span>
+                                                                        <strong>Due:</strong> ${prop.amount_due?.toLocaleString()}
+                                                                        <Button
+                                                                            size="small"
+                                                                            variant="contained"
+                                                                            className="mt-2 text-[10px] py-0.5"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setPreviewPropertyId(prop.parcel_id || prop.id);
+                                                                            }}
+                                                                        >
+                                                                            View Details
+                                                                        </Button>
+                                                                    </div>
+                                                                </Popup>
+                                                            </Marker>
+                                                        ))}
                                                     </>
                                                 );
                                             })()}
