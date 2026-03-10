@@ -350,14 +350,14 @@ const AdminLists: React.FC = () => {
                                                                 key={`${list.id}-${county}`}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    // For Admin, you might need a different handling or similar logic. Let's keep it structurally identical. 
-                                                                    console.log('County clicked in admin mode:', county);
+                                                                    setSelectedCountyName(county);
                                                                 }}
-                                                                className="group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50"
+                                                                className={`group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 
+                                                                    ${selectedCountyName === county ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
                                                             >
-                                                                <span className="material-symbols-outlined text-[16px] text-emerald-500">map</span>
+                                                                <span className={`material-symbols-outlined text-[16px] ${selectedCountyName === county ? 'text-white' : 'text-emerald-500'}`}>map</span>
                                                                 <span className="flex-1 text-sm font-medium truncate">{county}</span>
-                                                                <span className="text-xs text-slate-400">{count}</span>
+                                                                <span className={`text-xs ${selectedCountyName === county ? 'text-emerald-100' : 'text-slate-400'}`}>{count}</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -376,7 +376,7 @@ const AdminLists: React.FC = () => {
                                 {lists.filter(l => !l.is_favorite_list && l.tags !== 'STANDARD').map(list => (
                                     <div
                                         key={list.id}
-                                        onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); }}
+                                        onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
                                         onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
                                         onDragLeave={() => setDragOverListId(null)}
                                         onDrop={(e) => handleDrop(e, list.id)}
@@ -430,7 +430,7 @@ const AdminLists: React.FC = () => {
                                     {broadcastedLists.map(list => (
                                         <div
                                             key={list.id}
-                                            onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); }}
+                                            onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
                                             className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
                                                 ${selectedListId === list.id ? 'bg-green-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
                                         >
@@ -486,7 +486,7 @@ const AdminLists: React.FC = () => {
                     </div>
                 </div>
 
-                {/* State Folder Header */}
+                {/* State/County Folder Header */}
                 {selectedStateName && (() => {
                     const contactInfo = stateContacts.find(c => c.state === selectedStateName);
                     // Center map logic: try to find first property with coords, or default to US center
@@ -496,28 +496,50 @@ const AdminLists: React.FC = () => {
                         : [39.8283, -98.5795]; // Center of US
 
                     return (
-                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden mt-2">
-                            {/* State Government Link Header */}
-                            <div className="p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 mt-0 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">public</span>
-                                    <Typography className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                                        {selectedStateName} State Government
-                                    </Typography>
+                        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden mx-6 mt-6">
+                            {/* Header toggle between State and County */}
+                            {!selectedCountyName ? (
+                                <div className="p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 mt-0 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">public</span>
+                                        <Typography className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                                            {selectedStateName} State Government
+                                        </Typography>
+                                    </div>
+                                    {contactInfo?.url && (
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            href={contactInfo.url}
+                                            target="_blank"
+                                            className="text-[11px] h-7 rounded-sm border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 normal-case"
+                                            startIcon={<ExternalLinkIcon size={12} />}
+                                        >
+                                            Official Portal
+                                        </Button>
+                                    )}
                                 </div>
-                                {contactInfo?.url && (
-                                    <Button
-                                        variant="outlined"
-                                        size="small"
-                                        href={contactInfo.url}
-                                        target="_blank"
-                                        className="text-[11px] h-7 rounded-sm border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 normal-case"
-                                        startIcon={<ExternalLinkIcon size={12} />}
-                                    >
-                                        Official Portal
-                                    </Button>
-                                )}
-                            </div>
+                            ) : countyContacts.length > 0 ? (
+                                <div className="p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 mt-0">
+                                    <span className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-wider block mb-2">{selectedCountyName} County Contacts</span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {countyContacts.map((contact, idx) => (
+                                            <Button
+                                                key={idx}
+                                                variant="outlined"
+                                                size="small"
+                                                href={contact.url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-[11px] rounded-full border-sky-200 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-800 normal-case"
+                                            >
+                                                <span className="material-symbols-outlined text-[14px] mr-1">link</span>
+                                                {contact.name}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : null}
 
                             {/* Leaflet Map */}
                             <div className="h-48 w-full bg-slate-200 dark:bg-slate-800 relative z-[1]">
@@ -526,7 +548,7 @@ const AdminLists: React.FC = () => {
                                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                     />
-                                    {selectedListProperties.filter(p => p.latitude && p.longitude).map((prop, idx) => (
+                                    {selectedListProperties.filter(p => (!selectedCountyName || p.county === selectedCountyName) && p.latitude && p.longitude).map((prop, idx) => (
                                         <Marker key={idx} position={[parseFloat(prop.latitude), parseFloat(prop.longitude)]}>
                                             <Popup>
                                                 <div className="text-xs">
@@ -542,29 +564,6 @@ const AdminLists: React.FC = () => {
                         </div>
                     );
                 })()}
-
-                {/* Contact Links rendering for STANDARD lists */}
-                {((selectedList?.tags === 'STANDARD') || (selectedStateName && selectedCountyName)) && countyContacts.length > 0 && (
-                    <div className="bg-sky-50 dark:bg-sky-900/20 p-3 rounded-lg border border-sky-100 dark:border-sky-800/50 mt-4">
-                        <span className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-wider block mb-2">County Contacts</span>
-                        <div className="flex flex-wrap gap-2">
-                            {countyContacts.map((contact, idx) => (
-                                <Button
-                                    key={idx}
-                                    variant="outlined"
-                                    size="small"
-                                    href={contact.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-[11px] rounded-full border-sky-200 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-800 normal-case"
-                                >
-                                    <span className="material-symbols-outlined text-[14px] mr-1">link</span>
-                                    {contact.name}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 <div className="flex-1 mt-6">
                     {propsLoading ? (
@@ -590,7 +589,7 @@ const AdminLists: React.FC = () => {
                             ).map((prop: any) => (
                                 <SwipeToDeleteItem key={prop.id} onDelete={() => handleRemoveProperty(prop.id)}>
                                     <div
-                                        onClick={() => setPreviewPropertyId(prop.id)}
+                                        onClick={() => setPreviewPropertyId(prop.parcel_id || prop.id)}
                                         className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-pointer flex items-center gap-4"
                                     >
                                         <div className="flex-1 min-w-0">
