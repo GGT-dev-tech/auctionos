@@ -50,6 +50,7 @@ const ClientLists: React.FC = () => {
     const [stateContacts, setStateContacts] = useState<StateContact[]>([]);
     const [selectedState, setSelectedState] = useState<StateContact | null>(null);
     const [selectedStateName, setSelectedStateName] = useState<string | null>(null);
+    const [selectedCountyName, setSelectedCountyName] = useState<string | null>(null);
     const [previewPropertyId, setPreviewPropertyId] = useState<number | string | null>(null);
 
     const toggleState = (stateName: string) => {
@@ -65,22 +66,24 @@ const ClientLists: React.FC = () => {
         if (selectedListId) {
             loadListProperties(selectedListId);
             const selList = lists.find(l => l.id === selectedListId) || broadcastedLists.find(l => l.id === selectedListId);
-            if (selList?.tags === 'STANDARD') {
-                const parts = selList.name.split(' - ');
-                if (parts.length === 2 && parts[1] !== 'All') {
-                    countyService.getContacts(parts[0], parts[1]).then(setCountyContacts).catch(() => setCountyContacts([]));
-                }
+            if (selList?.tags === 'STANDARD') { // Now these are just states. We clear county contacts until they pick a county subfolder, but we can load state contacts if needed.
+                setCountyContacts([]);
             } else {
                 setCountyContacts([]);
             }
         } else if (selectedStateName) {
             loadStateProperties(selectedStateName);
-            setCountyContacts([]);
+            // If they clicked a specific county subfolder, load those county contacts
+            if (selectedCountyName) {
+                countyService.getContacts(selectedStateName, selectedCountyName).then(setCountyContacts).catch(() => setCountyContacts([]));
+            } else {
+                setCountyContacts([]);
+            }
         } else {
             setSelectedListProperties([]);
             setCountyContacts([]);
         }
-    }, [selectedListId, selectedStateName, lists, broadcastedLists]);
+    }, [selectedListId, selectedStateName, selectedCountyName, lists, broadcastedLists]);
 
     const loadLists = async () => {
         try {
@@ -106,6 +109,17 @@ const ClientLists: React.FC = () => {
         }
     };
 
+    const handleExpandStateList = async (listId: number, stateName: string) => {
+        toggleState(stateName);
+        if (!expandedStates[stateName]) {
+            // About to expand, fetch properties to group by county in the sidebar
+            try {
+                const data = await ClientDataService.getListProperties(listId);
+                // Keep it in some state Map if needed, but easier: simply group selectedListProperties if selected
+            } catch (err) { }
+        }
+    };
+
     const loadListProperties = async (listId: number) => {
         try {
             setPropsLoading(true);
@@ -121,17 +135,13 @@ const ClientLists: React.FC = () => {
     const loadStateProperties = async (stateName: string) => {
         try {
             setPropsLoading(true);
-            const stateLists = lists.filter(l => l.tags === 'STANDARD' && (l.name.split(' - ')[0] === stateName));
-            if (stateLists.length === 0) {
+            const stateList = lists.find(l => l.tags === 'STANDARD' && l.name === stateName);
+            if (!stateList) {
                 setSelectedListProperties([]);
                 return;
             }
-            const allPropsPromises = stateLists.map(l => ClientDataService.getListProperties(l.id));
-            const results = await Promise.all(allPropsPromises);
-
-            const uniquePropsMap = new Map();
-            results.flat().forEach(p => uniquePropsMap.set(p.id, p));
-            setSelectedListProperties(Array.from(uniquePropsMap.values()));
+            const data = await ClientDataService.getListProperties(stateList.id);
+            setSelectedListProperties(data);
         } catch (err) {
             console.error('Error loading state properties:', err);
         } finally {
@@ -145,11 +155,11 @@ const ClientLists: React.FC = () => {
                 await ClientDataService.removePropertyFromList(selectedListId, propertyId);
                 loadListProperties(selectedListId);
             } else if (selectedStateName) {
-                const stateLists = lists.filter(l => l.tags === 'STANDARD' && (l.name.split(' - ')[0] === selectedStateName));
-                for (const sl of stateLists) {
-                    try { await ClientDataService.removePropertyFromList(sl.id, propertyId); } catch (e) { }
+                const stateList = lists.find(l => l.tags === 'STANDARD' && l.name === selectedStateName);
+                if (stateList) {
+                    await ClientDataService.removePropertyFromList(stateList.id, propertyId);
+                    loadStateProperties(selectedStateName);
                 }
-                loadStateProperties(selectedStateName);
             }
             loadLists();
         } catch (err: any) {
@@ -164,8 +174,7 @@ const ClientLists: React.FC = () => {
                 await ClientDataService.createList(newListName);
             } else {
                 if (!selectedState) return;
-                const county = newCountyName.trim() ? newCountyName.trim() : 'All';
-                await ClientDataService.createList(`${selectedState.state} - ${county}`, 'STANDARD');
+                await ClientDataService.createList(selectedState.state, 'STANDARD');
             }
             setNewListName('');
             setNewCountyName('');
@@ -272,7 +281,7 @@ const ClientLists: React.FC = () => {
                                     {lists.filter(l => l.is_favorite_list).map(list => (
                                         <div
                                             key={list.id}
-                                            onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); }}
+                                            onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
                                             onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
                                             onDragLeave={() => setDragOverListId(null)}
                                             onDrop={(e) => handleDrop(e, list.id)}
@@ -290,81 +299,88 @@ const ClientLists: React.FC = () => {
                         )}
 
                         {/* standard folders */}
-                        {lists.some(l => l.tags === 'STANDARD') && (() => {
-                            const standardLists = lists.filter(l => l.tags === 'STANDARD');
-                            const statesMap: Record<string, typeof standardLists> = {};
-                            standardLists.forEach(list => {
-                                const parts = list.name.split(' - ');
-                                const state = parts.length === 2 ? parts[0] : 'Other';
-                                if (!statesMap[state]) statesMap[state] = [];
-                                statesMap[state].push(list);
-                            });
+                        {lists.some(l => l.tags === 'STANDARD') && (
+                            <div>
+                                <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Standard Folders</Typography>
+                                <div className="mt-1 space-y-1">
+                                    {lists.filter(l => l.tags === 'STANDARD').map(list => {
+                                        // Compute dynamic county groupings if this state is selected
+                                        const isSelectedState = selectedStateName === list.name;
+                                        const stateProperties = isSelectedState ? selectedListProperties : [];
+                                        const countyMap = new Map<string, number>();
+                                        stateProperties.forEach(p => {
+                                            const c = p.county || 'Unknown County';
+                                            countyMap.set(c, (countyMap.get(c) || 0) + 1);
+                                        });
+                                        const sortedCounties = Array.from(countyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 
-                            return (
-                                <div>
-                                    <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Standard Folders</Typography>
-                                    <div className="mt-1 space-y-1">
-                                        {Object.entries(statesMap).map(([state, stateLists]) => (
-                                            <div key={state} className="flex flex-col">
-                                                {/* State Header (Click to select & expand) */}
+                                        return (
+                                            <div key={list.id} className="flex flex-col">
+                                                {/* State Header (Click to select) */}
                                                 <div
                                                     onClick={() => {
-                                                        toggleState(state);
                                                         setSelectedListId(null);
-                                                        setSelectedStateName(state);
+                                                        setSelectedStateName(list.name);
+                                                        setSelectedCountyName(null);
+                                                        setCountyContacts([]);
+                                                        handleExpandStateList(list.id, list.name);
                                                     }}
-                                                    className={`group flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer text-slate-700 dark:text-slate-300 transition-colors ${selectedStateName === state && !selectedListId ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 shadow-sm' : 'hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
+                                                    onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
+                                                    onDragLeave={() => setDragOverListId(null)}
+                                                    onDrop={(e) => handleDrop(e, list.id)}
+                                                    className={`group flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer text-slate-700 dark:text-slate-300 transition-colors 
+                                                        ${selectedStateName === list.name && !selectedCountyName ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 shadow-sm' : 'hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
+                                                        ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
                                                 >
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${expandedStates[state] ? 'rotate-90 text-blue-500' : 'text-slate-400'}`}>
+                                                        <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${expandedStates[list.name] ? 'rotate-90 text-blue-500' : 'text-slate-400'}`}>
                                                             chevron_right
                                                         </span>
-                                                        <span className="text-sm font-bold truncate tracking-tight">{state}</span>
+                                                        <span className="text-sm font-bold truncate tracking-tight">{list.name}</span>
                                                     </div>
-                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${selectedStateName === state && !selectedListId ? 'text-blue-600 bg-blue-200/50 dark:bg-blue-800/50 dark:text-blue-300' : 'text-slate-400 bg-slate-200 dark:bg-slate-800'}`}>
-                                                        {stateLists.reduce((acc, curr) => acc + curr.property_count, 0)} Props
-                                                    </span>
+
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <IconButton
+                                                                size="small"
+                                                                className="p-0.5"
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
+                                                            >
+                                                                <Trash2Icon size={12} className={selectedStateName === list.name && !selectedCountyName ? 'text-blue-600' : 'text-slate-400'} />
+                                                            </IconButton>
+                                                        </div>
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${selectedStateName === list.name && !selectedCountyName ? 'text-blue-600 bg-blue-200/50 dark:bg-blue-800/50 dark:text-blue-300' : 'text-slate-400 bg-slate-200 dark:bg-slate-800'}`}>
+                                                            {list.property_count} Props
+                                                        </span>
+                                                    </div>
                                                 </div>
 
-                                                {/* Expanded County Lists */}
-                                                {expandedStates[state] && (
+                                                {/* Expanded Dynamic County Lists */}
+                                                {expandedStates[list.name] && isSelectedState && sortedCounties.length > 0 && (
                                                     <div className="mt-1 ml-4 border-l-2 border-slate-200 dark:border-slate-800 pl-2 space-y-0.5">
-                                                        {stateLists.map(list => {
-                                                            const countyName = list.name.split(' - ')[1] || list.name;
-                                                            return (
-                                                                <div
-                                                                    key={list.id}
-                                                                    onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); }}
-                                                                    onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
-                                                                    onDragLeave={() => setDragOverListId(null)}
-                                                                    onDrop={(e) => handleDrop(e, list.id)}
-                                                                    className={`group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 
-                                                                        ${selectedListId === list.id ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
-                                                                        ${dragOverListId === list.id ? 'ring-2 ring-emerald-400 ring-inset scale-[1.02]' : ''}`}
-                                                                >
-                                                                    <span className={`material-symbols-outlined text-[16px] ${selectedListId === list.id ? 'text-white' : 'text-emerald-500'}`}>map</span>
-                                                                    <span className="flex-1 text-sm font-medium truncate">{countyName}</span>
-                                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        <IconButton
-                                                                            size="small"
-                                                                            className="p-0.5"
-                                                                            onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
-                                                                        >
-                                                                            <Trash2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
-                                                                        </IconButton>
-                                                                    </div>
-                                                                    <span className={`text-xs ${selectedListId === list.id ? 'text-emerald-100' : 'text-slate-400'}`}>{list.property_count}</span>
-                                                                </div>
-                                                            );
-                                                        })}
+                                                        {sortedCounties.map(([county, count]) => (
+                                                            <div
+                                                                key={`${list.id}-${county}`}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setSelectedCountyName(county);
+                                                                }}
+                                                                className={`group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 
+                                                                    ${selectedCountyName === county ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
+                                                            >
+                                                                <span className={`material-symbols-outlined text-[16px] ${selectedCountyName === county ? 'text-white' : 'text-emerald-500'}`}>map</span>
+                                                                <span className="flex-1 text-sm font-medium truncate">{county}</span>
+                                                                <span className={`text-xs ${selectedCountyName === county ? 'text-emerald-100' : 'text-slate-400'}`}>{count}</span>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 )}
                                             </div>
-                                        ))}
-                                    </div>
+                                        );
+                                    })}
                                 </div>
-                            );
-                        })()}
+                            </div>
+                        )}
 
                         {/* custom folders */}
                         <div>
@@ -373,7 +389,7 @@ const ClientLists: React.FC = () => {
                                 {lists.filter(l => !l.is_favorite_list && l.tags !== 'STANDARD').map(list => (
                                     <div
                                         key={list.id}
-                                        onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); }}
+                                        onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
                                         onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
                                         onDragLeave={() => setDragOverListId(null)}
                                         onDrop={(e) => handleDrop(e, list.id)}
@@ -427,7 +443,7 @@ const ClientLists: React.FC = () => {
                                     {broadcastedLists.map(list => (
                                         <div
                                             key={list.id}
-                                            onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); }}
+                                            onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
                                             className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
                                                 ${selectedListId === list.id ? 'bg-green-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
                                         >
@@ -465,11 +481,15 @@ const ClientLists: React.FC = () => {
                         <div>
                             <Typography variant="h5" className="font-bold text-slate-900 dark:text-white capitalize leading-tight">
                                 {selectedStateName
-                                    ? selectedStateName
+                                    ? (selectedCountyName ? `${selectedStateName} - ${selectedCountyName}` : selectedStateName)
                                     : (selectedList?.name || 'Select a Folder')}
                             </Typography>
                             <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{selectedListProperties.length} Properties</span>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                    {selectedStateName && selectedCountyName
+                                        ? selectedListProperties.filter(p => p.county === selectedCountyName).length
+                                        : selectedListProperties.length} Properties
+                                </span>
                                 <div className="h-1 w-1 bg-slate-300 rounded-full"></div>
                                 <span className="text-xs text-slate-400">Synced to iCloud</span>
                             </div>
@@ -568,73 +588,89 @@ const ClientLists: React.FC = () => {
                             <Typography className="text-slate-500 text-sm font-medium">No Properties in this folder</Typography>
                             <Typography className="text-slate-400 text-xs mt-1">Drag and drop properties here from search or other lists.</Typography>
                         </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {selectedListProperties.map((prop: any) => (
-                                <SwipeToDeleteItem key={prop.id} onDelete={() => handleRemoveProperty(prop.id)}>
-                                    <div
-                                        onClick={() => setPreviewPropertyId(prop.id)}
-                                        className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-pointer flex items-center gap-4"
-                                    >
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">
-                                                    {prop.owner_address ? prop.owner_address.split('\n')[0] : (prop.title || 'Untitled Property')}
-                                                </h4>
-                                                <Chip
-                                                    label={prop.availability_status || 'Unknown'}
-                                                    size="small"
-                                                    className={`h-4 text-[8px] font-bold uppercase transition-colors px-0
+                    ) : (() => {
+                        // Filter by county if a subfolder is selected
+                        const displayProperties = selectedStateName && selectedCountyName
+                            ? selectedListProperties.filter(p => p.county === selectedCountyName)
+                            : selectedListProperties;
+
+                        if (displayProperties.length === 0) {
+                            return (
+                                <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
+                                    <span className="material-symbols-outlined text-[64px] text-slate-300 mb-4">folder_open</span>
+                                    <Typography className="text-slate-500 text-sm font-medium">No properties found in this specific county.</Typography>
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div className="space-y-3">
+                                {displayProperties.map((prop: any) => (
+                                    <SwipeToDeleteItem key={prop.id} onDelete={() => handleRemoveProperty(prop.id)}>
+                                        <div
+                                            onClick={() => setPreviewPropertyId(prop.id)}
+                                            className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-pointer flex items-center gap-4"
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">
+                                                        {prop.owner_address ? prop.owner_address.split('\n')[0] : (prop.title || 'Untitled Property')}
+                                                    </h4>
+                                                    <Chip
+                                                        label={prop.availability_status || 'Unknown'}
+                                                        size="small"
+                                                        className={`h-4 text-[8px] font-bold uppercase transition-colors px-0
                                                         ${prop.availability_status === 'available' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'}`}
-                                                />
-                                            </div>
-                                            <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
-                                                <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{prop.parcel_id}</span>
-                                                <span className="opacity-30">|</span>
-                                                <span className="truncate">{prop.address || 'No Address Listed'}</span>
+                                                    />
+                                                </div>
+                                                <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+                                                    <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{prop.parcel_id}</span>
+                                                    <span className="opacity-30">|</span>
+                                                    <span className="truncate">{prop.address || 'No Address Listed'}</span>
+                                                </div>
+
+                                                {/* Description Field Requested by User */}
+                                                {prop.description && (
+                                                    <p className="mt-2 text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 italic leading-relaxed">
+                                                        {prop.description}
+                                                    </p>
+                                                )}
+
+                                                <div className="mt-3 flex items-center gap-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Amount Due</span>
+                                                        <span className="text-xs font-bold text-slate-700 dark:text-white">${prop.amount_due?.toLocaleString() || '0'}</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Acres</span>
+                                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{prop.lot_acres || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Improvements</span>
+                                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">${prop.improvement_value?.toLocaleString() || '0'}</span>
+                                                    </div>
+                                                </div>
                                             </div>
 
-                                            {/* Description Field Requested by User */}
-                                            {prop.description && (
-                                                <p className="mt-2 text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 italic leading-relaxed">
-                                                    {prop.description}
-                                                </p>
-                                            )}
-
-                                            <div className="mt-3 flex items-center gap-4">
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Amount Due</span>
-                                                    <span className="text-xs font-bold text-slate-700 dark:text-white">${prop.amount_due?.toLocaleString() || '0'}</span>
+                                            <div className="flex flex-col items-end gap-2">
+                                                <div className="bg-slate-50 dark:bg-slate-800 p-1.5 rounded-lg text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                                                    onClick={(e) => { e.stopPropagation(); navigate(`/client/properties/${prop.parcel_id || prop.id}`); }}
+                                                >
+                                                    <ExternalLinkIcon size={16} />
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Acres</span>
-                                                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{prop.lot_acres || 'N/A'}</span>
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Improvements</span>
-                                                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">${prop.improvement_value?.toLocaleString() || '0'}</span>
+                                                <div className="opacity-40 hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+                                                    draggable
+                                                    onDragStart={(e) => handleDragStart(e, prop.id)}
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">drag_indicator</span>
                                                 </div>
                                             </div>
                                         </div>
-
-                                        <div className="flex flex-col items-end gap-2">
-                                            <div className="bg-slate-50 dark:bg-slate-800 p-1.5 rounded-lg text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors"
-                                                onClick={(e) => { e.stopPropagation(); navigate(`/client/properties/${prop.parcel_id || prop.id}`); }}
-                                            >
-                                                <ExternalLinkIcon size={16} />
-                                            </div>
-                                            <div className="opacity-40 hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-                                                draggable
-                                                onDragStart={(e) => handleDragStart(e, prop.id)}
-                                            >
-                                                <span className="material-symbols-outlined text-[18px]">drag_indicator</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </SwipeToDeleteItem>
-                            ))}
-                        </div>
-                    )}
+                                    </SwipeToDeleteItem>
+                                ))}
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
 
@@ -678,15 +714,6 @@ const ClientLists: React.FC = () => {
                                 )}
                                 fullWidth
                                 disablePortal
-                            />
-                            <TextField
-                                fullWidth
-                                placeholder="County Name (Optional, e.g., Harris)"
-                                variant="outlined"
-                                value={newCountyName}
-                                onChange={(e) => setNewCountyName(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && selectedState && newCountyName && handleCreateList()}
-                                className="bg-white dark:bg-slate-800 rounded-lg"
                             />
                         </div>
                     )}

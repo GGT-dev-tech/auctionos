@@ -182,26 +182,6 @@ def add_property_to_list(
     if not lst or not prop:
         raise HTTPException(status_code=404, detail="List (owned by you) or Property not found")
     
-    # If the user targets a "{State} - All" standard folder, automatically route to the precise {State} - {County} subfolder
-    if lst.tags == "STANDARD" and lst.name.endswith(" - All"):
-        state = prop.state or "Unknown State"
-        county = prop.county or "Unknown County"
-        precise_name = f"{state} - {county}"
-        
-        precise_lst = db.query(ClientList).filter(
-            ClientList.user_id == current_user.id,
-            ClientList.name == precise_name,
-            ClientList.tags == "STANDARD"
-        ).first()
-
-        if not precise_lst:
-            precise_lst = ClientList(name=precise_name, user_id=current_user.id, is_favorite_list=False, is_broadcasted=False, tags="STANDARD")
-            db.add(precise_lst)
-            db.commit()
-            db.refresh(precise_lst)
-        
-        lst = precise_lst
-
     if prop not in lst.properties:
         lst.properties.append(prop)
         db.commit()
@@ -220,10 +200,9 @@ def add_property_to_standard_list(
         raise HTTPException(status_code=404, detail="Property not found")
     
     state = prop.state or "Unknown State"
-    county = prop.county or "Unknown County"
-    list_name = f"{state} - {county}"
+    list_name = state
 
-    # Always ensure the property goes into its specific State - County list
+    # Always ensure the property goes into its specific State parent list
     lst = db.query(ClientList).filter(
         ClientList.user_id == current_user.id,
         ClientList.name == list_name,
