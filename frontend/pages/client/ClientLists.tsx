@@ -539,21 +539,25 @@ const ClientLists: React.FC = () => {
                                 ) : (
                                     <div className="p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 mt-0">
                                         <span className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-wider block mb-2">{selectedCountyName} County Information</span>
-                                        <div className="flex flex-wrap gap-2">
+                                        <div className="flex flex-col gap-2">
                                             {countyContacts.length > 0 ? (
                                                 countyContacts.map((contact, idx) => (
-                                                    <Button
-                                                        key={idx}
-                                                        variant="outlined"
-                                                        size="small"
-                                                        href={contact.url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="text-[11px] rounded-full border-sky-200 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-800 normal-case"
-                                                    >
-                                                        <span className="material-symbols-outlined text-[14px] mr-1">link</span>
-                                                        {contact.name}
-                                                    </Button>
+                                                    <div key={idx} className="flex items-center gap-2">
+                                                        <Button
+                                                            variant="outlined"
+                                                            size="small"
+                                                            href={contact.url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="text-[11px] rounded-full border-sky-200 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-800 normal-case"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[14px] mr-1">link</span>
+                                                            {contact.name}
+                                                        </Button>
+                                                        {contact.phone && (
+                                                            <span className="text-[11px] text-slate-500 font-medium">({contact.phone})</span>
+                                                        )}
+                                                    </div>
                                                 ))
                                             ) : (
                                                 <span className="text-[10px] text-slate-400 italic">No research links available for this county yet.</span>
@@ -562,26 +566,39 @@ const ClientLists: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Leaflet Map */}
-                                <div className="h-48 w-full bg-slate-200 dark:bg-slate-800 relative z-[1]">
-                                    <MapContainer center={center} zoom={propWithCoords ? 10 : 4} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 1 }}>
-                                        <TileLayer
-                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                        />
-                                        {selectedListProperties.filter(p => (!selectedCountyName || p.county === selectedCountyName) && p.latitude && p.longitude).map((prop, idx) => (
-                                            <Marker key={idx} position={[parseFloat(prop.latitude), parseFloat(prop.longitude)]}>
-                                                <Popup>
-                                                    <div className="text-xs">
-                                                        <strong className="block mb-1">{prop.parcel_id}</strong>
-                                                        {prop.address || 'Address Unavailable'}<br />
-                                                        <strong>Due:</strong> ${prop.amount_due?.toLocaleString()}
-                                                    </div>
-                                                </Popup>
-                                            </Marker>
-                                        ))}
-                                    </MapContainer>
-                                </div>
+                                {/* Leaflet Map - Only visible when State is selected but NOT County */}
+                                {!selectedCountyName && (
+                                    <div className="h-48 w-full bg-slate-200 dark:bg-slate-800 relative z-[1]">
+                                        <MapContainer center={center} zoom={propWithCoords ? 6 : 4} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 1 }}>
+                                            <TileLayer
+                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            />
+                                            {selectedListProperties.filter(p => p.latitude && p.longitude).map((prop, idx) => (
+                                                <Marker key={idx} position={[parseFloat(prop.latitude), parseFloat(prop.longitude)]}>
+                                                    <Popup>
+                                                        <div className="text-xs flex flex-col gap-1">
+                                                            <strong className="block mb-1 text-blue-600">{prop.parcel_id}</strong>
+                                                            <span className="truncate max-w-[150px]">{prop.address || 'Address Unavailable'}</span>
+                                                            <strong>Due:</strong> ${prop.amount_due?.toLocaleString()}
+                                                            <Button
+                                                                size="small"
+                                                                variant="contained"
+                                                                className="mt-2 text-[10px] py-0.5"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setPreviewPropertyId(prop.parcel_id || prop.id);
+                                                                }}
+                                                            >
+                                                                View Details
+                                                            </Button>
+                                                        </div>
+                                                    </Popup>
+                                                </Marker>
+                                            ))}
+                                        </MapContainer>
+                                    </div>
+                                )}
                             </div>
                         );
                     })()}
