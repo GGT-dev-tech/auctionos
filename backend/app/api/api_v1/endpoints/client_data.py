@@ -74,8 +74,31 @@ def get_client_lists(
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
-    """Get all lists for the current client."""
+    """Get all lists for the current client. Auto-migrates legacy state acryonyms."""
     lists = db.query(ClientList).filter(ClientList.user_id == current_user.id).all()
+    
+    # Auto-migration for legacy standard folders using acronyms (e.g., "TX" -> "Texas")
+    standard_lists = [l for l in lists if l.tags == "STANDARD"]
+    for lst in standard_lists:
+        normalized_name = lst.name.strip().upper()
+        if normalized_name in STATE_MAPPING:
+            full_name = STATE_MAPPING[normalized_name]
+            # See if the full name list already exists
+            existing_full = next((l for l in standard_lists if l.name == full_name and l.id != lst.id), None)
+            if existing_full:
+                # Merge properties into existing
+                for prop in lst.properties:
+                    if prop not in existing_full.properties:
+                        existing_full.properties.append(prop)
+                db.delete(lst)
+                db.commit()
+                # Remove from tracking array to avoid further processing
+                lists.remove(lst)
+            else:
+                # Just rename this one to the full name
+                lst.name = full_name
+                db.commit()
+
     results = []
     for lst in lists:
         count = db.query(client_list_property).filter(client_list_property.c.list_id == lst.id).count()
@@ -187,6 +210,19 @@ def add_property_to_list(
         db.commit()
     return {"ok": True}
 
+STATE_MAPPING = {
+    "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
+    "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "FL": "Florida", "GA": "Georgia",
+    "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa",
+    "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
+    "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri",
+    "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey",
+    "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio",
+    "OK": "Oklahoma", "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
+    "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont",
+    "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"
+}
+
 @router.post("/lists/standard/add/{property_id}")
 def add_property_to_standard_list(
     *,
@@ -199,8 +235,10 @@ def add_property_to_standard_list(
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
     
-    state = prop.state or "Unknown State"
-    list_name = state
+    raw_state = prop.state or "Unknown State"
+    # Normalize state string: attempt abbreviation translation, fallback to capitalized string
+    normalized_state = raw_state.strip().upper()
+    list_name = STATE_MAPPING.get(normalized_state, raw_state.strip().title())
 
     # Always ensure the property goes into its specific State parent list
     lst = db.query(ClientList).filter(

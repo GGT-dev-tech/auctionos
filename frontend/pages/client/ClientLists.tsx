@@ -554,7 +554,7 @@ const ClientLists: React.FC = () => {
                     })()}
 
                     {/* Contact Links rendering for STANDARD lists */}
-                    {selectedList?.tags === 'STANDARD' && countyContacts.length > 0 && (
+                    {((selectedList?.tags === 'STANDARD') || (selectedStateName && selectedCountyName)) && countyContacts.length > 0 && (
                         <div className="bg-sky-50 dark:bg-sky-900/20 p-3 rounded-lg border border-sky-100 dark:border-sky-800/50">
                             <span className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-wider block mb-2">County Contacts</span>
                             <div className="flex flex-wrap gap-2">

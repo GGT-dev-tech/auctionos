@@ -544,7 +544,7 @@ const AdminLists: React.FC = () => {
                 })()}
 
                 {/* Contact Links rendering for STANDARD lists */}
-                {selectedList?.tags === 'STANDARD' && countyContacts.length > 0 && (
+                {((selectedList?.tags === 'STANDARD') || (selectedStateName && selectedCountyName)) && countyContacts.length > 0 && (
                     <div className="bg-sky-50 dark:bg-sky-900/20 p-3 rounded-lg border border-sky-100 dark:border-sky-800/50 mt-4">
                         <span className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-wider block mb-2">County Contacts</span>
                         <div className="flex flex-wrap gap-2">
@@ -695,15 +695,6 @@ const AdminLists: React.FC = () => {
                                 )}
                                 fullWidth
                                 disablePortal
-                            />
-                            <TextField
-                                fullWidth
-                                placeholder="County Name (Optional, e.g., Harris)"
-                                variant="outlined"
-                                value={newCountyName}
-                                onChange={(e) => setNewCountyName(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && selectedState && newCountyName && handleCreateList()}
-                                className="bg-white dark:bg-slate-800 rounded-lg"
                             />
                         </div>
                     )}
