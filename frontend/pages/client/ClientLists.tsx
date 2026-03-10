@@ -673,10 +673,19 @@ const ClientLists: React.FC = () => {
                                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                             />
                                             {(() => {
+                                                if (selectedListProperties.length > 0) {
+                                                    console.log("Map debug: Processing selectedListProperties count:", selectedListProperties.length);
+                                                    console.log("Map debug: geocodedProperties keys:", Object.keys(geocodedProperties));
+                                                }
                                                 const validMarkers = selectedListProperties
                                                     .map(p => {
                                                         const lat = p.latitude ? parseFloat(p.latitude) : geocodedProperties[p.id]?.lat;
                                                         const lng = p.longitude ? parseFloat(p.longitude) : geocodedProperties[p.id]?.lng;
+
+                                                        if (selectedListProperties.length > 0 && selectedListProperties.length < 20) {
+                                                            console.log(`Map debug: Property ID ${p.id} - Result lat: ${lat} (native: ${p.latitude}, geocoded: ${geocodedProperties[p.id]?.lat}), lng: ${lng} (native: ${p.longitude}, geocoded: ${geocodedProperties[p.id]?.lng})`);
+                                                        }
+
                                                         return { prop: p, lat, lng };
                                                     })
                                                     .filter(m => m.lat !== undefined && m.lng !== undefined && !isNaN(m.lat as number) && !isNaN(m.lng as number));
