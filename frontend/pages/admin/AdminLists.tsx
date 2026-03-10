@@ -163,8 +163,9 @@ const AdminLists: React.FC = () => {
                 if (!newListName) return;
                 await ClientDataService.createList(newListName);
             } else {
-                if (!selectedState || !newCountyName) return;
-                await ClientDataService.createList(`${selectedState.state} - ${newCountyName.trim()}`, 'STANDARD');
+                if (!selectedState) return;
+                const county = newCountyName.trim() ? newCountyName.trim() : 'All';
+                await ClientDataService.createList(`${selectedState.state} - ${county}`, 'STANDARD');
             }
             setNewListName('');
             setNewCountyName('');
@@ -680,7 +681,7 @@ const AdminLists: React.FC = () => {
                             />
                             <TextField
                                 fullWidth
-                                placeholder="County Name (e.g., Harris)"
+                                placeholder="County Name (Optional, e.g., Harris)"
                                 variant="outlined"
                                 value={newCountyName}
                                 onChange={(e) => setNewCountyName(e.target.value)}
@@ -695,7 +696,7 @@ const AdminLists: React.FC = () => {
                         <Button
                             variant="contained"
                             onClick={handleCreateList}
-                            disabled={creationMode === 'custom' ? !newListName : (!selectedState || !newCountyName.trim())}
+                            disabled={creationMode === 'custom' ? !newListName : !selectedState}
                             className="bg-blue-600 rounded-lg shadow-none"
                         >
                             Create
