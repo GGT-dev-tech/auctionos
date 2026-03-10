@@ -202,11 +202,12 @@ def add_property_to_standard_list(
     state = prop.state or "Unknown State"
     county = prop.county or "Unknown County"
     list_name = f"{state} - {county}"
+    fallback_name = f"{state} - All"
 
-    # Find or create the standard list
+    # Find or create the standard list, converging to State - All if the user created it from My Lists
     lst = db.query(ClientList).filter(
         ClientList.user_id == current_user.id,
-        ClientList.name == list_name,
+        ClientList.name.in_([list_name, fallback_name]),
         ClientList.tags == "STANDARD"
     ).first()
 

@@ -353,8 +353,24 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                                 onClick={handleAddToStandardList}
                                 className="text-sm py-2 px-4 text-emerald-600 font-medium hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                             >
-                                <span className="material-symbols-outlined text-[18px] mr-3">auto_awesome</span> Standard List
+                                <span className="material-symbols-outlined text-[18px] mr-3">auto_awesome</span> Smart Standard Add
                             </MenuItem>
+                            {lists.some(l => l.tags === 'STANDARD') && (
+                                <div>
+                                    <Divider className="my-1" />
+                                    <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Standard Folders</div>
+                                    {lists.filter(l => l.tags === 'STANDARD').map(list => (
+                                        <MenuItem
+                                            key={list.id}
+                                            onClick={() => handleAddToList(list.id)}
+                                            className="text-sm py-2 px-4 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                        >
+                                            <span className="material-symbols-outlined text-[18px] mr-3 text-emerald-500">map</span>
+                                            {list.name}
+                                        </MenuItem>
+                                    ))}
+                                </div>
+                            )}
                             <Divider className="my-1" />
                             <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Custom Folders</div>
                             {lists.filter(l => l.tags !== 'STANDARD').map(list => (
