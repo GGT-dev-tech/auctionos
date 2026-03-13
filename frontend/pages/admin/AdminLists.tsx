@@ -380,7 +380,7 @@ const AdminLists: React.FC = () => {
                             <div>
                                 <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Standard Folders</Typography>
                                 <div className="mt-1 space-y-1">
-                                    {lists.filter(l => l.tags === 'STANDARD').map(list => {
+                                    {lists.filter(l => l.tags === 'STANDARD').sort((a, b) => a.name.localeCompare(b.name)).map(list => {
                                         // Compute dynamic county groupings if this state is selected
                                         const isSelectedState = selectedStateName === list.name;
                                         const stateProperties = isSelectedState ? selectedListProperties : [];
@@ -469,7 +469,7 @@ const AdminLists: React.FC = () => {
                         <div>
                             <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Custom Folders</Typography>
                             <div className="mt-1 space-y-0.5">
-                                {lists.filter(l => !l.is_favorite_list && l.tags !== 'STANDARD').map(list => (
+                                {lists.filter(l => !l.is_favorite_list && l.tags !== 'STANDARD').sort((a, b) => a.name.localeCompare(b.name)).map(list => (
                                     <div
                                         key={list.id}
                                         onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
@@ -523,7 +523,7 @@ const AdminLists: React.FC = () => {
                             <div>
                                 <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">From Admin</Typography>
                                 <div className="mt-1 space-y-0.5">
-                                    {broadcastedLists.map(list => (
+                                    {[...broadcastedLists].sort((a, b) => a.name.localeCompare(b.name)).map(list => (
                                         <div
                                             key={list.id}
                                             onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
