@@ -12,7 +12,7 @@ const ClientAuctions: React.FC = () => {
         params.set('startDate', date);
         params.set('endDate', date);
         params.set('q', type);
-        window.location.search = params.toString();
+        window.location.search = '?' + params.toString();
     };
 
     const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '');

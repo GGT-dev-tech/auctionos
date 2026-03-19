@@ -4,6 +4,7 @@ import { AuctionService } from '../../services/auction.service';
 import { AuctionEvent } from '../../types';
 import { Box, Typography, Button } from '@mui/material';
 import { AuctionForm } from './AuctionForm';
+import { AuctionDetailsModal } from './AuctionDetailsModal';
 
 
 
@@ -19,6 +20,8 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
     // Modal State
     const [formOpen, setFormOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<AuctionEvent | null>(null);
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [viewingEvent, setViewingEvent] = useState<any | null>(null);
 
     // Pagination State
     const [rowCount, setRowCount] = useState<number>(0);
@@ -65,6 +68,24 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
     const handleCreateClick = () => {
         setEditingEvent(null);
         setFormOpen(true);
+    };
+
+    const handleViewClick = (row: AuctionEvent) => {
+        setViewingEvent({
+            title: row.name,
+            start: row.auction_date ? new Date(row.auction_date).toISOString() : '',
+            extendedProps: {
+                location: row.location,
+                notes: row.notes,
+                linked_properties: '',
+                statuses: '',
+                property_count: row.parcels_count || 0,
+                register_link: row.register_link,
+                list_link: row.list_link,
+                tax_status: row.tax_status
+            }
+        });
+        setViewModalOpen(true);
     };
 
     const baseColumns: GridColDef[] = [
@@ -114,7 +135,28 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
         },
     ];
 
-    const displayColumns = readOnly ? baseColumns : [...baseColumns, ...actionColumn];
+    const clientActionColumn: GridColDef[] = [
+        {
+            field: 'view',
+            type: 'actions',
+            headerName: 'View',
+            width: 80,
+            cellClassName: 'actions',
+            getActions: ({ row }) => {
+                return [
+                    <GridActionsCellItem
+                        key={`view-${row.id}`}
+                        icon={<span className="material-symbols-outlined text-green-600">visibility</span>}
+                        label="View Details"
+                        onClick={() => handleViewClick(row as AuctionEvent)}
+                        color="inherit"
+                    />
+                ];
+            },
+        },
+    ];
+
+    const displayColumns = readOnly ? [...baseColumns, ...clientActionColumn] : [...baseColumns, ...actionColumn];
 
     return (
         <Box sx={{ width: '100%', bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden' }}>
@@ -164,6 +206,12 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
                 onClose={() => setFormOpen(false)}
                 onSuccess={fetchAuctions}
                 editingEvent={editingEvent}
+            />
+
+            <AuctionDetailsModal
+                open={viewModalOpen}
+                onClose={() => setViewModalOpen(false)}
+                eventData={viewingEvent}
             />
         </Box>
     );

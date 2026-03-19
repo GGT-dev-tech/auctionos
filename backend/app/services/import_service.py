@@ -48,7 +48,7 @@ class ImportService:
     async def process_properties_csv_file(file_path: str, job_id: str):
         try:
             # Using chunksize to keep memory footprint low
-            chunk_size = 2000
+            chunk_size = 500
             total_rows = 0
             success_count = 0
             errors = []
