@@ -9,8 +9,9 @@ from app.db.session import engine
 from datetime import datetime
 from redis import Redis
 import os
-
-import os
+import time
+import asyncio
+from sqlalchemy.exc import OperationalError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -134,84 +135,102 @@ class ImportService:
                     except Exception as e:
                         errors.append(f"Row {total_rows - chunk_size + _ + 2}: {str(e)}")
 
-                # Commit each chunk as a separate transaction for incremental visibility
-                with engine.begin() as conn:
-                    # 1. Bulk Upsert PropertyDetails
-                    if details_batch:
-                        # Extract parcel IDs to check current status for History tracking
-                        parcel_ids = [d["parcel_id"] for d in details_batch if d["parcel_id"]]
-                        existing_status_map = {}
-                        if parcel_ids:
-                            existing_rows = conn.execute(
-                                text("SELECT parcel_id, property_id, availability_status FROM property_details WHERE parcel_id = ANY(:parcel_ids)"),
-                                {"parcel_ids": parcel_ids}
-                            ).fetchall()
-                            for r in existing_rows:
-                                existing_status_map[r[0]] = (r[1], r[2]) # (property_id, availability_status)
+                # Commit each chunk as a separate transaction with connection drop retry logic
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        with engine.begin() as conn:
+                            # 1. Bulk Upsert PropertyDetails
+                            if details_batch:
+                                # Extract parcel IDs to check current status for History tracking
+                                parcel_ids = [d["parcel_id"] for d in details_batch if d["parcel_id"]]
+                                existing_status_map = {}
+                                if parcel_ids:
+                                    existing_rows = conn.execute(
+                                        text("SELECT parcel_id, property_id, availability_status FROM property_details WHERE parcel_id = ANY(:parcel_ids)"),
+                                        {"parcel_ids": parcel_ids}
+                                    ).fetchall()
+                                    for r in existing_rows:
+                                        existing_status_map[r[0]] = (r[1], r[2]) # (property_id, availability_status)
 
-                        availability_history_batch = []
-                        
-                        # Process existing ID mappings for updates and detect changes
-                        for d in details_batch:
-                            pid = d["parcel_id"]
-                            if pid in existing_status_map:
-                                db_prop_id, old_status = existing_status_map[pid]
-                                d["property_id"] = db_prop_id # Keep the same UUID
-                                # Check if status changed
-                                if (old_status or "not available") != d["availability_status"]:
-                                    availability_history_batch.append({
-                                        "property_id": db_prop_id,
-                                        "previous_status": old_status or "not available",
-                                        "new_status": d["availability_status"],
-                                        "change_source": "batch_import",
-                                        "changed_at": datetime.utcnow()
-                                    })
-                            else:
-                                # New property, defaults to whatever is in d["availability_status"]
-                                availability_history_batch.append({
-                                    "property_id": d["property_id"],
-                                    "previous_status": None,
-                                    "new_status": d["availability_status"],
-                                    "change_source": "batch_import",
-                                    "changed_at": datetime.utcnow()
-                                })
+                                availability_history_batch = []
+                                
+                                # Process existing ID mappings for updates and detect changes
+                                for d in details_batch:
+                                    pid = d["parcel_id"]
+                                    if pid in existing_status_map:
+                                        db_prop_id, old_status = existing_status_map[pid]
+                                        d["property_id"] = db_prop_id # Keep the same UUID
+                                        # Check if status changed
+                                        if (old_status or "not available") != d["availability_status"]:
+                                            availability_history_batch.append({
+                                                "property_id": db_prop_id,
+                                                "previous_status": old_status or "not available",
+                                                "new_status": d["availability_status"],
+                                                "change_source": "batch_import",
+                                                "changed_at": datetime.utcnow()
+                                            })
+                                    else:
+                                        # New property, defaults to whatever is in d["availability_status"]
+                                        availability_history_batch.append({
+                                            "property_id": d["property_id"],
+                                            "previous_status": None,
+                                            "new_status": d["availability_status"],
+                                            "change_source": "batch_import",
+                                            "changed_at": datetime.utcnow()
+                                        })
 
-                        fields_pd = ", ".join(details_batch[0].keys())
-                        placeholders_pd = ", ".join([f":{k}" for k in details_batch[0].keys()])
-                        updates_pd = ", ".join([f"{k} = EXCLUDED.{k}" for k in details_batch[0].keys() if k not in ["property_id", "parcel_id"]])
-                        
-                        query_pd = text(f"""
-                            INSERT INTO property_details ({fields_pd}) VALUES ({placeholders_pd})
-                            ON CONFLICT (parcel_id) DO UPDATE SET {updates_pd}
-                        """)
-                        conn.execute(query_pd, details_batch)
-                        
-                        # 2. Bulk Insert Availability History
-                        if availability_history_batch:
-                            fields_ah = ", ".join(availability_history_batch[0].keys())
-                            placeholders_ah = ", ".join([f":{k}" for k in availability_history_batch[0].keys()])
-                            query_ah = text(f"""
-                                INSERT INTO property_availability_history ({fields_ah}) VALUES ({placeholders_ah})
-                            """)
-                            conn.execute(query_ah, availability_history_batch)
+                                fields_pd = ", ".join(details_batch[0].keys())
+                                placeholders_pd = ", ".join([f":{k}" for k in details_batch[0].keys()])
+                                updates_pd = ", ".join([f"{k} = EXCLUDED.{k}" for k in details_batch[0].keys() if k not in ["property_id", "parcel_id"]])
+                                
+                                query_pd = text(f"""
+                                    INSERT INTO property_details ({fields_pd}) VALUES ({placeholders_pd})
+                                    ON CONFLICT (parcel_id) DO UPDATE SET {updates_pd}
+                                """)
+                                conn.execute(query_pd, details_batch)
+                                
+                                # 2. Bulk Insert Availability History
+                                if availability_history_batch:
+                                    fields_ah = ", ".join(availability_history_batch[0].keys())
+                                    placeholders_ah = ", ".join([f":{k}" for k in availability_history_batch[0].keys()])
+                                    query_ah = text(f"""
+                                        INSERT INTO property_availability_history ({fields_ah}) VALUES ({placeholders_ah})
+                                    """)
+                                    conn.execute(query_ah, availability_history_batch)
 
-                    # 3. Bulk Upsert Property Auction History
-                    if history_batch:
-                        query_h = text("""
-                            INSERT INTO property_auction_history (property_id, auction_name, auction_date, taxes_due, info_link, list_link, created_at)
-                            SELECT p.property_id, :auction_name, :auction_date, :taxes_due, :info_link, :list_link, :created_at
-                            FROM property_details p
-                            WHERE p.parcel_id = :parcel_id
-                            ON CONFLICT (property_id, auction_name) DO UPDATE SET
-                                auction_date = EXCLUDED.auction_date,
-                                taxes_due = EXCLUDED.taxes_due,
-                                info_link = EXCLUDED.info_link,
-                                list_link = EXCLUDED.list_link
-                        """)
-                        conn.execute(query_h, history_batch)
-                
-                success_count += len(details_batch)
-                logger.info(f"Job {job_id}: Processed {total_rows} rows...")
+                            # 3. Bulk Upsert Property Auction History
+                            if history_batch:
+                                query_h = text("""
+                                    INSERT INTO property_auction_history (property_id, auction_name, auction_date, taxes_due, info_link, list_link, created_at)
+                                    SELECT p.property_id, :auction_name, :auction_date, :taxes_due, :info_link, :list_link, :created_at
+                                    FROM property_details p
+                                    WHERE p.parcel_id = :parcel_id
+                                    ON CONFLICT (property_id, auction_name) DO UPDATE SET
+                                        auction_date = EXCLUDED.auction_date,
+                                        taxes_due = EXCLUDED.taxes_due,
+                                        info_link = EXCLUDED.info_link,
+                                        list_link = EXCLUDED.list_link
+                                """)
+                                conn.execute(query_h, history_batch)
+                        
+                        success_count += len(details_batch)
+                        logger.info(f"Job {job_id}: Processed {total_rows} rows...")
+                        break # Break loop on successful insert
+
+                    except OperationalError as oe:
+                        if attempt == max_retries - 1:
+                            logger.error(f"Job {job_id}: Failed to save chunk starting at {total_rows - chunk_size + 1} after {max_retries} retries: {str(oe)}")
+                            errors.append(f"Chunk rows {total_rows - chunk_size + 1} to {total_rows} completely failed: {str(oe)}")
+                            raise oe # We must raise it to stop the script, or we can choose to continue. Since partial imports are okay, let's catch it!
+                        
+                        logger.warning(f"Job {job_id}: DB OperationalError (Drop), retrying {attempt+1}/{max_retries} in 3s... ({str(oe)})")
+                        time.sleep(3)
+                        
+                    except Exception as ge:
+                        logger.error(f"Job {job_id}: Unhandled error in DB save chunk: {str(ge)}")
+                        errors.append(f"Chunk DB Error rows {total_rows - chunk_size + 1}: {str(ge)}")
+                        break # Not a connection error, break retry loop
 
             # Final Status Update
             if errors:
