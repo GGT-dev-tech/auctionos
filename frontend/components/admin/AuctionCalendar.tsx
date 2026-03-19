@@ -9,9 +9,10 @@ import { useNavigate } from 'react-router-dom';
 
 interface AuctionCalendarProps {
     filters?: any;
+    onDateTypeSelect?: (date: string, type: string) => void;
 }
 
-const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {} }) => {
+const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateTypeSelect }) => {
     const [events, setEvents] = useState<any[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
     const navigate = useNavigate();
@@ -19,26 +20,58 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {} }) => {
     useEffect(() => {
         AuctionService.getCalendarEvents(filters)
             .then(data => {
-                setEvents(data.map((item: any) => ({
-                    title: `${item.event_title} (${item.property_count})`,
-                    start: `${item.event_date}T${item.event_time || '00:00:00'}`,
-                    extendedProps: {
-                        location: item.event_location,
-                        notes: item.event_notes,
-                        linked_properties: item.linked_properties,
-                        statuses: item.statuses,
-                        property_count: item.property_count,
-                        register_link: item.register_link,
-                        list_link: item.list_link,
-                        tax_status: item.tax_status
+                const groups: Record<string, { date: string, type: string, auctionCount: number, propertyCount: number }> = {};
+
+                data.forEach((item: any) => {
+                    const titleLower = (item.event_title || '').toLowerCase();
+                    let type = 'Other';
+                    if (titleLower.includes('tax deed') || titleLower.includes('taxdeed')) type = 'Tax Deed';
+                    else if (titleLower.includes('foreclosure')) type = 'Foreclosure';
+                    else if (titleLower.includes('lien')) type = 'Tax Lien';
+                    else if (titleLower.includes('sheriff')) type = 'Sheriff Sale';
+                    else type = item.event_title || 'Auction'; // fallback to existing title if heuristics miss
+                    
+                    const groupKey = `${item.event_date}-${type}`;
+                    if (!groups[groupKey]) {
+                        groups[groupKey] = { date: item.event_date, type, auctionCount: 0, propertyCount: 0 };
                     }
-                })));
+                    groups[groupKey].auctionCount += 1;
+                    groups[groupKey].propertyCount += (item.property_count || 1);
+                });
+
+                const aggregatedEvents = Object.values(groups).map(g => ({
+                    title: `${g.type} (${g.auctionCount})`,
+                    start: g.date,
+                    allDay: true,
+                    extendedProps: {
+                        isGrouped: true,
+                        type: g.type,
+                        date: g.date,
+                        auctionCount: g.auctionCount,
+                        propertyCount: g.propertyCount
+                    }
+                }));
+
+                setEvents(aggregatedEvents);
             })
             .catch(err => console.error("Failed to load calendar", err));
     }, [filters]);
 
     const handleEventClick = (info: any) => {
-        setSelectedEvent(info.event);
+        const props = info.event.extendedProps;
+        if (props.isGrouped) {
+            if (onDateTypeSelect) {
+                onDateTypeSelect(props.date, props.type);
+            } else {
+                const params = new URLSearchParams(window.location.search);
+                params.set('startDate', props.date);
+                params.set('endDate', props.date);
+                params.set('q', props.type);
+                window.location.search = params.toString();
+            }
+        } else {
+            setSelectedEvent(info.event);
+        }
     };
 
     const handleCloseModal = () => {
