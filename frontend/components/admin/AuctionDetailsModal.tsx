@@ -134,7 +134,6 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
                         variant="contained"
                         color="primary"
                         onClick={() => setShowProperties(true)}
-                        disabled={props.property_count === 0}
                     >
                         View Matched Properties
                     </Button>
