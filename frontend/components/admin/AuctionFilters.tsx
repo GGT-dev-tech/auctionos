@@ -41,6 +41,40 @@ const AuctionFilters: React.FC<AuctionFiltersProps> = ({ onFilterChange }) => {
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [debouncedFilters] = useDebounce(filters, 500);
 
+    // Sync from URL to State (External Updates from Calendar)
+    useEffect(() => {
+        setFilters(prev => {
+            let changed = false;
+            const next = { ...prev };
+            
+            const checkAndSet = (key: keyof AuctionFilterParams, val: any) => {
+                if (next[key] !== val) {
+                    next[key] = val;
+                    changed = true;
+                }
+            };
+
+            checkAndSet('q', searchParams.get('q') || undefined);
+            checkAndSet('name', searchParams.get('name') || undefined);
+            checkAndSet('state', searchParams.get('state') || undefined);
+            checkAndSet('county', searchParams.get('county') || undefined);
+            
+            const isPres = searchParams.get('isPresencial');
+            checkAndSet('isPresencial', isPres ? isPres === 'true' : undefined);
+            
+            checkAndSet('startDate', searchParams.get('startDate') || undefined);
+            checkAndSet('endDate', searchParams.get('endDate') || undefined);
+            
+            const minP = searchParams.get('minParcels');
+            checkAndSet('minParcels', minP ? Number(minP) : undefined);
+            
+            const maxP = searchParams.get('maxParcels');
+            checkAndSet('maxParcels', maxP ? Number(maxP) : undefined);
+
+            return changed ? next : prev;
+        });
+    }, [searchParams]);
+
     // Sync state TO URL and emit parent callback
     useEffect(() => {
         const cleanParams: any = {};

@@ -4,15 +4,24 @@ import AuctionCalendar from '../../components/admin/AuctionCalendar';
 import AuctionFilters, { AuctionFilterParams } from '../../components/admin/AuctionFilters';
 import { Box, Typography } from '@mui/material';
 
+import { useSearchParams } from 'react-router-dom';
+
 const ClientAuctions: React.FC = () => {
     const [filters, setFilters] = useState<AuctionFilterParams>({});
+    const [, setSearchParams] = useSearchParams();
 
     const handleDateTypeSelect = (date: string, type: string) => {
-        const params = new URLSearchParams(window.location.search);
-        params.set('startDate', date);
-        params.set('endDate', date);
-        params.set('q', type);
-        window.location.search = '?' + params.toString();
+        setSearchParams(prev => {
+            const params = new URLSearchParams(prev);
+            params.set('startDate', date);
+            params.set('endDate', date);
+            if (type) {
+                params.set('q', type);
+            } else {
+                params.delete('q');
+            }
+            return params;
+        });
     };
 
     const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '');

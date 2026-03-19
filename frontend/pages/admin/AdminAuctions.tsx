@@ -9,11 +9,27 @@ import PropertyList from '../../components/admin/PropertyList';
 import PropertyFilters, { PropertyFilterParams } from '../../components/admin/PropertyFilters';
 import SystemAnnouncementForm from '../../components/admin/SystemAnnouncementForm';
 import { Box } from '@mui/material';
+import { useSearchParams } from 'react-router-dom';
 
 const AdminAuctions: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'auctions' | 'properties' | 'import_props' | 'import_auctions' | 'broadcasts'>('auctions');
     const [filters, setFilters] = useState<AuctionFilterParams>({});
     const [propertyFilters, setPropertyFilters] = useState<PropertyFilterParams>({});
+    const [, setSearchParams] = useSearchParams();
+
+    const handleDateTypeSelect = (date: string, type: string) => {
+        setSearchParams(prev => {
+            const params = new URLSearchParams(prev);
+            params.set('startDate', date);
+            params.set('endDate', date);
+            if (type) {
+                params.set('q', type);
+            } else {
+                params.delete('q');
+            }
+            return params;
+        });
+    };
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -37,7 +53,7 @@ const AdminAuctions: React.FC = () => {
                         </Box>
 
                         <Box className="w-full">
-                            <AuctionCalendar filters={{}} />
+                            <AuctionCalendar filters={{}} onDateTypeSelect={handleDateTypeSelect} />
                         </Box>
                     </div>
                 </div>
