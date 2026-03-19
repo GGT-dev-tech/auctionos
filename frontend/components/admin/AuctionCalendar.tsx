@@ -29,11 +29,14 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateT
                     else if (titleLower.includes('foreclosure')) type = 'Foreclosure';
                     else if (titleLower.includes('lien')) type = 'Tax Lien';
                     else if (titleLower.includes('sheriff')) type = 'Sheriff Sale';
-                    else type = item.event_title || 'Auction'; // fallback to existing title if heuristics miss
+                    else type = item.event_title || 'Auction'; 
                     
-                    const groupKey = `${item.event_date}-${type}`;
+                    const cleanDate = item.event_date ? item.event_date.split('T')[0] : '';
+                    if (!cleanDate) return;
+
+                    const groupKey = `${cleanDate}-${type}`;
                     if (!groups[groupKey]) {
-                        groups[groupKey] = { date: item.event_date, type, auctionCount: 0, propertyCount: 0 };
+                        groups[groupKey] = { date: cleanDate, type, auctionCount: 0, propertyCount: 0 };
                     }
                     groups[groupKey].auctionCount += 1;
                     groups[groupKey].propertyCount += (item.property_count || 1);
@@ -67,10 +70,23 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateT
                 params.set('startDate', props.date);
                 params.set('endDate', props.date);
                 params.set('q', props.type);
-                window.location.search = params.toString();
+                window.location.search = '?' + params.toString();
             }
         } else {
             setSelectedEvent(info.event);
+        }
+    };
+
+    const handleDateClick = (arg: any) => {
+        // Handle clicking the empty day box
+        if (onDateTypeSelect) {
+            onDateTypeSelect(arg.dateStr, ''); 
+        } else {
+            const params = new URLSearchParams(window.location.search);
+            params.set('startDate', arg.dateStr);
+            params.set('endDate', arg.dateStr);
+            params.delete('q'); // Clear search query to show all types for that date
+            window.location.search = '?' + params.toString();
         }
     };
 
@@ -83,6 +99,7 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateT
             <FullCalendar
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
+                timeZone="UTC"
                 headerToolbar={{
                     left: 'prev,next today',
                     center: 'title',
@@ -90,6 +107,7 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateT
                 }}
                 events={events}
                 eventClick={handleEventClick}
+                dateClick={handleDateClick}
                 height="100%"
                 eventColor="#3b82f6"
                 dayCellClassNames={(arg) => {

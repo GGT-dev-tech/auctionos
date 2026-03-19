@@ -48,7 +48,7 @@ class ImportService:
     async def process_properties_csv_file(file_path: str, job_id: str):
         try:
             # Using chunksize to keep memory footprint low
-            chunk_size = 500
+            chunk_size = 20
             total_rows = 0
             success_count = 0
             errors = []
@@ -227,13 +227,13 @@ class ImportService:
             resolve_property_auction_links_task.delay(job_id)
             
             # Cleanup temp file
-            if os.path.exists(file_path):
+            if os.path.exists(file_path) and "temp_imports" in file_path:
                 os.remove(file_path)
 
         except Exception as e:
             logger.error(f"Import Job Failed: {e}")
             redis.set(f"import_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
-            if os.path.exists(file_path):
+            if os.path.exists(file_path) and "temp_imports" in file_path:
                 os.remove(file_path)
             raise e
 
