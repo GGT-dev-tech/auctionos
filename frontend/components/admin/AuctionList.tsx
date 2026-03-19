@@ -117,6 +117,13 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
             getActions: ({ id, row }) => {
                 return [
                     <GridActionsCellItem
+                        key={`view-${id}`}
+                        icon={<span className="material-symbols-outlined text-green-600">visibility</span>}
+                        label="View Details"
+                        onClick={() => handleViewClick(row as AuctionEvent)}
+                        color="inherit"
+                    />,
+                    <GridActionsCellItem
                         key={`edit-${id}`}
                         icon={<span className="material-symbols-outlined text-blue-600">edit</span>}
                         label="Edit"
@@ -196,12 +203,12 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
                         }}
                         pageSizeOptions={[20, 50, 100]}
                         disableRowSelectionOnClick
-                        onRowClick={readOnly ? (params) => handleViewClick(params.row as AuctionEvent) : undefined}
+                        onRowClick={(params) => handleViewClick(params.row as AuctionEvent)}
                         density="compact"
-                        sx={readOnly ? {
+                        sx={{
                             '& .MuiDataGrid-row': { cursor: 'pointer' },
                             '& .MuiDataGrid-row:hover': { backgroundColor: 'rgba(59, 130, 246, 0.04)' }
-                        } : {}}
+                        }}
                     />
                 )}
             </Box>

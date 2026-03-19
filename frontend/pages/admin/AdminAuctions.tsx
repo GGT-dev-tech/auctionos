@@ -37,7 +37,7 @@ const AdminAuctions: React.FC = () => {
                         </Box>
 
                         <Box className="w-full">
-                            <AuctionCalendar filters={filters} />
+                            <AuctionCalendar filters={{}} />
                         </Box>
                     </div>
                 </div>
