@@ -196,7 +196,12 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
                         }}
                         pageSizeOptions={[20, 50, 100]}
                         disableRowSelectionOnClick
+                        onRowClick={readOnly ? (params) => handleViewClick(params.row as AuctionEvent) : undefined}
                         density="compact"
+                        sx={readOnly ? {
+                            '& .MuiDataGrid-row': { cursor: 'pointer' },
+                            '& .MuiDataGrid-row:hover': { backgroundColor: 'rgba(59, 130, 246, 0.04)' }
+                        } : {}}
                     />
                 )}
             </Box>

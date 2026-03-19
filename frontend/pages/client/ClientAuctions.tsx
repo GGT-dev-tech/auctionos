@@ -25,7 +25,7 @@ const ClientAuctions: React.FC = () => {
             <AuctionFilters onFilterChange={setFilters} />
             
             <Box className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
-                <AuctionCalendar filters={filters} onDateTypeSelect={handleDateTypeSelect} />
+                <AuctionCalendar filters={{}} onDateTypeSelect={handleDateTypeSelect} />
             </Box>
 
             {hasActiveFilters && (
