@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid, GridColDef, GridFilterModel } from '@mui/x-data-grid';
 import { AdminService } from '../../services/admin.service';
+import { AuthService } from '../../services/auth.service';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
@@ -18,6 +19,11 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
         pageSize: 10,
     });
     const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
+
+    // Determine Base Path depending on User Role
+    const currentUser = AuthService.getCurrentUser();
+    const isClient = currentUser?.role === 'client';
+    const basePath = isClient ? '#/client/properties' : '#/admin/properties';
 
     const fetchProperties = async () => {
         setLoading(true);
@@ -91,9 +97,10 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
                 <IconButton
                     size="small"
                     component="a"
-                    href={`#/admin/properties/${params.row.parcel_id}`}
+                    href={`${basePath}/${params.row.parcel_id}`}
                     target="_blank"
                     title="Open Details"
+                    onClick={(e) => e.stopPropagation()}
                 >
                     <OpenInNewIcon fontSize="small" className="text-blue-500" />
                 </IconButton>
@@ -138,11 +145,16 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
                     pageSizeOptions={[10, 20]}
                     disableRowSelectionOnClick
                     density="compact"
+                    onRowClick={(params) => {
+                        window.open(`${basePath}/${params.row.parcel_id}`, '_blank');
+                    }}
                     sx={{
                         border: 'none',
                         '& .MuiDataGrid-columnHeaders': {
                             backgroundColor: '#f8fafc',
                         },
+                        '& .MuiDataGrid-row': { cursor: 'pointer' },
+                        '& .MuiDataGrid-row:hover': { backgroundColor: 'rgba(59, 130, 246, 0.04)' }
                     }}
                 />
             </Box>
