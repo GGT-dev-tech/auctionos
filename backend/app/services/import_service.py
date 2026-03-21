@@ -265,67 +265,100 @@ class ImportService:
             success_count = 0
             errors = []
 
-            with engine.begin() as conn:
-                for index, row in df.iterrows():
+            chunk_size = 20
+            
+            # Iterate in chunks manually
+            for i in range(0, len(df), chunk_size):
+                chunk = df.iloc[i:i+chunk_size]
+                
+                max_retries = 3
+                for attempt in range(max_retries):
                     try:
-                        row_dict = row.where(pd.notnull(row), None).to_dict()
-                        validated_data = AuctionCSVRow(**row_dict)
-                        
-                        # Parse dates
-                        def parse_dt(d_str):
-                            if not d_str or d_str.strip() == "" or d_str == "N/A": return None
-                            try: return datetime.strptime(d_str.strip(), "%Y-%m-%d").date()
-                            except: return None
-                            
-                        a_date = parse_dt(validated_data.auction_date)
-                        if not a_date:
-                            raise ValueError(f"Invalid or missing auction date: {validated_data.auction_date}")
-                            
-                        r_date = parse_dt(validated_data.register_date)
+                        with engine.begin() as conn:
+                            for index, row in chunk.iterrows():
+                                try:
+                                    row_dict = row.where(pd.notnull(row), None).to_dict()
+                                    validated_data = AuctionCSVRow(**row_dict)
+                                    
+                                    # Parse dates
+                                    def parse_dt(d_str):
+                                        if not d_str or d_str.strip() == "" or d_str == "N/A": return None
+                                        try: return datetime.strptime(d_str.strip(), "%Y-%m-%d").date()
+                                        except: return None
+                                        
+                                    a_date = parse_dt(validated_data.auction_date)
+                                    if not a_date:
+                                        raise ValueError(f"Invalid or missing auction date: {validated_data.auction_date}")
+                                        
+                                    r_date = parse_dt(validated_data.register_date)
 
-                        auction_data = {
-                            "name": validated_data.name,
-                            "short_name": validated_data.short_name,
-                            "auction_date": a_date,
-                            "time": validated_data.time,
-                            "location": validated_data.location,
-                            "county": validated_data.county_name,
-                            "county_code": validated_data.county_code,
-                            "state": validated_data.state,
-                            "tax_status": validated_data.tax_status,
-                            "parcels_count": int(float(validated_data.parcels)) if validated_data.parcels else 0,
-                            "notes": validated_data.notes,
-                            "search_link": validated_data.search_link,
-                            "register_date": r_date,
-                            "register_link": validated_data.register_link,
-                            "list_link": validated_data.list_link,
-                            "purchase_info_link": validated_data.purchase_info_link,
-                            "updated_at": datetime.utcnow()
-                        }
-                        
-                        # Check exist by name and date
-                        existing = conn.execute(
-                            text("SELECT id FROM auction_events WHERE name = :name AND auction_date = :auction_date"), 
-                            {"name": auction_data["name"], "auction_date": auction_data["auction_date"]}
-                        ).fetchone()
-                        
-                        if existing:
-                            updates = ", ".join([f"{k} = :{k}" for k in auction_data.keys() if k not in ["name", "auction_date"]])
-                            query = text(f"UPDATE auction_events SET {updates} WHERE id = :id")
-                            update_params = {**auction_data, "id": existing[0]}
-                            conn.execute(query, update_params)
-                        else:
-                            auction_data["created_at"] = datetime.utcnow()
-                            fields = ", ".join(auction_data.keys())
-                            placeholders = ", ".join([f":{k}" for k in auction_data.keys()])
-                            query = text(f"INSERT INTO auction_events ({fields}) VALUES ({placeholders})")
-                            conn.execute(query, auction_data)
+                                    def parse_parcels(p_str):
+                                        if not p_str or str(p_str).strip() == "": return 0
+                                        try:
+                                            return int(float(str(p_str).replace(',', '')))
+                                        except ValueError:
+                                            return 0
 
-                        success_count += 1
+                                    auction_data = {
+                                        "name": validated_data.name,
+                                        "short_name": validated_data.short_name,
+                                        "auction_date": a_date,
+                                        "time": validated_data.time,
+                                        "location": validated_data.location,
+                                        "county": validated_data.county_name,
+                                        "county_code": validated_data.county_code,
+                                        "state": validated_data.state,
+                                        "tax_status": validated_data.tax_status,
+                                        "parcels_count": parse_parcels(validated_data.parcels),
+                                        "notes": validated_data.notes,
+                                        "search_link": validated_data.search_link,
+                                        "register_date": r_date,
+                                        "register_link": validated_data.register_link,
+                                        "list_link": validated_data.list_link,
+                                        "purchase_info_link": validated_data.purchase_info_link,
+                                        "updated_at": datetime.utcnow()
+                                    }
+                                    
+                                    # Check exist by name and date
+                                    existing = conn.execute(
+                                        text("SELECT id FROM auction_events WHERE name = :name AND auction_date = :auction_date"), 
+                                        {"name": auction_data["name"], "auction_date": auction_data["auction_date"]}
+                                    ).fetchone()
+                                    
+                                    if existing:
+                                        updates = ", ".join([f"{k} = :{k}" for k in auction_data.keys() if k not in ["name", "auction_date"]])
+                                        query = text(f"UPDATE auction_events SET {updates} WHERE id = :id")
+                                        update_params = {**auction_data, "id": existing[0]}
+                                        conn.execute(query, update_params)
+                                    else:
+                                        auction_data["created_at"] = datetime.utcnow()
+                                        fields = ", ".join(auction_data.keys())
+                                        placeholders = ", ".join([f":{k}" for k in auction_data.keys()])
+                                        query = text(f"INSERT INTO auction_events ({fields}) VALUES ({placeholders})")
+                                        conn.execute(query, auction_data)
+
+                                except Exception as e:
+                                    logger.error(f"Row {index + 2} failed: {str(e)}")
+                                    errors.append(f"Row {index + 2}: {str(e)}")
                         
-                    except Exception as e:
-                        logger.error(f"Row {index + 2} failed: {str(e)}")
-                        errors.append(f"Row {index + 2}: {str(e)}")
+                        # Chunk processed perfectly
+                        success_count += len(chunk)
+                        logger.info(f"Job {job_id}: Processed {min(i + chunk_size, total_rows)} / {total_rows} auctions...")
+                        break
+                        
+                    except OperationalError as oe:
+                        if attempt == max_retries - 1:
+                            logger.error(f"Job {job_id}: Failed chunk after {max_retries} retries: {str(oe)}")
+                            errors.append(f"Chunk DB rows {i+2} completely failed: {str(oe)}")
+                            raise oe
+                        
+                        logger.warning(f"Job {job_id}: DB OperationalError (Drop), retrying {attempt+1}/{max_retries} in 3s... ({str(oe)})")
+                        time.sleep(3)
+                        
+                    except Exception as ge:
+                        logger.error(f"Job {job_id}: Unhandled error in DB save chunk: {str(ge)}")
+                        errors.append(f"Chunk DB Error rows {i+2}: {str(ge)}")
+                        break
 
             if errors:
                 status_msg = f"Completed with errors. Success: {success_count}/{total_rows}. Errors: {len(errors)}"

@@ -4,7 +4,11 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { AuctionService } from '../../services/auction.service';
+import type { AuctionEvent } from '../../types';
 import { AuctionDetailsModal } from './AuctionDetailsModal';
+import AuctionList from './AuctionList';
+import { Dialog, DialogTitle, DialogContent, Typography, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
 
 interface AuctionCalendarProps {
@@ -15,6 +19,8 @@ interface AuctionCalendarProps {
 const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateTypeSelect }) => {
     const [events, setEvents] = useState<any[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+    const [groupedDialogOpen, setGroupedDialogOpen] = useState(false);
+    const [groupedDateType, setGroupedDateType] = useState<{date: string, type: string} | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -63,15 +69,9 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateT
     const handleEventClick = (info: any) => {
         const props = info.event.extendedProps;
         if (props.isGrouped) {
-            if (onDateTypeSelect) {
-                onDateTypeSelect(props.date, props.type);
-            } else {
-                const params = new URLSearchParams(window.location.search);
-                params.set('startDate', props.date);
-                params.set('endDate', props.date);
-                params.set('q', props.type);
-                window.location.search = '?' + params.toString();
-            }
+            // Display internal modal list instead of external parameter routing
+            setGroupedDateType({ date: props.date, type: props.type });
+            setGroupedDialogOpen(true);
         } else {
             setSelectedEvent(info.event);
         }
@@ -123,6 +123,35 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateT
                 onClose={handleCloseModal}
                 eventData={selectedEvent}
             />
+
+            <Dialog 
+                open={groupedDialogOpen} 
+                onClose={() => setGroupedDialogOpen(false)} 
+                maxWidth="lg" 
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 3, minHeight: '600px' } }}
+            >
+                <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
+                    <Typography variant="h6" className="font-bold text-slate-800">
+                        {groupedDateType ? `${groupedDateType.type} Auctions on ${new Date(groupedDateType.date).toLocaleDateString()}` : 'Auctions'}
+                    </Typography>
+                    <IconButton onClick={() => setGroupedDialogOpen(false)}>
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent dividers className="p-0 bg-slate-50">
+                    {groupedDateType && (
+                        <AuctionList 
+                            filters={{ 
+                                startDate: groupedDateType.date, 
+                                endDate: groupedDateType.date, 
+                                q: groupedDateType.type === 'Other' ? '' : groupedDateType.type 
+                            }} 
+                            readOnly={true} 
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

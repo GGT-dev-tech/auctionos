@@ -20,7 +20,7 @@ from app.services.import_service import import_service
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def run_import(file_path: str):
+async def run_import(file_path: str, import_type: str = "properties"):
     if not os.path.exists(file_path):
         # Try relative to app root
         root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,7 +37,14 @@ async def run_import(file_path: str):
     print(f"Target DB: {os.environ.get('DATABASE_URL', 'Default from config')}")
     
     try:
-        await import_service.process_properties_csv_file(file_path, job_id)
+        if import_type == "auctions":
+            with open(file_path, "rb") as f:
+                content = f.read()
+            print("Processing as AUCTIONS...")
+            await import_service.process_auctions_csv(content, job_id)
+        else:
+            print("Processing as PROPERTIES...")
+            await import_service.process_properties_csv_file(file_path, job_id)
         print("\nRemote import process completed successfully.")
         print("Check the Production UI to see the results.")
     except Exception as e:
@@ -47,9 +54,16 @@ async def run_import(file_path: str):
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage:")
-        print("  Option A: DATABASE_URL='your_url' python scripts/remote_db_import.py data/your_file.csv")
-        print("  Option B: python scripts/remote_db_import.py data/your_file.csv 'your_url'")
+        print("  Option A: DATABASE_URL='url' python scripts/remote_db_import.py data/file.csv [--type auctions]")
         sys.exit(1)
     
+    # Simple argparse for --type
+    import_type = "properties"
+    if "--type" in sys.argv:
+        idx = sys.argv.index("--type")
+        import_type = sys.argv[idx+1]
+        sys.argv.pop(idx+1)
+        sys.argv.pop(idx)
+        
     file_path = sys.argv[1]
-    asyncio.run(run_import(file_path))
+    asyncio.run(run_import(file_path, import_type))
