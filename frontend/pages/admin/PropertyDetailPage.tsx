@@ -234,6 +234,17 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
 
                 {/* Left Column */}
                 <div className="lg:col-span-2 space-y-6">
+                    {/* Import Status Banner */}
+                    {property.is_processed === false && (
+                        <div className="bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800 rounded-lg shadow-sm">
+                            <h3 className="text-red-800 dark:text-red-300 font-bold mb-1 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[20px]">error</span>
+                                Import Processing Error
+                            </h3>
+                            <p className="text-sm text-red-600 dark:text-red-400">{property.import_error_msg || 'An unknown error occurred during the CSV import mapping phase. Please review the raw data.'}</p>
+                        </div>
+                    )}
+
                     {/* Main Stats Card */}
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <div className="bg-primary-600 text-white p-3 text-center font-bold text-lg">
@@ -618,6 +629,13 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                                     <li><a href={`https://www.epa.gov/enviro/myenvironment`} target="_blank" rel="noreferrer" className="hover:underline">EPA Report</a></li>
                                     <li><a href={`https://news.google.com/search?q=${encodeURIComponent(property.address || property.parcel_id)}`} target="_blank" rel="noreferrer" className="hover:underline">Google News</a></li>
                                     <li><a href={`https://msc.fema.gov/portal/search?AddressQuery=${encodeURIComponent(property.address || '')}`} target="_blank" rel="noreferrer" className="hover:underline">FEMA Flood Map Details</a></li>
+                                    {property.map_link && (
+                                        <li>
+                                            <a href={property.map_link} target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                                                <MapIcon fontSize="small" /> View Official GIS Map
+                                            </a>
+                                        </li>
+                                    )}
                                 </ul>
                             </div>
                             <div>
