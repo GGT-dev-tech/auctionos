@@ -444,7 +444,17 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                     {/* Source: Parcel Shape Data */}
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
-                            Source: Parcel Shape Data
+                            Source: Parcel Shape Data & Features
+                        </div>
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-700">
+                            <div className="grid grid-cols-2 gap-y-2 text-sm text-slate-700 dark:text-slate-300">
+                                <div><span className="font-semibold text-slate-500">Zoning:</span> {property.zoning || 'N/A'}</div>
+                                <div><span className="font-semibold text-slate-500">Subdivision:</span> {property.subdivision || 'N/A'}</div>
+                                <div className="col-span-2"><span className="font-semibold text-slate-500">Legal Description:</span> {property.legal_description || 'N/A'}</div>
+                                <div><span className="font-semibold text-slate-500">Sewer Type:</span> {property.sewer_type || 'N/A'}</div>
+                                <div><span className="font-semibold text-slate-500">Water Type:</span> {property.water_type || 'N/A'}</div>
+                                <div className="col-span-2"><span className="font-semibold text-slate-500">Property Type Detail:</span> {property.property_type_detail || 'N/A'}</div>
+                            </div>
                         </div>
                         <div className="p-4 bg-slate-50 dark:bg-slate-900/50 text-xs font-mono text-slate-600 dark:text-slate-400 max-h-48 overflow-y-auto whitespace-pre-wrap">
                             {property.parcel_shape_data || 'No raw shape data available.'}
