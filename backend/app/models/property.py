@@ -78,6 +78,17 @@ class PropertyDetails(Base):
     additional_parcel_numbers = Column(Text, nullable=True)
     occupancy_checked_date = Column(Date, nullable=True)
 
+    # V3 Expanded Fields
+    redfin_url = Column(String(2048), nullable=True)
+    redfin_estimate = Column(Float, nullable=True)
+    lot_sqft = Column(Float, nullable=True)
+    sewer_type = Column(String(100), nullable=True)
+    water_type = Column(String(100), nullable=True)
+    property_type_detail = Column(String(255), nullable=True)
+    import_error_msg = Column(Text, nullable=True)
+    is_processed = Column(Boolean, nullable=True, default=False)
+    map_link = Column(String(2048), nullable=True)
+
 
 class PropertyAuctionHistory(Base):
     __tablename__ = "property_auction_history"

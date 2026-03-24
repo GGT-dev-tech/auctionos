@@ -95,6 +95,20 @@ export interface Property {
   created_at?: string;
   updated_at?: string;
   auction_id?: number | null;
+  
+  // V3 Extended Fields
+  latitude?: number;
+  longitude?: number;
+  redfin_url?: string;
+  redfin_estimate?: number;
+  lot_sqft?: number;
+  sewer_type?: string;
+  water_type?: string;
+  property_type_detail?: string;
+  import_error_msg?: string;
+  is_processed?: boolean;
+  map_link?: string;
+
   details?: PropertyDetails;
   media?: any[];
   auction_history?: PropertyAuctionHistory[];
@@ -169,4 +183,17 @@ export interface PropertyDetails {
   county_fips?: string;
   additional_parcel_numbers?: string;
   occupancy_checked_date?: string;
+
+  // V3 Extended Details
+  latitude?: number;
+  longitude?: number;
+  redfin_url?: string;
+  redfin_estimate?: number;
+  lot_sqft?: number;
+  sewer_type?: string;
+  water_type?: string;
+  property_type_detail?: string;
+  import_error_msg?: string;
+  is_processed?: boolean;
+  map_link?: string;
 }

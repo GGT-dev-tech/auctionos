@@ -261,6 +261,18 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                                         <span>{property.availability_status === 'available' ? 'Yes' : 'No'}</span>
                                     </div>
                                     <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
+                                        <span className="font-semibold">Type:</span>
+                                        <span>{property.type || property.property_type || 'N/A'} {property.property_type_detail ? `(${property.property_type_detail})` : ''}</span>
+                                    </div>
+                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
+                                        <span className="font-semibold">SqFt:</span>
+                                        <span>{property.lot_sqft ? property.lot_sqft.toLocaleString() : 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
+                                        <span className="font-semibold">Utilities:</span>
+                                        <span>{property.water_type || property.sewer_type ? `${property.water_type || 'Unknown'} / ${property.sewer_type || 'Unknown'}` : 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
                                         <span className="font-semibold">C/S Number:</span>
                                         <span>{property.cs_number || 'N/A'}</span>
                                     </div>
@@ -613,6 +625,13 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                                 <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
                                     <li><a href={`https://www.realtor.com/realestateandhomes-search/${encodeURIComponent(property.zip_code || property.city || '')}`} target="_blank" rel="noreferrer" className="hover:underline">Realtor.com Comps</a></li>
                                     <li><a href={`https://www.redfin.com/city/${encodeURIComponent(property.city || '')}/${property.state}`} target="_blank" rel="noreferrer" className="hover:underline">Redfin Comps</a></li>
+                                    {property.redfin_url && (
+                                        <li>
+                                            <a href={property.redfin_url} target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
+                                                Redfin Value: {property.redfin_estimate ? `$${Number(property.redfin_estimate).toLocaleString()}` : 'Link'}
+                                            </a>
+                                        </li>
+                                    )}
                                     <li><a href={`https://www.trulia.com/${property.state}/${encodeURIComponent(property.city || '')}/`} target="_blank" rel="noreferrer" className="hover:underline">Trulia Comps</a></li>
                                     <li><a href={`https://www.zillow.com/homes/${encodeURIComponent(property.zip_code || property.city || '')}_rb/`} target="_blank" rel="noreferrer" className="hover:underline">Zillow Comps</a></li>
                                 </ul>

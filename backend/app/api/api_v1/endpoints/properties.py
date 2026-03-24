@@ -185,7 +185,16 @@ def read_properties(
             p.raw_parcel_number,
             p.county_fips,
             p.additional_parcel_numbers,
-            p.occupancy_checked_date
+            p.occupancy_checked_date,
+            p.redfin_url,
+            p.redfin_estimate,
+            p.lot_sqft,
+            p.sewer_type,
+            p.water_type,
+            p.property_type_detail,
+            p.import_error_msg,
+            p.is_processed,
+            p.map_link
         FROM property_details p
         LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
         WHERE {where_str}
@@ -225,7 +234,16 @@ def read_properties(
             "raw_parcel_number": r[25],
             "county_fips": r[26],
             "additional_parcel_numbers": r[27],
-            "occupancy_checked_date": r[28]
+            "occupancy_checked_date": r[28],
+            "redfin_url": r[29],
+            "redfin_estimate": r[30],
+            "lot_sqft": r[31],
+            "sewer_type": r[32],
+            "water_type": r[33],
+            "property_type_detail": r[34],
+            "import_error_msg": r[35],
+            "is_processed": bool(r[36]) if r[36] is not None else False,
+            "map_link": r[37]
         }
         for r in result
     ]
@@ -263,6 +281,16 @@ class PropertyUpdateRequest(BaseModel):
     county_fips: Optional[str] = None
     additional_parcel_numbers: Optional[str] = None
     occupancy_checked_date: Optional[date] = None
+
+    # V3 Extended Fields
+    redfin_url: Optional[str] = None
+    redfin_estimate: Optional[float] = None
+    lot_sqft: Optional[float] = None
+    sewer_type: Optional[str] = None
+    water_type: Optional[str] = None
+    property_type_detail: Optional[str] = None
+    import_error_msg: Optional[str] = None
+    is_processed: Optional[bool] = False
 
 class PropertyCreateRequest(PropertyUpdateRequest):
     parcel_id: str  # Required for creation

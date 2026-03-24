@@ -40,7 +40,17 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
         raw_parcel_number: initialData?.raw_parcel_number || '',
         county_fips: initialData?.county_fips || '',
         additional_parcel_numbers: initialData?.additional_parcel_numbers || '',
-        occupancy_checked_date: initialData?.occupancy_checked_date || ''
+        occupancy_checked_date: initialData?.occupancy_checked_date || '',
+
+        // V3 Extended Details
+        redfin_url: initialData?.redfin_url || '',
+        redfin_estimate: initialData?.redfin_estimate || '',
+        lot_sqft: initialData?.lot_sqft || '',
+        sewer_type: initialData?.sewer_type || '',
+        water_type: initialData?.water_type || '',
+        property_type_detail: initialData?.property_type_detail || '',
+        import_error_msg: initialData?.import_error_msg || '',
+        is_processed: initialData?.is_processed ?? false
     });
     const [status, setStatus] = useState('');
 
@@ -76,7 +86,17 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                 raw_parcel_number: formData.raw_parcel_number,
                 county_fips: formData.county_fips,
                 additional_parcel_numbers: formData.additional_parcel_numbers,
-                occupancy_checked_date: formData.occupancy_checked_date || null
+                occupancy_checked_date: formData.occupancy_checked_date || null,
+
+                // V3 Extended Details mapping
+                redfin_url: formData.redfin_url,
+                redfin_estimate: formData.redfin_estimate ? parseFloat(formData.redfin_estimate) : null,
+                lot_sqft: formData.lot_sqft ? parseFloat(formData.lot_sqft) : null,
+                sewer_type: formData.sewer_type,
+                water_type: formData.water_type,
+                property_type_detail: formData.property_type_detail,
+                import_error_msg: formData.import_error_msg,
+                is_processed: formData.is_processed
             };
 
             if (initialData?.parcel_id) {
@@ -92,7 +112,8 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                     map_link: '', cs_number: '', parcel_code: '', occupancy: '', land_value: '', improvement_value: '',
                     estimated_arv: '', estimated_rent: '', availability_status: 'available',
                     alternate_owner_address: '', state_inventory_entered_date: '', qoz_description: '', parcel_shape_data: '',
-                    pin_ppin: '', raw_parcel_number: '', county_fips: '', additional_parcel_numbers: '', occupancy_checked_date: ''
+                    pin_ppin: '', raw_parcel_number: '', county_fips: '', additional_parcel_numbers: '', occupancy_checked_date: '',
+                    redfin_url: '', redfin_estimate: '', lot_sqft: '', sewer_type: '', water_type: '', property_type_detail: '', import_error_msg: '', is_processed: false
                 });
             }
             if (onSuccess) onSuccess();
@@ -177,6 +198,22 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                     <label className="label">Category</label>
                     <input name="property_category" className="input" value={formData.property_category} onChange={handleChange} />
                 </div>
+                <div>
+                    <label className="label">Property Type Detail</label>
+                    <input name="property_type_detail" className="input" value={formData.property_type_detail} onChange={handleChange} />
+                </div>
+                <div>
+                    <label className="label">Lot SqFt</label>
+                    <input name="lot_sqft" type="number" step="0.01" className="input" value={formData.lot_sqft} onChange={handleChange} />
+                </div>
+                <div>
+                    <label className="label">Sewer Type</label>
+                    <input name="sewer_type" className="input" value={formData.sewer_type} onChange={handleChange} />
+                </div>
+                <div>
+                    <label className="label">Water Type</label>
+                    <input name="water_type" className="input" value={formData.water_type} onChange={handleChange} />
+                </div>
 
                 <div className="col-span-1 md:col-span-3 border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
                     <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Financials & Valuation</h4>
@@ -205,6 +242,14 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                 <div>
                     <label className="label">Est. Rent</label>
                     <input name="estimated_rent" type="number" step="0.01" className="input" value={formData.estimated_rent} onChange={handleChange} />
+                </div>
+                <div>
+                    <label className="label">Redfin Estimate</label>
+                    <input name="redfin_estimate" type="number" step="0.01" className="input" value={formData.redfin_estimate} onChange={handleChange} />
+                </div>
+                <div className="md:col-span-2">
+                    <label className="label">Redfin URL</label>
+                    <input name="redfin_url" className="input" value={formData.redfin_url} onChange={handleChange} />
                 </div>
 
                 <div className="col-span-1 md:col-span-3 border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
@@ -263,6 +308,21 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                 <div className="md:col-span-3">
                     <label className="label">Parcel Shape Data (Raw Text/JSON)</label>
                     <textarea name="parcel_shape_data" className="input h-32 font-mono text-xs" value={formData.parcel_shape_data} onChange={handleChange} />
+                </div>
+
+                <div className="col-span-1 md:col-span-3 border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">System Flags</h4>
+                </div>
+
+                <div>
+                    <label className="label text-slate-900 dark:text-white flex items-center gap-2 cursor-pointer mt-2">
+                        <input name="is_processed" type="checkbox" checked={formData.is_processed} onChange={(e) => setFormData({...formData, is_processed: e.target.checked})} />
+                        Processed (Valid fields)
+                    </label>
+                </div>
+                <div className="md:col-span-2">
+                    <label className="label">Import Error Message</label>
+                    <input name="import_error_msg" className="input" value={formData.import_error_msg} onChange={handleChange} />
                 </div>
             </div>
 

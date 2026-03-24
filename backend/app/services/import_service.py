@@ -32,7 +32,7 @@ class ImportService:
     @staticmethod
     def process_properties_csv(file_content: bytes, job_id: str):
         # Wrapper to maintain existing interface but redirect to file-based processing
-        temp_path = f"/app/data/temp_imports/{job_id}.csv"
+        temp_path = f"data/temp_imports/{job_id}.csv"
         os.makedirs(os.path.dirname(temp_path), exist_ok=True)
         with open(temp_path, "wb") as f:
             f.write(file_content)
@@ -105,13 +105,26 @@ class ImportService:
                             "assessed_value": validated_data.total_value,
                             "property_category": validated_data.property_category,
                             "purchase_option_type": validated_data.purchase_option_type,
-                            "latitude": None,
-                            "longitude": None
+                            "latitude": validated_data.latitude,
+                            "longitude": validated_data.longitude,
+                            "redfin_url": validated_data.redfin_url,
+                            "redfin_estimate": validated_data.redfin_estimate,
+                            "lot_sqft": validated_data.lot_sqft,
+                            "zoning": validated_data.zoning,
+                            "subdivision": validated_data.subdivision,
+                            "legal_description": validated_data.legal_description,
+                            "sewer_type": validated_data.sewer_type,
+                            "water_type": validated_data.water_type,
+                            "property_type_detail": validated_data.property_type_detail,
+                            "import_error_msg": validated_data.error,
+                            "is_processed": str(validated_data.processed).lower() in ['true', '1', 'yes'] if pd.notna(validated_data.processed) else False,
+                            "map_link": validated_data.map_link,
                         }
                         
-                        if validated_data.coordinates:
+                        # Coordinate Synchronization Logic
+                        if not d["latitude"] and not d["longitude"] and pd.notna(validated_data.coordinates):
                             try:
-                                clean_coords = validated_data.coordinates.replace(',', ' ').strip()
+                                clean_coords = str(validated_data.coordinates).replace(',', ' ').strip()
                                 parts = clean_coords.split()
                                 if len(parts) >= 2:
                                     d["latitude"] = float(parts[0])
@@ -146,9 +159,11 @@ class ImportService:
                                 parcel_ids = [d["parcel_id"] for d in details_batch if d["parcel_id"]]
                                 existing_status_map = {}
                                 if parcel_ids:
+                                    in_placeholders = ", ".join([f":p_{i}" for i in range(len(parcel_ids))])
+                                    params = {f"p_{i}": pid for i, pid in enumerate(parcel_ids)}
                                     existing_rows = conn.execute(
-                                        text("SELECT parcel_id, property_id, availability_status FROM property_details WHERE parcel_id = ANY(:parcel_ids)"),
-                                        {"parcel_ids": parcel_ids}
+                                        text(f"SELECT parcel_id, property_id, availability_status FROM property_details WHERE parcel_id IN ({in_placeholders})"),
+                                        params
                                     ).fetchall()
                                     for r in existing_rows:
                                         existing_status_map[r[0]] = (r[1], r[2]) # (property_id, availability_status)

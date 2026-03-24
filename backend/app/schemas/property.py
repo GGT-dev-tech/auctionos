@@ -58,6 +58,20 @@ class PropertyDetailsBase(BaseModel):
     additional_parcel_numbers: Optional[str] = None
     occupancy_checked_date: Optional[date] = None
 
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+    # V3 Expanded Fields
+    redfin_url: Optional[str] = None
+    redfin_estimate: Optional[float] = None
+    lot_sqft: Optional[float] = None
+    sewer_type: Optional[str] = None
+    water_type: Optional[str] = None
+    property_type_detail: Optional[str] = None
+    import_error_msg: Optional[str] = None
+    is_processed: Optional[bool] = None
+    map_link: Optional[str] = None
+
 class PropertyDetailsCreate(PropertyDetailsBase):
     pass
 
@@ -123,6 +137,20 @@ class PropertyDashboardSchema(BaseModel):
     county_fips: Optional[str] = None
     additional_parcel_numbers: Optional[str] = None
     occupancy_checked_date: Optional[date] = None
+
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+    # V3 Expanded Fields
+    redfin_url: Optional[str] = None
+    redfin_estimate: Optional[float] = None
+    lot_sqft: Optional[float] = None
+    sewer_type: Optional[str] = None
+    water_type: Optional[str] = None
+    property_type_detail: Optional[str] = None
+    import_error_msg: Optional[str] = None
+    is_processed: Optional[bool] = None
+    map_link: Optional[str] = None
 
 class PaginatedPropertyResponse(BaseModel):
     items: List[PropertyDashboardSchema]

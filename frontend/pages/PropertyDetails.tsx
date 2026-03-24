@@ -89,12 +89,14 @@ const PropertyDetails: React.FC = () => {
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div><span className="block text-slate-500">Parcel ID</span> {property.parcel_id}</div>
                                 <div><span className="block text-slate-500">Tax Sale Year</span> {property.tax_sale_year || '-'}</div>
-                                <div><span className="block text-slate-500">Acres</span> {property.lot_acres || property.acres || '-'}</div>
+                                <div><span className="block text-slate-500">Acres / Sqft</span> {property.lot_acres || property.acres || '-'} / {property.lot_sqft ? property.lot_sqft.toLocaleString() : '-'}</div>
                                 <div><span className="block text-slate-500">Occupancy</span> {property.occupancy || (property.vacancy ? 'Vacant' : 'Occupied') || '-'}</div>
+                                <div><span className="block text-slate-500">Property Type</span> {property.type || property.property_type || '-'} {property.property_type_detail ? `(${property.property_type_detail})` : ''}</div>
                                 <div><span className="block text-slate-500">Zoning</span> {property.zoning || '-'}</div>
                                 <div><span className="block text-slate-500">Land Value</span> {property.land_value ? `$${Number(property.land_value).toLocaleString()}` : '-'}</div>
                                 <div><span className="block text-slate-500">Improvement Value</span> {property.improvement_value ? `$${Number(property.improvement_value).toLocaleString()}` : '-'}</div>
                                 <div><span className="block text-slate-500">Amount Due</span> {property.amount_due ? `$${Number(property.amount_due).toLocaleString()}` : '-'}</div>
+                                <div><span className="block text-slate-500">Utilities (Water/Sewer)</span> {property.water_type || property.sewer_type ? `${property.water_type || 'Unknown'} / ${property.sewer_type || 'Unknown'}` : '-'}</div>
                             </div>
 
                             <h3 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-700 pb-2 pt-4">Legal & Description</h3>
@@ -155,6 +157,20 @@ const PropertyDetails: React.FC = () => {
                                 <span className="flex items-center gap-2"><Building size={16} /> Zillow</span>
                                 <ExternalLink size={14} />
                             </a>
+                            {property.redfin_url && (
+                                <a
+                                    href={property.redfin_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-slate-300"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Building size={16} /> Redfin Estimate
+                                        {property.redfin_estimate && <span className="text-xs ml-1 text-slate-500 bg-white px-2 py-0.5 rounded-full border">${Number(property.redfin_estimate).toLocaleString()}</span>}
+                                    </span>
+                                    <ExternalLink size={14} />
+                                </a>
+                            )}
                             {property.map_link && (
                                 <a
                                     href={property.map_link}

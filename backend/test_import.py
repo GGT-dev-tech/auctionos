@@ -9,13 +9,13 @@ logging.basicConfig(level=logging.DEBUG)
 
 async def main():
     try:
-        with open('/app/detail_AR_147341.csv', 'rb') as f:
+        with open('data/output_final.csv', 'rb') as f:
             content = f.read()
             
         print("Running import_service...")
         # Simulate job ID
         job_id = "test_job_123"
-        await import_service.process_properties_csv(content, job_id)
+        import_service.process_properties_csv(content, job_id)
         
         # Check redis for errors
         from app.services.import_service import redis

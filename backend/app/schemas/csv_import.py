@@ -66,8 +66,23 @@ class PropertyCSVRow(BaseModel):
     vacancy: Optional[str] = None
     owner_address: Optional[str] = None
     availability: Optional[str] = Field(None, alias="Availability")
+    
+    # New Extended Fields (V3)
+    redfin_url: Optional[str] = None
+    redfin_estimate: Optional[float] = None
+    lot_sqft: Optional[float] = None
+    zoning: Optional[str] = None
+    subdivision: Optional[str] = None
+    legal_description: Optional[str] = None
+    sewer_type: Optional[str] = None
+    water_type: Optional[str] = None
+    property_type_detail: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    error: Optional[str] = None
+    processed: Optional[str] = None
 
-    @validator('amount_due', 'total_value', 'land_value', 'improvements', 'estimated_arv', 'estimated_rent', 'taxes_due_auction', 'acres', pre=True)
+    @validator('amount_due', 'total_value', 'land_value', 'improvements', 'estimated_arv', 'estimated_rent', 'taxes_due_auction', 'acres', 'redfin_estimate', 'lot_sqft', 'latitude', 'longitude', pre=True)
     def clean_floats(cls, v):
         return parse_float(v)
 
