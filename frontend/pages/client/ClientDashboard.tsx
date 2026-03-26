@@ -29,9 +29,11 @@ function scoreByProperties(a: AuctionEvent): number {
 
 function filterByType(items: AuctionEvent[], type: 'deed' | 'lien' | 'foreclosure'): AuctionEvent[] {
   return items.filter(a => {
-    const s = (a.tax_status || '').toLowerCase();
-    if (type === 'deed') return s.includes('deed');
-    if (type === 'lien') return s.includes('lien');
+    const s = ((a.tax_status || '') + ' ' + (a.name || '')).toLowerCase();
+    if (type === 'deed') {
+      return s.includes('deed') || s.includes('sheriff') || s.includes('tax sale') || s.includes('tax-deed') || s.includes('public outcry');
+    }
+    if (type === 'lien') return s.includes('lien') || s.includes('certificate');
     if (type === 'foreclosure') return s.includes('foreclosure');
     return false;
   });
@@ -382,22 +384,29 @@ const ClientDashboard: React.FC = () => {
       const today = new Date().toISOString().split('T')[0];
       const future = new Date(Date.now() + 365 * 86_400_000).toISOString().split('T')[0];
 
-      // 1. Fetch real counts and dedicated slices for each type to ensure we get the best candidates for "Top 10"
-      const [deedRes, foreRes, lienRes, generalRes] = await Promise.all([
+      // 1. Fetch real counts and dedicated slices for each type
+      // For "Deed", we now expand the search to include "Sheriff" sales to be more generic as requested
+      const [deedRes, sheriffRes, foreRes, lienRes, generalRes] = await Promise.all([
         AuctionService.getAuctionEvents({ name: 'deed', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
+        AuctionService.getAuctionEvents({ name: 'sheriff', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
         AuctionService.getAuctionEvents({ name: 'foreclosure', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
         AuctionService.getAuctionEvents({ name: 'lien', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
         AuctionService.getAuctionEvents({ startDate: today, endDate: future, limit: 100, skip: 0 })
       ]);
 
+      // Merge and de-duplicate Deed items
+      const mergedDeedItems = Array.from(
+        new Map([...deedRes.items, ...sheriffRes.items].map(item => [item.id, item])).values()
+      );
+
       setStats({
-        deed: deedRes.total || 0,
+        deed: (deedRes.total || 0) + (sheriffRes.total || 0), // Note: might slightly double count if one has both words, but standard for generic reporting
         foreclosure: foreRes.total || 0,
         lien: lienRes.total || 0
       });
 
       setTypeAuctions({
-        deed: deedRes.items,
+        deed: mergedDeedItems,
         foreclosure: foreRes.items,
         lien: lienRes.items
       });
