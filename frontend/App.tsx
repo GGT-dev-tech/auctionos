@@ -105,6 +105,8 @@ const App: React.FC = () => {
             {/* Account Support Pages */}
             <Route path="change-password" element={<ChangePasswordPage />} />
             <Route path="contact-support" element={<ClientSupportPage />} />
+            <Route path="about" element={<AboutPage standalone={false} />} />
+            <Route path="support" element={<SupportPage standalone={false} />} />
             <Route path="cancel-subscription" element={<CancelSubscriptionPage />} />
           </Route>
         </Routes>

@@ -358,7 +358,7 @@ const ClientLists: React.FC = () => {
     }
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 border-x border-slate-200 dark:border-slate-800">
+        <div className="flex h-[calc(100vh-4rem)] max-w-full mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 border-x border-slate-200 dark:border-slate-800">
             {/* Left Sidebar */}
             <div className="w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-xl">
                 <div className="p-4 flex justify-between items-center">

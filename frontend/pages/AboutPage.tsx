@@ -37,14 +37,16 @@ const sections = [
   },
 ];
 
-const AboutPage: React.FC = () => {
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-900">
-      <Header />
+interface AboutPageProps {
+  standalone?: boolean;
+}
 
+const AboutPage: React.FC<AboutPageProps> = ({ standalone = true }) => {
+  const content = (
+    <>
       {/* Hero */}
       <section className="bg-gradient-to-br from-primary to-[#0e56b8] text-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <div className="max-w-full mx-auto px-4 sm:px-8 lg:px-12 py-20 text-center">
           <span className="inline-block px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold uppercase tracking-widest mb-4">
             Tax Property Intelligence Platform
           </span>
@@ -74,11 +76,11 @@ const AboutPage: React.FC = () => {
 
       {/* Metrics */}
       <section className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-full mx-auto px-4 sm:px-8 lg:px-12 py-12">
           <h2 className="text-center text-sm font-semibold uppercase tracking-widest text-slate-400 mb-8">
             By the Numbers
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center max-w-5xl mx-auto">
             {metrics.map((m) => (
               <div key={m.label} className="text-center">
                 <div className="text-4xl font-extrabold text-primary mb-1">{m.value}</div>
@@ -90,8 +92,8 @@ const AboutPage: React.FC = () => {
       </section>
 
       {/* Intro */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="prose prose-slate dark:prose-invert max-w-none">
+      <section className="max-w-full mx-auto px-4 sm:px-8 lg:px-12 py-16">
+        <div className="prose prose-slate dark:prose-invert max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
             Welcome to AuctionOS
           </h2>
@@ -111,11 +113,11 @@ const AboutPage: React.FC = () => {
 
       {/* Feature Sections */}
       <section className="bg-white dark:bg-slate-800">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-full mx-auto px-4 sm:px-8 lg:px-12 py-16">
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-12 text-center">
             Built for the Modern Tax Investor
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {sections.map((s) => (
               <div
                 key={s.title}
@@ -135,11 +137,11 @@ const AboutPage: React.FC = () => {
       </section>
 
       {/* CTA */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+      <section className="max-w-full mx-auto px-4 sm:px-8 lg:px-12 py-16 text-center">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
           Ready to find your next deal?
         </h2>
-        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xl mx-auto">
+        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xl mx-auto text-sm leading-relaxed">
           Join thousands of investors using AuctionOS to source, analyze, and close on distressed
           property opportunities faster than ever.
         </p>
@@ -150,7 +152,17 @@ const AboutPage: React.FC = () => {
           Start Free Trial
         </Link>
       </section>
+    </>
+  );
 
+  if (!standalone) {
+    return <div className="bg-slate-50 dark:bg-slate-900">{content}</div>;
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-900">
+      <Header />
+      <main className="flex-1">{content}</main>
       <Footer />
     </div>
   );

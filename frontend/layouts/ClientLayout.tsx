@@ -32,8 +32,8 @@ const ClientLayout: React.FC = () => {
     { icon: 'campaign', label: 'Live Auctions', path: '/client/auctions' },
     { icon: 'location_on', label: 'Property Search', path: '/client/properties' },
     { icon: 'list_alt', label: 'My Lists', path: '/client/lists' },
-    { icon: 'info', label: 'About', path: '/about' },
-    { icon: 'contact_support', label: 'Contact', path: '/support' },
+    { icon: 'info', label: 'About', path: '/client/about' },
+    { icon: 'contact_support', label: 'Contact', path: '/client/support' },
     {
       icon: 'hub',
       label: 'Connect',
@@ -58,7 +58,7 @@ const ClientLayout: React.FC = () => {
     <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-900 font-display flex flex-col">
       {/* Header Navigation */}
       <header className="bg-white dark:bg-[#1a2634] border-b border-[#e7ecf3] dark:border-slate-700 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-full mx-auto px-4 sm:px-8 lg:px-12">
           <div className="flex justify-between h-16">
             <div className="flex">
               {/* Brand */}

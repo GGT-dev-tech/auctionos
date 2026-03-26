@@ -8,7 +8,15 @@ import { useSearchParams } from 'react-router-dom';
 
 const ClientAuctions: React.FC = () => {
     const [filters, setFilters] = useState<AuctionFilterParams>({});
-    const [, setSearchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // Deep-linking: Initialize filters from URL query parameters
+    React.useEffect(() => {
+        const query = searchParams.get('q');
+        if (query) {
+            setFilters(prev => ({ ...prev, q: query }));
+        }
+    }, [searchParams]);
 
     const handleDateTypeSelect = (date: string, type: string) => {
         setSearchParams(prev => {
@@ -27,7 +35,7 @@ const ClientAuctions: React.FC = () => {
     const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '');
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="p-6 max-w-full mx-auto space-y-6 px-4 sm:px-8 lg:px-12">
             <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
                 Live Auctions
             </Typography>
