@@ -46,7 +46,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ standalone = true }) => {
     <>
       {/* Hero */}
       <section className="bg-gradient-to-br from-primary to-[#0e56b8] text-white">
-        <div className="max-w-full mx-auto px-4 sm:px-8 lg:px-12 py-20 text-center">
+        <div className="w-full px-4 sm:px-8 lg:px-12 py-20 text-center">
           <span className="inline-block px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold uppercase tracking-widest mb-4">
             Tax Property Intelligence Platform
           </span>
@@ -80,7 +80,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ standalone = true }) => {
           <h2 className="text-center text-sm font-semibold uppercase tracking-widest text-slate-400 mb-8">
             By the Numbers
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center max-w-full mx-auto">
             {metrics.map((m) => (
               <div key={m.label} className="text-center">
                 <div className="text-4xl font-extrabold text-primary mb-1">{m.value}</div>
@@ -93,7 +93,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ standalone = true }) => {
 
       {/* Intro */}
       <section className="max-w-full mx-auto px-4 sm:px-8 lg:px-12 py-16">
-        <div className="prose prose-slate dark:prose-invert max-w-5xl mx-auto">
+        <div className="prose prose-slate dark:prose-invert max-w-full mx-auto">
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
             Welcome to AuctionOS
           </h2>
@@ -117,7 +117,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ standalone = true }) => {
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-12 text-center">
             Built for the Modern Tax Investor
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-full mx-auto">
             {sections.map((s) => (
               <div
                 key={s.title}
@@ -137,7 +137,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ standalone = true }) => {
       </section>
 
       {/* CTA */}
-      <section className="max-w-full mx-auto px-4 sm:px-8 lg:px-12 py-16 text-center">
+      <section className="w-full px-4 sm:px-8 lg:px-12 py-16 text-center">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
           Ready to find your next deal?
         </h2>

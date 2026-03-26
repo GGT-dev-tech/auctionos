@@ -12,11 +12,16 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
 
 interface AuctionCalendarProps {
-    filters?: any;
+    filters?: {
+        startDate?: string;
+        endDate?: string;
+        name?: string;
+        [key: string]: any;
+    };
     onDateTypeSelect?: (date: string, type: string) => void;
 }
 
-const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateTypeSelect }) => {
+const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = { startDate: undefined }, onDateTypeSelect }) => {
     const [events, setEvents] = useState<any[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
     const [groupedDialogOpen, setGroupedDialogOpen] = useState(false);
@@ -97,8 +102,10 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateT
     return (
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm h-[600px] relative">
             <FullCalendar
+                key={filters.startDate || 'default'} // Force re-render/re-focus when deep-linking to a specific date
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
+                initialDate={filters.startDate}
                 timeZone="UTC"
                 headerToolbar={{
                     left: 'prev,next today',

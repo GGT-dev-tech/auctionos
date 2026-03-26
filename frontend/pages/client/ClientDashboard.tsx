@@ -123,7 +123,10 @@ const AuctionCard: React.FC<{ auction: AuctionEvent }> = ({ auction }) => {
 
   return (
     <div
-      onClick={() => navigate(`/client/auctions?q=${encodeURIComponent(auction.name || '')}`)}
+      onClick={() => {
+        const d = auction.auction_date ? auction.auction_date.split('T')[0] : '';
+        navigate(`/client/auctions?name=${encodeURIComponent(auction.name || '')}&startDate=${d}&endDate=${d}`);
+      }}
       className="flex-shrink-0 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
     >
       <div className="flex items-start justify-between mb-3">
@@ -324,7 +327,10 @@ const AuctionSearch: React.FC<{ allAuctions: AuctionEvent[] }> = ({ allAuctions 
                   return (
                     <div
                       key={a.id}
-                      onClick={() => navigate(`/client/auctions?q=${encodeURIComponent(a.name || '')}`)}
+                      onClick={() => {
+                        const d = a.auction_date ? a.auction_date.split('T')[0] : '';
+                        navigate(`/client/auctions?name=${encodeURIComponent(a.name || '')}&startDate=${d}&endDate=${d}`);
+                      }}
                       className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors"
                     >
                       <div className="flex-1 min-w-0">
@@ -398,7 +404,7 @@ const ClientDashboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-4 sm:p-6 max-w-full mx-auto space-y-8 px-4 sm:px-8 lg:px-12">
+    <div className="p-4 sm:p-6 w-full space-y-8 px-4 sm:px-8 lg:px-12">
 
       {/* Welcome Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

@@ -9,7 +9,7 @@ const ClientProperties: React.FC = () => {
     const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '');
 
     return (
-        <div className="p-6 max-w-full mx-auto space-y-6 px-4 sm:px-8 lg:px-12">
+        <div className="p-6 w-full space-y-6 px-4 sm:px-8 lg:px-12">
             <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
                 Property Search
             </Typography>
