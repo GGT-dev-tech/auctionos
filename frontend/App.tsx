@@ -11,6 +11,11 @@ import { AuctionList } from './pages/AuctionList';
 import { AuthService } from './services/auth.service';
 import PropertyManualEntry from './pages/PropertyManualEntry';
 import PropertyDetails from './pages/PropertyDetails';
+import SupportPage from './pages/SupportPage';
+import AboutPage from './pages/AboutPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import DisclaimerPage from './pages/DisclaimerPage';
 
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
@@ -18,6 +23,9 @@ import AdminAuctions from './pages/admin/AdminAuctions';
 import PropertyDetailPage from './pages/admin/PropertyDetailPage';
 import AdminLists from './pages/admin/AdminLists';
 import AdminResearch from './pages/admin/AdminResearch';
+import AdminImportProperties from './pages/admin/AdminImportProperties';
+import AdminImportAuctions from './pages/admin/AdminImportAuctions';
+import AdminBroadcasts from './pages/admin/AdminBroadcasts';
 
 // Client Portal Pages
 import ClientLayout from './layouts/ClientLayout';
@@ -25,6 +33,10 @@ import ClientDashboard from './pages/client/ClientDashboard';
 import ClientAuctions from './pages/client/ClientAuctions';
 import ClientProperties from './pages/client/ClientProperties';
 import ClientLists from './pages/client/ClientLists';
+import ClientSupportPage from './pages/client/SupportPage';
+import { TrainingPage, CommunityPage, GroupsPage } from './pages/client/EcosystemPages';
+import ChangePasswordPage from './pages/client/ChangePasswordPage';
+import CancelSubscriptionPage from './pages/client/CancelSubscriptionPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: string[] }> = ({ children, allowedRoles }) => {
   const user = AuthService.getCurrentUser();
@@ -54,6 +66,12 @@ const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/support" element={<SupportPage />} />
+          <Route path="/contact" element={<SupportPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/disclaimer" element={<DisclaimerPage />} />
 
           {/* Protected Routes (Admin/Agent) */}
           <Route element={<ProtectedRoute allowedRoles={['admin', 'superuser', 'agent']}><Layout /></ProtectedRoute>}>
@@ -63,6 +81,9 @@ const App: React.FC = () => {
             <Route path="/admin/properties/:id" element={<PropertyDetailPage />} />
             <Route path="/admin/lists" element={<AdminLists />} />
             <Route path="/admin/research" element={<AdminResearch />} />
+            <Route path="/admin/import/properties" element={<AdminImportProperties />} />
+            <Route path="/admin/import/auctions" element={<AdminImportAuctions />} />
+            <Route path="/admin/broadcasts" element={<AdminBroadcasts />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/properties/new" element={<PropertyManualEntry />} />
             <Route path="/properties/:id" element={<PropertyDetails />} />
@@ -77,6 +98,14 @@ const App: React.FC = () => {
             <Route path="lists" element={<ClientLists />} />
             {/* Target same detail page internally handling client view restrictions */}
             <Route path="properties/:id" element={<PropertyDetailPage readOnly={true} />} />
+            {/* Ecosystem Pages */}
+            <Route path="training" element={<TrainingPage />} />
+            <Route path="community" element={<CommunityPage />} />
+            <Route path="groups" element={<GroupsPage />} />
+            {/* Account Support Pages */}
+            <Route path="change-password" element={<ChangePasswordPage />} />
+            <Route path="contact-support" element={<ClientSupportPage />} />
+            <Route path="cancel-subscription" element={<CancelSubscriptionPage />} />
           </Route>
         </Routes>
       </HashRouter>

@@ -80,6 +80,39 @@ class ImportService:
                             s = str(raw_val).lower().strip()
                             return "not available" if s == "not available" else "available"
 
+                        # Parse dense text blocks from zoning and legal_description
+                        def extract_dense_data(z_str, l_str):
+                            import re
+                            res = {
+                                "zoning": z_str, "subdivision": l_str,
+                                "lot_sqft": None, "lot_acres": None,
+                                "legal_desc": l_str, "parcel_shape_data": []
+                            }
+                            if z_str and isinstance(z_str, str):
+                                res["parcel_shape_data"].append(f"Zoning Data: {z_str}")
+                                m_zone = re.search(r'Zoning Code:\s*([^\s]+)', z_str)
+                                if m_zone: res["zoning"] = m_zone.group(1).strip()
+                                
+                                m_sq = re.search(r'Land Sq\. Ft:\s*([\d,]+)', z_str)
+                                if m_sq: res["lot_sqft"] = m_sq.group(1).replace(',', '')
+                                
+                                m_ac = re.search(r'Acres:\s*([\d.]+)', z_str)
+                                if m_ac: res["lot_acres"] = m_ac.group(1).strip()
+                                
+                            if l_str and isinstance(l_str, str):
+                                res["parcel_shape_data"].append(f"Legal Rules: {l_str}")
+                                m_sub = re.search(r'Subdivision Name:\s*(.*?)(?=\s+(?:Living|Adjusted|Ground|Building|#\s*of|Stories|Legal\sDescription))', l_str)
+                                if m_sub: res["subdivision"] = m_sub.group(1).strip()
+                                
+                                m_leg = re.search(r'Legal Description:\s*(.*)', l_str)
+                                if m_leg: res["legal_desc"] = m_leg.group(1).strip()
+                                
+                            # Convert array of shapes to a single text block
+                            res["parcel_shape_data"] = "\n\n".join(res["parcel_shape_data"]) if res["parcel_shape_data"] else None
+                            return res
+
+                        dense_parsed = extract_dense_data(validated_data.zoning, validated_data.legal_description)
+
                         # Prepare PropertyDetails map
                         new_avail_status = parse_availability(validated_data.availability)
                         
@@ -97,7 +130,7 @@ class ImportService:
                             "property_type": validated_data.type,
                             "availability_status": new_avail_status,
                             "account_number": validated_data.account,
-                            "lot_acres": validated_data.acres,
+                            "lot_acres": validated_data.acres or dense_parsed["lot_acres"],
                             "estimated_value": validated_data.estimated_arv,
                             "rental_value": validated_data.estimated_rent,
                             "improvement_value": validated_data.improvements,
@@ -109,10 +142,11 @@ class ImportService:
                             "longitude": validated_data.longitude,
                             "redfin_url": validated_data.redfin_url,
                             "redfin_estimate": validated_data.redfin_estimate,
-                            "lot_sqft": validated_data.lot_sqft,
-                            "zoning": validated_data.zoning,
-                            "subdivision": validated_data.subdivision,
-                            "legal_description": validated_data.legal_description,
+                            "lot_sqft": validated_data.lot_sqft or dense_parsed["lot_sqft"],
+                            "zoning": dense_parsed["zoning"],
+                            "subdivision": dense_parsed["subdivision"],
+                            "legal_description": dense_parsed["legal_desc"],
+                            "parcel_shape_data": dense_parsed["parcel_shape_data"],
                             "sewer_type": validated_data.sewer_type,
                             "water_type": validated_data.water_type,
                             "property_type_detail": validated_data.property_type_detail,

@@ -93,14 +93,25 @@ export const Landing: React.FC = () => {
             </section>
 
             {/* Footer */}
-            <footer className="bg-slate-900 border-t border-slate-800 py-12 text-center">
-                <div className="flex justify-center items-center gap-2 mb-4">
-                    <span className="material-symbols-outlined text-primary">gavel</span>
-                    <span className="font-bold text-white tracking-tight">AuctionOS</span>
+            <footer className="bg-slate-900 border-t border-slate-800 py-12 text-center text-slate-400">
+                <div className="max-w-4xl mx-auto flex flex-col items-center">
+                    <div className="flex justify-center items-center gap-2 mb-6">
+                        <span className="material-symbols-outlined text-primary text-2xl">gavel</span>
+                        <span className="font-bold text-white tracking-tight text-xl">AuctionOS</span>
+                    </div>
+                    
+                    <div className="flex flex-wrap justify-center gap-6 mb-8 text-sm font-medium">
+                        <Link to="/about" className="hover:text-white transition-colors">About Us</Link>
+                        <Link to="/support" className="hover:text-white transition-colors">Support</Link>
+                        <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+                        <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                        <Link to="/disclaimer" className="hover:text-white transition-colors">Disclaimer</Link>
+                    </div>
+
+                    <p className="text-slate-500 text-sm">
+                        &copy; {new Date().getFullYear()} AuctionOS Inc. All rights reserved.
+                    </p>
                 </div>
-                <p className="text-slate-500 text-sm">
-                    &copy; {new Date().getFullYear()} AuctionOS Inc. All rights reserved.
-                </p>
             </footer>
         </div>
     );
