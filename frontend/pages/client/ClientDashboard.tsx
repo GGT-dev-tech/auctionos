@@ -23,16 +23,8 @@ function getTypeLabel(taxStatus?: string): { label: string; color: string } {
   return { label: taxStatus || 'Auction', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' };
 }
 
-function scoreAuction(a: AuctionEvent): number {
-  // Scoring model placeholder:
-  // Score = recency (upcoming date closer = higher) + parcels_count
-  let score = 0;
-  if (a.auction_date) {
-    const daysUntil = (new Date(a.auction_date).getTime() - Date.now()) / 86_400_000;
-    if (daysUntil >= 0) score += Math.max(0, 365 - daysUntil);
-  }
-  score += (a.parcels_count || a.properties_count || 0) * 0.5;
-  return score;
+function scoreByProperties(a: AuctionEvent): number {
+  return a.parcels_count || a.properties_count || 0;
 }
 
 function filterByType(items: AuctionEvent[], type: 'deed' | 'lien' | 'foreclosure'): AuctionEvent[] {
@@ -45,9 +37,9 @@ function filterByType(items: AuctionEvent[], type: 'deed' | 'lien' | 'foreclosur
   });
 }
 
-function sortAndSlice(items: AuctionEvent[], n = 8): AuctionEvent[] {
+function sortByTopProperties(items: AuctionEvent[], n = 10): AuctionEvent[] {
   return [...items]
-    .sort((a, b) => scoreAuction(b) - scoreAuction(a))
+    .sort((a, b) => scoreByProperties(b) - scoreByProperties(a))
     .slice(0, n);
 }
 
@@ -197,7 +189,7 @@ interface TopAuctionsProps {
 
 const TopAuctions: React.FC<TopAuctionsProps> = ({ type, allAuctions, loading }) => {
   const meta = sectionMeta[type];
-  const items = sortAndSlice(filterByType(allAuctions, type));
+  const items = sortByTopProperties(filterByType(allAuctions, type));
 
   return (
     <section>
@@ -379,29 +371,51 @@ const ClientDashboard: React.FC = () => {
   const userName = user?.email ? user.email.split('@')[0] : 'there';
 
   const [allAuctions, setAllAuctions] = useState<AuctionEvent[]>([]);
+  const [typeAuctions, setTypeAuctions] = useState<{deed: AuctionEvent[], foreclosure: AuctionEvent[], lien: AuctionEvent[]}>({
+    deed: [], foreclosure: [], lien: []
+  });
+  const [stats, setStats] = useState({ deed: 0, foreclosure: 0, lien: 0 });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUpcoming = async () => {
-      try {
-        // Fetch a broad upcoming slice — enough to populate all three sections
-        const today = new Date().toISOString().split('T')[0];
-        const future = new Date(Date.now() + 365 * 86_400_000).toISOString().split('T')[0];
-        const { items } = await AuctionService.getAuctionEvents({
-          startDate: today,
-          endDate: future,
-          limit: 100,
-          skip: 0,
-        });
-        setAllAuctions(items);
-      } catch (err) {
-        console.error('ClientDashboard: failed to fetch auctions', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUpcoming();
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const future = new Date(Date.now() + 365 * 86_400_000).toISOString().split('T')[0];
+
+      // 1. Fetch real counts and dedicated slices for each type to ensure we get the best candidates for "Top 10"
+      const [deedRes, foreRes, lienRes, generalRes] = await Promise.all([
+        AuctionService.getAuctionEvents({ name: 'deed', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
+        AuctionService.getAuctionEvents({ name: 'foreclosure', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
+        AuctionService.getAuctionEvents({ name: 'lien', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
+        AuctionService.getAuctionEvents({ startDate: today, endDate: future, limit: 100, skip: 0 })
+      ]);
+
+      setStats({
+        deed: deedRes.total || 0,
+        foreclosure: foreRes.total || 0,
+        lien: lienRes.total || 0
+      });
+
+      setTypeAuctions({
+        deed: deedRes.items,
+        foreclosure: foreRes.items,
+        lien: lienRes.items
+      });
+
+      setAllAuctions(generalRes.items);
+    } catch (err) {
+      console.error('ClientDashboard: failed to fetch dynamic data', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+    // Auto-refresh every 5 minutes to keep numbers real-time as requested
+    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchDashboardData]);
 
   return (
     <div className="p-4 sm:p-6 w-full space-y-8 px-4 sm:px-8 lg:px-12">
@@ -435,9 +449,9 @@ const ClientDashboard: React.FC = () => {
       {!loading && allAuctions.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: 'gavel', label: 'Deed Auctions', count: filterByType(allAuctions, 'deed').length, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
-            { icon: 'real_estate_agent', label: 'Foreclosures', count: filterByType(allAuctions, 'foreclosure').length, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
-            { icon: 'receipt_long', label: 'Tax Liens', count: filterByType(allAuctions, 'lien').length, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+            { icon: 'gavel', label: 'Deed Auctions', count: stats.deed, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+            { icon: 'real_estate_agent', label: 'Foreclosures', count: stats.foreclosure, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
+            { icon: 'receipt_long', label: 'Tax Liens', count: stats.lien, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
           ].map((s) => (
             <div key={s.label} className={`flex flex-col items-center p-4 rounded-xl border border-slate-200 dark:border-slate-700 ${s.bg}`}>
               <span className={`material-symbols-outlined ${s.color} text-[24px] mb-1`}>{s.icon}</span>
@@ -449,9 +463,9 @@ const ClientDashboard: React.FC = () => {
       )}
 
       {/* Top Auctions Sections */}
-      <TopAuctions type="deed" allAuctions={allAuctions} loading={loading} />
-      <TopAuctions type="foreclosure" allAuctions={allAuctions} loading={loading} />
-      <TopAuctions type="lien" allAuctions={allAuctions} loading={loading} />
+      <TopAuctions type="deed" allAuctions={typeAuctions.deed} loading={loading} />
+      <TopAuctions type="foreclosure" allAuctions={typeAuctions.foreclosure} loading={loading} />
+      <TopAuctions type="lien" allAuctions={typeAuctions.lien} loading={loading} />
     </div>
   );
 };

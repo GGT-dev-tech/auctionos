@@ -14,6 +14,8 @@ export const AuctionService = {
         if (filters.maxParcels) queryParams.append('max_parcels', String(filters.maxParcels));
         if (filters.skip !== undefined) queryParams.append('skip', String(filters.skip));
         if (filters.limit !== undefined) queryParams.append('limit', String(filters.limit));
+        if (filters.sortBy) queryParams.append('sort_by', filters.sortBy);
+        if (filters.order) queryParams.append('order', filters.order);
 
         const response = await fetch(`${API_URL}/auctions/?${queryParams.toString()}`, {
             headers: getHeaders()
