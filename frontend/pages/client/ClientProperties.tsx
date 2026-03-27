@@ -1,10 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import PropertyList from '../../components/admin/PropertyList';
 import PropertyFilters, { PropertyFilterParams } from '../../components/admin/PropertyFilters';
 import { Typography } from '@mui/material';
 
 const ClientProperties: React.FC = () => {
+    const [searchParams] = useSearchParams();
     const [filters, setFilters] = useState<PropertyFilterParams>({});
+
+    // Sync URL params to filter state on mount
+    useEffect(() => {
+        const stateParam = searchParams.get('state');
+        const topParam = searchParams.get('top');
+        const initialFilters: PropertyFilterParams = {};
+        
+        if (stateParam) initialFilters.state = stateParam;
+        if (topParam === 'true') {
+            initialFilters.min_score = 70; // Map 'top' to a high score threshold
+        }
+        
+        if (Object.keys(initialFilters).length > 0) {
+            setFilters(prev => ({ ...prev, ...initialFilters }));
+        }
+    }, [searchParams]);
 
     const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '');
 
@@ -13,7 +31,11 @@ const ClientProperties: React.FC = () => {
             <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
                 Property Search
             </Typography>
-            <PropertyFilters onFilterChange={setFilters} readOnly={true} />
+            <PropertyFilters 
+                onFilterChange={setFilters} 
+                readOnly={true} 
+                initialFilters={filters}
+            />
             
             {hasActiveFilters ? (
                 <div className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-500">

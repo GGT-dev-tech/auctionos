@@ -14,7 +14,10 @@ import { PropertyResearchLinks } from '../../components/property/PropertyResearc
 import { PropertyUserActions } from '../../components/property/PropertyUserActions';
 import { PropertyFinancialsModal } from '../../components/property/PropertyFinancialsModal';
 import { PropertyMetadataModal } from '../../components/property/PropertyMetadataModal';
-import PropertyMap from '../../components/PropertyMap';
+import { PropertyMap } from '../../components/property/PropertyMap';
+import { PropertyNextSteps } from '../../components/property/PropertyNextSteps';
+import { PropertyContactInfo } from '../../components/property/PropertyContactInfo';
+import { PropertyInventoryHistory } from '../../components/property/PropertyInventoryHistory';
 
 interface PropertyDetailPageProps {
     readOnly?: boolean;
@@ -194,10 +197,10 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     const ownerNameFallback = property.owner_address ? property.owner_address.split('\n')[0] : 'UNKNOWN OWNER';
 
     return (
-        <div className="w-full px-4 sm:px-8 lg:px-12 py-6 space-y-6 mb-20">
+        <div className="w-full px-4 sm:px-8 lg:px-12 py-6 space-y-6 mb-20 animate-in fade-in duration-700">
             {/* Header */}
             <div className="flex items-center gap-4 mb-2">
-                <Button variant="text" startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} className="text-slate-500 hover:text-slate-700">
+                <Button variant="text" startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} className="text-slate-500 hover:text-slate-700 normal-case">
                     Back to Inventory
                 </Button>
             </div>
@@ -213,26 +216,45 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                 </div>
             )}
 
-            <div className="flex items-baseline justify-between">
-                <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">
-                    {ownerNameFallback !== 'UNKNOWN OWNER' ? ownerNameFallback : (property.parcel_address || property.parcel_id)}
-                </h1>
-                {property.is_qoz && (
-                    <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase">Opportunity Zone</span>
-                )}
+            <div className="flex items-baseline justify-between border-b border-slate-100 dark:border-slate-800 pb-6">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">
+                        {ownerNameFallback !== 'UNKNOWN OWNER' ? ownerNameFallback : (property.parcel_address || property.parcel_id)}
+                    </h1>
+                    <div className="flex items-center gap-3 mt-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{property.county} County, {property.state}</span>
+                        <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                        <span className="text-xs font-mono font-bold text-blue-500">ID: {property.parcel_id}</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    {property.is_qoz && (
+                        <span className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-amber-200 dark:border-amber-800">Opportunity Zone</span>
+                    )}
+                    {!readOnly && (
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={() => navigate(`/properties/${property.parcel_id}/edit`)}
+                            className="normal-case font-bold text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                        >
+                            Edit
+                        </Button>
+                    )}
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
                 
-                {/* Main Content Column (Left) */}
-                <div className="xl:col-span-2 space-y-6">
+                {/* Main Content Column (Left/Center) */}
+                <div className="xl:col-span-2 space-y-8">
                     <PropertyBasicInfo 
                         property={property} 
                         onOpenFinancials={() => setIsFinOpen(true)}
                         onOpenMetadata={() => setIsMetaOpen(true)}
                     />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <PropertyPurchaseOptions 
                             property={property} 
                             readOnly={readOnly}
@@ -242,31 +264,32 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                         <PropertyComps property={property} />
                     </div>
 
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-1 shadow-sm border border-slate-200 dark:border-slate-700 h-[400px] overflow-hidden">
-                        <PropertyMap parcelId={property.parcel_id || null} />
-                    </div>
+                    <PropertyMap property={property} />
 
                     {/* Preserved Raw Data Block */}
-                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 font-bold text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700">
-                            Source: Parcel Shape Data & Features
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 px-6 font-bold text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-slate-400 text-lg">database</span>
+                            Full Parcel Features
                         </div>
-                        <div className="p-6">
-                            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm text-slate-700 dark:text-slate-300">
-                                <div><span className="font-semibold text-slate-500 uppercase text-xs tracking-wide block mb-1">Zoning</span> {property.zoning || 'N/A'}</div>
-                                <div><span className="font-semibold text-slate-500 uppercase text-xs tracking-wide block mb-1">Subdivision</span> {property.subdivision || 'N/A'}</div>
-                                <div><span className="font-semibold text-slate-500 uppercase text-xs tracking-wide block mb-1">Sewer Type</span> {property.sewer_type || 'N/A'}</div>
-                                <div><span className="font-semibold text-slate-500 uppercase text-xs tracking-wide block mb-1">Water Type</span> {property.water_type || 'N/A'}</div>
-                                <div className="col-span-2"><span className="font-semibold text-slate-500 uppercase text-xs tracking-wide block mb-1">Property Type Detail</span> {property.property_type_detail || property.description || 'N/A'}</div>
+                        <div className="p-6 px-7">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-8 text-sm text-slate-700 dark:text-slate-300">
+                                <div><span className="font-bold text-slate-400 uppercase text-[10px] tracking-widest block mb-1">Zoning</span> {property.zoning || 'Residential (Default)'}</div>
+                                <div><span className="font-bold text-slate-400 uppercase text-[10px] tracking-widest block mb-1">Subdivision</span> {property.subdivision || 'Unrecorded'}</div>
+                                <div><span className="font-bold text-slate-400 uppercase text-[10px] tracking-widest block mb-1">Sewer Type</span> {property.sewer_type || 'Public'}</div>
+                                <div><span className="font-bold text-slate-400 uppercase text-[10px] tracking-widest block mb-1">Water Type</span> {property.water_type || 'Municipal'}</div>
+                                <div className="col-span-2"><span className="font-bold text-slate-400 uppercase text-[10px] tracking-widest block mb-1">Property Type Detail</span> {property.property_type_detail || property.description || 'Single Family Residence'}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Sidebar Column (Right) */}
-                <div className="space-y-6 mt-0">
+                <div className="space-y-8 mt-0">
                     <PropertyResearchLinks property={property} />
                     
+                    <PropertyNextSteps property={property} />
+
                     <PropertyUserActions 
                         property={property} 
                         isFavorite={isFavorite}
@@ -285,17 +308,15 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                         }}
                     />
 
-                    {/* Admin Actions - Preserved */}
+                    <PropertyContactInfo property={property} />
+
+                    <PropertyInventoryHistory property={property} />
+
+                    {/* Admin Actions - Preserved/Minimized */}
                     {!readOnly && (
-                        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Admin Actions</h3>
+                        <div className="bg-slate-50 dark:bg-slate-900/30 rounded-2xl p-6 border border-slate-100 dark:border-slate-800">
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-1">System Administration</h3>
                             <div className="space-y-3">
-                                <button
-                                    onClick={() => navigate(`/properties/${property.parcel_id}/edit`)}
-                                    className="w-full py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors shadow-sm"
-                                >
-                                    Edit Property Data
-                                </button>
                                 <button
                                     onClick={async () => {
                                         setActionLoading(true);
@@ -310,8 +331,9 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                                         }
                                     }}
                                     disabled={actionLoading}
-                                    className="w-full py-2.5 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition-colors"
+                                    className="w-full py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 font-bold text-xs transition-all flex items-center justify-center gap-2"
                                 >
+                                    <span className="material-symbols-outlined text-[16px]">verified</span>
                                     Force GSI Validation
                                 </button>
                             </div>

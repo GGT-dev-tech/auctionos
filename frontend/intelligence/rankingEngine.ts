@@ -38,15 +38,22 @@ export const rankAuctions = (auctions: any[]): RankedAuction[] => {
  * Recommends specific properties from a list based on Deal Score.
  */
 export const recommendProperties = (properties: Property[], limit: number = 5): Property[] => {
-    // Filter out anything that is explicitly marked as purchased, sold, or unavailable
-    const availableProps = properties.filter(p => {
+    // 1. Try strictly available properties first
+    let candidates = properties.filter(p => {
         const status = (p.availability_status || p.details?.availability_status || '').toLowerCase();
-        if (!status) return true; // Assume available if undefined
+        // If status is blank, we assume available for recommendation purposes unless strictly 'sold'
+        if (!status) return true;
         return !status.includes('purchased') && !status.includes('sold') && !status.includes('unavailable');
     });
 
+    // 2. Fallback: If no available properties, use the full list (show the best deals the system has)
+    // This prevents a broken/empty dashboard experience.
+    if (candidates.length === 0 && properties.length > 0) {
+        candidates = properties;
+    }
+
     // Map with scores
-    const scored = availableProps.map(p => ({
+    const scored = candidates.map(p => ({
         property: p,
         scoreResult: calculateDealScore(p)
     }));

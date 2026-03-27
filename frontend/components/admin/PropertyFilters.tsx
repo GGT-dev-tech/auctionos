@@ -9,6 +9,7 @@ export interface PropertyFilterParams {
     county?: string;
     state?: string;
     keyword?: string;
+    min_score?: number;
 
     // Optional Filters
     auction_name?: string;
@@ -38,13 +39,21 @@ export interface PropertyFilterParams {
 interface PropertyFiltersProps {
     onFilterChange: (filters: PropertyFilterParams) => void;
     readOnly?: boolean;
+    initialFilters?: PropertyFilterParams;
 }
 
-const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readOnly = false }) => {
+const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readOnly = false, initialFilters }) => {
     const navigate = useNavigate();
-    const [filters, setFilters] = useState<PropertyFilterParams>({});
+    const [filters, setFilters] = useState<PropertyFilterParams>(initialFilters || {});
     const [showFilters, setShowFilters] = useState(false);
     const [debouncedFilters] = useDebounce(filters, 500);
+
+    // Sync external initialFilters changes
+    useEffect(() => {
+        if (initialFilters && Object.keys(initialFilters).length > 0) {
+            setFilters(prev => ({ ...prev, ...initialFilters }));
+        }
+    }, [initialFilters]);
 
     // Autocomplete state
     const [open, setOpen] = useState(false);

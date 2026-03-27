@@ -211,7 +211,7 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = (
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Intelligence-filtered opportunities</p>
         </div>
         <button 
-          onClick={() => navigate('/client/properties')}
+          onClick={() => navigate('/client/properties?top=true')}
           className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline uppercase tracking-widest"
         >
           Explore All
@@ -269,7 +269,7 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = (
 
       {properties.length > 0 && (
         <button 
-          onClick={() => navigate('/client/properties')}
+          onClick={() => navigate('/client/properties?top=true')}
           className="mt-6 w-full py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors uppercase tracking-widest"
         >
           Discover More Opportunities
@@ -465,6 +465,7 @@ const SystemAnnouncements: React.FC = () => (
 // ─── Main Dashboard ──────────────────────────────────────────────────────────
 
 const ClientDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const user = AuthService.getCurrentUser();
   const userName = user?.email ? user.email.split('@')[0] : 'there';
 
@@ -579,7 +580,10 @@ const ClientDashboard: React.FC = () => {
       {/* Intelligence Layer Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <SuggestedDeals properties={suggestedDeals} loading={loading} />
-        <InvestmentHeatmap />
+        <InvestmentHeatmap 
+          properties={suggestedDeals} 
+          onStateClick={(code) => navigate(`/client/properties${code ? `?state=${code}` : ''}`)} 
+        />
       </div>
 
       {/* Top Auctions Sections */}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Property } from '../../types';
+import { PropertyDetails as Property } from '../../types';
 import { Modal } from '../Modal';
 
 interface Props {
@@ -19,107 +19,137 @@ export const PropertyPurchaseOptions: React.FC<Props> = ({
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString();
+        return new Date(dateString).toLocaleDateString(undefined, {
+            month: 'short', day: 'numeric', year: 'numeric'
+        });
     };
 
     const isAvailable = property.availability_status === 'available' || property.details?.availability_status === 'available';
-    const isPurchased = property.availability_status === 'purchased' || property.details?.availability_status === 'purchased';
+    const isPurchased = property.availability_status === 'purchased' || property.details?.availability_status === 'purchased' || property.availability_status === 'sold';
+
+    // Link Priority: auction_list_link -> auction_info_link -> fallback search
+    const primaryLink = property.auction_list_link || property.auction_info_link || `https://www.google.com/search?q=${encodeURIComponent(`${property.county} County ${property.state} tax sale portal`)}`;
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col h-full">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[20px] text-emerald-500">shopping_cart_checkout</span>
-                Purchase Options
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm flex flex-col h-full overflow-hidden">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-6">
+                <span className="material-symbols-outlined text-emerald-500 text-lg">shopping_bag</span>
+                Purchase Ecosystem
             </h3>
 
             {/* Structured Auction Data */}
-            <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-600 flex-1">
-                <div className="grid grid-cols-2 gap-4">
+            <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 flex-1">
+                <div className="grid grid-cols-2 gap-y-5 gap-x-4">
                     <div>
-                        <p className="text-xs text-slate-500 uppercase font-semibold">Auction Status</p>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">
-                            {property.availability_status || property.details?.availability_status || 'Active'}
+                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Status</p>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            isAvailable ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'
+                        }`}>
+                            {property.availability_status || 'Market Active'}
+                        </span>
+                    </div>
+                    <div>
+                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Taxes Due</p>
+                        <p className="text-sm font-black text-rose-600 dark:text-rose-400">
+                            {property.amount_due ? `$${property.amount_due.toLocaleString()}` : 'Contact Authority'}
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-slate-500 uppercase font-semibold">Taxes Due</p>
-                        <p className="text-sm font-bold text-red-600 dark:text-red-400">
-                            {property.amount_due ? `$${property.amount_due.toLocaleString()}` : '-'}
+                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Last Update</p>
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                            {formatDate(property.updated_at)}
                         </p>
                     </div>
                     <div>
-                        <p className="text-xs text-slate-500 uppercase font-semibold">Date</p>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">
-                            {property.auction_history && property.auction_history[0] ? formatDate(property.auction_history[0].auction_date) : '-'}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-slate-500 uppercase font-semibold">Listed Parcel</p>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                            {property.auction_history && property.auction_history[0] ? property.auction_history[0].listed_as : property.parcel_id || '-'}
+                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">Parcel Ref</p>
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">
+                            {property.parcel_id}
                         </p>
                     </div>
                 </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-3 mt-auto">
-                <button 
-                    onClick={() => setIsApplyOpen(true)}
-                    className="w-full py-2.5 px-4 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
-                >
-                    <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
-                    Apply Online Instructions
-                </button>
-                
-                {/* Purchase Online Actions Box (Hidden for Clients) */}
-                {!readOnly && isAvailable && (
-                    <div
-                        className={`bg-green-600 text-white rounded-lg p-6 text-center shadow-lg transition ${actionLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700 cursor-pointer'}`}
-                        onClick={actionLoading ? undefined : onSimulatePurchase}
-                    >
-                        <h3 className="font-bold text-xl mb-1">{actionLoading ? 'Processing...' : 'Purchase Online'}</h3>
-                        <p className="text-sm opacity-90">{property.county} County-Held Certificates</p>
-                        <p className="text-xs font-semibold mt-2 underline">Click to simulate OTC purchase transaction</p>
-                    </div>
-                )}
-
-                {!readOnly && isPurchased && (
-                    <div className="bg-slate-200 text-slate-500 rounded-lg p-6 text-center shadow-inner cursor-not-allowed">
-                        <h3 className="font-bold text-xl mb-1">Already Purchased</h3>
-                        <p className="text-sm">This property is no longer available.</p>
+            <div className="space-y-3">
+                {isAvailable ? (
+                    <>
+                        <button 
+                            onClick={() => setIsApplyOpen(true)}
+                            className="w-full py-3 px-4 bg-slate-900 dark:bg-slate-700 text-white rounded-xl hover:bg-slate-800 dark:hover:bg-slate-600 font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-sm uppercase tracking-widest"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
+                            Online Instructions
+                        </button>
+                        
+                        <div
+                            onClick={actionLoading ? undefined : onSimulatePurchase}
+                            className={`group relative overflow-hidden bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl p-5 text-center shadow-lg transition-all duration-300 ${
+                                actionLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-700 dark:hover:bg-emerald-400 cursor-pointer hover:shadow-emerald-500/20 active:scale-[0.98]'
+                            }`}
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-white/20"></div>
+                            <h3 className="font-black text-lg uppercase tracking-tight mb-1">
+                                {actionLoading ? 'Verifying...' : 'Purchase Online'}
+                            </h3>
+                            <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest">
+                                {property.county} County Direct
+                            </p>
+                            <div className="mt-3 flex items-center justify-center gap-2 text-[10px] font-black bg-white/10 py-1 px-3 rounded-full group-hover:bg-white/20 transition-colors">
+                                <span className="material-symbols-outlined text-[14px]">bolt</span>
+                                SIMULATE TRANSACTION
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <div className="bg-slate-100 dark:bg-slate-900/50 text-slate-400 rounded-xl p-6 text-center border border-dashed border-slate-200 dark:border-slate-800">
+                        <span className="material-symbols-outlined text-3xl mb-2">lock_clock</span>
+                        <h3 className="font-bold text-sm uppercase tracking-widest">Not Available</h3>
+                        <p className="text-[10px] mt-1 italic">This property has been moved to archival status.</p>
                     </div>
                 )}
             </div>
 
             {/* Apply Online Modal */}
-            <Modal isOpen={isApplyOpen} onClose={() => setIsApplyOpen(false)} title="Apply Online" size="2xl">
-                <div className="space-y-6">
-                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start gap-3">
-                        <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 mt-0.5">warning</span>
-                        <div className="text-sm text-amber-800 dark:text-amber-300">
-                            <strong>Disclaimer:</strong> You are about to leave the AuctionOS platform. AuctionOS is not responsible for external systems. The application process, including all documentation and payments, is handled exclusively by the respective state or county authority.
+            <Modal isOpen={isApplyOpen} onClose={() => setIsApplyOpen(false)} title="External Portal Access" size="xl">
+                <div className="space-y-6 py-2">
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-4">
+                        <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">gavel</span>
+                        <div className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+                            <strong className="block mb-1">Official Disclaimer</strong>
+                            You are about to access the state/county authority portal. AuctionOS provides data intelligence but does not process payments or legal documents for the direct purchase of tax certificates.
                         </div>
                     </div>
 
-                    <div>
-                        <h4 className="font-bold text-slate-900 dark:text-white mb-2">Instructions (Alabama Example)</h4>
-                        <ol className="list-decimal list-inside space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                            <li>Visit the state portal using the link below.</li>
-                            <li>Search for CS Number: <strong className="text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-1 rounded">{property.cs_number || 'UNKNOWN'}</strong></li>
-                            <li>Verify the Parcel ID: <strong>{property.parcel_id}</strong></li>
-                            <li>Complete the application and submit the required documentation.</li>
-                        </ol>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <h4 className="font-bold text-[10px] uppercase tracking-widest text-slate-500 mb-3">Required Credentials</h4>
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-500">Subject Parcel ID:</span>
+                                <span className="font-mono font-bold text-slate-900 dark:text-white px-2 py-0.5 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                                    {property.parcel_id}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-slate-500">CS / Certificate No:</span>
+                                <span className="font-mono font-bold text-blue-600 dark:text-blue-400 px-2 py-0.5 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                                    {property.cs_number || 'CONTACT OFFICE'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <div className="pt-2">
                         <a 
-                            href="#" 
-                            onClick={(e) => { e.preventDefault(); alert('External link opening simulation.'); }}
-                            className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
+                            href={primaryLink} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="w-full py-4 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-black text-sm transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-500/20"
                         >
-                            Proceed to State Portal <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                            Open State Portal Link <span className="material-symbols-outlined text-[18px]">open_in_new</span>
                         </a>
+                        <p className="text-center text-[10px] text-slate-400 mt-4 leading-relaxed px-8">
+                            Ensure you have your banking information and personal identification ready before continuing to the state website.
+                        </p>
                     </div>
                 </div>
             </Modal>
