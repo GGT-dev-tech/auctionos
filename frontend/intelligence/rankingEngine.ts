@@ -38,8 +38,15 @@ export const rankAuctions = (auctions: any[]): RankedAuction[] => {
  * Recommends specific properties from a list based on Deal Score.
  */
 export const recommendProperties = (properties: Property[], limit: number = 5): Property[] => {
+    // Filter out anything that is explicitly marked as purchased, sold, or unavailable
+    const availableProps = properties.filter(p => {
+        const status = (p.availability_status || p.details?.availability_status || '').toLowerCase();
+        if (!status) return true; // Assume available if undefined
+        return !status.includes('purchased') && !status.includes('sold') && !status.includes('unavailable');
+    });
+
     // Map with scores
-    const scored = properties.map(p => ({
+    const scored = availableProps.map(p => ({
         property: p,
         scoreResult: calculateDealScore(p)
     }));

@@ -72,32 +72,22 @@ export const PropertyPurchaseOptions: React.FC<Props> = ({
                     Apply Online Instructions
                 </button>
                 
-                {/* Simulated Purchase Button (Admins only, if available) */}
-                {!readOnly && isAvailable && onSimulatePurchase && (
-                    <button 
+                {/* Purchase Online Actions Box (Hidden for Clients) */}
+                {!readOnly && isAvailable && (
+                    <div
+                        className={`bg-green-600 text-white rounded-lg p-6 text-center shadow-lg transition ${actionLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700 cursor-pointer'}`}
                         onClick={actionLoading ? undefined : onSimulatePurchase}
-                        disabled={actionLoading}
-                        className={`w-full py-2.5 px-4 border text-center rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${actionLoading ? 'border-slate-200 text-slate-400 bg-slate-50' : 'border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-900/20'}`}
                     >
-                        {actionLoading ? (
-                            <>
-                                <span className="material-symbols-outlined text-[18px] animate-spin">refresh</span>
-                                Processing...
-                            </>
-                        ) : (
-                            <>
-                                <span className="material-symbols-outlined text-[18px]">payments</span>
-                                Purchase (Simulate OTC)
-                            </>
-                        )}
-                    </button>
+                        <h3 className="font-bold text-xl mb-1">{actionLoading ? 'Processing...' : 'Purchase Online'}</h3>
+                        <p className="text-sm opacity-90">{property.county} County-Held Certificates</p>
+                        <p className="text-xs font-semibold mt-2 underline">Click to simulate OTC purchase transaction</p>
+                    </div>
                 )}
 
-                {/* Purchased Status Indicator */}
                 {!readOnly && isPurchased && (
-                    <div className="w-full py-2.5 px-4 border border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 rounded-lg font-semibold flex items-center justify-center gap-2 cursor-not-allowed">
-                        <span className="material-symbols-outlined text-[18px]">block</span>
-                        Already Purchased
+                    <div className="bg-slate-200 text-slate-500 rounded-lg p-6 text-center shadow-inner cursor-not-allowed">
+                        <h3 className="font-bold text-xl mb-1">Already Purchased</h3>
+                        <p className="text-sm">This property is no longer available.</p>
                     </div>
                 )}
             </div>
