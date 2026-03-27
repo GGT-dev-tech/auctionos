@@ -6,6 +6,7 @@ import { AuctionEvent, Property } from '../../types';
 import { AuthService } from '../../services/auth.service';
 import { recommendProperties, rankAuctions } from '../../intelligence/rankingEngine';
 import { calculateDealScore } from '../../intelligence/scoringEngine';
+import { InvestmentHeatmap } from '../../components/property/InvestmentHeatmap';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -199,74 +200,80 @@ const sectionMeta = {
 const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = ({ properties, loading }) => {
   const navigate = useNavigate();
 
-  if (!loading && properties.length === 0) return null;
-
   return (
-    <section>
-      <div className="flex justify-between items-end mb-4">
+    <section className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden h-full flex flex-col">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent flex items-center gap-2">
-            <span className="material-symbols-outlined text-[24px] text-emerald-500">auto_awesome</span>
-            Suggested Deals
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-wide">
+            <span className="material-symbols-outlined text-emerald-500">auto_awesome</span>
+            Top Recommended Deals
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Properties curated by highest Deal Score</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Intelligence-filtered opportunities</p>
         </div>
+        <button 
+          onClick={() => navigate('/client/properties')}
+          className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline uppercase tracking-widest"
+        >
+          Explore All
+        </button>
       </div>
 
-      {loading ? (
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex-shrink-0 w-72 h-44 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900/50">
-          {properties.map((p) => {
-            const score = calculateDealScore(p);
-            return (
-              <div 
-                key={p.id}
-                onClick={() => navigate(`/client/properties/${p.id}`)}
-                className="flex-shrink-0 w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 hover:border-emerald-500/50 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer group flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-3">
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                      score.rating.startsWith('A') ? 'bg-green-100 text-green-700' :
-                      score.rating.startsWith('B') ? 'bg-blue-100 text-blue-700' :
-                      'bg-slate-100 text-slate-700'
-                    }`}>
-                      {score.rating} Grade Deal
-                    </span>
-                    <span className="text-xs font-semibold text-slate-400">Score: {score.score}</span>
+      <div className="flex-1">
+        {loading ? (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-24 bg-slate-100 dark:bg-slate-900/50 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : properties.length === 0 ? (
+          <div className="h-64 bg-slate-50 dark:bg-slate-900/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center text-slate-400 p-6 text-center">
+            <span className="material-symbols-outlined text-4xl mb-2 text-slate-300">inventory_2</span>
+            <p className="text-sm font-bold">Adjusting Algorithm...</p>
+            <p className="text-xs mt-1">We couldn't find matches in your current filters. Try relaxing your search or checking back later.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {properties.slice(0, 4).map((p) => {
+              const score = calculateDealScore(p);
+              return (
+                <div 
+                  key={p.id || p.parcel_id}
+                  onClick={() => navigate(`/client/properties/${p.parcel_id || p.id}`)}
+                  className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer group"
+                >
+                  <div className={`size-12 rounded-lg flex flex-col items-center justify-center text-white font-black text-sm shadow-sm ${
+                    score.rating.startsWith('A') ? 'bg-emerald-500' :
+                    score.rating === 'B' ? 'bg-blue-500' :
+                    'bg-slate-400'
+                  }`}>
+                    <span>{score.rating}</span>
                   </div>
-                  <p className="text-base font-bold text-slate-800 dark:text-white line-clamp-1 group-hover:text-emerald-600 transition-colors">
-                    {p.title || p.address || 'Unknown Address'}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">location_on</span>
-                    {[p.city, p.state].filter(Boolean).join(', ')}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/50 flex justify-between items-center">
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-semibold uppercase">Est. Value</p>
-                    <p className="text-sm font-bold text-slate-800 dark:text-white">
-                      {p.assessed_value ? `$${(p.assessed_value * 1.5).toLocaleString()}` : 'TBD'}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-slate-800 dark:text-white truncate group-hover:text-emerald-600">
+                      {p.title || p.address || 'Property Detail'}
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                      {p.city}, {p.state} · ${p.amount_due ? p.amount_due.toLocaleString() : '—'}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] text-slate-400 font-semibold uppercase">Min Bid</p>
-                    <p className="text-sm font-bold text-emerald-600">
-                      {p.amount_due ? `$${p.amount_due.toLocaleString()}` : 'TBD'}
-                    </p>
+                    <div className="text-[10px] text-slate-400 uppercase font-bold">Match</div>
+                    <div className="text-xs font-bold text-emerald-600">{score.score}%</div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {properties.length > 0 && (
+        <button 
+          onClick={() => navigate('/client/properties')}
+          className="mt-6 w-full py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors uppercase tracking-widest"
+        >
+          Discover More Opportunities
+        </button>
       )}
     </section>
   );
@@ -481,7 +488,7 @@ const ClientDashboard: React.FC = () => {
         AuctionService.getAuctionEvents({ name: 'foreclosure', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
         AuctionService.getAuctionEvents({ name: 'lien', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
         AuctionService.getAuctionEvents({ startDate: today, endDate: future, limit: 100, skip: 0 }),
-        PropertyService.getProperties({ limit: 150 }) // Fetch a batch for scoring
+        PropertyService.getProperties({ limit: 150, availability_status: 'available' }) // Guarantee active inventory
       ]);
 
       // Merge and de-duplicate Deed items
@@ -569,13 +576,18 @@ const ClientDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Suggested Curated Deals (Intelligence Layer) */}
-      <SuggestedDeals properties={suggestedDeals} loading={loading} />
+      {/* Intelligence Layer Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <SuggestedDeals properties={suggestedDeals} loading={loading} />
+        <InvestmentHeatmap />
+      </div>
 
       {/* Top Auctions Sections */}
-      <TopAuctions type="deed" allAuctions={typeAuctions.deed} loading={loading} />
-      <TopAuctions type="foreclosure" allAuctions={typeAuctions.foreclosure} loading={loading} />
-      <TopAuctions type="lien" allAuctions={typeAuctions.lien} loading={loading} />
+      <div className="space-y-12">
+        <TopAuctions type="deed" allAuctions={typeAuctions.deed} loading={loading} />
+        <TopAuctions type="foreclosure" allAuctions={typeAuctions.foreclosure} loading={loading} />
+        <TopAuctions type="lien" allAuctions={typeAuctions.lien} loading={loading} />
+      </div>
     </div>
   );
 };
