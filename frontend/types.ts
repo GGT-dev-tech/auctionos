@@ -97,6 +97,15 @@ export interface Property {
   auction_id?: number | null;
   
   // V3 Extended Fields
+  property_type?: string;
+  assessed_value?: number;
+  improvement_value?: number;
+  land_value?: number;
+  is_qoz?: boolean;
+  zoning?: string;
+  subdivision?: string;
+  legal_description?: string;
+
   latitude?: number;
   longitude?: number;
   redfin_url?: string;

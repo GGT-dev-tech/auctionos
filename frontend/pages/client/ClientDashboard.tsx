@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuctionService } from '../../services/auction.service';
-import { AuctionEvent } from '../../types';
+import { PropertyService } from '../../services/property.service';
+import { AuctionEvent, Property } from '../../types';
 import { AuthService } from '../../services/auth.service';
+import { recommendProperties, rankAuctions } from '../../intelligence/rankingEngine';
+import { calculateDealScore } from '../../intelligence/scoringEngine';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -23,10 +26,6 @@ function getTypeLabel(taxStatus?: string): { label: string; color: string } {
   return { label: taxStatus || 'Auction', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' };
 }
 
-function scoreByProperties(a: AuctionEvent): number {
-  return a.parcels_count || a.properties_count || 0;
-}
-
 function filterByType(items: AuctionEvent[], type: 'deed' | 'lien' | 'foreclosure'): AuctionEvent[] {
   return items.filter(a => {
     const s = ((a.tax_status || '') + ' ' + (a.name || '')).toLowerCase();
@@ -40,8 +39,20 @@ function filterByType(items: AuctionEvent[], type: 'deed' | 'lien' | 'foreclosur
 }
 
 function sortByTopProperties(items: AuctionEvent[], n = 10): AuctionEvent[] {
+  // Use the intelligence layer ranking engine to sort auctions natively
+  const ranked = rankAuctions(items);
+  // Re-map back to the exact array order dictated by the ranking result string-match,
+  // or simply return a slice since rankAuctions structure sorts correctly by Normalized Score.
+  // We'll just sort the source items by reading the score from the engine.
+  const nameToScore = new Map<string, number>();
+  ranked.forEach(r => nameToScore.set(r.name, r.normalizedScore));
+
   return [...items]
-    .sort((a, b) => scoreByProperties(b) - scoreByProperties(a))
+    .sort((a, b) => {
+       const scoreA = nameToScore.get(a.name || '') || 0;
+       const scoreB = nameToScore.get(b.name || '') || 0;
+       return scoreB - scoreA;
+    })
     .slice(0, n);
 }
 
@@ -181,6 +192,84 @@ const sectionMeta = {
     color: 'text-amber-600 dark:text-amber-400',
     bg: 'bg-amber-50 dark:bg-amber-900/20',
   },
+};
+
+// ─── Suggested Deals Section ─────────────────────────────────────────────────
+
+const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = ({ properties, loading }) => {
+  const navigate = useNavigate();
+
+  if (!loading && properties.length === 0) return null;
+
+  return (
+    <section>
+      <div className="flex justify-between items-end mb-4">
+        <div>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent flex items-center gap-2">
+            <span className="material-symbols-outlined text-[24px] text-emerald-500">auto_awesome</span>
+            Suggested Deals
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Properties curated by highest Deal Score</p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex-shrink-0 w-72 h-44 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-emerald-200 dark:scrollbar-thumb-emerald-900/50">
+          {properties.map((p) => {
+            const score = calculateDealScore(p);
+            return (
+              <div 
+                key={p.id}
+                onClick={() => navigate(`/client/properties/${p.id}`)}
+                className="flex-shrink-0 w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 hover:border-emerald-500/50 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                      score.rating.startsWith('A') ? 'bg-green-100 text-green-700' :
+                      score.rating.startsWith('B') ? 'bg-blue-100 text-blue-700' :
+                      'bg-slate-100 text-slate-700'
+                    }`}>
+                      {score.rating} Grade Deal
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400">Score: {score.score}</span>
+                  </div>
+                  <p className="text-base font-bold text-slate-800 dark:text-white line-clamp-1 group-hover:text-emerald-600 transition-colors">
+                    {p.title || p.address || 'Unknown Address'}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">location_on</span>
+                    {[p.city, p.state].filter(Boolean).join(', ')}
+                  </p>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/50 flex justify-between items-center">
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-semibold uppercase">Est. Value</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-white">
+                      {p.assessed_value ? `$${(p.assessed_value * 1.5).toLocaleString()}` : 'TBD'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-400 font-semibold uppercase">Min Bid</p>
+                    <p className="text-sm font-bold text-emerald-600">
+                      {p.amount_due ? `$${p.amount_due.toLocaleString()}` : 'TBD'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
 };
 
 interface TopAuctionsProps {
@@ -377,6 +466,7 @@ const ClientDashboard: React.FC = () => {
     deed: [], foreclosure: [], lien: []
   });
   const [stats, setStats] = useState({ deed: 0, foreclosure: 0, lien: 0 });
+  const [suggestedDeals, setSuggestedDeals] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = useCallback(async () => {
@@ -385,13 +475,13 @@ const ClientDashboard: React.FC = () => {
       const future = new Date(Date.now() + 365 * 86_400_000).toISOString().split('T')[0];
 
       // 1. Fetch real counts and dedicated slices for each type
-      // For "Deed", we now expand the search to include "Sheriff" sales to be more generic as requested
-      const [deedRes, sheriffRes, foreRes, lienRes, generalRes] = await Promise.all([
+      const [deedRes, sheriffRes, foreRes, lienRes, generalRes, propRes] = await Promise.all([
         AuctionService.getAuctionEvents({ name: 'deed', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
         AuctionService.getAuctionEvents({ name: 'sheriff', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
         AuctionService.getAuctionEvents({ name: 'foreclosure', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
         AuctionService.getAuctionEvents({ name: 'lien', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
-        AuctionService.getAuctionEvents({ startDate: today, endDate: future, limit: 100, skip: 0 })
+        AuctionService.getAuctionEvents({ startDate: today, endDate: future, limit: 100, skip: 0 }),
+        PropertyService.getProperties({ limit: 150 }) // Fetch a batch for scoring
       ]);
 
       // Merge and de-duplicate Deed items
@@ -400,7 +490,7 @@ const ClientDashboard: React.FC = () => {
       );
 
       setStats({
-        deed: (deedRes.total || 0) + (sheriffRes.total || 0), // Note: might slightly double count if one has both words, but standard for generic reporting
+        deed: (deedRes.total || 0) + (sheriffRes.total || 0),
         foreclosure: foreRes.total || 0,
         lien: lienRes.total || 0
       });
@@ -412,6 +502,14 @@ const ClientDashboard: React.FC = () => {
       });
 
       setAllAuctions(generalRes.items);
+
+      // Score and Recommend top 8 properties
+      const rawProperties = (propRes as any).items || propRes;
+      if (Array.isArray(rawProperties)) {
+        const topDeals = recommendProperties(rawProperties, 8);
+        setSuggestedDeals(topDeals);
+      }
+
     } catch (err) {
       console.error('ClientDashboard: failed to fetch dynamic data', err);
     } finally {
@@ -470,6 +568,9 @@ const ClientDashboard: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Suggested Curated Deals (Intelligence Layer) */}
+      <SuggestedDeals properties={suggestedDeals} loading={loading} />
 
       {/* Top Auctions Sections */}
       <TopAuctions type="deed" allAuctions={typeAuctions.deed} loading={loading} />
