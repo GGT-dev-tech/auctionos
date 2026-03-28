@@ -25,19 +25,15 @@ export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ properties
             
             // Fallback: Try to parse state from address if p.state is missing
             if (!state && p.address) {
-                // Try to find 2 letters followed by a 5-digit zip code or a comma/space
-                // e.g., "Charlotte, NC 28202" or "Charlotte, NC"
-                const stateMatch = p.address.match(/\s([A-Z]{2})(?:\s\d{5}|,|$)/);
-                if (stateMatch) {
-                    state = stateMatch[1];
-                } else {
-                    // Try splitting by comma and looking at the second to last part
-                    const parts = p.address.split(',').map(s => s.trim());
-                    if (parts.length >= 2) {
-                        const statePart = parts[parts.length - 1].split(' ')[0];
-                        if (statePart && statePart.length === 2 && /^[A-Z]+$/.test(statePart)) {
-                            state = statePart;
-                        }
+                // More permissive regex to find any 2 caps letters surrounded by word boundaries OR following a city-like pattern
+                // Search from end to start to find the most likely state code
+                const matches = p.address.match(/\b[A-Z]{2}\b/g);
+                if (matches && matches.length > 0) {
+                    // Usually the state is the last or second to last capitalized 2-letter word (near Zip)
+                    state = matches[matches.length - 1];
+                    // Skip if it looks like a common abbreviation for St, Dr, Rd if possible
+                    if (['ST', 'DR', 'RD', 'PL', 'AV', 'LN'].includes(state)) {
+                        if (matches.length > 1) state = matches[matches.length - 2];
                     }
                 }
             }
