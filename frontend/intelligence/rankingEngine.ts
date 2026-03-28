@@ -57,12 +57,18 @@ export const recommendProperties = (properties: Property[], limit: number = 5): 
         scoreResult: calculateDealScore(p)
     }));
 
-    // Sort by Score DESC, then by Assessed Value DESC if tied
+    // Sort by Score DESC, then by Assessed Value DESC, then by Parcel ID (deterministic tie-breaker)
     scored.sort((a, b) => {
         if (b.scoreResult.score !== a.scoreResult.score) {
             return b.scoreResult.score - a.scoreResult.score;
         }
-        return (b.property.assessed_value || 0) - (a.property.assessed_value || 0);
+        if ((b.property.assessed_value || 0) !== (a.property.assessed_value || 0)) {
+            return (b.property.assessed_value || 0) - (a.property.assessed_value || 0);
+        }
+        // Strict tie-breaker to prevent layout flickering on refreshes
+        const idA = a.property.parcel_id || String(a.property.id || '');
+        const idB = b.property.parcel_id || String(b.property.id || '');
+        return idB.localeCompare(idA);
     });
 
     return scored.slice(0, limit).map(s => s.property);

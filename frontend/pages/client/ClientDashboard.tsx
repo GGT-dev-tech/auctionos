@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuctionService } from '../../services/auction.service';
 import { PropertyService } from '../../services/property.service';
@@ -482,6 +482,7 @@ const ClientDashboard: React.FC = () => {
   const [dbTopDeals, setDbTopDeals] = useState<Property[]>([]);
   const [stateStats, setStateStats] = useState<StateStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const isFetchingBus = useRef(false);
 
   // ─── Reactive Data Pipeline ────────────────────────────────────────────────
   
@@ -492,17 +493,30 @@ const ClientDashboard: React.FC = () => {
   }, [rawProperties]);
 
   const suggestedDeals = useMemo(() => {
+    let baseList: Property[] = [];
     // Priority 1: Persistent backend scores (if available)
     if (dbTopDeals.length > 0) {
-      return dbTopDeals.filter(p => 
+      baseList = dbTopDeals.filter(p => 
         (p.availability_status || '').toLowerCase().trim() === 'available'
       );
+    } else {
+      // Priority 2: Real-time local scoring fallback
+      baseList = recommendProperties(marketInventory, 20); // Get more then slice deterministically
     }
-    // Priority 2: Real-time local scoring fallback
-    return recommendProperties(marketInventory, 5);
+
+    return baseList
+      .sort((a, b) => {
+        const scoreA = (a as any).deal_score || calculateDealScore(a).score;
+        const scoreB = (b as any).deal_score || calculateDealScore(b).score;
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        return (b.parcel_id || '').localeCompare(a.parcel_id || '');
+      })
+      .slice(0, 5);
   }, [dbTopDeals, marketInventory]);
 
   const fetchDashboardData = useCallback(async () => {
+    if (isFetchingBus.current) return;
+    isFetchingBus.current = true;
     try {
       const now = new Date();
       const today = now.toISOString().split('T')[0];
@@ -560,6 +574,7 @@ const ClientDashboard: React.FC = () => {
       console.error('ClientDashboard: failed to fetch dynamic data', err);
     } finally {
       setLoading(false);
+      isFetchingBus.current = false;
     }
   }, []);
 

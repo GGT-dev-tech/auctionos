@@ -26,7 +26,7 @@ export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ stats: raw
                 volume: s.volume,
                 color
             };
-        });
+        }).sort((a, b) => b.volume - a.volume).slice(0, 5);
 
         if (mapped.length > 0) return mapped;
 
