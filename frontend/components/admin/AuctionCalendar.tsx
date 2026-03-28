@@ -22,59 +22,62 @@ interface AuctionCalendarProps {
 }
 
 const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = { startDate: undefined }, onDateTypeSelect }) => {
-    const [events, setEvents] = useState<any[]>([]);
+    const [rawEvents, setRawEvents] = useState<any[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
     const [groupedDialogOpen, setGroupedDialogOpen] = useState(false);
     const [groupedDateType, setGroupedDateType] = useState<{date: string, type: string} | null>(null);
     const navigate = useNavigate();
 
+    // Use a stable string for effect dependency to prevent redundant fetches
+    const filterKey = JSON.stringify(filters);
+
     useEffect(() => {
         AuctionService.getCalendarEvents(filters)
-            .then(data => {
-                const groups: Record<string, { date: string, type: string, auctionCount: number, propertyCount: number }> = {};
-
-                data.forEach((item: any) => {
-                    const titleLower = (item.event_title || '').toLowerCase();
-                    let type = 'Other';
-                    if (titleLower.includes('tax deed') || titleLower.includes('taxdeed')) type = 'Tax Deed';
-                    else if (titleLower.includes('foreclosure')) type = 'Foreclosure';
-                    else if (titleLower.includes('lien')) type = 'Tax Lien';
-                    else if (titleLower.includes('sheriff')) type = 'Sheriff Sale';
-                    else type = item.event_title || 'Auction'; 
-                    
-                    const cleanDate = item.event_date ? item.event_date.split('T')[0] : '';
-                    if (!cleanDate) return;
-
-                    const groupKey = `${cleanDate}-${type}`;
-                    if (!groups[groupKey]) {
-                        groups[groupKey] = { date: cleanDate, type, auctionCount: 0, propertyCount: 0 };
-                    }
-                    groups[groupKey].auctionCount += 1;
-                    groups[groupKey].propertyCount += (item.property_count || 1);
-                });
-
-                const aggregatedEvents = Object.values(groups).map(g => ({
-                    title: `${g.type} (${g.auctionCount})`,
-                    start: g.date,
-                    allDay: true,
-                    extendedProps: {
-                        isGrouped: true,
-                        type: g.type,
-                        date: g.date,
-                        auctionCount: g.auctionCount,
-                        propertyCount: g.propertyCount
-                    }
-                }));
-
-                setEvents(aggregatedEvents);
-            })
+            .then(data => setRawEvents(data))
             .catch(err => console.error("Failed to load calendar", err));
-    }, [filters]);
+    }, [filterKey]);
+
+    // Memoize the heavy aggregation logic for smoother performance
+    const processedEvents = React.useMemo(() => {
+        const groups: Record<string, { date: string, type: string, auctionCount: number, propertyCount: number }> = {};
+
+        rawEvents.forEach((item: any) => {
+            const titleLower = (item.event_title || '').toLowerCase();
+            let type = 'Other';
+            if (titleLower.includes('tax deed') || titleLower.includes('taxdeed')) type = 'Tax Deed';
+            else if (titleLower.includes('foreclosure')) type = 'Foreclosure';
+            else if (titleLower.includes('lien')) type = 'Tax Lien';
+            else if (titleLower.includes('sheriff')) type = 'Sheriff Sale';
+            else type = item.event_title || 'Auction'; 
+            
+            const cleanDate = item.event_date ? item.event_date.split('T')[0] : '';
+            if (!cleanDate) return;
+
+            const groupKey = `${cleanDate}-${type}`;
+            if (!groups[groupKey]) {
+                groups[groupKey] = { date: cleanDate, type, auctionCount: 0, propertyCount: 0 };
+            }
+            groups[groupKey].auctionCount += 1;
+            groups[groupKey].propertyCount += (item.property_count || 1);
+        });
+
+        return Object.values(groups).map(g => ({
+            title: `${g.type} (${g.auctionCount})`,
+            start: g.date,
+            allDay: true,
+            extendedProps: {
+                isGrouped: true,
+                type: g.type,
+                date: g.date,
+                auctionCount: g.auctionCount,
+                propertyCount: g.propertyCount
+            }
+        }));
+    }, [rawEvents]);
 
     const handleEventClick = (info: any) => {
         const props = info.event.extendedProps;
         if (props.isGrouped) {
-            // Display internal modal list instead of external parameter routing
             setGroupedDateType({ date: props.date, type: props.type });
             setGroupedDialogOpen(true);
         } else {
@@ -83,14 +86,13 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = { startDate
     };
 
     const handleDateClick = (arg: any) => {
-        // Handle clicking the empty day box
         if (onDateTypeSelect) {
             onDateTypeSelect(arg.dateStr, ''); 
         } else {
             const params = new URLSearchParams(window.location.search);
             params.set('startDate', arg.dateStr);
             params.set('endDate', arg.dateStr);
-            params.delete('q'); // Clear search query to show all types for that date
+            params.delete('q');
             window.location.search = '?' + params.toString();
         }
     };
@@ -102,7 +104,6 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = { startDate
     return (
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm h-[600px] relative">
             <FullCalendar
-                key={filters.startDate || 'default'} // Force re-render/re-focus when deep-linking to a specific date
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
                 initialDate={filters.startDate}
@@ -112,7 +113,7 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = { startDate
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek'
                 }}
-                events={events}
+                events={processedEvents}
                 eventClick={handleEventClick}
                 dateClick={handleDateClick}
                 height="100%"

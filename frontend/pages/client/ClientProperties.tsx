@@ -16,11 +16,15 @@ const ClientProperties: React.FC = () => {
         
         if (stateParam) initialFilters.state = stateParam;
         if (topParam === 'true') {
-            initialFilters.min_score = 70; // Map 'top' to a high score threshold
+            initialFilters.min_score = 70;
         }
         
         if (Object.keys(initialFilters).length > 0) {
-            setFilters(prev => ({ ...prev, ...initialFilters }));
+            // Only update if actually different to prevent flickering loops
+            setFilters(prev => {
+                const isDifferent = JSON.stringify(prev) !== JSON.stringify({ ...prev, ...initialFilters });
+                return isDifferent ? { ...prev, ...initialFilters } : prev;
+            });
         }
     }, [searchParams]);
 

@@ -48,10 +48,17 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readO
     const [showFilters, setShowFilters] = useState(false);
     const [debouncedFilters] = useDebounce(filters, 500);
 
-    // Sync external initialFilters changes
+    const isInternalUpdate = React.useRef(false);
+
+    // Sync external initialFilters changes only if they differ
     useEffect(() => {
         if (initialFilters && Object.keys(initialFilters).length > 0) {
-            setFilters(prev => ({ ...prev, ...initialFilters }));
+            // Check if values are actually different to prevent unnecessary updates
+            const hasChanged = JSON.stringify(filters) !== JSON.stringify(initialFilters);
+            if (hasChanged) {
+                isInternalUpdate.current = true;
+                setFilters(initialFilters);
+            }
         }
     }, [initialFilters]);
 
@@ -90,14 +97,20 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readO
     }, [inputValue]);
 
     useEffect(() => {
+        if (isInternalUpdate.current) {
+            isInternalUpdate.current = false;
+            return;
+        }
         onFilterChange(debouncedFilters);
     }, [debouncedFilters, onFilterChange]);
 
     const handleChange = (key: keyof PropertyFilterParams, value: any) => {
+        isInternalUpdate.current = false;
         setFilters(prev => ({ ...prev, [key]: value || undefined }));
     };
 
     const handleClear = () => {
+        isInternalUpdate.current = false;
         setFilters({});
         setInputValue('');
     };
