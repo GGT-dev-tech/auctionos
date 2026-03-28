@@ -6,6 +6,9 @@ import { countyService, CountyContact } from '../../services/county.service';
 import { Button, CircularProgress, Divider, Menu, MenuItem } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { PlusIcon } from 'lucide-react';
+import { Property, PropertyDetails, ClientList } from '../../types';
+import { calculateDealScore, DealScoreResult } from '../../intelligence/scoringEngine';
+import { submitScore } from '../../services/scores.service';
 
 import { PropertyBasicInfo } from '../../components/property/PropertyBasicInfo';
 import { PropertyPurchaseOptions } from '../../components/property/PropertyPurchaseOptions';
@@ -18,6 +21,7 @@ import { PropertyMap } from '../../components/property/PropertyMap';
 import { PropertyNextSteps } from '../../components/property/PropertyNextSteps';
 import { PropertyContactInfo } from '../../components/property/PropertyContactInfo';
 import { PropertyInventoryHistory } from '../../components/property/PropertyInventoryHistory';
+import { PropertyEstimatesComps } from '../../components/property/PropertyEstimatesComps';
 
 interface PropertyDetailPageProps {
     readOnly?: boolean;
@@ -26,14 +30,15 @@ interface PropertyDetailPageProps {
 const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = false }) => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [property, setProperty] = useState<any>(null);
+    const [property, setProperty] = useState<Property | null>(null);
     const [countyContacts, setCountyContacts] = useState<CountyContact[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
-    const [lists, setLists] = useState<any[]>([]);
+    const [lists, setLists] = useState<ClientList[]>([]);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [localScore, setLocalScore] = useState<DealScoreResult | null>(null);
 
     const [isFinOpen, setIsFinOpen] = useState(false);
     const [isMetaOpen, setIsMetaOpen] = useState(false);
@@ -62,6 +67,21 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
 
             fetchSecondaryData(data);
             setError(null);
+
+            // Auto-sync score to backend (silent, non-blocking)
+            // Only compute if backend hasn't stored one yet
+            if (!data.deal_score) {
+                const computed = calculateDealScore(data);
+                setLocalScore(computed);
+                submitScore(data.parcel_id, computed); // fire-and-forget
+            } else {
+                // Use the stored backend score for display consistency
+                setLocalScore({
+                    score: data.deal_score,
+                    rating: data.deal_rating,
+                    factors: data.score_factors || [],
+                });
+            }
         } catch (err: any) {
             setError(err.message || 'Error loading property details');
             setLoading(false);
@@ -252,7 +272,10 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                         property={property} 
                         onOpenFinancials={() => setIsFinOpen(true)}
                         onOpenMetadata={() => setIsMetaOpen(true)}
+                        dealScore={localScore}
                     />
+
+                    <PropertyEstimatesComps property={property} />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <PropertyPurchaseOptions 

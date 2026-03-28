@@ -3,8 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.config import settings
 from app.api.api_v1.api import api_router
-# Import base to register all models
+# Import base to register all models (including new property_scores)
 from app.db import base  # noqa
+from app.db.base_class import Base
+from app.db.session import engine
 
 from fastapi.staticfiles import StaticFiles
 import os
@@ -30,6 +32,9 @@ async def run_daily_task():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Auto-create any new tables (e.g., property_scores) on startup
+    Base.metadata.create_all(bind=engine)
+
     redis = aioredis.from_url(settings.REDIS_URL)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
     

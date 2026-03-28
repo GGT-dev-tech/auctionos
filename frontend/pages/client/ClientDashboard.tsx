@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { recommendProperties, rankAuctions } from '../../intelligence/rankingEngine';
 import { calculateDealScore } from '../../intelligence/scoringEngine';
 import { InvestmentHeatmap } from '../../components/property/InvestmentHeatmap';
+import { getTopScoredProperties } from '../../services/scores.service';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -242,11 +243,11 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = (
                   className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer group"
                 >
                   <div className={`size-12 rounded-lg flex flex-col items-center justify-center text-white font-black text-sm shadow-sm ${
-                    score.rating.startsWith('A') ? 'bg-emerald-500' :
-                    score.rating === 'B' ? 'bg-blue-500' :
+                    (p.deal_rating || score.rating).startsWith('A') ? 'bg-emerald-500' :
+                    (p.deal_rating || score.rating) === 'B' ? 'bg-blue-500' :
                     'bg-slate-400'
                   }`}>
-                    <span>{score.rating}</span>
+                    <span>{p.deal_rating || score.rating}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-slate-800 dark:text-white truncate group-hover:text-emerald-600">
@@ -258,7 +259,7 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = (
                   </div>
                   <div className="text-right">
                     <div className="text-[10px] text-slate-400 uppercase font-bold">Match</div>
-                    <div className="text-xs font-bold text-emerald-600">{score.score}%</div>
+                    <div className="text-xs font-bold text-emerald-600">{p.deal_score || score.score}%</div>
                   </div>
                 </div>
               );
@@ -511,11 +512,18 @@ const ClientDashboard: React.FC = () => {
 
       setAllAuctions(generalRes.items);
 
-      // Score and Recommend top 8 properties
-      const rawProperties = (propRes as any).items || propRes;
-      if (Array.isArray(rawProperties)) {
-        const topDeals = recommendProperties(rawProperties, 8);
-        setSuggestedDeals(topDeals);
+      // 2. Fetch Top Scored Properties from DB (ML Engine Persistence)
+      const topScoredFromDb = await getTopScoredProperties(8);
+      
+      if (topScoredFromDb.length > 0) {
+        setSuggestedDeals(topScoredFromDb as any);
+      } else {
+        // Fallback to local rule-based recommendations if DB is empty
+        const rawProperties = (propRes as any).items || propRes;
+        if (Array.isArray(rawProperties)) {
+          const topDeals = recommendProperties(rawProperties, 8);
+          setSuggestedDeals(topDeals);
+        }
       }
 
     } catch (err) {

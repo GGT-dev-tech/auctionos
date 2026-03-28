@@ -553,7 +553,26 @@ def get_property(
         next_steps.append({"action": "Verify Occupancy", "priority": "medium", "type": "verify"})
     
     data["recommended_next_steps"] = next_steps
-    
+
+    # Fetch persisted ML score if available
+    import json as _json
+    score_row = db.execute(
+        text("SELECT deal_score, rating, score_factors, model_version, updated_at FROM property_scores WHERE parcel_id = :parcel_id"),
+        {"parcel_id": parcel_id}
+    ).fetchone()
+    if score_row:
+        data["deal_score"] = score_row[0]
+        data["deal_rating"] = score_row[1]
+        data["score_factors"] = _json.loads(score_row[2]) if score_row[2] else []
+        data["score_model_version"] = score_row[3]
+        data["score_updated_at"] = score_row[4].isoformat() if score_row[4] else None
+    else:
+        data["deal_score"] = None
+        data["deal_rating"] = None
+        data["score_factors"] = []
+        data["score_model_version"] = None
+        data["score_updated_at"] = None
+
     return data
 
 @router.get("/{parcel_id}/redirect/auction")

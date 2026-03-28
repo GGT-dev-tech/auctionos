@@ -1,0 +1,237 @@
+import json
+from typing import Any, List, Optional
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+
+from app.api import deps
+
+router = APIRouter()
+
+
+# ─── Schemas ────────────────────────────────────────────────────────────────
+
+class ScoreSubmitRequest(BaseModel):
+    parcel_id: str
+    deal_score: float
+    rating: str
+    score_factors: Optional[List[str]] = []
+    model_version: Optional[str] = "rule-based-v1"
+
+
+class ScoreResponse(BaseModel):
+    parcel_id: str
+    deal_score: float
+    rating: str
+    score_factors: Optional[List[str]]
+    model_version: str
+    computed_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+
+# ─── Endpoints ───────────────────────────────────────────────────────────────
+
+@router.post("/", response_model=dict)
+def upsert_score(
+    payload: ScoreSubmitRequest,
+    db: Session = Depends(deps.get_db),
+) -> Any:
+    """
+    Upsert a deal score for a given parcel_id.
+    Called automatically from the frontend on property detail load.
+    This builds the persistent scoring dataset for ML training later.
+    """
+    factors_json = json.dumps(payload.score_factors or [])
+    now = datetime.utcnow()
+
+    # Check if score already exists
+    existing = db.execute(
+        text("SELECT parcel_id FROM property_scores WHERE parcel_id = :parcel_id"),
+        {"parcel_id": payload.parcel_id}
+    ).fetchone()
+
+    try:
+        if existing:
+            db.execute(
+                text("""
+                    UPDATE property_scores
+                    SET deal_score = :deal_score,
+                        rating = :rating,
+                        score_factors = :score_factors,
+                        model_version = :model_version,
+                        updated_at = :updated_at
+                    WHERE parcel_id = :parcel_id
+                """),
+                {
+                    "deal_score": payload.deal_score,
+                    "rating": payload.rating,
+                    "score_factors": factors_json,
+                    "model_version": payload.model_version,
+                    "updated_at": now,
+                    "parcel_id": payload.parcel_id,
+                }
+            )
+        else:
+            db.execute(
+                text("""
+                    INSERT INTO property_scores
+                        (parcel_id, deal_score, rating, score_factors, model_version, computed_at, updated_at)
+                    VALUES
+                        (:parcel_id, :deal_score, :rating, :score_factors, :model_version, :computed_at, :updated_at)
+                """),
+                {
+                    "parcel_id": payload.parcel_id,
+                    "deal_score": payload.deal_score,
+                    "rating": payload.rating,
+                    "score_factors": factors_json,
+                    "model_version": payload.model_version,
+                    "computed_at": now,
+                    "updated_at": now,
+                }
+            )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Score upsert failed: {str(e)}")
+
+    return {
+        "ok": True,
+        "parcel_id": payload.parcel_id,
+        "deal_score": payload.deal_score,
+        "rating": payload.rating,
+        "action": "updated" if existing else "created",
+    }
+
+
+@router.get("/top", response_model=List[dict])
+def get_top_scores(
+    db: Session = Depends(deps.get_db),
+    limit: int = 10,
+    min_score: Optional[float] = None,
+    state: Optional[str] = None,
+) -> Any:
+    """
+    Returns the top-N scored properties from the DB,
+    joined with key property fields for dashboard display.
+    Optionally filter by state or minimum score.
+    """
+    where_clauses = ["1=1", "p.availability_status NOT IN ('purchased', 'sold', 'not available')"]
+    params: dict = {"limit": limit}
+
+    if min_score is not None:
+        where_clauses.append("s.deal_score >= :min_score")
+        params["min_score"] = min_score
+    if state:
+        where_clauses.append("p.state ILIKE :state")
+        params["state"] = f"%{state}%"
+
+    where_str = " AND ".join(where_clauses)
+
+    query = text(f"""
+        SELECT
+            s.parcel_id,
+            s.deal_score,
+            s.rating,
+            s.score_factors,
+            s.model_version,
+            s.updated_at,
+            p.address,
+            p.county,
+            p.state,
+            p.amount_due,
+            p.assessed_value,
+            p.availability_status,
+            p.property_type,
+            p.lot_acres,
+            p.improvement_value,
+            p.owner_address
+        FROM property_scores s
+        JOIN property_details p ON p.parcel_id = s.parcel_id
+        WHERE {where_str}
+        ORDER BY s.deal_score DESC
+        LIMIT :limit
+    """)
+
+    results = db.execute(query, params).fetchall()
+
+    return [
+        {
+            "parcel_id": r[0],
+            "deal_score": r[1],
+            "rating": r[2],
+            "score_factors": json.loads(r[3]) if r[3] else [],
+            "model_version": r[4],
+            "updated_at": r[5].isoformat() if r[5] else None,
+            "address": r[6],
+            "county": r[7],
+            "state": r[8],
+            "amount_due": r[9],
+            "assessed_value": r[10],
+            "availability_status": r[11],
+            "property_type": r[12],
+            "lot_acres": r[13],
+            "improvement_value": r[14],
+            "owner_address": r[15],
+        }
+        for r in results
+    ]
+
+
+@router.get("/{parcel_id}", response_model=dict)
+def get_score(
+    parcel_id: str,
+    db: Session = Depends(deps.get_db),
+) -> Any:
+    """Retrieve the persisted score for a specific property."""
+    result = db.execute(
+        text("""
+            SELECT parcel_id, deal_score, rating, score_factors, model_version, computed_at, updated_at
+            FROM property_scores
+            WHERE parcel_id = :parcel_id
+        """),
+        {"parcel_id": parcel_id}
+    ).fetchone()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="No score found for this property. It will be computed on next detail page view.")
+
+    return {
+        "parcel_id": result[0],
+        "deal_score": result[1],
+        "rating": result[2],
+        "score_factors": json.loads(result[3]) if result[3] else [],
+        "model_version": result[4],
+        "computed_at": result[5].isoformat() if result[5] else None,
+        "updated_at": result[6].isoformat() if result[6] else None,
+    }
+
+
+@router.get("/", response_model=List[dict])
+def list_scores(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """Paginated list of all stored scores for admin analytics."""
+    results = db.execute(
+        text("""
+            SELECT parcel_id, deal_score, rating, model_version, updated_at
+            FROM property_scores
+            ORDER BY deal_score DESC
+            OFFSET :skip LIMIT :limit
+        """),
+        {"skip": skip, "limit": limit}
+    ).fetchall()
+
+    return [
+        {
+            "parcel_id": r[0],
+            "deal_score": r[1],
+            "rating": r[2],
+            "model_version": r[3],
+            "updated_at": r[4].isoformat() if r[4] else None,
+        }
+        for r in results
+    ]

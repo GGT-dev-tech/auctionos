@@ -1,108 +1,125 @@
 import React from 'react';
 import { Property } from '../../types';
-import { calculateDealScore } from '../../intelligence/scoringEngine';
+import { calculateDealScore, DealScoreResult } from '../../intelligence/scoringEngine';
 
 interface Props {
     property: Property;
     onOpenFinancials: () => void;
     onOpenMetadata: () => void;
+    dealScore?: DealScoreResult | null;
 }
 
-export const PropertyBasicInfo: React.FC<Props> = ({ property, onOpenFinancials, onOpenMetadata }) => {
-    const dealScore = calculateDealScore(property);
+export const PropertyBasicInfo: React.FC<Props> = ({ property, onOpenFinancials, onOpenMetadata, dealScore: passedScore }) => {
+    // Fallback to local calculation if no score passed or persisted yet
+    const displayScore = passedScore || calculateDealScore(property);
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-            <div className="flex justify-between items-start mb-6">
-                <div className="flex-1 pr-4">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
-                        {property.title || property.address || 'Unknown Property'}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+            {/* Top Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
+                <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">
+                            {property.smart_tag || 'Auction Property'}
+                        </span>
+                        {property.availability_status && (
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter ${
+                                property.availability_status === 'available' 
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                                : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                            }`}>
+                                {property.availability_status}
+                            </span>
+                        )}
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-800 dark:text-white leading-tight">
+                        {property.address || property.parcel_id || 'Unknown Property'}
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">location_on</span>
+                    <p className="text-sm font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[18px] text-slate-400">location_on</span>
                         {[property.city, property.state, property.zip_code].filter(Boolean).join(', ')}
                     </p>
-                    
-                    <div className="flex gap-2 mt-3">
-                        <button 
-                            onClick={onOpenFinancials}
-                            className="px-3 py-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 rounded-lg hover:bg-emerald-100 transition-colors border border-emerald-200 dark:border-emerald-800"
-                        >
-                            View Financials
-                        </button>
-                        <button 
-                            onClick={onOpenMetadata}
-                            className="px-3 py-1.5 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200 dark:border-blue-800 flex items-center gap-1"
-                        >
-                            <span className="material-symbols-outlined text-[14px]">info</span> All Data
-                        </button>
-                    </div>
                 </div>
 
-                {/* Deal Score Badge */}
-                <div className="flex flex-col items-end">
+                {/* Score Indicator */}
+                <div className="flex bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800 min-w-[140px] items-center gap-3">
                     <div 
-                        className={`flex flex-col items-center justify-center w-16 h-16 rounded-xl border-2 shadow-sm ${
-                            dealScore.rating.startsWith('A') ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400' :
-                            dealScore.rating.startsWith('B') ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400' :
-                            dealScore.rating.startsWith('C') ? 'bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-400' :
-                            'bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
+                        className={`flex items-center justify-center w-12 h-12 rounded-lg border-2 font-black text-lg ${
+                            displayScore.rating.startsWith('A') ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400' :
+                            displayScore.rating.startsWith('B') ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400' :
+                            displayScore.rating.startsWith('C') ? 'bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-400' :
+                            'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-400'
                         }`}
-                        title={dealScore.factors.join('\n')}
+                        title={displayScore.factors.join('\n')}
                     >
-                        <span className="text-2xl font-black leading-none">{dealScore.rating}</span>
-                        <span className="text-[10px] uppercase font-bold mt-0.5 tracking-wider opacity-80">Grade</span>
+                        {displayScore.rating}
                     </div>
-                    <span className="text-[10px] text-slate-400 font-semibold mt-1 flex items-center gap-1 cursor-help" title="Score based on data completeness and financial viability.">
-                        Score: {dealScore.score}/100 <span className="material-symbols-outlined text-[12px]">info</span>
-                    </span>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Deal Score</span>
+                        <span className="text-sm font-black text-slate-700 dark:text-slate-200 leading-none">
+                            {displayScore.score}/100
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            {/* Critical Attributes Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4 mb-8">
                 <div>
-                    <p className="text-xs text-slate-500 font-semibold uppercase">County / State</p>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">
-                        {property.details?.county || '-'} / {property.state || property.details?.state || '-'}
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">County / State</label>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                        {property.county || property.details?.county || '-'} / {property.state || property.details?.state || '-'}
                     </p>
                 </div>
                 <div>
-                    <p className="text-xs text-slate-500 font-semibold uppercase">Parcel ID</p>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white break-all">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Parcel ID</label>
+                    <p className="text-sm font-mono font-bold text-blue-600 dark:text-blue-400 truncate">
                         {property.parcel_id || '-'}
                     </p>
                 </div>
                 <div>
-                    <p className="text-xs text-slate-500 font-semibold uppercase">Auction Type</p>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white capitalize">
-                        {property.smart_tag || 'Auction'}
-                    </p>
-                </div>
-                <div>
-                    <p className="text-xs text-slate-500 font-semibold uppercase">Occupancy</p>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">
-                        {property.occupancy || '-'}
-                    </p>
-                </div>
-                <div>
-                    <p className="text-xs text-slate-500 font-semibold uppercase">Acreage</p>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">
-                        {property.details?.lot_acres || '-'}
-                    </p>
-                </div>
-                <div>
-                    <p className="text-xs text-slate-500 font-semibold uppercase">C/S Number</p>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">C/S Number</label>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
                         {property.cs_number || '-'}
+                    </p>
+                </div>
+                <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Acreage</label>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                        {property.details?.lot_acres || property.lot_sqft ? (property.lot_sqft! / 43560).toFixed(2) : '-'} ac
+                    </p>
+                </div>
+                <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Occupancy</label>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                        {property.occupancy || 'Unknown'}
+                    </p>
+                </div>
+                <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Structure</label>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">
+                        {property.property_type || property.details?.property_type || 'Unknown'}
                     </p>
                 </div>
             </div>
 
-            <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">Description</h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-h-32 overflow-y-auto pr-2 scrollbar-thin">
-                    {property.description || property.details?.legal_description || "No description available."}
-                </p>
+            {/* Metadata Footer Action */}
+            <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex gap-2">
+                    <button 
+                        onClick={onOpenFinancials}
+                        className="px-4 py-2 text-xs font-black bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 dark:shadow-none"
+                    >
+                        Property Financials
+                    </button>
+                    <button 
+                        onClick={onOpenMetadata}
+                        className="px-4 py-2 text-xs font-black bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-all flex items-center gap-1.5"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">equalizer</span>
+                        Extended Metrics
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -76,7 +76,7 @@ export interface PropertyAvailabilityHistory {
 export interface Property {
   id: string | number;
   parcel_id?: string;
-  title: string;
+  title?: string;  // Optional — not returned by property_details API
   address?: string;
   city?: string;
   state?: string;
@@ -121,57 +121,103 @@ export interface Property {
   details?: PropertyDetails;
   media?: any[];
   auction_history?: PropertyAuctionHistory[];
+
+  // ML Scoring Engine Fields (populated by backend join with property_scores)
+  deal_score?: number | null;
+  deal_rating?: string | null;
+  score_factors?: string[];
+  score_model_version?: string | null;
+  score_updated_at?: string | null;
+
+  notes?: string;
+  attachments?: any[];
+  recommended_next_steps?: any[];
 }
 
-// Property Details
+// Property Details (nested sub-object and also the single-property API response shape)
 export interface PropertyDetails {
   id: number;
   property_id: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  sqft?: number;
-  lot_size?: number;
-  year_built?: number;
+  parcel_id?: string;
+  address?: string;
+  county?: string;
+  state?: string;
+  description?: string;
+  amount_due?: number;
+  occupancy?: string;
+  cs_number?: string;
+  property_type?: string;
+  status?: string;
+  availability_status?: string;
+  latitude?: number;
+  longitude?: number;
+  updated_at?: string;
+  created_at?: string;
 
+  // Financials
   estimated_value?: number;
   rental_value?: number;
-
-  state_parcel_id?: string;
-  account_number?: string;
-  attom_id?: string;
-
-  use_code?: string;
-  use_description?: string;
-  zoning?: string;
-  zoning_description?: string;
-  legal_description?: string;
-  subdivision?: string;
-
-  num_stories?: number;
-  num_units?: number;
-  structure_style?: string;
-  building_area_sqft?: number;
-
-  lot_acres?: number;
-
   assessed_value?: number;
   land_value?: number;
   improvement_value?: number;
   tax_amount?: number;
   tax_year?: number;
-  homestead_exemption?: boolean;
-  state?: string;
-  county?: string;
-  owner_address?: string;
 
+  // Owner
+  owner_address?: string;
+  alternate_owner_address?: string;
+
+  // Physical Attributes
+  bedrooms?: number;
+  bathrooms?: number;
+  sqft?: number;
+  lot_size?: number;
+  lot_acres?: number;
+  lot_sqft?: number;
+  year_built?: number;
+  num_stories?: number;
+  num_units?: number;
+  building_area_sqft?: number;
+  structure_style?: string;
+
+  // Identifiers
+  state_parcel_id?: string;
+  account_number?: string;
+  attom_id?: string;
+  pin_ppin?: string;
+  raw_parcel_number?: string;
+  county_fips?: string;
+  additional_parcel_numbers?: string;
+
+  // Classification
+  use_code?: string;
+  use_description?: string;
+  zoning?: string;
+  zoning_description?: string;
+  property_type_detail?: string;
+  legal_description?: string;
+  subdivision?: string;
+
+  // Status
+  homestead_exemption?: boolean;
+  is_qoz?: boolean;
+  is_processed?: boolean;
+  import_error_msg?: string;
+  state_inventory_entered_date?: string;
+  occupancy_checked_date?: string;
+  qoz_description?: string;
+
+  // Sale History
   last_sale_date?: string;
   last_sale_price?: number;
   last_transfer_date?: string;
 
+  // Flags & Misc
   flood_zone_code?: string;
-  is_qoz?: boolean;
-
   legal_tags?: string;
+  parcel_shape_data?: string;
+
+  // External Links
   market_value_url?: string;
   appraisal_desc?: string;
   regrid_url?: string;
@@ -179,30 +225,36 @@ export interface PropertyDetails {
   zillow_url?: string;
   gsi_url?: string;
   gsi_data?: string;
-  max_bid?: number;
-  availability_status?: string;
-
-  // Extended Details
-  alternate_owner_address?: string;
-  state_inventory_entered_date?: string;
-  qoz_description?: string;
-  parcel_shape_data?: string;
-  pin_ppin?: string;
-  raw_parcel_number?: string;
-  county_fips?: string;
-  additional_parcel_numbers?: string;
-  occupancy_checked_date?: string;
-
-  // V3 Extended Details
-  latitude?: number;
-  longitude?: number;
+  map_link?: string;
   redfin_url?: string;
   redfin_estimate?: number;
-  lot_sqft?: number;
+  max_bid?: number;
+
+  // Utilities
   sewer_type?: string;
   water_type?: string;
-  property_type_detail?: string;
-  import_error_msg?: string;
-  is_processed?: boolean;
-  map_link?: string;
+
+  // ML Score (returned by backend join)
+  deal_score?: number | null;
+  deal_rating?: string | null;
+  score_factors?: string[];
+  score_model_version?: string | null;
+  score_updated_at?: string | null;
+
+  // Runtime client data
+  notes?: string;
+  attachments?: any[];
+  recommended_next_steps?: any[];
+  auction_history?: any[];
+  owner_name?: string;
+}
+
+// Client Lists / Folders
+export interface ClientList {
+    id: number;
+    name: string;
+    property_count: number;
+    is_favorite_list: boolean;
+    is_broadcasted: boolean;
+    tags?: string;
 }
