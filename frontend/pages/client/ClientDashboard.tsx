@@ -234,27 +234,30 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = (
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {properties.slice(0, 4).map((p) => {
+            {properties.slice(0, 5).map((p) => {
               const score = calculateDealScore(p);
+              const displayRating = p.deal_rating || score.rating;
+              const displayScore = p.deal_score || score.score;
+
               return (
                 <div 
-                  key={p.id || p.parcel_id}
+                  key={p.parcel_id || p.id}
                   onClick={() => navigate(`/client/properties/${p.parcel_id || p.id}`)}
                   className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer group"
                 >
                   <div className={`size-12 rounded-lg flex flex-col items-center justify-center text-white font-black text-sm shadow-sm ${
-                    (p.deal_rating || score.rating).startsWith('A') ? 'bg-emerald-500' :
-                    (p.deal_rating || score.rating) === 'B' ? 'bg-blue-500' :
+                    displayRating.startsWith('A') ? 'bg-emerald-500' :
+                    displayRating === 'B' ? 'bg-blue-500' :
                     'bg-slate-400'
                   }`}>
-                    <span>{p.deal_rating || score.rating}</span>
+                    <span>{displayRating}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-slate-800 dark:text-white truncate group-hover:text-emerald-600">
-                      {p.title || p.address || 'Property Detail'}
+                      {p.address || p.parcel_id}
                     </p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                      {p.city}, {p.state} · ${p.amount_due ? p.amount_due.toLocaleString() : '—'}
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate uppercase tracking-widest font-bold">
+                      {p.county || 'Unknown County'}, {p.state}
                     </p>
                   </div>
                   <div className="text-right">
@@ -513,15 +516,19 @@ const ClientDashboard: React.FC = () => {
       setAllAuctions(generalRes.items);
 
       // 2. Fetch Top Scored Properties from DB (ML Engine Persistence)
-      const topScoredFromDb = await getTopScoredProperties(8);
+      const topScoredFromDb = await getTopScoredProperties(5);
       
-      if (topScoredFromDb.length > 0) {
-        setSuggestedDeals(topScoredFromDb as any);
+      const filteredDeals = (topScoredFromDb as any[]).filter(p => 
+        p.availability_status?.toLowerCase().trim() === 'available'
+      ).sort((a, b) => (b.deal_score || 0) - (a.deal_score || 0));
+
+      if (filteredDeals.length > 0) {
+        setSuggestedDeals(filteredDeals);
       } else {
         // Fallback to local rule-based recommendations if DB is empty
         const rawProperties = (propRes as any).items || propRes;
         if (Array.isArray(rawProperties)) {
-          const topDeals = recommendProperties(rawProperties, 8);
+          const topDeals = recommendProperties(rawProperties, 5);
           setSuggestedDeals(topDeals);
         }
       }

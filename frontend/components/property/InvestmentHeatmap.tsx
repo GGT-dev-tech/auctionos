@@ -22,7 +22,8 @@ export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ properties
         
         properties.forEach(p => {
             const state = p.state || 'Unknown';
-            const score = calculateDealScore(p).score;
+            // Important: Use persisted deal_score if available from the backend join
+            const score = p.deal_score || calculateDealScore(p).score;
             const current = stateMap.get(state) || { totalScore: 0, count: 0 };
             stateMap.set(state, {
                 totalScore: current.totalScore + score,
@@ -33,12 +34,12 @@ export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ properties
         const result: StateStat[] = Array.from(stateMap.entries()).map(([state, data]) => {
             const avgScore = Math.round(data.totalScore / data.count);
             let color = 'bg-amber-400';
-            if (avgScore > 75) color = 'bg-emerald-600';
-            else if (avgScore > 60) color = 'bg-emerald-500';
-            else if (avgScore > 40) color = 'bg-emerald-400';
+            if (avgScore > 85) color = 'bg-emerald-600';
+            else if (avgScore > 70) color = 'bg-emerald-500';
+            else if (avgScore > 50) color = 'bg-emerald-400';
 
             return {
-                name: state, // For simplicity, using code as name if mapping not present
+                name: state, 
                 code: state,
                 score: avgScore,
                 volume: data.count,
@@ -46,8 +47,8 @@ export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ properties
             };
         });
 
-        // Sort by volume or score? Let's do volume desc
-        return result.sort((a, b) => b.volume - a.volume).slice(0, 5);
+        // Sort by avg score first, then volume
+        return result.sort((a, b) => b.score - a.score || b.volume - a.volume);
     }, [properties]);
 
     // Fallback if no properties yet
