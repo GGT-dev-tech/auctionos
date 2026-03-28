@@ -479,6 +479,7 @@ const ClientDashboard: React.FC = () => {
   });
   const [stats, setStats] = useState({ deed: 0, foreclosure: 0, lien: 0 });
   const [suggestedDeals, setSuggestedDeals] = useState<Property[]>([]);
+  const [marketInventory, setMarketInventory] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = useCallback(async () => {
@@ -531,6 +532,12 @@ const ClientDashboard: React.FC = () => {
           const topDeals = recommendProperties(rawProperties, 5);
           setSuggestedDeals(topDeals);
         }
+      }
+
+      // 3. Set full inventory for the Heatmap
+      const allProps = (propRes as any).items || propRes;
+      if (Array.isArray(allProps)) {
+        setMarketInventory(allProps);
       }
 
     } catch (err) {
@@ -596,7 +603,7 @@ const ClientDashboard: React.FC = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <SuggestedDeals properties={suggestedDeals} loading={loading} />
         <InvestmentHeatmap 
-          properties={suggestedDeals} 
+          properties={marketInventory} 
           onStateClick={(code) => navigate(`/client/properties${code ? `?state=${code}` : ''}`)} 
         />
       </div>

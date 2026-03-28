@@ -21,7 +21,29 @@ export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ properties
         const stateMap = new Map<string, { totalScore: number; count: number }>();
         
         properties.forEach(p => {
-            const state = p.state || 'Unknown';
+            let state = p.state;
+            
+            // Fallback: Try to parse state from address if p.state is missing
+            if (!state && p.address) {
+                // Try to find 2 letters followed by a 5-digit zip code or a comma/space
+                // e.g., "Charlotte, NC 28202" or "Charlotte, NC"
+                const stateMatch = p.address.match(/\s([A-Z]{2})(?:\s\d{5}|,|$)/);
+                if (stateMatch) {
+                    state = stateMatch[1];
+                } else {
+                    // Try splitting by comma and looking at the second to last part
+                    const parts = p.address.split(',').map(s => s.trim());
+                    if (parts.length >= 2) {
+                        const statePart = parts[parts.length - 1].split(' ')[0];
+                        if (statePart && statePart.length === 2 && /^[A-Z]+$/.test(statePart)) {
+                            state = statePart;
+                        }
+                    }
+                }
+            }
+
+            if (!state) state = 'Unknown';
+            
             // Important: Use persisted deal_score if available from the backend join
             const score = p.deal_score || calculateDealScore(p).score;
             const current = stateMap.get(state) || { totalScore: 0, count: 0 };

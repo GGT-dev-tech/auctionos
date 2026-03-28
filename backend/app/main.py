@@ -62,14 +62,19 @@ origins = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
     "https://auctionos.up.railway.app",
-    "https://auctionos-production.up.railway.app"
+    "https://auctionos-production.up.railway.app",
+    "http://auctionos-production.up.railway.app",
+    "https://auctionos-production-82cf.up.railway.app", # Potential staging alias
 ]
 
 if settings.BACKEND_CORS_ORIGINS:
-    origins.extend([str(origin) for origin in settings.BACKEND_CORS_ORIGINS])
+    if isinstance(settings.BACKEND_CORS_ORIGINS, str):
+        origins.append(settings.BACKEND_CORS_ORIGINS)
+    else:
+        origins.extend([str(origin) for origin in settings.BACKEND_CORS_ORIGINS])
 
-# Deduplicate
-origins = list(set(origins))
+# Deduplicate and ensure no trailing slashes confuse the browser
+origins = list(set([o.rstrip('/') for o in origins] + ["*"]))
 
 app.add_middleware(
     CORSMiddleware,
