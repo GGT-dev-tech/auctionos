@@ -5,6 +5,7 @@ import { Box, Typography, Button, Dialog, DialogContent, IconButton } from '@mui
 import { useNavigate } from 'react-router-dom';
 import PropertyForm from './PropertyForm';
 import AvailabilityHistoryDashboard from './AvailabilityHistoryDashboard';
+import { calculateDealScore } from '../../intelligence/scoringEngine';
 
 interface PropertyListProps {
     filters?: any;
@@ -100,6 +101,28 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
     };
 
     const columns: GridColDef[] = [
+        {
+            field: 'deal_grade',
+            headerName: 'Grade',
+            width: 80,
+            renderCell: (params) => {
+                const score = calculateDealScore(params.row);
+                const rating = params.row.deal_rating || score.rating;
+                const colors: Record<string, string> = {
+                    'A+': 'bg-emerald-600 text-white',
+                    'A': 'bg-emerald-500 text-white',
+                    'B': 'bg-blue-500 text-white',
+                    'C': 'bg-amber-500 text-white',
+                    'D': 'bg-orange-500 text-white',
+                    'F': 'bg-red-500 text-white',
+                };
+                return (
+                    <div className={`px-2 py-0.5 rounded font-black text-[10px] ${colors[rating] || 'bg-slate-400 text-white'}`}>
+                        {rating}
+                    </div>
+                );
+            }
+        },
         { field: 'parcel_id', headerName: 'Parcel Number', width: 140 },
         { field: 'cs_number', headerName: 'C/S#', width: 90 },
         { field: 'account_number', headerName: 'PIN', width: 100 },

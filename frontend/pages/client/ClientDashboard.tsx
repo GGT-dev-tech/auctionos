@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuctionService } from '../../services/auction.service';
 import { PropertyService } from '../../services/property.service';
@@ -478,9 +478,28 @@ const ClientDashboard: React.FC = () => {
     deed: [], foreclosure: [], lien: []
   });
   const [stats, setStats] = useState({ deed: 0, foreclosure: 0, lien: 0 });
-  const [suggestedDeals, setSuggestedDeals] = useState<Property[]>([]);
-  const [marketInventory, setMarketInventory] = useState<Property[]>([]);
+  const [rawProperties, setRawProperties] = useState<Property[]>([]);
+  const [dbTopDeals, setDbTopDeals] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // ─── Reactive Data Pipeline ────────────────────────────────────────────────
+  
+  const marketInventory = useMemo(() => {
+    return rawProperties.filter(p => 
+      (p.availability_status || '').toLowerCase().trim() === 'available'
+    );
+  }, [rawProperties]);
+
+  const suggestedDeals = useMemo(() => {
+    // Priority 1: Persistent backend scores (if available)
+    if (dbTopDeals.length > 0) {
+      return dbTopDeals.filter(p => 
+        (p.availability_status || '').toLowerCase().trim() === 'available'
+      );
+    }
+    // Priority 2: Real-time local scoring fallback
+    return recommendProperties(marketInventory, 5);
+  }, [dbTopDeals, marketInventory]);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -494,7 +513,7 @@ const ClientDashboard: React.FC = () => {
         AuctionService.getAuctionEvents({ name: 'foreclosure', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
         AuctionService.getAuctionEvents({ name: 'lien', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
         AuctionService.getAuctionEvents({ startDate: today, endDate: future, limit: 100, skip: 0 }),
-        PropertyService.getProperties({ limit: 150, availability_status: 'available' }) // Guarantee active inventory
+        PropertyService.getProperties({ limit: 150, availability_status: 'available' })
       ]);
 
       // Merge and de-duplicate Deed items
@@ -516,28 +535,14 @@ const ClientDashboard: React.FC = () => {
 
       setAllAuctions(generalRes.items);
 
-      // 2. Fetch Top Scored Properties from DB (ML Engine Persistence)
-      const topScoredFromDb = await getTopScoredProperties(5);
-      
-      const filteredDeals = (topScoredFromDb as any[]).filter(p => 
-        p.availability_status?.toLowerCase().trim() === 'available'
-      ).sort((a, b) => (b.deal_score || 0) - (a.deal_score || 0));
+      // 2. Load Top Scored Properties from DB
+      const topScored = await getTopScoredProperties(5);
+      setDbTopDeals(topScored as any[]);
 
-      if (filteredDeals.length > 0) {
-        setSuggestedDeals(filteredDeals);
-      } else {
-        // Fallback to local rule-based recommendations if DB is empty
-        const rawProperties = (propRes as any).items || propRes;
-        if (Array.isArray(rawProperties)) {
-          const topDeals = recommendProperties(rawProperties, 5);
-          setSuggestedDeals(topDeals);
-        }
-      }
-
-      // 3. Set full inventory for the Heatmap
+      // 3. Load Raw Inventory
       const allProps = (propRes as any).items || propRes;
       if (Array.isArray(allProps)) {
-        setMarketInventory(allProps);
+        setRawProperties(allProps);
       }
 
     } catch (err) {

@@ -40,10 +40,9 @@ export const rankAuctions = (auctions: any[]): RankedAuction[] => {
 export const recommendProperties = (properties: Property[], limit: number = 5): Property[] => {
     // 1. Try strictly available properties first
     let candidates = properties.filter(p => {
-        const status = (p.availability_status || p.details?.availability_status || '').toLowerCase();
-        // If status is blank, we assume available for recommendation purposes unless strictly 'sold'
-        if (!status) return true;
-        return !status.includes('purchased') && !status.includes('sold') && !status.includes('unavailable');
+        const status = (p.availability_status || p.details?.availability_status || '').toLowerCase().trim();
+        // If status is blank, we assume it's possibly available but we prefer confirmed 'available'
+        return status === 'available';
     });
 
     // 2. Fallback: If no available properties, use the full list (show the best deals the system has)
