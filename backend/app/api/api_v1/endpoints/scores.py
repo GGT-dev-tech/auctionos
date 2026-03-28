@@ -137,7 +137,9 @@ def get_top_scores(
     """
     # Prefer status stored in property_scores, but fallback to property_details if null
     # This aligns the dashboard with the user requirement to only show available deals.
-    where_clauses = ["1=1", "LOWER(TRIM(COALESCE(s.status, p.availability_status))) = 'available'"]
+    # Strictly filter for 'available' status in the primary property table (source of truth)
+    # This ensures the dashboard recommendations are always actionable.
+    where_clauses = ["1=1", "LOWER(TRIM(p.availability_status)) = 'available'"]
     params: dict = {"limit": limit}
 
     if min_score is not None:

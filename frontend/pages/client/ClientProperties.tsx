@@ -8,21 +8,26 @@ const ClientProperties: React.FC = () => {
     const [searchParams] = useSearchParams();
     const [filters, setFilters] = useState<PropertyFilterParams>({});
 
-    // Sync URL params to filter state on mount
+    // Sync URL params to filter state ONLY on mount or when params explicitly change
+    // This prevents the feedback loop with the PropertyFilters child component.
     useEffect(() => {
         const stateParam = searchParams.get('state');
         const topParam = searchParams.get('top');
-        const initialFilters: PropertyFilterParams = {};
         
-        if (stateParam) initialFilters.state = stateParam;
-        if (topParam === 'true') {
-            initialFilters.min_score = 70; // Map 'top' to a high score threshold
-        }
+        if (!stateParam && topParam !== 'true') return;
+
+        const newFilters: PropertyFilterParams = {};
+        if (stateParam) newFilters.state = stateParam;
+        if (topParam === 'true') newFilters.min_score = 70;
         
-        if (Object.keys(initialFilters).length > 0) {
-            setFilters(prev => ({ ...prev, ...initialFilters }));
-        }
-    }, [searchParams]);
+        // Only update if current filters are empty (preventing mount-time recursive loops)
+        setFilters(prev => {
+            if (Object.keys(prev).length === 0) {
+                return { ...prev, ...newFilters };
+            }
+            return prev;
+        });
+    }, [searchParams]); // Stable dependency as searchParams is from useSearchParams hook
 
     const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '');
 

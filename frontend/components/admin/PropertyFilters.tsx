@@ -89,9 +89,15 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readO
         };
     }, [inputValue]);
 
+    // Call the onFilterChange only when debounced filters actually change
+    // and differ from the parent's current state.
     useEffect(() => {
-        onFilterChange(debouncedFilters);
-    }, [debouncedFilters, onFilterChange]);
+        // Simple functional equality check to break the feedback loop
+        const isEquivalent = JSON.stringify(debouncedFilters) === JSON.stringify(initialFilters);
+        if (!isEquivalent) {
+            onFilterChange(debouncedFilters);
+        }
+    }, [debouncedFilters, onFilterChange, initialFilters]);
 
     const handleChange = (key: keyof PropertyFilterParams, value: any) => {
         setFilters(prev => ({ ...prev, [key]: value || undefined }));
