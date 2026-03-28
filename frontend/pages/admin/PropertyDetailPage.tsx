@@ -21,7 +21,7 @@ import { PropertyMap } from '../../components/property/PropertyMap';
 import { PropertyNextSteps } from '../../components/property/PropertyNextSteps';
 import { PropertyContactInfo } from '../../components/property/PropertyContactInfo';
 import { PropertyInventoryHistory } from '../../components/property/PropertyInventoryHistory';
-import { PropertyEstimatesComps } from '../../components/property/PropertyEstimatesComps';
+
 
 interface PropertyDetailPageProps {
     readOnly?: boolean;
@@ -279,7 +279,6 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                         dealScore={localScore}
                     />
 
-                    <PropertyEstimatesComps property={property} />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <PropertyPurchaseOptions 
