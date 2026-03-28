@@ -198,7 +198,7 @@ def read_properties(
         FROM property_details p
         LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
         WHERE {where_str}
-        ORDER BY pah.auction_date ASC NULLS LAST 
+        ORDER BY pah.auction_date ASC NULLS LAST, p.parcel_id ASC
         OFFSET :skip LIMIT :limit
     """
     

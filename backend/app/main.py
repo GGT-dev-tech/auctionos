@@ -74,11 +74,12 @@ if settings.BACKEND_CORS_ORIGINS:
         origins.extend([str(origin) for origin in settings.BACKEND_CORS_ORIGINS])
 
 # Deduplicate and ensure no trailing slashes confuse the browser
-origins = list(set([o.rstrip('/') for o in origins] + ["*"]))
+origins = list(set([o.rstrip('/') for o in origins if o]))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex="https://auctionos.*\\.up\\.railway\\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
