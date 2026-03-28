@@ -20,6 +20,9 @@ class PropertyScore(Base):
     parcel_id = Column(String(100), primary_key=True, index=True, nullable=False)
     deal_score = Column(Float, nullable=False)
     rating = Column(String(5), nullable=False)           # A+, A, B, C, D, F
+    status = Column(String(50), nullable=True)            # available, sold, etc.
+    state = Column(String(50), nullable=True)
+    county = Column(String(100), nullable=True)
     score_factors = Column(Text, nullable=True)           # JSON-encoded list of factor strings
     model_version = Column(String(50), nullable=False, default="rule-based-v1")
     computed_at = Column(DateTime, nullable=False, default=datetime.utcnow)

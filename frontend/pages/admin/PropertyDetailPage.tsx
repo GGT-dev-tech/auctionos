@@ -70,10 +70,14 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
 
             // Auto-sync score to backend (silent, non-blocking)
             // Only compute if backend hasn't stored one yet
-            if (!data.deal_score) {
+            if (data?.parcel_id) {
                 const computed = calculateDealScore(data);
                 setLocalScore(computed);
-                submitScore(data.parcel_id, computed); // fire-and-forget
+                submitScore(data.parcel_id, computed, { 
+                    status: data.availability_status,
+                    state: data.state,
+                    county: data.county
+                }); // fire-and-forget
             } else {
                 // Use the stored backend score for display consistency
                 setLocalScore({

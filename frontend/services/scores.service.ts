@@ -39,7 +39,11 @@ const SCORES_URL = `${API_URL}/scores`;
  * Called automatically on property detail page load (non-blocking).
  * Errors are swallowed to ensure they never interrupt the user experience.
  */
-export const submitScore = async (parcelId: string, scoreResult: DealScoreResult): Promise<void> => {
+export const submitScore = async (
+    parcelId: string, 
+    scoreResult: DealScoreResult,
+    metadata?: { status?: string; state?: string; county?: string }
+): Promise<void> => {
     try {
         await fetch(`${SCORES_URL}/`, {
             method: 'POST',
@@ -48,6 +52,9 @@ export const submitScore = async (parcelId: string, scoreResult: DealScoreResult
                 parcel_id: parcelId,
                 deal_score: scoreResult.score,
                 rating: scoreResult.rating,
+                status: metadata?.status,
+                state: metadata?.state,
+                county: metadata?.county,
                 score_factors: scoreResult.factors,
                 model_version: 'rule-based-v1',
             }),

@@ -17,6 +17,9 @@ class ScoreSubmitRequest(BaseModel):
     parcel_id: str
     deal_score: float
     rating: str
+    status: Optional[str] = None
+    state: Optional[str] = None
+    county: Optional[str] = None
     score_factors: Optional[List[str]] = []
     model_version: Optional[str] = "rule-based-v1"
 
@@ -25,6 +28,9 @@ class ScoreResponse(BaseModel):
     parcel_id: str
     deal_score: float
     rating: str
+    status: Optional[str]
+    state: Optional[str]
+    county: Optional[str]
     score_factors: Optional[List[str]]
     model_version: str
     computed_at: Optional[datetime]
@@ -59,6 +65,9 @@ def upsert_score(
                     UPDATE property_scores
                     SET deal_score = :deal_score,
                         rating = :rating,
+                        status = :status,
+                        state = :state,
+                        county = :county,
                         score_factors = :score_factors,
                         model_version = :model_version,
                         updated_at = :updated_at
@@ -67,6 +76,9 @@ def upsert_score(
                 {
                     "deal_score": payload.deal_score,
                     "rating": payload.rating,
+                    "status": payload.status,
+                    "state": payload.state,
+                    "county": payload.county,
                     "score_factors": factors_json,
                     "model_version": payload.model_version,
                     "updated_at": now,
@@ -77,14 +89,17 @@ def upsert_score(
             db.execute(
                 text("""
                     INSERT INTO property_scores
-                        (parcel_id, deal_score, rating, score_factors, model_version, computed_at, updated_at)
+                        (parcel_id, deal_score, rating, status, state, county, score_factors, model_version, computed_at, updated_at)
                     VALUES
-                        (:parcel_id, :deal_score, :rating, :score_factors, :model_version, :computed_at, :updated_at)
+                        (:parcel_id, :deal_score, :rating, :status, :state, :county, :score_factors, :model_version, :computed_at, :updated_at)
                 """),
                 {
                     "parcel_id": payload.parcel_id,
                     "deal_score": payload.deal_score,
                     "rating": payload.rating,
+                    "status": payload.status,
+                    "state": payload.state,
+                    "county": payload.county,
                     "score_factors": factors_json,
                     "model_version": payload.model_version,
                     "computed_at": now,
@@ -116,15 +131,21 @@ def get_top_scores(
     Returns the top-N scored properties from the DB,
     joined with key property fields for dashboard display.
     Optionally filter by state or minimum score.
+    
+    Strictly filters for 'available' status to ensure suggested 
+    deals are actionable for the user.
     """
-    where_clauses = ["1=1", "p.availability_status NOT IN ('purchased', 'sold', 'not available')"]
+    # Prefer status stored in property_scores, but fallback to property_details if null
+    # This aligns the dashboard with the user requirement to only show available deals.
+    where_clauses = ["1=1", "COALESCE(s.status, p.availability_status) IN ('available', 'AVAILABLE')"]
     params: dict = {"limit": limit}
 
     if min_score is not None:
         where_clauses.append("s.deal_score >= :min_score")
         params["min_score"] = min_score
     if state:
-        where_clauses.append("p.state ILIKE :state")
+        # Prefer the direct state property if possible
+        where_clauses.append("(s.state ILIKE :state OR p.state ILIKE :state)")
         params["state"] = f"%{state}%"
 
     where_str = " AND ".join(where_clauses)
@@ -138,11 +159,11 @@ def get_top_scores(
             s.model_version,
             s.updated_at,
             p.address,
-            p.county,
-            p.state,
+            COALESCE(s.county, p.county) as county,
+            COALESCE(s.state, p.state) as state,
             p.amount_due,
             p.assessed_value,
-            p.availability_status,
+            COALESCE(s.status, p.availability_status) as availability_status,
             p.property_type,
             p.lot_acres,
             p.improvement_value,
