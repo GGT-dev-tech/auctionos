@@ -5,7 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 
 import { PropertyBasicInfo } from '../components/property/PropertyBasicInfo';
 import { PropertyPurchaseOptions } from '../components/property/PropertyPurchaseOptions';
-import { PropertyComps } from '../components/property/PropertyComps';
+import { PropertyEstimatesComps } from '../components/property/PropertyEstimatesComps';
 import { PropertyResearchLinks } from '../components/property/PropertyResearchLinks';
 import { PropertyUserActions } from '../components/property/PropertyUserActions';
 import { PropertyFinancialsModal } from '../components/property/PropertyFinancialsModal';
@@ -61,7 +61,7 @@ const PropertyDetails: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <PropertyPurchaseOptions property={property} />
-                        <PropertyComps property={property} />
+                        <PropertyEstimatesComps property={property} />
                     </div>
 
                     <div className="bg-white dark:bg-slate-800 rounded-xl p-1 shadow-sm border border-slate-200 dark:border-slate-700 h-[400px] overflow-hidden">

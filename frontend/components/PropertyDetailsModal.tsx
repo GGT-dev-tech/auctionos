@@ -5,7 +5,7 @@ import { PropertyService } from '../services/property.service';
 
 import { PropertyBasicInfo } from './property/PropertyBasicInfo';
 import { PropertyPurchaseOptions } from './property/PropertyPurchaseOptions';
-import { PropertyComps } from './property/PropertyComps';
+import { PropertyEstimatesComps } from './property/PropertyEstimatesComps';
 import { PropertyResearchLinks } from './property/PropertyResearchLinks';
 import { PropertyUserActions } from './property/PropertyUserActions';
 import { PropertyFinancialsModal } from './property/PropertyFinancialsModal';
@@ -102,7 +102,7 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
 
                         <div className="grid grid-cols-1 gap-6">
                             <PropertyPurchaseOptions property={property} />
-                            <PropertyComps property={property} />
+                            <PropertyEstimatesComps property={property} />
                         </div>
 
                         <div className="bg-slate-100 dark:bg-slate-800 rounded-xl h-[300px] overflow-hidden border border-slate-200 dark:border-slate-700">
