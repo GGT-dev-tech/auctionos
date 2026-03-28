@@ -7,7 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { recommendProperties, rankAuctions } from '../../intelligence/rankingEngine';
 import { calculateDealScore } from '../../intelligence/scoringEngine';
 import { InvestmentHeatmap } from '../../components/property/InvestmentHeatmap';
-import { getTopScoredProperties } from '../../services/scores.service';
+import { getTopScoredProperties, getStateStats, StateStat } from '../../services/scores.service';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -480,6 +480,7 @@ const ClientDashboard: React.FC = () => {
   const [stats, setStats] = useState({ deed: 0, foreclosure: 0, lien: 0 });
   const [rawProperties, setRawProperties] = useState<Property[]>([]);
   const [dbTopDeals, setDbTopDeals] = useState<Property[]>([]);
+  const [stateStats, setStateStats] = useState<StateStat[]>([]);
   const [loading, setLoading] = useState(true);
 
   // ─── Reactive Data Pipeline ────────────────────────────────────────────────
@@ -503,17 +504,20 @@ const ClientDashboard: React.FC = () => {
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const future = new Date(Date.now() + 365 * 86_400_000).toISOString().split('T')[0];
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      
+      // Look back 7 days to capture still-active auctions that started recently
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000).toISOString().split('T')[0];
+      const future = new Date(now.getTime() + 365 * 86_400_000).toISOString().split('T')[0];
 
       // 1. Fetch real counts and dedicated slices for each type
-      const [deedRes, sheriffRes, foreRes, lienRes, generalRes, propRes] = await Promise.all([
-        AuctionService.getAuctionEvents({ name: 'deed', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
-        AuctionService.getAuctionEvents({ name: 'sheriff', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
-        AuctionService.getAuctionEvents({ name: 'foreclosure', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
-        AuctionService.getAuctionEvents({ name: 'lien', startDate: today, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
-        AuctionService.getAuctionEvents({ startDate: today, endDate: future, limit: 100, skip: 0 }),
-        PropertyService.getProperties({ limit: 150, availability_status: 'available' })
+      const [deedRes, sheriffRes, foreRes, lienRes, generalRes] = await Promise.all([
+        AuctionService.getAuctionEvents({ name: 'deed', startDate: sevenDaysAgo, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
+        AuctionService.getAuctionEvents({ name: 'sheriff', startDate: sevenDaysAgo, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
+        AuctionService.getAuctionEvents({ name: 'foreclosure', startDate: sevenDaysAgo, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
+        AuctionService.getAuctionEvents({ name: 'lien', startDate: sevenDaysAgo, limit: 100, sortBy: 'parcels_count', order: 'desc' }),
+        AuctionService.getAuctionEvents({ startDate: sevenDaysAgo, endDate: future, limit: 100, skip: 0 })
       ]);
 
       // Merge and de-duplicate Deed items
@@ -539,10 +543,17 @@ const ClientDashboard: React.FC = () => {
       const topScored = await getTopScoredProperties(5);
       setDbTopDeals(topScored as any[]);
 
-      // 3. Load Raw Inventory
-      const allProps = (propRes as any).items || propRes;
-      if (Array.isArray(allProps)) {
-        setRawProperties(allProps);
+      // 3. Load Regional Aggregated Stats (Heatmap)
+      const stats = await getStateStats();
+      setStateStats(stats);
+
+      // 4. Fallback: Only fetch raw properties if recommendations are empty
+      if (topScored.length === 0) {
+        const propRes = await PropertyService.getProperties({ limit: 50, availability_status: 'available' });
+        const allProps = (propRes as any).items || propRes;
+        if (Array.isArray(allProps)) {
+          setRawProperties(allProps);
+        }
       }
 
     } catch (err) {
@@ -608,8 +619,8 @@ const ClientDashboard: React.FC = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <SuggestedDeals properties={suggestedDeals} loading={loading} />
         <InvestmentHeatmap 
-          properties={marketInventory} 
-          onStateClick={(code) => navigate(`/client/properties${code ? `?state=${code}` : ''}`)} 
+          stats={stateStats}
+          onStateClick={(code) => code ? navigate(`/client/properties?state=${code}`) : navigate('/client/properties')} 
         />
       </div>
 

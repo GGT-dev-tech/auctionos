@@ -105,6 +105,30 @@ export const getTopScoredProperties = async (
 };
 
 /**
+ * Fetches pre-aggregated statistics categorized by state.
+ * This handles the heavy lifting on the backend to avoid looping through
+ * thousands of properties on the client.
+ */
+export interface StateStat {
+    state_code: string;
+    volume: number;
+    average_score: number;
+}
+
+export const getStateStats = async (): Promise<StateStat[]> => {
+    try {
+        const res = await fetch(`${SCORES_URL}/stats/state`, {
+            headers: getHeaders(),
+        });
+        if (!res.ok) return [];
+        return await res.json();
+    } catch {
+        return [];
+    }
+};
+
+
+/**
  * Fetches the paginated full score list (admin analytics).
  */
 export const listScores = async (skip = 0, limit = 100): Promise<StoredScore[]> => {

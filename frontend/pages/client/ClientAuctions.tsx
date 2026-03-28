@@ -54,7 +54,7 @@ const ClientAuctions: React.FC = () => {
             </Box>
 
             {hasActiveFilters && (
-                <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="w-full animate-in fade-in duration-500">
                     <Typography variant="h6" className="font-bold text-slate-800 dark:text-white mb-4">
                         Search Results
                     </Typography>

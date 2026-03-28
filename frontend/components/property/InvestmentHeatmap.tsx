@@ -1,80 +1,42 @@
 import React, { useMemo } from 'react';
 import { Typography } from '@mui/material';
-import { Property } from '../../types';
-import { calculateDealScore } from '../../intelligence/scoringEngine';
+import { StateStat as StateStatData } from '../../services/scores.service';
 
-interface StateStat {
-    name: string;
-    code: string;
-    score: number;
-    volume: number;
+interface StateStat extends StateStatData {
     color: string;
 }
 
 interface InvestmentHeatmapProps {
-    properties: Property[];
+    stats: StateStatData[];
     onStateClick?: (stateCode: string) => void;
 }
 
-export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ properties, onStateClick }) => {
-    const stats = useMemo(() => {
-        const stateMap = new Map<string, { totalScore: number; count: number }>();
-        
-        properties.forEach(p => {
-            let state = p.state;
-            
-            // Fallback: Try to parse state from address if p.state is missing
-            if (!state && p.address) {
-                // More permissive regex to find any 2 caps letters surrounded by word boundaries OR following a city-like pattern
-                // Search from end to start to find the most likely state code
-                const matches = p.address.match(/\b[A-Z]{2}\b/g);
-                if (matches && matches.length > 0) {
-                    // Usually the state is the last or second to last capitalized 2-letter word (near Zip)
-                    state = matches[matches.length - 1];
-                    // Skip if it looks like a common abbreviation for St, Dr, Rd if possible
-                    if (['ST', 'DR', 'RD', 'PL', 'AV', 'LN'].includes(state)) {
-                        if (matches.length > 1) state = matches[matches.length - 2];
-                    }
-                }
-            }
-
-            if (!state) state = 'Unknown';
-            
-            // Important: Use persisted deal_score if available from the backend join
-            const score = p.deal_score || calculateDealScore(p).score;
-            const current = stateMap.get(state) || { totalScore: 0, count: 0 };
-            stateMap.set(state, {
-                totalScore: current.totalScore + score,
-                count: current.count + 1
-            });
-        });
-
-        const result: StateStat[] = Array.from(stateMap.entries()).map(([state, data]) => {
-            const avgScore = Math.round(data.totalScore / data.count);
+export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ stats: rawStats, onStateClick }) => {
+    const displayStats = useMemo(() => {
+        const mapped = rawStats.map(s => {
             let color = 'bg-amber-400';
-            if (avgScore > 85) color = 'bg-emerald-600';
-            else if (avgScore > 70) color = 'bg-emerald-500';
-            else if (avgScore > 50) color = 'bg-emerald-400';
+            if (s.average_score > 85) color = 'bg-emerald-600';
+            else if (s.average_score > 70) color = 'bg-emerald-500';
+            else if (s.average_score > 50) color = 'bg-emerald-400';
 
             return {
-                name: state, 
-                code: state,
-                score: avgScore,
-                volume: data.count,
+                name: s.state_code,
+                code: s.state_code,
+                score: Math.round(s.average_score),
+                volume: s.volume,
                 color
             };
         });
 
-        // Sort by avg score first, then volume
-        return result.sort((a, b) => b.score - a.score || b.volume - a.volume);
-    }, [properties]);
+        if (mapped.length > 0) return mapped;
 
-    // Fallback if no properties yet
-    const displayStats = stats.length > 0 ? stats : [
-        { name: 'OH', code: 'OH', score: 85, volume: 12, color: 'bg-emerald-500' },
-        { name: 'FL', code: 'FL', score: 72, volume: 8, color: 'bg-emerald-400' },
-        { name: 'GA', code: 'GA', score: 65, volume: 4, color: 'bg-emerald-300' }
-    ];
+        // Fallback static data if no live stats are available
+        return [
+            { name: 'NC', code: 'NC', score: 85, volume: 12, color: 'bg-emerald-500' },
+            { name: 'FL', code: 'FL', score: 72, volume: 8, color: 'bg-emerald-400' },
+            { name: 'GA', code: 'GA', score: 65, volume: 4, color: 'bg-emerald-300' }
+        ];
+    }, [rawStats]);
 
     return (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm h-full flex flex-col overflow-hidden">

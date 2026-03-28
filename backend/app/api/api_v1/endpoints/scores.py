@@ -229,6 +229,39 @@ def get_score(
     }
 
 
+@router.get("/stats/state", response_model=List[dict])
+def get_state_stats(
+    db: Session = Depends(deps.get_db),
+) -> Any:
+    """
+    Returns aggregated deal quality and volume statistics per state.
+    This replaces the expensive client-side looping logic for the Heatmap.
+    """
+    query = text("""
+        SELECT 
+            p.state as state_code,
+            COUNT(*) as volume,
+            AVG(COALESCE(s.deal_score, 0)) as avg_score
+        FROM property_details p
+        LEFT JOIN property_scores s ON p.parcel_id = s.parcel_id
+        WHERE LOWER(TRIM(p.availability_status)) = 'available'
+          AND p.state IS NOT NULL
+        GROUP BY 1
+        ORDER BY volume DESC
+    """)
+
+    results = db.execute(query).fetchall()
+
+    return [
+        {
+            "state_code": r[0].upper() if r[0] else "Unknown",
+            "volume": r[1],
+            "average_score": float(r[2]) if r[2] is not None else 0.0,
+        }
+        for r in results
+    ]
+
+
 @router.get("/", response_model=List[dict])
 def list_scores(
     db: Session = Depends(deps.get_db),

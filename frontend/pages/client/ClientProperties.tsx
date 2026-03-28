@@ -38,7 +38,7 @@ const ClientProperties: React.FC = () => {
             />
             
             {hasActiveFilters ? (
-                <div className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl animate-in fade-in duration-500">
                     <PropertyList filters={filters} readOnly={true} />
                 </div>
             ) : (
