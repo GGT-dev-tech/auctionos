@@ -148,53 +148,48 @@ export const PropertyEstimatesComps: React.FC<Props> = ({ property }) => {
     return (
         <>
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-5">
-                    <span className="material-symbols-outlined text-violet-500 text-lg">insights</span>
-                    Estimates & Comparables
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[20px] text-blue-500">analytics</span>
+                    Estimates & Comps
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* ARV Card */}
-                    <button
+                    <button 
                         onClick={() => setArvOpen(true)}
-                        className="group relative overflow-hidden flex flex-col items-start p-5 rounded-xl border border-violet-100 dark:border-violet-900/50 bg-violet-50/50 dark:bg-violet-900/10 hover:bg-violet-100/70 dark:hover:bg-violet-900/20 transition-all hover:shadow-md active:scale-[0.98] text-left"
+                        className="flex flex-col items-start p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-blue-300 dark:hover:border-blue-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all text-left group h-full relative"
                     >
-                        <div className="flex items-center justify-between w-full mb-4">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-violet-400">Estimated ARV</span>
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Estimated ARV</span>
+                        <span className="text-2xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                            {hasData ? `$${arvEstimate.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : 'N/A'}
+                        </span>
+                        <div className="mt-1 flex items-center gap-2">
                             <ConfidenceBadge confidence={arvEstimate.confidence} />
                         </div>
-                        <div className="text-2xl font-black text-violet-700 dark:text-violet-300">
-                            {hasData ? `$${arvEstimate.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : 'N/A'}
-                        </div>
-                        <div className="text-[10px] text-violet-500 mt-2 italic">{arvEstimate.calculationMethod}</div>
-                        <div className="absolute bottom-3 right-4 flex items-center gap-1 text-[10px] font-black text-violet-500 group-hover:text-violet-700 transition-colors">
-                            View Comps <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                        </div>
+                        <span className="text-xs text-slate-400 mt-auto pt-4 flex items-center gap-1">
+                            View Comp Logic <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                        </span>
                     </button>
 
                     {/* Rent Card */}
-                    <button
+                    <button 
                         onClick={() => setRentOpen(true)}
-                        className="group relative overflow-hidden flex flex-col items-start p-5 rounded-xl border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-900/10 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/20 transition-all hover:shadow-md active:scale-[0.98] text-left"
+                        className="flex flex-col items-start p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all text-left group h-full relative"
                     >
-                        <div className="flex items-center justify-between w-full mb-4">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Estimated Rent</span>
-                            <ConfidenceBadge confidence={rentEstimate.confidence} />
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Estimated Rent</span>
+                        <span className="text-2xl font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+                            {rentEstimate.monthlyRent > 0 ? `$${rentEstimate.monthlyRent.toLocaleString()}/mo` : 'N/A'}
+                        </span>
+                        <div className="mt-1 flex items-center gap-2">
+                            {rentEstimate.yieldPercentage > 0 && (
+                                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                    {rentEstimate.yieldPercentage.toFixed(1)}% Yield
+                                </span>
+                            )}
                         </div>
-                        <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
-                            {rentEstimate.monthlyRent > 0
-                                ? `$${rentEstimate.monthlyRent.toLocaleString()}/mo`
-                                : 'N/A'}
-                        </div>
-                        {rentEstimate.yieldPercentage > 0 && (
-                            <div className="text-xs font-bold text-emerald-600 mt-1">
-                                {rentEstimate.yieldPercentage.toFixed(1)}% yield on taxes due
-                            </div>
-                        )}
-                        <div className="text-[10px] text-emerald-500 mt-2 italic">{rentEstimate.calculationMethod}</div>
-                        <div className="absolute bottom-3 right-4 flex items-center gap-1 text-[10px] font-black text-emerald-500 group-hover:text-emerald-700 transition-colors">
-                            View Comps <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                        </div>
+                        <span className="text-xs text-slate-400 mt-auto pt-4 flex items-center gap-1">
+                            View Rent Report <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                        </span>
                     </button>
                 </div>
 
@@ -228,13 +223,13 @@ export const PropertyEstimatesComps: React.FC<Props> = ({ property }) => {
             {/* ARV Modal */}
             <Modal isOpen={arvOpen} onClose={() => setArvOpen(false)} title="Comparable Sales Report" size="2xl">
                 <div className="space-y-5">
-                    <div className="flex items-center justify-between p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-100 dark:border-violet-900/50">
+                    <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/50">
                         <div>
-                            <p className="text-[10px] font-black text-violet-400 uppercase tracking-widest mb-1">Estimated ARV (After Repair Value)</p>
-                            <p className="text-3xl font-black text-violet-700 dark:text-violet-300">
+                            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Estimated ARV (After Repair Value)</p>
+                            <p className="text-3xl font-black text-blue-700 dark:text-blue-300">
                                 {hasData ? `$${arvEstimate.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : 'Insufficient Data'}
                             </p>
-                            <p className="text-xs text-violet-500 mt-1 italic">{arvEstimate.calculationMethod}</p>
+                            <p className="text-xs text-blue-500 mt-1 italic">{arvEstimate.calculationMethod}</p>
                         </div>
                         <ConfidenceBadge confidence={arvEstimate.confidence} />
                     </div>

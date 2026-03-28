@@ -12,7 +12,6 @@ import { submitScore } from '../../services/scores.service';
 
 import { PropertyBasicInfo } from '../../components/property/PropertyBasicInfo';
 import { PropertyPurchaseOptions } from '../../components/property/PropertyPurchaseOptions';
-import { PropertyComps } from '../../components/property/PropertyComps';
 import { PropertyResearchLinks } from '../../components/property/PropertyResearchLinks';
 import { PropertyUserActions } from '../../components/property/PropertyUserActions';
 import { PropertyFinancialsModal } from '../../components/property/PropertyFinancialsModal';
@@ -281,14 +280,13 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
 
                     <PropertyEstimatesComps property={property} />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-8">
                         <PropertyPurchaseOptions 
                             property={property} 
                             readOnly={readOnly}
                             actionLoading={actionLoading}
                             onSimulatePurchase={handlePurchaseOnline}
                         />
-                        <PropertyComps property={property} />
                     </div>
 
                     <PropertyMap property={property} />
