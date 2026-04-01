@@ -35,11 +35,13 @@ const ClientProperties: React.FC = () => {
             <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
                 Property Search
             </Typography>
-            <PropertyFilters 
-                onFilterChange={setFilters} 
-                readOnly={true} 
-                initialFilters={filters}
-            />
+            <div className="sticky top-0 z-40 pt-2 pb-1 bg-[#F8FAFC] dark:bg-slate-950/80 backdrop-blur-md -mx-4 px-4 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
+                <PropertyFilters 
+                    onFilterChange={setFilters} 
+                    readOnly={true} 
+                    initialFilters={filters}
+                />
+            </div>
             
             {hasActiveFilters ? (
                 <div className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl min-h-[800px]">

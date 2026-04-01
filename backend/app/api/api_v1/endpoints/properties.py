@@ -18,6 +18,9 @@ def read_properties(
     county: Optional[str] = None,
     state: Optional[str] = None,
     auction_name: Optional[str] = None,
+    auction_date: Optional[str] = None,
+    sort_field: Optional[str] = None,
+    sort_order: Optional[str] = "asc",
     min_amount_due: Optional[float] = None,
     max_amount_due: Optional[float] = None,
     property_category: Optional[str] = None,
@@ -53,6 +56,9 @@ def read_properties(
     if auction_name:
         where_clauses.append("pah.auction_name ILIKE :auction_name")
         params["auction_name"] = f"%{auction_name}%"
+    if auction_date:
+        where_clauses.append("pah.auction_date = :auction_date::date")
+        params["auction_date"] = auction_date
     if min_amount_due is not None:
         where_clauses.append("p.amount_due >= :min_amount_due")
         params["min_amount_due"] = min_amount_due
@@ -201,10 +207,42 @@ def read_properties(
         FROM property_details p
         LEFT JOIN {history_subquery} pah ON pah.property_id = p.property_id
         WHERE {where_str}
-        ORDER BY pah.auction_date ASC NULLS LAST, p.parcel_id ASC
+        ORDER BY {"{order_by_clause}"}
         OFFSET :skip LIMIT :limit
     """
     
+    # Ensure safe ordering
+    sort_map = {
+        "deal_grade": "p.assessed_value", 
+        "parcel_id": "p.parcel_id",
+        "cs_number": "p.cs_number",
+        "account_number": "p.account_number",
+        "owner_address": "p.owner_address",
+        "county": "p.county",
+        "state_code": "p.state",
+        "availability_status": "p.availability_status",
+        "tax_year": "p.tax_year",
+        "amount_due": "p.amount_due",
+        "lot_acres": "p.lot_acres",
+        "assessed_value": "p.assessed_value",
+        "land_value": "p.land_value",
+        "improvement_value": "p.improvement_value",
+        "property_type": "p.property_type",
+        "address": "p.address",
+        "auction_name": "pah.auction_name",
+        "auction_date": "pah.auction_date",
+        "occupancy": "p.occupancy"
+    }
+
+    order_by_clause = "pah.auction_date ASC NULLS LAST, p.parcel_id ASC"
+    if sort_field and sort_field in sort_map:
+        safe_col = sort_map[sort_field]
+        safe_dir = "DESC" if sort_order and sort_order.lower() == "desc" else "ASC"
+        order_by_clause = f"{safe_col} {safe_dir} NULLS LAST, p.parcel_id ASC"
+
+    # Format the query with the safe order_by_clause
+    items_query = items_query.format(order_by_clause=order_by_clause)
+
     result = db.execute(text(items_query), params).fetchall()
     
     items = [

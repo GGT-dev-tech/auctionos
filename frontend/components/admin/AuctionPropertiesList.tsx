@@ -7,10 +7,11 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 interface AuctionPropertiesListProps {
     auctionName: string;
+    auctionDate?: string;
     onClose?: () => void;
 }
 
-const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionName, onClose }) => {
+const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionName, auctionDate, onClose }) => {
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [rowCount, setRowCount] = useState(0);
@@ -33,6 +34,9 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
 
             // Fetch properties specifically for this auction
             const params: any = { auction_name: auctionName, limit, skip };
+            if (auctionDate) {
+                params.auction_date = auctionDate;
+            }
 
             filterModel.items.forEach(item => {
                 if (item.value === undefined || item.value === null || item.value === '') return;

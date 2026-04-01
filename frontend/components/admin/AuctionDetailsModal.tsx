@@ -33,7 +33,8 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
     if (!eventData) return null;
 
     const props = eventData.extendedProps;
-    const dateStr = eventData.start ? new Date(eventData.start).toLocaleDateString() : '';
+    const dateStr = eventData.start ? new Date(eventData.start).toLocaleDateString(undefined, { timeZone: 'UTC' }) : '';
+    const rawDate = eventData.startStr ? eventData.startStr.split('T')[0] : (eventData.start ? new Date(eventData.start).toISOString().split('T')[0] : undefined);
     const timeStr = eventData.start ? new Date(eventData.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
     const cleanAuctionName = eventData.title.replace(/\(\d+\)$/, '').trim();
 
@@ -57,6 +58,7 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
                 {showProperties ? (
                     <AuctionPropertiesList
                         auctionName={cleanAuctionName}
+                        auctionDate={rawDate}
                         onClose={() => setShowProperties(false)}
                     />
                 ) : (

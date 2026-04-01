@@ -24,6 +24,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
         pageSize: 50,
     });
     const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
+    const [sortModel, setSortModel] = useState<any[]>([{ field: 'auction_date', sort: 'asc' }]);
 
     const fetchProperties = async () => {
         setLoading(true);
@@ -32,6 +33,11 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
             const limit = paginationModel.pageSize;
 
             const params: any = { ...filters, limit, skip };
+            
+            if (sortModel.length > 0) {
+                params.sort_field = sortModel[0].field;
+                params.sort_order = sortModel[0].sort;
+            }
 
             // Apply DataGrid server-side column filters
             filterModel.items.forEach(item => {
@@ -83,7 +89,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
 
     useEffect(() => {
         fetchProperties();
-    }, [filters, paginationModel, filterModel]);
+    }, [filters, paginationModel, filterModel, sortModel]);
 
     const handleEditClick = (row: any) => {
         setEditRow(row);
@@ -251,9 +257,9 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
                     onPaginationModelChange={setPaginationModel}
                     filterModel={filterModel}
                     onFilterModelChange={setFilterModel}
-                    initialState={{
-                        sorting: { sortModel: [{ field: 'auction_date', sort: 'asc' }] }
-                    }}
+                    sortingMode="server"
+                    sortModel={sortModel}
+                    onSortModelChange={setSortModel}
                     pageSizeOptions={[20, 50, 100]}
                     disableRowSelectionOnClick
                     density="compact"
