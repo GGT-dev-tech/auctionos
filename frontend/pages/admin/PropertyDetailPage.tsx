@@ -21,6 +21,7 @@ import { PropertyNextSteps } from '../../components/property/PropertyNextSteps';
 import { PropertyContactInfo } from '../../components/property/PropertyContactInfo';
 import { PropertyInventoryHistory } from '../../components/property/PropertyInventoryHistory';
 import { PropertyEstimatesComps } from '../../components/property/PropertyEstimatesComps';
+import { RedemptionDisclaimerCard } from '../../components/property/RedemptionDisclaimerCard';
 
 interface PropertyDetailPageProps {
     readOnly?: boolean;
@@ -288,6 +289,8 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                             onSimulatePurchase={handlePurchaseOnline}
                         />
                     </div>
+
+                    <RedemptionDisclaimerCard state={property.state} auctionType={property.auction_type} />
 
                     <PropertyMap property={property} />
 

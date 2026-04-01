@@ -22,6 +22,7 @@ import {
 } from '@mui/icons-material';
 import AuctionPropertiesList from './AuctionPropertiesList';
 import { AdminService } from '../../services/admin.service';
+import { RedemptionDisclaimerCard } from '../property/RedemptionDisclaimerCard';
 
 interface AuctionDetailsModalProps {
     open: boolean;
@@ -115,6 +116,8 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
                         )}
 
                         <Divider sx={{ my: 2 }} />
+
+                        <RedemptionDisclaimerCard state={props.state} auctionType={props.tax_status} />
 
                         <Typography variant="subtitle2" color="textSecondary" className="mb-2">Official Links</Typography>
                         <Box className="flex flex-col gap-2">
