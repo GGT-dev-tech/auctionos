@@ -241,6 +241,68 @@ export interface PropertyDetails {
   score_model_version?: string | null;
   score_updated_at?: string | null;
 
+  // ==== NEW ATTOM FIELDS ==== //
+  // Metadata & Parcels
+  publishing_date?: string;
+  apn_unformatted?: string;
+  apn_previous?: string;
+  fips_code?: string;
+  county_land_use_code?: string;
+  county_land_use_description?: string;
+  standardized_land_use_category?: string;
+  standardized_land_use_type?: string;
+  lot_number?: string;
+  municipality?: string;
+  section_township_range?: string;
+
+  // Structure & Building
+  effective_year_built?: number;
+  stories?: string;
+  rooms_count?: number;
+  partial_baths_count?: number;
+  parking_type?: string;
+  parking_spaces_count?: number;
+  pool_type?: string;
+  architecture_type?: string;
+  construction_type?: string;
+  exterior_wall_type?: string;
+  foundation_type?: string;
+  roof_material_type?: string;
+  roof_style_type?: string;
+  heating_type?: string;
+  heating_fuel_type?: string;
+  air_conditioning_type?: string;
+  fireplaces?: string;
+  basement_type?: string;
+  quality?: string;
+  condition?: string;
+
+  // Valuations
+  market_land_value?: number;
+  market_improvement_value?: number;
+  market_total_value?: number;
+  proprietary_value?: number;
+  proprietary_value_high?: number;
+  proprietary_value_low?: number;
+  proprietary_forecast_std_dev?: number;
+  proprietary_valuation_date?: string;
+
+  // Owner
+  owner_second_name?: string;
+  owner_formatted_street_address?: string;
+  owner_city?: string;
+  owner_zip_code?: string;
+  owner_occupied?: string;
+
+  // Complex Features / JSONB
+  other_areas?: any;
+  other_features?: any;
+  other_improvements?: any;
+  other_rooms?: any;
+  amenities?: any;
+  flooring_types?: string[];
+  // ========================== //
+
   // Runtime client data
   notes?: string;
   attachments?: any[];

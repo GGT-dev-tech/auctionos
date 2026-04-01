@@ -119,6 +119,8 @@ export const PropertyMetadataModal: React.FC<Props> = ({ property, isOpen, onClo
                         <DataRow label="Flood Zone" value={d.flood_zone_code} />
                         <DataRow label="Opportunity Zone" value={property.is_qoz} />
                         <DataRow label="ATTOM ID" value={d.attom_id} />
+                        <DataRow label="APN (Unformatted)" value={d.apn_unformatted} copyable={true} />
+                        <DataRow label="APN (Previous)" value={d.apn_previous} />
                     </div>
                 </section>
             </div>
@@ -130,8 +132,13 @@ export const PropertyMetadataModal: React.FC<Props> = ({ property, isOpen, onClo
                         <span className="material-symbols-outlined text-[12px]">verified</span> Verified Data
                     </span>
                     <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[12px]">schedule</span> Last Update: {property.updated_at ? new Date(property.updated_at).toLocaleDateString() : 'N/A'}
+                        <span className="material-symbols-outlined text-[12px]">schedule</span> Sys Update: {property.updated_at ? new Date(property.updated_at).toLocaleDateString() : 'N/A'}
                     </span>
+                    {d.publishing_date && (
+                        <span className="flex items-center gap-1 text-blue-500/80">
+                            <span className="material-symbols-outlined text-[12px]">update</span> Data Date: {new Date(d.publishing_date).toLocaleDateString()}
+                        </span>
+                    )}
                 </div>
             </div>
         </Modal>

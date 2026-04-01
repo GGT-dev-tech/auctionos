@@ -11,6 +11,8 @@ import { PropertyUserActions } from '../components/property/PropertyUserActions'
 import { PropertyFinancialsModal } from '../components/property/PropertyFinancialsModal';
 import { PropertyMetadataModal } from '../components/property/PropertyMetadataModal';
 import PropertyMap from '../components/PropertyMap';
+import { PropertyExtendedTabs } from '../components/property/PropertyExtendedTabs';
+import { PropertyOwnerCard } from '../components/property/PropertyOwnerCard';
 
 const PropertyDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -64,13 +66,16 @@ const PropertyDetails: React.FC = () => {
                         <PropertyEstimatesComps property={property} />
                     </div>
 
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-1 shadow-sm border border-slate-200 dark:border-slate-700 h-[400px] overflow-hidden">
+                    <PropertyExtendedTabs property={property} />
+
+                    <div className="bg-white dark:bg-slate-800 rounded-xl p-1 shadow-sm border border-slate-200 dark:border-slate-700 h-[400px] overflow-hidden mt-6">
                         <PropertyMap parcelId={property.parcel_id || null} />
                     </div>
                 </div>
 
                 {/* Sidebar Column (Right) */}
                 <div className="space-y-6">
+                    <PropertyOwnerCard property={property} />
                     <PropertyResearchLinks property={property} />
                     <PropertyUserActions property={property} />
 
