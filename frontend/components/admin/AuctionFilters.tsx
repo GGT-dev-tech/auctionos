@@ -12,6 +12,7 @@ export interface AuctionFilterParams {
     endDate?: string;
     minParcels?: number;
     maxParcels?: number;
+    tax_status?: string;
 }
 
 interface AuctionFiltersProps {

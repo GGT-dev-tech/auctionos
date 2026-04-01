@@ -21,6 +21,7 @@ def read_auctions(
     min_parcels: Optional[int] = Query(None, description="Mínimo de parcelas (imóveis)"),
     max_parcels: Optional[int] = Query(None, description="Máximo de parcelas (imóveis)"),
     q: Optional[str] = Query(None, description="Busca textual genérica avançada"),
+    tax_status: Optional[str] = Query(None, description="Filtro por status de impostos/leilão"),
     sort_by_date: bool = Query(False, description="Ordernar por auction_date descendente (False) ou ascendente (True)"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -38,6 +39,7 @@ def read_auctions(
         min_parcels=min_parcels,
         max_parcels=max_parcels,
         q=q,
+        tax_status=tax_status,
         sort_by_date=sort_by_date
     )
     return {"items": items, "total": total}
