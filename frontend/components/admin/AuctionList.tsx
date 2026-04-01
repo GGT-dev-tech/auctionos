@@ -95,7 +95,11 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
             valueFormatter: (params: any) => {
                 const val = (params && typeof params === 'object' && 'value' in params) ? params.value : params;
                 if (!val) return '';
-                const date = new Date(val);
+                let dateStr = val;
+                if (typeof val === 'string' && !val.includes('T')) {
+                    dateStr = val + 'T00:00:00';
+                }
+                const date = new Date(dateStr);
                 return date.toLocaleDateString();
             }
         },

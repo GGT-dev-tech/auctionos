@@ -39,50 +39,35 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = { startDate
 
     // Memoize the heavy aggregation logic for smoother performance
     const processedEvents = React.useMemo(() => {
-        const groups: Record<string, { date: string, type: string, auctionCount: number, propertyCount: number }> = {};
-
-        rawEvents.forEach((item: any) => {
-            const titleLower = (item.event_title || '').toLowerCase();
-            let type = 'Other';
-            if (titleLower.includes('tax deed') || titleLower.includes('taxdeed')) type = 'Tax Deed';
-            else if (titleLower.includes('foreclosure')) type = 'Foreclosure';
-            else if (titleLower.includes('lien')) type = 'Tax Lien';
-            else if (titleLower.includes('sheriff')) type = 'Sheriff Sale';
-            else type = item.event_title || 'Auction'; 
-            
+        return rawEvents.map((item: any) => {
             const cleanDate = item.event_date ? item.event_date.split('T')[0] : '';
-            if (!cleanDate) return;
-
-            const groupKey = `${cleanDate}-${type}`;
-            if (!groups[groupKey]) {
-                groups[groupKey] = { date: cleanDate, type, auctionCount: 0, propertyCount: 0 };
-            }
-            groups[groupKey].auctionCount += 1;
-            groups[groupKey].propertyCount += (item.property_count || 1);
+            return {
+                id: item.id,
+                title: item.event_title || item.name || 'Auction',
+                start: cleanDate,
+                allDay: true,
+                extendedProps: {
+                    isGrouped: false,
+                    location: item.location,
+                    notes: item.notes,
+                    property_count: item.property_count || 0,
+                    tax_status: item.tax_status,
+                    register_link: item.register_link,
+                    list_link: item.list_link
+                }
+            };
         });
-
-        return Object.values(groups).map(g => ({
-            title: `${g.type} (${g.auctionCount})`,
-            start: g.date,
-            allDay: true,
-            extendedProps: {
-                isGrouped: true,
-                type: g.type,
-                date: g.date,
-                auctionCount: g.auctionCount,
-                propertyCount: g.propertyCount
-            }
-        }));
     }, [rawEvents]);
 
     const handleEventClick = (info: any) => {
         const props = info.event.extendedProps;
-        if (props.isGrouped) {
-            setGroupedDateType({ date: props.date, type: props.type });
-            setGroupedDialogOpen(true);
-        } else {
-            setSelectedEvent(info.event);
-        }
+        const normalizedEvent = {
+            id: info.event.id,
+            title: info.event.title,
+            start: info.event.startStr || info.event.start,
+            extendedProps: props
+        };
+        setSelectedEvent(normalizedEvent);
     };
 
     const handleDateClick = (arg: any) => {
@@ -141,7 +126,7 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = { startDate
             >
                 <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
                     <Typography variant="h6" className="font-bold text-slate-800">
-                        {groupedDateType ? `${groupedDateType.type} Auctions on ${new Date(groupedDateType.date).toLocaleDateString()}` : 'Auctions'}
+                        {groupedDateType ? `${groupedDateType.type} Auctions on ${new Date(groupedDateType.date + 'T00:00:00').toLocaleDateString()}` : 'Auctions'}
                     </Typography>
                     <IconButton onClick={() => setGroupedDialogOpen(false)}>
                         <CloseIcon />

@@ -57,8 +57,8 @@ def read_properties(
         where_clauses.append("pah.auction_name ILIKE :auction_name")
         params["auction_name"] = f"%{auction_name}%"
     if auction_date:
-        where_clauses.append("pah.auction_date = :auction_date::date")
-        params["auction_date"] = auction_date
+        where_clauses.append("pah.auction_date::text LIKE :auction_date")
+        params["auction_date"] = f"{auction_date}%"
     if min_amount_due is not None:
         where_clauses.append("p.amount_due >= :min_amount_due")
         params["min_amount_due"] = min_amount_due

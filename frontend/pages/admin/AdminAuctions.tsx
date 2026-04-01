@@ -66,7 +66,7 @@ const AdminAuctions: React.FC = () => {
                         <div className="w-full max-w-4xl mx-auto">
                             <PropertyForm onSuccess={() => { }} />
                         </div>
-                        <div className="w-full">
+                        <div className="w-full h-[calc(100vh-350px)] flex flex-col min-h-[500px]">
                             <PropertyList filters={propertyFilters} />
                         </div>
                     </div>

@@ -44,7 +44,7 @@ const ClientProperties: React.FC = () => {
             </div>
             
             {hasActiveFilters ? (
-                <div className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl min-h-[800px]">
+                <div className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl h-[calc(100vh-250px)] flex flex-col">
                     <PropertyList filters={filters} readOnly={true} />
                 </div>
             ) : (
