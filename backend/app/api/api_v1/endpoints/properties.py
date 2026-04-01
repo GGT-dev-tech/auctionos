@@ -7,6 +7,8 @@ import re
 from app.api import deps
 from app.schemas.property import PropertyDashboardSchema, PaginatedPropertyResponse
 from app.models.user import User
+from app.services.reconciliation_service import reconciliation_service
+import uuid
 
 router = APIRouter()
 
@@ -667,3 +669,18 @@ def log_property_action(
     )
     db.commit()
     return {"ok": True}
+
+@router.post("/reconcile/{auction_id}", response_model=dict)
+def reconcile_auction_properties(
+    auction_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Triggers a reconciliation job to link available properties to a specific auction
+    based on matching County and State locations.
+    """
+    result = reconciliation_service.reconcile_auction_properties(db, auction_id)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result

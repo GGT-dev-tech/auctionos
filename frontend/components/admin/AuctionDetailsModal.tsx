@@ -17,9 +17,11 @@ import {
     LocationOn as LocationIcon,
     Info as InfoIcon,
     OpenInNew as OpenInNewIcon,
-    ListAlt as ListIcon
+    ListAlt as ListIcon,
+    Sync as SyncIcon
 } from '@mui/icons-material';
 import AuctionPropertiesList from './AuctionPropertiesList';
+import { AdminService } from '../../services/admin.service';
 
 interface AuctionDetailsModalProps {
     open: boolean;
@@ -29,6 +31,8 @@ interface AuctionDetailsModalProps {
 
 export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, onClose, eventData }) => {
     const [showProperties, setShowProperties] = useState(false);
+    const [reconciling, setReconciling] = useState(false);
+    const [reconcileCount, setReconcileCount] = useState<number | null>(null);
 
     if (!eventData) return null;
 
@@ -40,7 +44,24 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
 
     const handleClose = () => {
         setShowProperties(false);
+        setReconcileCount(null);
         onClose();
+    };
+
+    const handleReconcile = async () => {
+        if (!eventData.id) {
+            console.error("No auction ID found in eventData", eventData);
+            return;
+        }
+        setReconciling(true);
+        try {
+            const res = await AdminService.reconcileAuctionProperties(eventData.id);
+            setReconcileCount(res.linked_count);
+        } catch (err: any) {
+            alert(`Reconciliation failed: ${err.message}`);
+        } finally {
+            setReconciling(false);
+        }
     };
 
     return (
@@ -130,15 +151,33 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
             </DialogContent>
 
             {!showProperties && (
-                <DialogActions sx={{ p: 2, backgroundColor: '#f8fafc' }}>
-                    <Button onClick={handleClose} color="inherit">Close</Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setShowProperties(true)}
-                    >
-                        View Matched Properties
-                    </Button>
+                <DialogActions sx={{ p: 2, backgroundColor: '#f8fafc', justifyContent: 'space-between' }}>
+                    <Box>
+                        <Button 
+                            startIcon={<SyncIcon />} 
+                            onClick={handleReconcile} 
+                            disabled={reconciling}
+                            color="secondary"
+                            size="small"
+                        >
+                            {reconciling ? 'Syncing...' : 'Sync Properties'}
+                        </Button>
+                        {reconcileCount !== null && (
+                            <Typography variant="caption" color="success.main" sx={{ display: 'block', mt: 0.5, fontWeight: 'bold' }}>
+                                Linked {reconcileCount} properties!
+                            </Typography>
+                        )}
+                    </Box>
+                    <Box>
+                        <Button onClick={handleClose} color="inherit" sx={{ mr: 1 }}>Close</Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => setShowProperties(true)}
+                        >
+                            View Matched Properties
+                        </Button>
+                    </Box>
                 </DialogActions>
             )}
         </Dialog>
