@@ -7,7 +7,7 @@ from functools import lru_cache
 CSV_FILE_PATH = os.path.join("data", "contact_data.csv")
 EXCLUDED_NAMES = ["NETR Mapping and GIS", "Historic Aerials"]
 
-@lru_cache(max_items=1)
+@lru_cache(maxsize=1)
 def _load_csv_data() -> List[Dict[str, str]]:
     """
     Private helper to load and parse the CSV into memory once.
