@@ -22,6 +22,7 @@ import { PropertyContactInfo } from '../../components/property/PropertyContactIn
 import { PropertyInventoryHistory } from '../../components/property/PropertyInventoryHistory';
 import { PropertyEstimatesComps } from '../../components/property/PropertyEstimatesComps';
 import { RedemptionDisclaimerCard } from '../../components/property/RedemptionDisclaimerCard';
+import { CountyContactCard } from '../../components/property/CountyContactCard';
 
 interface PropertyDetailPageProps {
     readOnly?: boolean;
@@ -337,6 +338,11 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                     />
 
                     <PropertyContactInfo property={property} />
+
+                    <CountyContactCard 
+                        contacts={countyContacts} 
+                        countyName={property.details?.county || property.county} 
+                    />
 
                     <PropertyInventoryHistory property={property} />
 
