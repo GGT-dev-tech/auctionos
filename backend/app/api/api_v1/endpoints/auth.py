@@ -94,14 +94,20 @@ async def login_oauth(request: Request, provider: str):
             detail=f"Provider {provider} not configured. Please ensure {provider.upper()}_CLIENT_ID and {provider.upper()}_CLIENT_SECRET are set in environment variables."
         )
     
-    redirect_uri = request.url_for('auth_callback', provider=provider, _external=True)
+    try:
+        redirect_uri = request.url_for('oauth_callback', provider=provider, _external=True)
+    except Exception:
+        # Robust fallback for proxy/load-balancer environments where url_for might fail
+        base_url = str(request.base_url).rstrip("/")
+        redirect_uri = f"{base_url}{settings.API_V1_STR}/auth/callback/{provider}"
+        
     # Ensure scheme is https in production (ProxyHeadersMiddleware also helps)
     if "https://" not in str(redirect_uri) and "localhost" not in str(redirect_uri) and "127.0.0.1" not in str(redirect_uri):
         redirect_uri = str(redirect_uri).replace("http://", "https://")
         
     return await client.authorize_redirect(request, str(redirect_uri))
 
-@router.get("/callback/{provider}", name="auth_callback", response_model=Token)
+@router.get("/callback/{provider}", name="oauth_callback", response_model=Token)
 async def auth_callback(request: Request, provider: str, db: Session = Depends(deps.get_db)):
     """
     OAuth Callback handler. Verifies token, fetches user info and grants access.
