@@ -47,6 +47,7 @@ def register_user(
     user = User(
         email=email,
         hashed_password=security.get_password_hash(user_in.password),
+        full_name=user_in.full_name,
         is_superuser=user_in.is_superuser,
         role=user_in.role,
     )
@@ -134,6 +135,7 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
         user = User(
             email=email,
             hashed_password=security.get_password_hash(random_password),
+            full_name=user_info.get('name') or user_info.get('given_name') or None,
             is_active=True,
             is_superuser=False,
             role="client"

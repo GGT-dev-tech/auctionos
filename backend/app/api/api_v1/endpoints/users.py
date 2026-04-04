@@ -35,6 +35,7 @@ def create_user(
     user = User(
         email=email,
         hashed_password=security.get_password_hash(user_in.password),
+        full_name=user_in.full_name,
         is_superuser=user_in.is_superuser,
         role=user_in.role if hasattr(user_in, 'role') else "client",
     )
@@ -83,6 +84,8 @@ def update_user(
         user.email = user_in.email.strip().lower()
     if user_in.password is not None:
         user.hashed_password = security.get_password_hash(user_in.password)
+    if user_in.full_name is not None:
+        user.full_name = user_in.full_name
     if user_in.is_active is not None:
         user.is_active = user_in.is_active
     

@@ -476,7 +476,16 @@ const ClientDashboard: React.FC = () => {
     const base = str.split('@')[0];
     return base.charAt(0).toUpperCase() + base.slice(1).toLowerCase();
   };
-  const userName = formatName(user?.email);
+  
+  const getFirstName = () => {
+      // @ts-ignore - full_name may not be typed in current frontend models
+      if (user?.full_name) {
+          const first = user.full_name.trim().split(' ')[0];
+          return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+      }
+      return formatName(user?.email);
+  };
+  const userName = getFirstName();
 
   const [allAuctions, setAllAuctions] = useState<AuctionEvent[]>([]);
   const [typeAuctions, setTypeAuctions] = useState<{deed: AuctionEvent[], foreclosure: AuctionEvent[], lien: AuctionEvent[]}>({
