@@ -126,6 +126,18 @@ app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-@app.get("/")
-def root():
-    return {"message": "Welcome to AuctionOS API"}
+# Mount Frontend SPA
+# The dist folder is located at the root, one level up from the backend/app directory
+frontend_dist = os.path.abspath(os.path.join(os.getcwd(), "..", "frontend", "dist"))
+
+if os.path.exists(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+else:
+    # Fallback if the folder structure is different in production
+    alt_frontend_dist = os.path.abspath(os.path.join(os.getcwd(), "frontend", "dist"))
+    if os.path.exists(alt_frontend_dist):
+        app.mount("/", StaticFiles(directory=alt_frontend_dist, html=True), name="frontend")
+    else:
+        @app.get("/")
+        def root():
+            return {"message": "Welcome to AuctionOS API", "warning": "Frontend dist not found"}
