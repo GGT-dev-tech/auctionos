@@ -104,6 +104,9 @@ async def login_oauth(request: Request, provider: str):
     # Ensure scheme is https in production (ProxyHeadersMiddleware also helps)
     if "https://" not in str(redirect_uri) and "localhost" not in str(redirect_uri) and "127.0.0.1" not in str(redirect_uri):
         redirect_uri = str(redirect_uri).replace("http://", "https://")
+    
+    # 🚨 DIAGNOSTIC LOG: This will appear in Railway Logs
+    print(f">>> OAUTH REDIRECT URI: {redirect_uri}")
         
     return await client.authorize_redirect(request, str(redirect_uri))
 
