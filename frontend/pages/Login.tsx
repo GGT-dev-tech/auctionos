@@ -10,6 +10,39 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // 1. Handle OAuth Token from URL
+  React.useEffect(() => {
+    const handleOAuth = async () => {
+      // With HashRouter, the query params are after the hash: /#/login?token=xyz
+      const hash = window.location.hash;
+      if (hash.includes('?token=')) {
+        const token = hash.split('?token=')[1];
+        if (token) {
+          setIsLoading(true);
+          try {
+            localStorage.setItem('token', token);
+            // Fetch User Profile using the new token
+            const user = await AuthService.getMe();
+            localStorage.setItem('user', JSON.stringify(user));
+            
+            // Route based on role
+            if (user.role === 'client') {
+              navigate('/client');
+            } else {
+              navigate('/dashboard');
+            }
+          } catch (err) {
+            console.error('OAuth Error:', err);
+            setError('Failed to sync with Google. Please try again.');
+          } finally {
+            setIsLoading(false);
+          }
+        }
+      }
+    };
+    handleOAuth();
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
