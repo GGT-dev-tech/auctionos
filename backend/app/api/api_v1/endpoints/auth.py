@@ -2,6 +2,7 @@ import secrets
 from datetime import timedelta
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.api import deps
@@ -159,9 +160,16 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
         raise HTTPException(status_code=400, detail="Inactive user")
         
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    return {
-        "access_token": security.create_access_token(
-            user.id, expires_delta=access_token_expires
-        ),
-        "token_type": "bearer",
-    }
+    access_token = security.create_access_token(
+        user.id, expires_delta=access_token_expires
+    )
+    
+    # Redirect to frontend with token
+    # We use HashRouter, so we append the query after the hash: /#/login?token=...
+    frontend_url = "https://auctionos-production.up.railway.app"
+    if "localhost" in str(request.base_url) or "127.0.0.1" in str(request.base_url):
+        frontend_url = "http://localhost:5173"
+        
+    # Correct URL construction for HashRouter
+    redirect_url = f"{frontend_url}/#/login?token={access_token}"
+    return RedirectResponse(url=redirect_url)
