@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/auth.service';
+import { API_BASE_URL } from '../services/httpClient';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -112,12 +113,14 @@ export const Login: React.FC = () => {
             <div className="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <button type="button" className="flex items-center justify-center h-12 px-4 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors gap-3">
-              <span className="text-slate-700 dark:text-slate-200 text-sm font-semibold">Google</span>
-            </button>
-            <button type="button" className="flex items-center justify-center h-12 px-4 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors gap-3">
-              <span className="text-slate-700 dark:text-slate-200 text-sm font-semibold">Facebook</span>
+          <div className="flex flex-col gap-4">
+            <button 
+              type="button" 
+              onClick={() => { window.location.href = `${API_BASE_URL}/api/v1/auth/login/google`; }}
+              className="flex items-center justify-center w-full h-12 px-4 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors gap-3"
+            >
+              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5 rounded-sm bg-white p-0.5" />
+              <span className="text-slate-700 dark:text-slate-200 text-sm font-semibold">Continue with Google</span>
             </button>
           </div>
         </div>

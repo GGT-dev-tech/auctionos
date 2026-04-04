@@ -471,7 +471,12 @@ const SystemAnnouncements: React.FC = () => (
 const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
   const user = AuthService.getCurrentUser();
-  const userName = user?.email ? user.email.split('@')[0] : 'there';
+  const formatName = (str?: string) => {
+    if (!str) return 'There';
+    const base = str.split('@')[0];
+    return base.charAt(0).toUpperCase() + base.slice(1).toLowerCase();
+  };
+  const userName = formatName(user?.email);
 
   const [allAuctions, setAllAuctions] = useState<AuctionEvent[]>([]);
   const [typeAuctions, setTypeAuctions] = useState<{deed: AuctionEvent[], foreclosure: AuctionEvent[], lien: AuctionEvent[]}>({
@@ -592,7 +597,7 @@ const ClientDashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-            Welcome back, <span className="text-primary capitalize">{userName}</span>
+            Welcome back, <span className="text-primary">{userName}</span>
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             Here's your investment intelligence dashboard.

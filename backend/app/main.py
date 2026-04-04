@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from app.core.config import settings
 from app.core.config import settings
 from app.api.api_v1.api import api_router
@@ -84,6 +85,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 # Ensure static directory exists
 static_dir = os.path.join(os.getcwd(), "data")

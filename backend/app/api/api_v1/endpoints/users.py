@@ -27,12 +27,13 @@ def create_user(
     user_in: UserCreate,
     current_user: User = Depends(deps.get_current_active_superuser),
 ) -> Any:
-    user = db.query(User).filter(User.email == user_in.email).first()
+    email = user_in.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
     if user:
         raise HTTPException(status_code=400, detail="The user with this username already exists.")
     
     user = User(
-        email=user_in.email,
+        email=email,
         hashed_password=security.get_password_hash(user_in.password),
         is_superuser=user_in.is_superuser,
         role=user_in.role if hasattr(user_in, 'role') else "client",
@@ -53,7 +54,7 @@ def update_user_me(
     if password is not None:
         current_user.hashed_password = security.get_password_hash(password)
     if email is not None:
-        current_user.email = email
+        current_user.email = email.strip().lower()
     
     db.add(current_user)
     db.commit()
@@ -79,7 +80,7 @@ def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     if user_in.email is not None:
-        user.email = user_in.email
+        user.email = user_in.email.strip().lower()
     if user_in.password is not None:
         user.hashed_password = security.get_password_hash(user_in.password)
     if user_in.is_active is not None:
