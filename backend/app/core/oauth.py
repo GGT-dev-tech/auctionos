@@ -14,6 +14,10 @@ if settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET:
             'scope': 'openid email profile'
         }
     )
+    print(">>> OAuth: Google provider registered correctly.")
+else:
+    print(">>> OAuth: Google provider NOT registered (missing GOOGLE_CLIENT_ID or SECRET).")
+
 
 # Facebook OAuth Setup
 if settings.FACEBOOK_CLIENT_ID and settings.FACEBOOK_CLIENT_SECRET:
@@ -28,3 +32,7 @@ if settings.FACEBOOK_CLIENT_ID and settings.FACEBOOK_CLIENT_SECRET:
         api_base_url='https://graph.facebook.com/v16.0/',
         client_kwargs={'scope': 'email public_profile'},
     )
+    print(">>> OAuth: Facebook provider registered correctly.")
+else:
+    print(">>> OAuth: Facebook provider NOT registered (missing FACEBOOK_CLIENT_ID or SECRET).")
+

@@ -89,7 +89,10 @@ async def login_oauth(request: Request, provider: str):
     """
     client = getattr(oauth, provider, None)
     if not client:
-        raise HTTPException(status_code=400, detail=f"Provider {provider} not supported or not configured")
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Provider {provider} not configured. Please ensure {provider.upper()}_CLIENT_ID and {provider.upper()}_CLIENT_SECRET are set in environment variables."
+        )
     
     redirect_uri = request.url_for('auth_callback', provider=provider, _external=True)
     # Ensure scheme is https in production (ProxyHeadersMiddleware also helps)
