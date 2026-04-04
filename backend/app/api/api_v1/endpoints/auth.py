@@ -91,12 +91,12 @@ async def login_oauth(request: Request, provider: str):
     if not client:
         raise HTTPException(status_code=400, detail=f"Provider {provider} not supported or not configured")
     
-    redirect_uri = request.url_for('auth_callback', provider=provider)
-    # Ensure scheme is https in production
-    if "localhost" not in str(redirect_uri) and "127.0.0.1" not in str(redirect_uri):
+    redirect_uri = request.url_for('auth_callback', provider=provider, _external=True)
+    # Ensure scheme is https in production (ProxyHeadersMiddleware also helps)
+    if "https://" not in str(redirect_uri) and "localhost" not in str(redirect_uri) and "127.0.0.1" not in str(redirect_uri):
         redirect_uri = str(redirect_uri).replace("http://", "https://")
         
-    return await client.authorize_redirect(request, redirect_uri)
+    return await client.authorize_redirect(request, str(redirect_uri))
 
 @router.get("/callback/{provider}", name="auth_callback", response_model=Token)
 async def auth_callback(request: Request, provider: str, db: Session = Depends(deps.get_db)):
