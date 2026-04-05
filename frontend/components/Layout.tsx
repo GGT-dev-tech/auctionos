@@ -42,7 +42,7 @@ export const Layout: React.FC = () => {
             <div className="flex">
               <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
                 <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">A</div>
-                <span className="text-[#0d131b] dark:text-white text-lg font-bold hidden md:block">AuctionOS</span>
+                <span className="text-[#0d131b] dark:text-white text-lg font-bold hidden md:block">GoAuct</span>
               </div>
 
               {/* Desktop Nav */}

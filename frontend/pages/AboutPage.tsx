@@ -15,7 +15,7 @@ const sections = [
     icon: 'search',
     title: 'Discovery',
     body:
-      'AuctionOS aggregates tax-delinquent and foreclosure auction data from county and municipal sources nationwide, giving you a unified view of opportunities before they hit the open market.',
+      'GoAuct aggregates tax-delinquent and foreclosure auction data from county and municipal sources nationwide, giving you a unified view of opportunities before they hit the open market.',
   },
   {
     icon: 'analytics',
@@ -51,7 +51,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ standalone = true }) => {
             Tax Property Intelligence Platform
           </span>
           <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight mb-6">
-            AuctionOS
+            GoAuct
           </h1>
           <p className="text-lg sm:text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
             The most comprehensive real-time platform for discovering, analyzing, and acting on
@@ -95,7 +95,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ standalone = true }) => {
       <section className="max-w-full mx-auto px-4 sm:px-8 lg:px-12 py-16">
         <div className="prose prose-slate dark:prose-invert max-w-full mx-auto">
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
-            Welcome to AuctionOS
+            Welcome to GoAuct
           </h2>
           <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed mb-4">
             We are dedicated to providing the most comprehensive and up-to-date real estate auction
@@ -104,7 +104,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ standalone = true }) => {
             our clients have the edge in the competitive real estate market.
           </p>
           <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed">
-            Founded by real estate professionals for real estate professionals, AuctionOS
+            Founded by real estate professionals for real estate professionals, GoAuct
             centralizes public records, tax information, and property details into an easy-to-use
             interface — removing the friction between opportunity and action.
           </p>
@@ -142,7 +142,7 @@ const AboutPage: React.FC<AboutPageProps> = ({ standalone = true }) => {
           Ready to find your next deal?
         </h2>
         <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xl mx-auto text-sm leading-relaxed">
-          Join thousands of investors using AuctionOS to source, analyze, and close on distressed
+          Join thousands of investors using GoAuct to source, analyze, and close on distressed
           property opportunities faster than ever.
         </p>
         <Link

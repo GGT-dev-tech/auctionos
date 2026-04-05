@@ -62,7 +62,7 @@ def reset_admin_production(secret: str, db: Session = Depends(deps.get_db)):
     if secret != "ResetAdmin2026Secure!":
         raise HTTPException(status_code=403, detail="Invalid secret")
     
-    email = "admin@auctionpro.com"
+    email = "admin@goauct.com"
     temp_password = "AdminSecurePass123!"
     
     existing_user = db.query(User).filter(User.email == email).first()

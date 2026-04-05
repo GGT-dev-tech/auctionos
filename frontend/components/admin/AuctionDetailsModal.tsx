@@ -20,7 +20,7 @@ import {
     ListAlt as ListIcon,
     Sync as SyncIcon
 } from '@mui/icons-material';
-import AuctionPropertiesList from './AuctionPropertiesList';
+import GoAuctpertiesList from './GoAuctpertiesList';
 import { AdminService } from '../../services/admin.service';
 import { RedemptionDisclaimerCard } from '../property/RedemptionDisclaimerCard';
 
@@ -56,7 +56,7 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
         }
         setReconciling(true);
         try {
-            const res = await AdminService.reconcileAuctionProperties(eventData.id);
+            const res = await AdminService.reconcileGoAuctperties(eventData.id);
             setReconcileCount(res.linked_count);
         } catch (err: any) {
             alert(`Reconciliation failed: ${err.message}`);
@@ -78,7 +78,7 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
 
             <DialogContent dividers className="bg-white p-0">
                 {showProperties ? (
-                    <AuctionPropertiesList
+                    <GoAuctpertiesList
                         auctionName={cleanAuctionName}
                         auctionDate={rawDate}
                         onClose={() => setShowProperties(false)}

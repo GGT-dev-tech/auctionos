@@ -31,7 +31,7 @@ const PrivacyPolicyPage: React.FC = () => {
           </div>
 
           <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-8">
-            Your privacy is important to us. It is AuctionOS's policy to respect your privacy
+            Your privacy is important to us. It is GoAuct's policy to respect your privacy
             regarding any information we may collect from you across our website and other services
             we own and operate. This policy explains what information we collect, how we use it,
             and what rights you have in relation to it.
@@ -118,8 +118,8 @@ const PrivacyPolicyPage: React.FC = () => {
 
           <div className="mt-10 pt-8 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400">
             Questions about your privacy? Contact our Data Protection team at{' '}
-            <a href="mailto:privacy@auctionos.com" className="text-primary hover:underline">
-              privacy@auctionos.com
+            <a href="mailto:privacy@goauct.com" className="text-primary hover:underline">
+              privacy@goauct.com
             </a>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import * as L from 'leaflet';
 import 'leaflet-control-geocoder';
 
-const CACHE_KEY = 'auctionos_geocoding_cache';
+const CACHE_KEY = 'goauct_geocoding_cache';
 const DELAY_MS = 1200; // Nominatim compliance (1 request per second)
 
 // Load cache from localStorage
@@ -86,7 +86,7 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number, ln
             const response = await fetch(url, {
                 headers: {
                     'Accept': 'application/json',
-                    'User-Agent': 'AuctionOS-App/1.0'
+                    'User-Agent': 'GoAuct-App/1.0'
                 }
             });
 

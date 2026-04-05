@@ -5,13 +5,13 @@ import { AuthService } from '../../services/auth.service';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-interface AuctionPropertiesListProps {
+interface GoAuctpertiesListProps {
     auctionName: string;
     auctionDate?: string;
     onClose?: () => void;
 }
 
-const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionName, auctionDate, onClose }) => {
+const GoAuctpertiesList: React.FC<GoAuctpertiesListProps> = ({ auctionName, auctionDate, onClose }) => {
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [rowCount, setRowCount] = useState(0);
@@ -166,4 +166,4 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
     );
 };
 
-export default AuctionPropertiesList;
+export default GoAuctpertiesList;

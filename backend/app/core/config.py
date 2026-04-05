@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "AuctionOS"
+    PROJECT_NAME: str = "GoAuct"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "changethiskeyinproduction"  # Should be overridden by env var
     ALGORITHM: str = "HS256"

@@ -17,7 +17,7 @@ export const PropertyInventoryHistory: React.FC<PropertyInventoryHistoryProps> =
         {
             date: '2026-03-01',
             label: 'Initial Listing',
-            desc: 'Property ingested into AuctionOS.',
+            desc: 'Property ingested into GoAuct.',
             status: 'completed',
             icon: 'inventory_2'
         },

@@ -22,7 +22,7 @@ const Header: React.FC = () => {
               A
             </div>
             <span className="text-[#0d131b] dark:text-white text-lg font-bold">
-              auctionOS
+              GoAuct
             </span>
           </div>
 

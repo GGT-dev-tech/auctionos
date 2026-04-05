@@ -32,7 +32,7 @@ class JSONFormatter(logging.Formatter):
             
         return json.dumps(log_record)
 
-def setup_logger(name="auctionos_api"):
+def setup_logger(name="goauct_api"):
     logger = logging.getLogger(name)
     
     # Prevent duplicate handlers

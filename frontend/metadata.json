@@ -1,5 +1,5 @@
 {
-  "name": "AuctionOS",
+  "name": "GoAuct",
   "description": "A comprehensive property auction management system featuring secure authentication, property inventory management, and a multi-step registration wizard.",
   "requestFramePermissions": []
 }

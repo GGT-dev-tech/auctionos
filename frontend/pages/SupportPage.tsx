@@ -36,7 +36,7 @@ const SupportPage: React.FC<SupportPageProps> = ({ standalone = true }) => {
                     Contact Us
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-                    Have a question or need help with AuctionOS? Fill out the form below and
+                    Have a question or need help with GoAuct? Fill out the form below and
                     our team will get back to you as soon as possible.
                 </p>
 
@@ -134,13 +134,13 @@ const SupportPage: React.FC<SupportPageProps> = ({ standalone = true }) => {
                     <ul className="space-y-3 text-slate-600 dark:text-slate-300">
                         <li className="flex items-center gap-3">
                             <span className="material-symbols-outlined text-primary">email</span>
-                            <a href="mailto:support@auctionos.com" className="hover:text-primary transition-colors">
-                                support@auctionos.com
+                            <a href="mailto:support@goauct.com" className="hover:text-primary transition-colors">
+                                support@goauct.com
                             </a>
                         </li>
                         <li className="flex items-center gap-3">
                             <span className="material-symbols-outlined text-primary">language</span>
-                            <span>auctionos.up.railway.app.com</span>
+                            <span>goauct.com</span>
                         </li>
                     </ul>
                 </div>

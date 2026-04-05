@@ -3,7 +3,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-POSTGRES_DATABASE_URL = os.getenv("POSTGRES_URL", "postgresql://postgres:postgres@postgis:5432/auctionos_gis")
+POSTGRES_DATABASE_URL = os.getenv("POSTGRES_URL", "postgresql://postgres:postgres@postgis:5432/goauct_gis")
 
 engine = create_engine(POSTGRES_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

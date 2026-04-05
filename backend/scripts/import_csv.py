@@ -7,7 +7,7 @@ import sys
 # Configuration
 API_URL = "http://localhost:8000/api/v1"
 # We could allow passing token as argument or env var
-ADMIN_EMAIL = "admin@auctionpro.com"
+ADMIN_EMAIL = "admin@goauct.com"
 ADMIN_PASSWORD = "password"
 
 def get_access_token():

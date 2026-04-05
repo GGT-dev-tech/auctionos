@@ -1,7 +1,8 @@
-// Use environment variable with fallback to production URL
 const isProd = import.meta.env.PROD;
+const defaultProdApi = 'https://goauct-production.up.railway.app/api/v1';
+
 export const API_URL = isProd
-    ? 'https://auctionos-production.up.railway.app/api/v1'
+    ? (import.meta.env.VITE_API_URL || defaultProdApi)
     : (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1');
 export const API_BASE_URL = API_URL.replace('/api/v1', '');
 

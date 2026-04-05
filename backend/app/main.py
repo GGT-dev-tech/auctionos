@@ -63,10 +63,10 @@ origins = [
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
-    "https://auctionos.up.railway.app",
-    "https://auctionos-production.up.railway.app",
-    "http://auctionos-production.up.railway.app",
-    "https://auctionos-production-82cf.up.railway.app", # Potential staging alias
+    "https://goauct.up.railway.app",
+    "https://goauct-production.up.railway.app",
+    "http://goauct-production.up.railway.app",
+    "https://goauct-production-82cf.up.railway.app", # Potential staging alias
     "https://goauct.com",
     "https://www.goauct.com",
 ]
@@ -83,7 +83,7 @@ origins = list(set([o.rstrip('/') for o in origins if o]))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex="https://(auctionos.*\\.up\\.railway\\.app|.*\\.goauct\\.com|goauct\\.com)",
+    allow_origin_regex="https://(goauct.*\\.up\\.railway\\.app|.*\\.goauct\\.com|goauct\\.com)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -130,4 +130,4 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():
-    return {"message": "AuctionOS API is running", "environment": "production"}
+    return {"message": "GoAuct API is running", "environment": "production"}

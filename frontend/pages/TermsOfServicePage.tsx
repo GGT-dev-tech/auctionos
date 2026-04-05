@@ -36,13 +36,13 @@ const TermsOfServicePage: React.FC = () => {
               and provision of this agreement. In addition, when using this website's particular
               services, you shall be subject to any posted guidelines or rules applicable to such
               services. These terms apply to all visitors, users, and others who access or use the
-              AuctionOS platform.
+              GoAuct platform.
             </p>
           </Section>
 
           <Section title="2. Use of License">
             <p>
-              Permission is granted to temporarily access and use the AuctionOS platform for
+              Permission is granted to temporarily access and use the GoAuct platform for
               personal, non-commercial purposes only. This is the grant of a license, not a
               transfer of title, and under this license you may not:
             </p>
@@ -58,7 +58,7 @@ const TermsOfServicePage: React.FC = () => {
           <Section title="3. Data Usage">
             <p>
               Property data, auction schedules, and related information available on this platform
-              are sourced from public records and third-party providers. AuctionOS provides this
+              are sourced from public records and third-party providers. GoAuct provides this
               data as-is and makes no warranty as to its accuracy or completeness. All data must be
               independently verified before reliance.
             </p>
@@ -85,7 +85,7 @@ const TermsOfServicePage: React.FC = () => {
 
           <Section title="6. Disclaimer">
             <p>
-              The materials on AuctionOS's website are provided on an 'as is' basis. AuctionOS
+              The materials on GoAuct's website are provided on an 'as is' basis. GoAuct
               makes no warranties, expressed or implied, and hereby disclaims and negates all other
               warranties including, without limitation, implied warranties or conditions of
               merchantability, fitness for a particular purpose, or non-infringement of intellectual
@@ -95,9 +95,9 @@ const TermsOfServicePage: React.FC = () => {
 
           <Section title="7. Limitations">
             <p>
-              In no event shall AuctionOS or its suppliers be liable for any damages (including,
+              In no event shall GoAuct or its suppliers be liable for any damages (including,
               without limitation, damages for loss of data or profit, or due to business
-              interruption) arising out of the use or inability to use the materials on AuctionOS's
+              interruption) arising out of the use or inability to use the materials on GoAuct's
               website.
             </p>
           </Section>
@@ -112,7 +112,7 @@ const TermsOfServicePage: React.FC = () => {
 
           <Section title="9. Changes to Terms">
             <p>
-              AuctionOS reserves the right to modify these terms at any time. We will provide
+              GoAuct reserves the right to modify these terms at any time. We will provide
               notice of significant changes. Your continued use of the platform after changes
               are posted constitutes your acceptance of the modified terms.
             </p>
@@ -120,8 +120,8 @@ const TermsOfServicePage: React.FC = () => {
 
           <div className="mt-10 pt-8 border-t border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-400">
             Questions about these Terms? Contact us at{' '}
-            <a href="mailto:support@auctionos.com" className="text-primary hover:underline">
-              support@auctionos.com
+            <a href="mailto:support@goauct.com" className="text-primary hover:underline">
+              support@goauct.com
             </a>
           </div>
         </div>

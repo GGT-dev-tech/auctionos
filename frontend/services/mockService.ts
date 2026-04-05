@@ -3,7 +3,7 @@ import { Property, PropertyStatus, PropertyType, FloodZone, User } from "../type
 const MOCK_USER: User = {
   id: "u1",
   name: "Alex Morgan",
-  email: "admin@auctionpro.com",
+  email: "admin@goauct.com",
   role: "Admin",
   avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAzHCmK4J45o0beR-1xxZUm2NGCGFvT0TaN2wDxCL7g2PZ1Xjc6dppgoNLRRluAVrvHNM7UE-IFhjxDvjB8WUYjOnLabDtYjatl7kMap4kLIaP-Izezc4VFHmUn6dUXgKsGqGiEQDl47eB7LLlJxl4AV8HuK2L35fZiTX7OkNMZ3dOWlHGyNfE2hHy5ifs9aVs5OHio4KxRtFsBgHhbaKsuBYUWGhCZF8UlIF9E4T15Wo8D4BuBDQofdmbBNQuv7ojpYlSQfWo9uAs",
 };

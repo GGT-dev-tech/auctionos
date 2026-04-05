@@ -8,7 +8,7 @@ import os
 conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv("MAIL_USERNAME", "user@example.com"),
     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", "password"),
-    MAIL_FROM=os.getenv("MAIL_FROM", "admin@auctionos.com"),
+    MAIL_FROM=os.getenv("MAIL_FROM", "admin@goauct.com"),
     MAIL_PORT=int(os.getenv("MAIL_PORT", "587")),
     MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp.gmail.com"),
     MAIL_STARTTLS=os.getenv("MAIL_STARTTLS", "True").lower() == "true",

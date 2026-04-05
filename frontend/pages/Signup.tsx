@@ -84,7 +84,7 @@ export const Signup: React.FC = () => {
                         <div className="size-8 text-primary flex items-center justify-center">
                             <span className="material-symbols-outlined text-[32px]">gavel</span>
                         </div>
-                        <h2 className="text-2xl font-bold leading-tight tracking-tight">AuctionOS</h2>
+                        <h2 className="text-2xl font-bold leading-tight tracking-tight">GoAuct</h2>
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Create Account</h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm">Join to access exclusive property auctions.</p>

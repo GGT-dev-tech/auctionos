@@ -116,7 +116,7 @@ export const PropertyPurchaseOptions: React.FC<Props> = ({
                         <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">gavel</span>
                         <div className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
                             <strong className="block mb-1">Official Disclaimer</strong>
-                            You are about to access the state/county authority portal. AuctionOS provides data intelligence but does not process payments or legal documents for the direct purchase of tax certificates.
+                            You are about to access the state/county authority portal. GoAuct provides data intelligence but does not process payments or legal documents for the direct purchase of tax certificates.
                         </div>
                     </div>
 

@@ -3,7 +3,7 @@ import requests
 import sys
 
 API_URL = "http://localhost:8000/api/v1"
-ADMIN_EMAIL = "admin@auctionpro.com"
+ADMIN_EMAIL = "admin@goauct.com"
 ADMIN_PASSWORD = "password"
 
 def get_token(email, password):

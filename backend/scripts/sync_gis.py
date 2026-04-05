@@ -4,8 +4,8 @@ import time
 from sqlalchemy import create_engine, text
 
 # Database URLs
-MYSQL_URL = os.getenv("DATABASE_URL", "mysql://user:password@localhost:3306/auctionos")
-POSTGRES_URL = os.getenv("POSTGRES_URL", "postgresql://postgres:postgres@localhost:5432/auctionos_gis")
+MYSQL_URL = os.getenv("DATABASE_URL", "mysql://user:password@localhost:3306/goauct")
+POSTGRES_URL = os.getenv("POSTGRES_URL", "postgresql://postgres:postgres@localhost:5432/goauct_gis")
 
 def sync_properties():
     print("Starting sync from MySQL to PostGIS...")

@@ -13,7 +13,7 @@ export const Landing: React.FC = () => {
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary text-3xl">gavel</span>
-                            <span className="font-bold text-xl tracking-tight">AuctionOS</span>
+                            <span className="font-bold text-xl tracking-tight">GoAuct</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <Link to="/login" className="text-sm font-medium hover:text-primary transition-colors">
@@ -97,7 +97,7 @@ export const Landing: React.FC = () => {
                 <div className="max-w-4xl mx-auto flex flex-col items-center">
                     <div className="flex justify-center items-center gap-2 mb-6">
                         <span className="material-symbols-outlined text-primary text-2xl">gavel</span>
-                        <span className="font-bold text-white tracking-tight text-xl">AuctionOS</span>
+                        <span className="font-bold text-white tracking-tight text-xl">GoAuct</span>
                     </div>
                     
                     <div className="flex flex-wrap justify-center gap-6 mb-8 text-sm font-medium">
@@ -109,7 +109,7 @@ export const Landing: React.FC = () => {
                     </div>
 
                     <p className="text-slate-500 text-sm">
-                        &copy; {new Date().getFullYear()} AuctionOS Inc. All rights reserved.
+                        &copy; {new Date().getFullYear()} GoAuct Inc. All rights reserved.
                     </p>
                 </div>
             </footer>

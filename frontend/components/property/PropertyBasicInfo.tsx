@@ -20,7 +20,7 @@ export const PropertyBasicInfo: React.FC<Props> = ({ property, onOpenFinancials,
                 <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2 mb-1">
                         <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter">
-                            {property.smart_tag || 'Auction Property'}
+                            {property.smart_tag || 'GoAuctperty'}
                         </span>
                         {property.availability_status && (
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-tighter ${

@@ -102,7 +102,7 @@ export const AdminService = {
         return response.json();
     },
 
-    reconcileAuctionProperties: async (auctionId: number): Promise<any> => {
+    reconcileGoAuctperties: async (auctionId: number): Promise<any> => {
         const response = await fetch(`${API_URL}/properties/reconcile/${auctionId}`, {
             method: 'POST',
             headers: getHeaders()

@@ -5,8 +5,8 @@ import { API_BASE_URL } from '../services/httpClient';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@auctionpro.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -85,7 +85,7 @@ export const Login: React.FC = () => {
             <div className="size-8 text-primary flex items-center justify-center">
               <span className="material-symbols-outlined text-[32px]">gavel</span>
             </div>
-            <h2 className="text-2xl font-bold leading-tight tracking-tight">AuctionPro</h2>
+            <h2 className="text-2xl font-bold leading-tight tracking-tight">GoAuct</h2>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Welcome Back</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Please enter your details to sign in.</p>

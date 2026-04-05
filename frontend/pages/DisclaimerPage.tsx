@@ -33,7 +33,7 @@ const DisclaimerPage: React.FC = () => {
           <Section title="General Disclaimer">
             <p>
               The information contained on this website is for general information purposes only.
-              The information is provided by AuctionOS and while we endeavour to keep the
+              The information is provided by GoAuct and while we endeavour to keep the
               information up to date and correct, we make no representations or warranties of any
               kind, express or implied, about the completeness, accuracy, reliability, suitability
               or availability with respect to the website or the information, products, services, or
@@ -48,7 +48,7 @@ const DisclaimerPage: React.FC = () => {
             <p>
               Property information and data provided on this platform, including but not limited to
               auction dates, property details, and values, are derived from third-party sources and
-              public records. AuctionOS does not guarantee the accuracy of this data.
+              public records. GoAuct does not guarantee the accuracy of this data.
             </p>
             <p>
               Users are strongly advised to perform their own due diligence, consult with legal and
@@ -70,7 +70,7 @@ const DisclaimerPage: React.FC = () => {
 
           <Section title="Third-Party Data">
             <p>
-              AuctionOS aggregates data from public county records, government databases, and
+              GoAuct aggregates data from public county records, government databases, and
               third-party data providers. We strive to maintain accuracy but cannot guarantee
               real-time correctness. Auction dates, property statuses, and ownership records
               can change without notice. Users should verify all details directly with the
@@ -80,7 +80,7 @@ const DisclaimerPage: React.FC = () => {
 
           <Section title="Limitation of Liability">
             <p>
-              In no event will AuctionOS be liable for any loss or damage including without
+              In no event will GoAuct be liable for any loss or damage including without
               limitation, indirect or consequential loss or damage, or any loss or damage
               whatsoever arising from loss of data or profits arising out of, or in connection
               with, the use of this website.

@@ -25,7 +25,7 @@ export const TrainingPage: React.FC = () => (
     icon="school"
     badge="Coming Soon"
     title="Training Center"
-    description="Video tutorials, guides, and best practices for mastering tax property investing with AuctionOS. Launching soon."
+    description="Video tutorials, guides, and best practices for mastering tax property investing with GoAuct. Launching soon."
   />
 );
 
@@ -34,7 +34,7 @@ export const CommunityPage: React.FC = () => (
     icon="groups"
     badge="Coming Soon"
     title="Community"
-    description="Connect with other AuctionOS investors, share strategies, and learn from real deal experiences. Community features are coming soon."
+    description="Connect with other GoAuct investors, share strategies, and learn from real deal experiences. Community features are coming soon."
   />
 );
 
