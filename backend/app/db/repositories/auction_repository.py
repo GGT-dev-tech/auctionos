@@ -29,7 +29,11 @@ class AuctionRepository:
         available_count_subq = db.query(func.count(PropertyDetails.id))\
             .join(PropertyAuctionHistory, PropertyDetails.property_id == PropertyAuctionHistory.property_id)\
             .filter(
-                PropertyAuctionHistory.auction_id == AuctionEvent.id,
+                or_(
+                    PropertyAuctionHistory.auction_id == AuctionEvent.id,
+                    PropertyAuctionHistory.auction_name == AuctionEvent.name
+                ),
+                PropertyAuctionHistory.auction_date == AuctionEvent.auction_date,
                 PropertyDetails.availability_status == 'available'
             ).correlate(AuctionEvent).as_scalar()
 

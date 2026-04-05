@@ -159,10 +159,14 @@ def read_properties(
     where_str = " AND ".join(where_clauses)
 
     # 2. Get Total Count (with same filters)
-    # We use a subquery for history to ensure 1:1 row ratio per property
-    history_subquery = "(SELECT DISTINCT ON (property_id) * FROM property_auction_history ORDER BY property_id, auction_date DESC)"
+    # If filtering by a specific auction, we join against the full history. 
+    # Otherwise, we use DISTINCT ON to ensure 1 property = 1 row for general dashboard.
+    if auction_name:
+        history_table = "property_auction_history"
+    else:
+        history_table = "(SELECT DISTINCT ON (property_id) * FROM property_auction_history ORDER BY property_id, auction_date DESC)"
     
-    count_query = f"SELECT count(*) FROM property_details p LEFT JOIN {history_subquery} pah ON pah.property_id = p.property_id WHERE {where_str}"
+    count_query = f"SELECT count(*) FROM property_details p LEFT JOIN {history_table} pah ON pah.property_id = p.property_id WHERE {where_str}"
     total = db.execute(text(count_query), params).scalar()
 
     # 3. Get Items
@@ -207,7 +211,7 @@ def read_properties(
             p.is_processed,
             p.map_link
         FROM property_details p
-        LEFT JOIN {history_subquery} pah ON pah.property_id = p.property_id
+        LEFT JOIN {history_table} pah ON pah.property_id = p.property_id
         WHERE {where_str}
         ORDER BY {"{order_by_clause}"}
         OFFSET :skip LIMIT :limit
