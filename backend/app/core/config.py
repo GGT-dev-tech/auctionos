@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "changethiskeyinproduction"  # Should be overridden by env var
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    FRONTEND_URL: str = "https://www.goauct.com"
     
     # OAuth Configurations
     GOOGLE_CLIENT_ID: Optional[str] = None

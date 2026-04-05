@@ -166,7 +166,7 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
     
     # Redirect to frontend with token
     # We use HashRouter, so we append the query after the hash: /#/login?token=...
-    frontend_url = "https://auctionos.up.railway.app"
+    frontend_url = settings.FRONTEND_URL
     if "localhost" in str(request.base_url) or "127.0.0.1" in str(request.base_url):
         frontend_url = "http://localhost:5173"
         
