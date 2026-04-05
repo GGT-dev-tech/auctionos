@@ -88,7 +88,10 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
                         <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                             <Chip icon={<EventIcon />} label={`${dateStr} at ${timeStr}`} color="primary" variant="outlined" />
                             {props.property_count > 0 && (
-                                <Chip icon={<ListIcon />} label={`${props.property_count} Properties`} color="secondary" variant="outlined" />
+                                <Chip icon={<ListIcon />} label={`${props.property_count} Total`} color="secondary" variant="outlined" />
+                            )}
+                            {props.available_count > 0 && (
+                                <Chip icon={<SyncIcon />} label={`${props.available_count} Available`} color="success" variant="outlined" sx={{ fontWeight: 'bold' }} />
                             )}
                             {props.tax_status && (
                                 <Chip label={props.tax_status} color={props.tax_status.toLowerCase() === 'deed' ? 'success' : 'error'} variant="filled" sx={{ fontWeight: 'bold' }} />

@@ -28,6 +28,7 @@ class AuctionEventUpdate(AuctionEventBase):
 
 class AuctionEvent(AuctionEventBase):
     id: int
+    live_available_count: Optional[int] = 0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

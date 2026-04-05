@@ -36,6 +36,7 @@ export interface AuctionEvent {
   state?: string;
   tax_status?: string;
   parcels_count?: number;
+  live_available_count?: number;
   notes?: string;
   search_link?: string;
   register_date?: string;

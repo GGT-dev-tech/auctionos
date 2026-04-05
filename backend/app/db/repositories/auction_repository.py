@@ -1,9 +1,10 @@
 from typing import List, Optional, Any
 from datetime import date
 from sqlalchemy.orm import Session
-from sqlalchemy import asc, or_, text
+from sqlalchemy import asc, or_, text, func
 from fastapi.encoders import jsonable_encoder
 from app.models.auction_event import AuctionEvent
+from app.models.property import PropertyDetails, PropertyAuctionHistory
 from app.schemas.auction_event import AuctionEventCreate, AuctionEventUpdate
 
 class AuctionRepository:
@@ -23,8 +24,19 @@ class AuctionRepository:
         q: Optional[str] = None,
         tax_status: Optional[str] = None,
         sort_by_date: bool = True
-    ) -> tuple[List[AuctionEvent], int]:
-        query = db.query(AuctionEvent)
+    ) -> tuple[List[Any], int]:
+        # Subquery to count available parcels for each auction
+        available_count_subq = db.query(func.count(PropertyDetails.id))\
+            .join(PropertyAuctionHistory, PropertyDetails.property_id == PropertyAuctionHistory.property_id)\
+            .filter(
+                PropertyAuctionHistory.auction_id == AuctionEvent.id,
+                PropertyDetails.availability_status == 'available'
+            ).correlate(AuctionEvent).as_scalar()
+
+        query = db.query(
+            AuctionEvent,
+            available_count_subq.label("live_available_count")
+        )
 
         if name:
             query = query.filter(or_(
@@ -72,7 +84,15 @@ class AuctionRepository:
             query = query.order_by(AuctionEvent.auction_date.desc()) # desc by default
 
         total = query.count()
-        items = query.offset(skip).limit(limit).all()
+        results = query.offset(skip).limit(limit).all()
+        
+        # Format results to attach the scalar value to the object
+        items = []
+        for auction, live_count in results:
+            # We add it as a dynamic attribute so the schema can pick it up
+            auction.live_available_count = live_count
+            items.append(auction)
+            
         return items, total
 
     def get_calendar_events(

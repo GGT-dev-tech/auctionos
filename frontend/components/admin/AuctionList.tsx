@@ -80,6 +80,7 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
                 linked_properties: '',
                 statuses: '',
                 property_count: row.parcels_count || 0,
+                available_count: row.live_available_count || 0,
                 register_link: row.register_link,
                 list_link: row.list_link,
                 tax_status: row.tax_status
@@ -108,7 +109,18 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
         { field: 'county', headerName: 'County', width: 150 },
         { field: 'location', headerName: 'Location', width: 150 },
         { field: 'tax_status', headerName: 'Tax Status', width: 150, type: 'singleSelect', valueOptions: ['Tax Sale', 'Over the Counter', 'Sealed Bid', 'Public Outcry', 'Tax Deed', 'Tax Lien', 'Foreclosure'] },
-        { field: 'parcels_count', headerName: 'Parcels', type: 'number', width: 100 },
+        { field: 'parcels_count', headerName: 'Parcels', type: 'number', width: 90 },
+        { 
+            field: 'live_available_count', 
+            headerName: 'Available', 
+            type: 'number', 
+            width: 100,
+            renderCell: (params: any) => (
+                <Box sx={{ fontWeight: 'bold', color: params.value > 0 ? 'success.main' : 'text.secondary' }}>
+                    {params.value || 0}
+                </Box>
+            )
+        },
     ];
 
     const actionColumn: GridColDef[] = [
