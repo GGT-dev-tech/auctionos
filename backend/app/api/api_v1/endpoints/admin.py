@@ -54,6 +54,23 @@ async def import_auctions(
     
     return {"message": "Import started", "job_id": job_id}
 
+@router.post("/import/history")
+async def import_history(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_active_user)
+) -> Any:
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Must be a CSV file")
+        
+    job_id = str(uuid.uuid4())
+    content = await file.read()
+    
+    redis_client.set(f"import_history_status:{job_id}", "pending", ex=3600)
+    background_tasks.add_task(import_service.process_history_mapping_csv, content, job_id)
+    
+    return {"message": "Import started", "job_id": job_id}
+
 @router.get("/import/status/{job_id}")
 async def get_import_status(
     job_id: str,
@@ -62,6 +79,9 @@ async def get_import_status(
     status = redis_client.get(f"import_status:{job_id}")
     if status is None:
         status = redis_client.get(f"import_auctions_status:{job_id}")
+    
+    if status is None:
+        status = redis_client.get(f"import_history_status:{job_id}")
         
     if status is None:
         raise HTTPException(status_code=404, detail="Job not found")
