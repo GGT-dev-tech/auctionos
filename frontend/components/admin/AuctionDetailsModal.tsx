@@ -20,7 +20,7 @@ import {
     ListAlt as ListIcon,
     Sync as SyncIcon
 } from '@mui/icons-material';
-import GoAuctpertiesList from './GoAuctpertiesList';
+import AuctionPropertiesList from './AuctionPropertiesList';
 import { AdminService } from '../../services/admin.service';
 import { RedemptionDisclaimerCard } from '../property/RedemptionDisclaimerCard';
 
@@ -78,7 +78,7 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
 
             <DialogContent dividers className="bg-white p-0">
                 {showProperties ? (
-                    <GoAuctpertiesList
+                    <AuctionPropertiesList
                         auctionName={cleanAuctionName}
                         auctionDate={rawDate}
                         onClose={() => setShowProperties(false)}
