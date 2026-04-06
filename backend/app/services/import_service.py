@@ -117,8 +117,8 @@ class ImportService:
                         new_avail_status = parse_availability(validated_data.availability)
                         
                         d = {
-                            "property_id": str(uuid.uuid4()),
-                            "parcel_id": validated_data.parcel_id,
+                            "property_id": validated_data.property_id if validated_data.property_id else str(uuid.uuid4()),
+                            "parcel_id": str(validated_data.parcel_id).strip() if validated_data.parcel_id else None,
                             "address": validated_data.address,
                             "owner_address": validated_data.owner_address,
                             "county": validated_data.county,
@@ -369,10 +369,14 @@ class ImportService:
                                     }
                                     
                                     # Check exist by name and date
-                                    existing = conn.execute(
-                                        text("SELECT id FROM auction_events WHERE name = :name AND auction_date = :auction_date"), 
-                                        {"name": auction_data["name"], "auction_date": auction_data["auction_date"]}
-                                    ).fetchone()
+                                    check_query = "SELECT id FROM auction_events WHERE name = :name AND auction_date = :auction_date"
+                                    check_params = {"name": auction_data["name"], "auction_date": auction_data["auction_date"]}
+                                    
+                                    if validated_data.id:
+                                        check_query = "SELECT id FROM auction_events WHERE id = :id OR (name = :name AND auction_date = :auction_date)"
+                                        check_params["id"] = int(validated_data.id)
+                                    
+                                    existing = conn.execute(text(check_query), check_params).fetchone()
                                     
                                     if existing:
                                         updates = ", ".join([f"{k} = :{k}" for k in auction_data.keys() if k not in ["name", "auction_date"]])
@@ -380,6 +384,10 @@ class ImportService:
                                         update_params = {**auction_data, "id": existing[0]}
                                         conn.execute(query, update_params)
                                     else:
+                                        # Use original ID if provided
+                                        if validated_data.id:
+                                            auction_data["id"] = int(validated_data.id)
+                                        
                                         auction_data["created_at"] = datetime.utcnow()
                                         fields = ", ".join(auction_data.keys())
                                         placeholders = ", ".join([f":{k}" for k in auction_data.keys()])
@@ -420,5 +428,67 @@ class ImportService:
         except Exception as e:
             logger.error(f"Auctions Import Job Failed: {e}")
             redis.set(f"import_auctions_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
+
+    @staticmethod
+    async def process_history_mapping_csv(file_content: bytes, job_id: str):
+        try:
+            df = pd.read_csv(io.BytesIO(file_content), dtype=str)
+            total_rows = len(df)
+            success_count = 0
+            errors = []
+
+            chunk_size = 50
+            for i in range(0, len(df), chunk_size):
+                chunk = df.iloc[i:i+chunk_size]
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        with engine.begin() as conn:
+                            for index, row in chunk.iterrows():
+                                try:
+                                    row_dict = row.where(pd.notnull(row), None).to_dict()
+                                    prop_id = row_dict.get('property_id')
+                                    legacy_auction_id = row_dict.get('auction_eventId') or row_dict.get('auction_id')
+                                    
+                                    if not prop_id or not legacy_auction_id:
+                                        continue
+
+                                    # Link history to auction by the legacy ID (which we now preserve)
+                                    # Also copy auction details for historical consistency
+                                    query = text("""
+                                        INSERT INTO property_auction_history (property_id, auction_id, auction_name, auction_date, created_at)
+                                        SELECT :prop_id, a.id, a.name, a.auction_date, :created_at
+                                        FROM auction_events a
+                                        WHERE a.id = :auction_id
+                                        ON CONFLICT (property_id, auction_name) DO NOTHING
+                                    """)
+                                    conn.execute(query, {
+                                        "prop_id": prop_id,
+                                        "auction_id": int(legacy_auction_id),
+                                        "created_at": datetime.utcnow()
+                                    })
+                                    
+                                except Exception as e:
+                                    errors.append(f"Row {i + index + 2}: {str(e)}")
+                        
+                        success_count += len(chunk)
+                        break
+                    except OperationalError:
+                        if attempt == max_retries - 1: raise
+                        time.sleep(3)
+                    except Exception as ge:
+                        errors.append(f"Chunk error: {str(ge)}")
+                        break
+            
+            status_msg = f"History Linkage Success: {success_count} mappings processed"
+            if errors:
+                status_msg = f"Completed with {len(errors)} errors. Success: {success_count}/{total_rows}"
+                redis.set(f"import_errors:{job_id}", str(errors[:200]), ex=3600)
+            
+            redis.set(f"import_history_status:{job_id}", status_msg, ex=3600)
+            
+        except Exception as e:
+            logger.error(f"History Mapping Failed: {e}")
+            redis.set(f"import_history_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
 
 import_service = ImportService()

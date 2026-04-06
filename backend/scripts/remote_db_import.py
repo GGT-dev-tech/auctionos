@@ -42,6 +42,11 @@ async def run_import(file_path: str, import_type: str = "properties"):
                 content = f.read()
             print("Processing as AUCTIONS...")
             await import_service.process_auctions_csv(content, job_id)
+        elif import_type == "history":
+            with open(file_path, "rb") as f:
+                content = f.read()
+            print("Processing as HISTORY...")
+            await import_service.process_history_mapping_csv(content, job_id)
         else:
             print("Processing as PROPERTIES...")
             await import_service.process_properties_csv_file(file_path, job_id)

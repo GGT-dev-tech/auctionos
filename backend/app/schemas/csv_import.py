@@ -21,14 +21,17 @@ def parse_float(v):
     return float(v)
 
 class PropertyCSVRow(BaseModel):
-    parcel_id: str = Field(alias="Parcel ID")
-    address: Optional[str] = Field(None, alias="parcel_address")
-    type: Optional[str] = Field("residential")
+    model_config = ConfigDict(populate_by_name=True)
+
+    property_id: Optional[str] = Field(None, alias="property_id")
+    parcel_id: str = Field(..., alias="parcel_id")
+    address: Optional[str] = Field(None, alias="address")
+    type: Optional[str] = Field("residential", alias="property_type")
     description: Optional[str] = None
     
     # Financials
     amount_due: Optional[float] = None
-    total_value: Optional[float] = Field(None, alias="total_value")
+    total_value: Optional[float] = Field(None, alias="assessed_value")
     land_value: Optional[float] = None
     improvements: Optional[float] = None
     estimated_arv: Optional[float] = None
@@ -37,7 +40,7 @@ class PropertyCSVRow(BaseModel):
 
     # Location
     county: Optional[str] = None
-    state_code: Optional[str] = None
+    state_code: Optional[str] = Field(None, alias="state")
     coordinates: Optional[str] = None # coordinates: "lat, lon" or "lat lon"
 
     # Auction Info
@@ -48,8 +51,8 @@ class PropertyCSVRow(BaseModel):
     
     # Details
     account: Optional[str] = None
-    acres: Optional[float] = None
-    tax_sale_year: Optional[Union[float, int]] = None
+    acres: Optional[float] = Field(None, alias="lot_acres")
+    tax_sale_year: Optional[Union[float, int]] = Field(None, alias="tax_year")
     date: Optional[str] = None
     cs_number: Optional[str] = None
     parcel_code: Optional[str] = None
@@ -58,7 +61,7 @@ class PropertyCSVRow(BaseModel):
     purchase_option_type: Optional[str] = None
     vacancy: Optional[str] = None
     owner_address: Optional[str] = None
-    availability: Optional[str] = Field(None, alias="Availability")
+    availability: Optional[str] = Field(None, alias="availability_status")
     
     # New Extended Fields (V3)
     redfin_url: Optional[str] = None
@@ -88,6 +91,7 @@ class PropertyCSVRow(BaseModel):
 class AuctionCSVRow(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
+    id: Optional[Union[int, str]] = Field(None, alias="id")
     name: str = Field(alias="Name")
     short_name: Optional[str] = Field(None, alias="Short Name")
     tax_status: Optional[str] = Field(None, alias="Tax Status")
