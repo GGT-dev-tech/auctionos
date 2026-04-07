@@ -688,3 +688,19 @@ def reconcile_auction_properties(
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
+
+
+from app.services.attom_enrichment import enrich_property
+
+@router.post("/{property_id}/enrich", response_model=dict)
+def enrich_property_endpoint(
+    property_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    On-demand API endpoint to enrich property details using ATTOM Property Data.
+    Verifica se existem campos faltando e, se sim, busca na API da ATTOM, usa cache no Redis e salva tudo na base de dados.
+    """
+    result = enrich_property(db, property_id)
+    return result
