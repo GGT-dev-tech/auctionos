@@ -39,6 +39,7 @@ class Settings(BaseSettings):
 
     REDIS_URL: str = "redis://redis:6379"
     ZENROWS_API_KEY: Optional[str] = None
+    ATTOM_API_KEY: Optional[str] = None
 
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env")
 
