@@ -9,9 +9,12 @@ const ClientProperties: React.FC = () => {
     const [filters, setFilters] = useState<PropertyFilterParams>(() => {
         try {
             const saved = sessionStorage.getItem('property_search_filters');
-            if (saved) return JSON.parse(saved);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                return Object.keys(parsed).length > 0 ? parsed : { availability: 'available' };
+            }
         } catch {}
-        return {};
+        return { availability: 'available' };
     });
 
     // Save to sessionStorage whenever filters change

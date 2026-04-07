@@ -14,7 +14,21 @@ import { useSearchParams } from 'react-router-dom';
 const AdminAuctions: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'auctions' | 'properties' | 'import_props' | 'import_auctions' | 'broadcasts'>('auctions');
     const [filters, setFilters] = useState<AuctionFilterParams>({});
-    const [propertyFilters, setPropertyFilters] = useState<PropertyFilterParams>({});
+    const [propertyFilters, setPropertyFilters] = useState<PropertyFilterParams>(() => {
+        try {
+            const saved = sessionStorage.getItem('admin_property_filters');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                return Object.keys(parsed).length > 0 ? parsed : { availability: 'available' };
+            }
+        } catch {}
+        return { availability: 'available' };
+    });
+
+    React.useEffect(() => {
+        sessionStorage.setItem('admin_property_filters', JSON.stringify(propertyFilters));
+    }, [propertyFilters]);
+
     const [, setSearchParams] = useSearchParams();
 
     const handleDateTypeSelect = (date: string, type: string) => {
