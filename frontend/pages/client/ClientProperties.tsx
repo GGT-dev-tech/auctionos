@@ -6,25 +6,40 @@ import { Typography } from '@mui/material';
 
 const ClientProperties: React.FC = () => {
     const [searchParams] = useSearchParams();
-    const [filters, setFilters] = useState<PropertyFilterParams>({});
+    const [filters, setFilters] = useState<PropertyFilterParams>(() => {
+        try {
+            const saved = sessionStorage.getItem('property_search_filters');
+            if (saved) return JSON.parse(saved);
+        } catch {}
+        return {};
+    });
+
+    // Save to sessionStorage whenever filters change
+    useEffect(() => {
+        sessionStorage.setItem('property_search_filters', JSON.stringify(filters));
+    }, [filters]);
 
     // Sync URL params to filter state on mount
     useEffect(() => {
         const stateParam = searchParams.get('state');
         const topParam = searchParams.get('top');
-        const initialFilters: PropertyFilterParams = {};
+        const initialFilters: PropertyFilterParams = { availability: 'available' };
         
         if (stateParam) initialFilters.state = stateParam;
         if (topParam === 'true') {
             initialFilters.min_score = 70;
         }
         
-        if (Object.keys(initialFilters).length > 0) {
-            // Only update if actually different to prevent flickering loops
-            setFilters(prev => {
-                const isDifferent = JSON.stringify(prev) !== JSON.stringify({ ...prev, ...initialFilters });
-                return isDifferent ? { ...prev, ...initialFilters } : prev;
-            });
+        const hasSavedSession = sessionStorage.getItem('property_search_filters');
+        
+        // Apply defaults/URL params only if there's an explicit URL override OR no saved session
+        if (stateParam || topParam || !hasSavedSession) {
+            if (Object.keys(initialFilters).length > 0) {
+                setFilters(prev => {
+                    const isDifferent = JSON.stringify(prev) !== JSON.stringify({ ...prev, ...initialFilters });
+                    return isDifferent ? { ...prev, ...initialFilters } : prev;
+                });
+            }
         }
     }, [searchParams]);
 

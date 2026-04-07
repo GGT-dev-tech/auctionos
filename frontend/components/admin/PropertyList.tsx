@@ -263,6 +263,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
                     pageSizeOptions={[20, 50, 100]}
                     disableRowSelectionOnClick
                     density="compact"
+                    onRowClick={(params) => navigate(readOnly ? `/client/properties/${params.id}` : `/admin/properties/${params.id}`)}
                     sx={{
                         border: 'none',
                         '& .MuiDataGrid-columnHeaders': {
