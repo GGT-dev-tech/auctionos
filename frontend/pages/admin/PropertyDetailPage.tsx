@@ -69,6 +69,24 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
             fetchSecondaryData(data);
             setError(null);
 
+            // Background Check: Auto-Enrich via ATTOM if crucial details are missing
+            const checkMissing = !data.year_built || !data.bedrooms || !data.owner_name || !data.assessed_value;
+            if (checkMissing && data.property_id) {
+                const token = localStorage.getItem('token');
+                fetch(`${API_BASE_URL}/api/v1/properties/${data.property_id}/enrich`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res?.enriched_fields && Object.keys(res.enriched_fields).length > 0) {
+                        setProperty((prev: any) => prev ? { ...prev, ...res.enriched_fields } : prev);
+                        console.log("ATTOM Auto-Enriched Property for Client View:", res.enriched_fields);
+                    }
+                }).catch(() => {});
+            }
+
+
             // Auto-sync score to backend (silent, non-blocking)
             // Only compute if backend hasn't stored one yet
             if (data?.parcel_id) {

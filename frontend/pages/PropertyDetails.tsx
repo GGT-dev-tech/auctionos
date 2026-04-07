@@ -29,6 +29,20 @@ const PropertyDetails: React.FC = () => {
             try {
                 const data = await AdminService.getProperty(id);
                 setProperty(data);
+                
+                // Background Check: Auto-Enrich via ATTOM if crucial details are missing.
+                const checkMissing = !data.year_built || !data.bedrooms || !data.owner_name || !data.assessed_value;
+                if (checkMissing && data.property_id) {
+                    AdminService.enrichProperty(data.property_id)
+                        .then(res => {
+                            if (res?.enriched_fields && Object.keys(res.enriched_fields).length > 0) {
+                                // Update React state locally with new fields so UI refreshes organically
+                                setProperty((prev: any) => ({ ...prev, ...res.enriched_fields }));
+                                console.log("ATTOM Auto-Enriched Property:", res.enriched_fields);
+                            }
+                        })
+                        .catch(err => console.debug("ATTOM Enrichment skipped or failed:", err));
+                }
             } catch (error) {
                 console.error('Failed to fetch property details', error);
             } finally {
@@ -37,6 +51,7 @@ const PropertyDetails: React.FC = () => {
         };
         fetchProperty();
     }, [id]);
+
 
     if (loading) return <div className="p-8 text-center text-slate-500">Loading details...</div>;
     if (!property) return <div className="p-8 text-center text-red-500">Property not found.</div>;
