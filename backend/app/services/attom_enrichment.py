@@ -117,34 +117,37 @@ def map_attom_to_db(attom_data: Dict[str, Any], existing_prop: PropertyDetails, 
     set_if_missing("longitude", float(location.get("longitude")) if location.get("longitude") else None)
 
     # Summary
-    set_if_missing("property_type_detail", summary.get("propSubType") or summary.get("propClass"))
+    set_if_missing("property_type_detail", summary.get("propsubtype") or summary.get("propSubType") or summary.get("propclass"))
     set_if_missing("legal_description", summary.get("legal1"))
 
     # Building details
-    set_if_missing("year_built", building.get("yearBuilt"))
+    # yearbuilt can be in summary or building
+    set_if_missing("year_built", summary.get("yearbuilt") or building.get("yearBuilt") or b_summary.get("yearbuilteffective"))
     set_if_missing("bedrooms", b_rooms.get("beds"))
-    set_if_missing("bathrooms", b_rooms.get("bathsTotal"))
-    set_if_missing("sqft", b_size.get("livingSize") or b_size.get("bldgSize"))
-    set_if_missing("building_area_sqft", b_size.get("bldgSize"))
+    set_if_missing("bathrooms", b_rooms.get("bathstotal") or b_rooms.get("bathsTotal"))
+    set_if_missing("sqft", b_size.get("livingsize") or b_size.get("livingSize") or b_size.get("bldgsize"))
+    set_if_missing("building_area_sqft", b_size.get("bldgsize") or b_size.get("bldgSize"))
     set_if_missing("num_stories", b_summary.get("levels"))
-    set_if_missing("num_units", b_summary.get("unitsCount"))
-    set_if_missing("structure_style", b_construction.get("condition") or b_summary.get("propClass"))
+    set_if_missing("num_units", b_summary.get("unitscount") or b_summary.get("unitsCount"))
+    set_if_missing("structure_style", b_construction.get("condition") or b_summary.get("propclass") or summary.get("propclass"))
 
     # Lot size
-    set_if_missing("lot_acres", lot.get("lotSize1"))
-    set_if_missing("lot_sqft", lot.get("lotSize2"))
-    set_if_missing("lot_size", lot.get("lotSize2"))
-    set_if_missing("zoning", lot.get("zoningType"))
-    set_if_missing("subdivision", lot.get("subdivisionName"))
+    set_if_missing("lot_acres", lot.get("lotsize1") or lot.get("lotSize1"))
+    set_if_missing("lot_sqft", lot.get("lotsize2") or lot.get("lotSize2"))
+    set_if_missing("lot_size", lot.get("lotsize2") or lot.get("lotSize2"))
+    set_if_missing("zoning", lot.get("zoningtype") or lot.get("zoningType") or lot.get("zoning"))
+    # In ATTOM, subdivision is often in area.subdname
+    area = p_data.get("area", {})
+    set_if_missing("subdivision", area.get("subdname") or lot.get("subdivisionName"))
 
     # Values (AVM e Assessment)
     set_if_missing("estimated_value", avm.get("amount", {}).get("value"))
-    set_if_missing("assessed_value", assessed.get("assdTtlValue"))
-    set_if_missing("land_value", assessed.get("assdLandValue"))
-    set_if_missing("improvement_value", assessed.get("assdImprValue"))
+    set_if_missing("assessed_value", assessed.get("assdttlvalue") or assessed.get("assdTtlValue") or assessed.get("assessedValue"))
+    set_if_missing("land_value", assessed.get("assdlandvalue") or assessed.get("assdLandValue"))
+    set_if_missing("improvement_value", assessed.get("assdimprvalue") or assessed.get("assdImprValue"))
     
-    set_if_missing("tax_amount", tax.get("taxAmt"))
-    set_if_missing("tax_year", tax.get("taxYear"))
+    set_if_missing("tax_amount", tax.get("taxamt") or tax.get("taxAmt") or tax.get("taxAmount"))
+    set_if_missing("tax_year", tax.get("taxyear") or tax.get("taxYear"))
 
     # Sales info
     from datetime import datetime
