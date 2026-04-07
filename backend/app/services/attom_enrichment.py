@@ -27,17 +27,24 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
+from app.core.config import settings
+
 # Constantes ATTOM
-ATTOM_API_KEY = os.getenv("ATTOM_API_KEY")
+ATTOM_API_KEY = settings.ATTOM_API_KEY
 ATTOM_BASE_URL = "https://api.gateway.attomdata.com/propertyapi/v1.0.0"
 
 # Configuração Redis
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_URL = settings.REDIS_URL
 try:
-    redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+    if REDIS_URL:
+        # Resolve any strange protocols by ensuring safe loading
+        redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+    else:
+        redis_client = None
 except Exception as e:
     logger.warning(f"Não foi possível conectar ao Redis: {e}")
     redis_client = None
+
 
 CACHE_TTL_SECONDS = 60 * 24 * 60 * 60  # 60 dias
 
