@@ -45,17 +45,22 @@ CACHE_TTL_SECONDS = 60 * 24 * 60 * 60  # 60 dias
 def get_missing_fields(prop: PropertyDetails) -> List[str]:
     """
     Função auxiliar que verifica quais campos importantes estão faltando.
-    Caso o cliente já possua esta função globalmente, ela pode ser importada.
     """
     missing = []
-    # Definindo uma lista de campos cruciais que esperamos preencher com a ATTOM
-    crucial_fields = [
+    # Lista estendida visando extrair o MÁXIMO da ATTOM
+    potential_fields = [
         "year_built", "latitude", "longitude", "estimated_value",
-        "lot_size", "bedrooms", "bathrooms", "owner_name", "owner_occupied"
+        "lot_size", "bedrooms", "bathrooms", "owner_name", "owner_occupied",
+        "county_fips", "zoning", "legal_description", "lot_sqft", "subdivision",
+        "num_stories", "num_units", "structure_style", "building_area_sqft",
+        "lot_acres", "assessed_value", "land_value", "improvement_value",
+        "tax_amount", "tax_year", "last_sale_date", "last_sale_price",
+        "water_type", "sewer_type", "property_type_detail", "attom_id", "apn_unformatted",
+        "occupancy"
     ]
     
-    for field in crucial_fields:
-        if not hasattr(prop, field) or getattr(prop, field) is None:
+    for field in potential_fields:
+        if hasattr(prop, field) and (getattr(prop, field) is None or getattr(prop, field) == ""):
             missing.append(field)
             
     return missing
@@ -63,15 +68,14 @@ def get_missing_fields(prop: PropertyDetails) -> List[str]:
 
 def map_attom_to_db(attom_data: Dict[str, Any], existing_prop: PropertyDetails, missing_fields: List[str]) -> Dict[str, Any]:
     """
-    Mapeia os dados da API ATTOM para os campos do banco de dados (PropertyDetails).
-    Atualiza SOMENTE os campos que estão na lista `missing_fields` (ou pode atualizar todos vazios).
+    Mapeia agressivamente os dados extras da ATTOM para a DB (somente mapeia se estiver na lista missing_fields).
     """
     if "property" not in attom_data or not attom_data["property"]:
         return {}
 
     p_data = attom_data["property"][0]
     
-    # Extração de seções seguras
+    identifier = p_data.get("identifier", {})
     address = p_data.get("address", {})
     location = p_data.get("location", {})
     summary = p_data.get("summary", {})
@@ -80,59 +84,81 @@ def map_attom_to_db(attom_data: Dict[str, Any], existing_prop: PropertyDetails, 
     b_rooms = building.get("rooms", {})
     b_interior = building.get("interior", {})
     b_construction = building.get("construction", {})
+    b_summary = building.get("summary", {})
     lot = p_data.get("lot", {})
     avm = p_data.get("avm", {})
     owner = p_data.get("owner", {})
     utilities = p_data.get("utilities", {})
+    assessment = p_data.get("assessment", {})
+    assessed = assessment.get("assessed", {})
+    tax = assessment.get("tax", {})
+    sale = p_data.get("sale", {})
 
     update_data = {}
 
-    # Mapeamento
-    # ATTOM ID
-    if "attom_id" in missing_fields or not getattr(existing_prop, "attom_id", None):
-        update_data["attom_id"] = str(p_data.get("identifier", {}).get("attomId", ""))
-    
-    if "apn_unformatted" in missing_fields or not getattr(existing_prop, "apn_unformatted", None):
-        update_data["apn_unformatted"] = p_data.get("identifier", {}).get("apn", "")
-    
+    def set_if_missing(field, value):
+        if value is not None and value != "" and field in missing_fields:
+            update_data[field] = value
+
+    # Identifiers
+    set_if_missing("attom_id", str(identifier.get("attomId")) if identifier.get("attomId") else None)
+    set_if_missing("apn_unformatted", identifier.get("apn"))
+    set_if_missing("county_fips", identifier.get("fips"))
+
     # Location
-    if "latitude" in missing_fields:
-        update_data["latitude"] = float(location.get("latitude")) if location.get("latitude") else None
-    if "longitude" in missing_fields:
-        update_data["longitude"] = float(location.get("longitude")) if location.get("longitude") else None
+    set_if_missing("latitude", float(location.get("latitude")) if location.get("latitude") else None)
+    set_if_missing("longitude", float(location.get("longitude")) if location.get("longitude") else None)
+
+    # Summary
+    set_if_missing("property_type_detail", summary.get("propSubType") or summary.get("propClass"))
+    set_if_missing("legal_description", summary.get("legal1"))
 
     # Building details
-    if "year_built" in missing_fields:
-        update_data["year_built"] = building.get("yearBuilt")
-    if "bedrooms" in missing_fields:
-        update_data["bedrooms"] = b_rooms.get("beds")
-    if "bathrooms" in missing_fields:
-        update_data["bathrooms"] = b_rooms.get("bathsTotal")
-    if "sqft" in missing_fields:
-        update_data["sqft"] = b_size.get("livingSize") or b_size.get("bldgSize")
+    set_if_missing("year_built", building.get("yearBuilt"))
+    set_if_missing("bedrooms", b_rooms.get("beds"))
+    set_if_missing("bathrooms", b_rooms.get("bathsTotal"))
+    set_if_missing("sqft", b_size.get("livingSize") or b_size.get("bldgSize"))
+    set_if_missing("building_area_sqft", b_size.get("bldgSize"))
+    set_if_missing("num_stories", b_summary.get("levels"))
+    set_if_missing("num_units", b_summary.get("unitsCount"))
+    set_if_missing("structure_style", b_construction.get("condition") or b_summary.get("propClass"))
 
     # Lot size
-    if "lot_size" in missing_fields:
-        update_data["lot_size"] = lot.get("lotSize2") # lotSize1 é acres, lotSize2 geralmente sqft
+    set_if_missing("lot_acres", lot.get("lotSize1"))
+    set_if_missing("lot_sqft", lot.get("lotSize2"))
+    set_if_missing("lot_size", lot.get("lotSize2"))
+    set_if_missing("zoning", lot.get("zoningType"))
+    set_if_missing("subdivision", lot.get("subdivisionName"))
+
+    # Values (AVM e Assessment)
+    set_if_missing("estimated_value", avm.get("amount", {}).get("value"))
+    set_if_missing("assessed_value", assessed.get("assdTtlValue"))
+    set_if_missing("land_value", assessed.get("assdLandValue"))
+    set_if_missing("improvement_value", assessed.get("assdImprValue"))
     
-    # Values
-    if "estimated_value" in missing_fields:
-        update_data["estimated_value"] = avm.get("amount", {}).get("value")
+    set_if_missing("tax_amount", tax.get("taxAmt"))
+    set_if_missing("tax_year", tax.get("taxYear"))
+
+    # Sales info
+    from datetime import datetime
+    raw_date = sale.get("saleTransDate") or sale.get("saleSearchDate")
+    if raw_date and isinstance(raw_date, str) and raw_date.strip() and "last_sale_date" in missing_fields:
+        try:
+            # Pega o YYYY-MM-DD
+            update_data["last_sale_date"] = datetime.strptime(raw_date, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    set_if_missing("last_sale_price", sale.get("saleAmt"))
 
     # Owners
-    if "owner_name" in missing_fields:
-        update_data["owner_name"] = owner.get("owner1", {}).get("fullName")
-    if "owner_occupied" in missing_fields:
-        update_data["owner_occupied"] = owner.get("ownerOccupied")
+    set_if_missing("owner_name", owner.get("owner1", {}).get("fullName"))
+    set_if_missing("owner_occupied", owner.get("ownerOccupied"))
+    set_if_missing("occupancy", owner.get("ownerOccupied"))
 
-    # Property characteristics
-    if hasattr(existing_prop, "heating_type") and (getattr(existing_prop, "heating_type") is None):
-        update_data["heating_type"] = utilities.get("heatingType")
-        
-    if hasattr(existing_prop, "sewer_type") and (getattr(existing_prop, "sewer_type") is None):
-        update_data["sewer_type"] = utilities.get("sewerType")
+    # Utilities
+    set_if_missing("water_type", utilities.get("waterType"))
+    set_if_missing("sewer_type", utilities.get("sewerType"))
 
-    # Limpa valores nulos no dict
     return {k: v for k, v in update_data.items() if v is not None}
 
 
