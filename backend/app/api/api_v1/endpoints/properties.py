@@ -21,6 +21,7 @@ def read_properties(
     state: Optional[str] = None,
     auction_name: Optional[str] = None,
     auction_date: Optional[str] = None,
+    auction_id: Optional[int] = None,
     sort_field: Optional[str] = None,
     sort_order: Optional[str] = "asc",
     min_amount_due: Optional[float] = None,
@@ -55,6 +56,9 @@ def read_properties(
     if state:
         where_clauses.append("p.state ILIKE :state")
         params["state"] = f"%{state}%"
+    if auction_id:
+        where_clauses.append("pah.auction_id = :auction_id")
+        params["auction_id"] = auction_id
     if auction_name:
         where_clauses.append("pah.auction_name ILIKE :auction_name")
         params["auction_name"] = f"%{auction_name}%"
@@ -470,6 +474,16 @@ def purchase_property_action(
             # State Transition Validation
             if current_status != "available":
                 raise HTTPException(status_code=400, detail=f"Cannot purchase property. Current state is '{current_status}'. Must be 'available'.")
+            
+            # Auction Linkage Validation for non-privileged users
+            if not current_user.is_superuser:
+                auction_q = text("SELECT 1 FROM property_auction_history WHERE property_id = :prop_id LIMIT 1")
+                has_auction = db.execute(auction_q, {"prop_id": prop_id}).fetchone()
+                if has_auction:
+                    raise HTTPException(
+                        status_code=403, 
+                        detail="This property is linked to a live auction. Clients must bid via the official portal instead of direct purchase."
+                    )
                 
             # Perform atomic update
             new_status = "purchased"

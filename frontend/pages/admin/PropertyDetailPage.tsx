@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PropertyService, ClientDataService } from '../../services/property.service';
+import { AuthService } from '../../services/auth.service';
 import { API_BASE_URL } from '../../services/httpClient';
 import { countyService, CountyContact } from '../../services/county.service';
 import { Button, CircularProgress, Divider, Menu, MenuItem } from '@mui/material';
@@ -249,7 +250,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
             </div>
 
             {/* Import Error Banner */}
-            {property.is_processed === false && (
+            {AuthService.getCurrentUser()?.role === 'admin' && property.is_processed === false && (
                 <div className="bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800 rounded-lg shadow-sm">
                     <h3 className="text-red-800 dark:text-red-300 font-bold mb-1 flex items-center gap-2">
                         <span className="material-symbols-outlined text-[20px]">error</span>
@@ -278,7 +279,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                         <Button
                             variant="outlined"
                             size="small"
-                            onClick={() => navigate(`/properties/${property.parcel_id}/edit`)}
+                            onClick={() => navigate(`/admin/properties/${property.parcel_id}/edit`)}
                             className="normal-case font-bold text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
                         >
                             Edit

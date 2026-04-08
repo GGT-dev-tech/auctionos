@@ -81,6 +81,7 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
                     <AuctionPropertiesList
                         auctionName={cleanAuctionName}
                         auctionDate={rawDate}
+                        auctionId={eventData.id}
                         onClose={() => setShowProperties(false)}
                     />
                 ) : (

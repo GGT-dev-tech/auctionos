@@ -310,6 +310,8 @@ export interface PropertyDetails {
   attachments?: any[];
   recommended_next_steps?: any[];
   auction_history?: any[];
+  current_auction_name?: string;
+  current_auction_date?: string;
   owner_name?: string;
 }
 
@@ -321,4 +323,6 @@ export interface ClientList {
     is_favorite_list: boolean;
     is_broadcasted: boolean;
     tags?: string;
+    has_upcoming_auction?: boolean;
+    upcoming_auctions_count?: number;
 }

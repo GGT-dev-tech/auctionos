@@ -78,7 +78,9 @@ const App: React.FC = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/auctions" element={<AuctionList filters={{}} />} />
             <Route path="/admin/auctions" element={<AdminAuctions />} />
+            <Route path="/admin/properties" element={<AdminAuctions defaultTab="properties" />} />
             <Route path="/admin/properties/:id" element={<PropertyDetailPage />} />
+            <Route path="/admin/properties/:id/edit" element={<PropertyManualEntry />} />
             <Route path="/admin/lists" element={<AdminLists />} />
             <Route path="/admin/research" element={<AdminResearch />} />
             <Route path="/admin/import/properties" element={<AdminImportProperties />} />
