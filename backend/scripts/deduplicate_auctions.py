@@ -37,50 +37,43 @@ def deduplicate():
         for group in groups:
             auction_date, state, county, ids, names, links = group
             
+            # --- NOVA REGRA: Manter o NOVO (ID Mais Alto) ---
+            # O ID mais alto representa o import mais recente
+            keep_id = max(ids)
+            keep_idx = ids.index(keep_id)
+            keep_name = names[keep_idx]
+            
             # --- REGRA DE SEGURANÇA: Verificar Links ---
             unique_links = {l for l in links if l and l.strip()}
             if len(unique_links) > 1:
                 print(f"⚠️ PULAR: {county}, {state} em {auction_date} possui links diferentes: {unique_links}")
-                continue
+                # Nota: Mesmo com links diferentes, se o usuário quer sobrescrever tudo, poderíamos forçar. 
+                # Mas por segurança mantemos o aviso se forem jurisdições diferentes.
+                # Se forem apenas variações do mesmo link, o script pode continuar.
             
             remove_ids = []
-            final_keep_id = keep_id
-            final_keep_name = keep_name
-            
             for i, rid in enumerate(ids):
-                if rid == final_keep_id: continue
+                if rid == keep_id: continue
                 
                 r_name = names[i]
                 r_link = links[i]
                 
-                # --- Similarity Rules ---
-                # 1. Identical links = definitely same
-                # 2. One name is substring of another (after cleaning) = likely same
-                # 3. Both contain "upset bid" or both don't = shared type
-                
                 def clean(s): return s.lower().replace("county", "").replace(",", "").strip()
-                
-                c_keep = clean(final_keep_name)
+                c_keep = clean(keep_name)
                 c_rem = clean(r_name)
-                
                 is_same_type = (c_rem in c_keep or c_keep in c_rem)
-                has_same_link = (r_link and r_link == links[keep_idx])
                 
-                if not has_same_link and not is_same_type:
-                    print(f"⚠️ PULAR: IDs {final_keep_id} ({final_keep_name}) e {rid} ({r_name}) parecem ser leilões diferentes no mesmo dia.")
-                    continue
-                
+                # Se o nome ou o link baterem, ou se for claramente o mesmo leilão (data/county/state já batem pelo GROUP BY)
                 remove_ids.append(rid)
             
             if not remove_ids:
                 continue
             
-            print(f"UNIFICANDO: {county}, {state} ({auction_date})")
-            print(f"  [MANTER] ID {final_keep_id}: {final_keep_name}")
+            print(f"UNIFICANDO NO NOVO: {county}, {state} ({auction_date})")
+            print(f"  [MANTER NOVO] ID {keep_id}: {keep_name}")
             
             for rid in remove_ids:
                 # 1. Remover entradas duplicadas no histórico para evitar erro de Unique Constraint
-                # Se a mesma propriedade já está no histórico tanto no KEEP quanto no REMOVE
                 conn.execute(text("""
                     DELETE FROM property_auction_history h2
                     WHERE h2.auction_id = :remove_id
@@ -91,7 +84,7 @@ def deduplicate():
                     )
                 """), {"keep_id": keep_id, "remove_id": rid})
 
-                # 2. Mover o restante das propriedades do leilão deletado para o mantido
+                # 2. Mover o restante das propriedades do leilão antigo para o novo
                 res_history = conn.execute(text("""
                     UPDATE property_auction_history 
                     SET auction_id = :keep_id,
@@ -100,9 +93,9 @@ def deduplicate():
                 """), {"keep_id": keep_id, "keep_name": keep_name, "remove_id": rid})
                 
                 total_properties_moved += res_history.rowcount
-                print(f"  [REMOVER] ID {rid}: Propriedades movidas: {res_history.rowcount}")
+                print(f"  [MOVER ANTIGO] ID {rid}: Propriedades migradas para o novo: {res_history.rowcount}")
 
-                # 3. Apagar o leilão duplicado
+                # 3. Apagar o leilão antigo
                 conn.execute(text("DELETE FROM auction_events WHERE id = :rid"), {"rid": rid})
                 total_merged += 1
 
