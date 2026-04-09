@@ -551,10 +551,11 @@ def get_property(
             p.*,
             pah.auction_name as current_auction_name, 
             pah.auction_date as current_auction_date,
-            pah.info_link as auction_info_link,
-            pah.list_link as auction_list_link
+            COALESCE(pah.info_link, ae.register_link) as auction_info_link,
+            COALESCE(pah.list_link, ae.list_link) as auction_list_link
         FROM property_details p
         LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
+        LEFT JOIN auction_events ae ON pah.auction_id = ae.id
         WHERE p.parcel_id = :parcel_id
         ORDER BY pah.auction_date DESC
         LIMIT 1

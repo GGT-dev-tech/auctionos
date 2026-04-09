@@ -180,7 +180,7 @@ export const PropertyPurchaseOptions: React.FC<Props> = ({
 
                     <div className="pt-2">
                         <a 
-                            href={primaryLink} 
+                            href={auctionInfoLink || primaryLink} 
                             target="_blank" 
                             rel="noreferrer"
                             className="w-full py-4 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-black text-sm transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-500/20"

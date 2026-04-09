@@ -19,7 +19,7 @@ export const PropertyResearchLinks: React.FC<Props> = ({ property }) => {
             links: [
                 ...(property.auction_info_link ? [{ label: 'Official Registration', url: property.auction_info_link }] : []),
                 ...(property.auction_list_link ? [{ label: 'Official Property List', url: property.auction_list_link }] : []),
-                ...( !property.auction_info_link && !property.auction_list_link ? [{ label: 'Search County Portal', url: `https://www.google.com/search?q=${encodeURIComponent(`${property.county} County ${property.state} tax sale portal`)}` }] : [])
+                { label: 'Search County Portal', url: property.auction_info_link || `https://www.google.com/search?q=${encodeURIComponent(`${property.county} County ${property.state} tax sale portal`)}` }
             ]
         },
         {
