@@ -95,6 +95,7 @@ def read_properties(
         where_clauses.append("p.improvement_value <= :max_improvements")
         params["max_improvements"] = max_improvements
     if availability:
+        # Normalize to 'available' if 'available' is passed, or use the string as is
         where_clauses.append("p.availability_status ILIKE :availability")
         params["availability"] = f"%{availability}%"
     if min_county_appraisal is not None:
@@ -162,10 +163,9 @@ def read_properties(
 
     where_str = " AND ".join(where_clauses)
 
-    # 2. Get Total Count (with same filters)
-    # If filtering by a specific auction, we join against the full history. 
+    # If filtering by a specific auction (name or id), we join against the full history. 
     # Otherwise, we use DISTINCT ON to ensure 1 property = 1 row for general dashboard.
-    if auction_name:
+    if auction_name or auction_id:
         history_table = "property_auction_history"
     else:
         history_table = "(SELECT DISTINCT ON (property_id) * FROM property_auction_history ORDER BY property_id, auction_date DESC)"
