@@ -43,7 +43,7 @@ def resolve_property_auction_links_task(job_id: str):
                 SET auction_id = ae.id
                 FROM auction_events ae
                 WHERE pah.auction_id IS NULL 
-                  AND pah.auction_name = ae.name 
+                  AND (pah.auction_name = ae.name OR pah.auction_name = ae.short_name)
                   AND pah.auction_date = ae.auction_date;
             """)
             result = conn.execute(query)

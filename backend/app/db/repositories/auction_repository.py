@@ -31,7 +31,8 @@ class AuctionRepository:
             .filter(
                 or_(
                     PropertyAuctionHistory.auction_id == AuctionEvent.id,
-                    PropertyAuctionHistory.auction_name == AuctionEvent.name
+                    PropertyAuctionHistory.auction_name == AuctionEvent.name,
+                    PropertyAuctionHistory.auction_name == AuctionEvent.short_name
                 ),
                 PropertyAuctionHistory.auction_date == AuctionEvent.auction_date,
                 PropertyDetails.availability_status == 'available'

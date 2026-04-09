@@ -22,6 +22,17 @@ class ReconciliationService:
             return {"error": "Auction not found"}
 
         auction_id_val, auction_name, county, state, a_date, tax_status = auction
+        
+        # --- SAFETY CHECK ---
+        # If the name contains a clear state suffix (e.g. ", IN") that differs from the state field (e.g. "NC"), 
+        # we abort auto-reconciliation to prevent massive corruption.
+        import re
+        state_match = re.search(r",\s*([A-Z]{2})\b", auction_name)
+        if state_match and state:
+            extracted_state = state_match.group(1)
+            if extracted_state != state and extracted_state != "PA": # Some weird edge cases might exist, but usually it should match
+                 logger.warning(f"Aborting reconciliation for {auction_name}: Name implies {extracted_state} but metadata says {state}")
+                 return {"error": f"State mismatch detected: {extracted_state} vs {state}. Fix metadata first."}
 
         # 2. Reconcile by Location Match
         # We target properties in the same county/state that are 'available'

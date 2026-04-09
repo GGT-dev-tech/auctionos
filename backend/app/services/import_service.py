@@ -369,11 +369,24 @@ class ImportService:
                                     }
                                     
                                     # Check exist by name and date
-                                    check_query = "SELECT id FROM auction_events WHERE name = :name AND auction_date = :auction_date"
-                                    check_params = {"name": auction_data["name"], "auction_date": auction_data["auction_date"]}
+                                    check_query = """
+                                        SELECT id FROM auction_events 
+                                        WHERE (name = :name OR short_name = :name OR name = :short_name OR short_name = :short_name) 
+                                        AND auction_date = :auction_date
+                                    """
+                                    check_params = {
+                                        "name": auction_data["name"], 
+                                        "short_name": auction_data["short_name"],
+                                        "auction_date": auction_data["auction_date"]
+                                    }
                                     
                                     if validated_data.id:
-                                        check_query = "SELECT id FROM auction_events WHERE id = :id OR (name = :name AND auction_date = :auction_date)"
+                                        check_query = """
+                                            SELECT id FROM auction_events 
+                                            WHERE id = :id 
+                                            OR ((name = :name OR short_name = :name OR name = :short_name OR short_name = :short_name) 
+                                                AND auction_date = :auction_date)
+                                        """
                                         check_params["id"] = int(validated_data.id)
                                     
                                     existing = conn.execute(text(check_query), check_params).fetchone()

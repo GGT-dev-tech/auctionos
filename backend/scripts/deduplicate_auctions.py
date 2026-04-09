@@ -43,25 +43,40 @@ def deduplicate():
                 print(f"⚠️ PULAR: {county}, {state} em {auction_date} possui links diferentes: {unique_links}")
                 continue
             
-            # --- REGRA DE SELEÇÃO: Identificar quem manter (KEEP) ---
-            # Prioridade 1: Não conter 'Upset Bid'
-            # Prioridade 2: Menor ID (vínculo mais antigo)
-            candidate_indices = []
-            for idx, name in enumerate(names):
-                if 'upset bid' not in name.lower():
-                    candidate_indices.append(idx)
+            remove_ids = []
+            final_keep_id = keep_id
+            final_keep_name = keep_name
             
-            if not candidate_indices: # Todos são 'Upset Bid'
-                keep_idx = 0 
-            else:
-                keep_idx = candidate_indices[0] # Pega o primeiro que não é 'Upset Bid'
+            for i, rid in enumerate(ids):
+                if rid == final_keep_id: continue
+                
+                r_name = names[i]
+                r_link = links[i]
+                
+                # --- Similarity Rules ---
+                # 1. Identical links = definitely same
+                # 2. One name is substring of another (after cleaning) = likely same
+                # 3. Both contain "upset bid" or both don't = shared type
+                
+                def clean(s): return s.lower().replace("county", "").replace(",", "").strip()
+                
+                c_keep = clean(final_keep_name)
+                c_rem = clean(r_name)
+                
+                is_same_type = (c_rem in c_keep or c_keep in c_rem)
+                has_same_link = (r_link and r_link == links[keep_idx])
+                
+                if not has_same_link and not is_same_type:
+                    print(f"⚠️ PULAR: IDs {final_keep_id} ({final_keep_name}) e {rid} ({r_name}) parecem ser leilões diferentes no mesmo dia.")
+                    continue
+                
+                remove_ids.append(rid)
             
-            keep_id = ids[keep_idx]
-            keep_name = names[keep_idx]
-            remove_ids = [i for i in ids if i != keep_id]
+            if not remove_ids:
+                continue
             
             print(f"UNIFICANDO: {county}, {state} ({auction_date})")
-            print(f"  [MANTER] ID {keep_id}: {keep_name}")
+            print(f"  [MANTER] ID {final_keep_id}: {final_keep_name}")
             
             for rid in remove_ids:
                 # 1. Remover entradas duplicadas no histórico para evitar erro de Unique Constraint
