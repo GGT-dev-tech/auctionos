@@ -210,9 +210,15 @@ export const AuctionList: React.FC = () => {
                                             {auction.county && <span className="block text-xs">{auction.county}, {auction.state}</span>}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                                                {auction.properties_count || 0} Linked
-                                            </span>
+                                            <div className="flex flex-col gap-1">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${auction.live_available_count && auction.live_available_count > 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                                    <span className="material-symbols-outlined text-[14px] mr-1">check_circle</span>
+                                                    {auction.live_available_count || 0} Available
+                                                </span>
+                                                <span className="text-[11px] text-slate-500 dark:text-slate-400 ml-2">
+                                                    of {auction.parcels_count || 0} total parcelas
+                                                </span>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">

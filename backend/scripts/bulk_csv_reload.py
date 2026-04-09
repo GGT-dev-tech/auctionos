@@ -47,6 +47,15 @@ def run_bulk_import():
         CLEANED_PROPERTIES_CSV = PROPERTIES_CSV
 
     print("Importando property_details...")
+    # Remapear 'unavailable' -> 'sold' para manter fidelidade com o sistema
+    try:
+        df_prop = pd.read_csv(CLEANED_PROPERTIES_CSV, dtype=str)
+        df_prop['availability_status'] = df_prop['availability_status'].replace('unavailable', 'sold')
+        df_prop.to_csv(CLEANED_PROPERTIES_CSV, index=False)
+        print("Status 'unavailable' remapped to 'sold'.")
+    except Exception as e:
+        print(f"Erro ao remapear status: {e}")
+
     prop_copy = f"\\copy property_details(property_id, parcel_id, address, county, state, lot_acres, property_type, amount_due, assessed_value, tax_year, owner_address, status, availability_status, property_category, is_processed) FROM '{CLEANED_PROPERTIES_CSV}' WITH (FORMAT csv, HEADER true, QUOTE '\"', DELIMITER ',');"
     subprocess.run(["psql", DATABASE_URL, "-c", prop_copy], check=True)
 
@@ -56,6 +65,10 @@ def run_bulk_import():
     print("Importando property_auction_history...")
     hist_copy = f"\\copy property_auction_history(property_id, auction_id, created_at) FROM '{HISTORY_CSV}' WITH (FORMAT csv, HEADER true, QUOTE '\"', DELIMITER ',');"
     subprocess.run(["psql", DATABASE_URL, "-c", hist_copy], check=True)
+
+    # 3.5 SYNC DATES FOR FIDELITY
+    print("Sincronizando datas de vínculo para fidelidade de contagem...")
+    run_psql_command("UPDATE property_auction_history pah SET auction_date = ae.auction_date FROM auction_events ae WHERE pah.auction_id = ae.id AND pah.auction_date IS NULL;")
 
     # 4. RESET SEQUENCES
     print("Resetando sequências...")
