@@ -312,6 +312,8 @@ export interface PropertyDetails {
   auction_history?: any[];
   current_auction_name?: string;
   current_auction_date?: string;
+  auction_info_link?: string;
+  auction_list_link?: string;
   owner_name?: string;
 }
 

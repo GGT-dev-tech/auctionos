@@ -32,7 +32,11 @@ export const PropertyPurchaseOptions: React.FC<Props> = ({
     const hasActiveAuction = !!(property.current_auction_name || (property.auction_history && property.auction_history.length > 0));
 
     // Link Priority: auction_list_link -> auction_info_link -> fallback search
-    const primaryLink = property.auction_list_link || property.auction_info_link || `https://www.google.com/search?q=${encodeURIComponent(`${property.county} County ${property.state} tax sale portal`)}`;
+    const details = property.details || {};
+    const auctionInfoLink = property.auction_info_link || details.auction_info_link;
+    const auctionListLink = property.auction_list_link || details.auction_list_link;
+    
+    const primaryLink = auctionListLink || auctionInfoLink || `https://www.google.com/search?q=${encodeURIComponent(`${property.county || details.county} County ${property.state || details.state} tax sale portal`)}`;
 
     const handleAuctionRedirect = async () => {
         try {
@@ -91,7 +95,7 @@ export const PropertyPurchaseOptions: React.FC<Props> = ({
                 {isAvailable ? (
                     <>
                         <button 
-                            onClick={() => setIsApplyOpen(true)}
+                            onClick={() => auctionInfoLink ? window.open(auctionInfoLink, '_blank') : setIsApplyOpen(true)}
                             className="w-full py-3 px-4 bg-slate-900 dark:bg-slate-700 text-white rounded-xl hover:bg-slate-800 dark:hover:bg-slate-600 font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-sm uppercase tracking-widest"
                         >
                             <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
@@ -100,7 +104,7 @@ export const PropertyPurchaseOptions: React.FC<Props> = ({
                         
                         {readOnly && hasActiveAuction ? (
                             <div
-                                onClick={handleAuctionRedirect}
+                                onClick={() => auctionListLink ? window.open(auctionListLink, '_blank') : handleAuctionRedirect()}
                                 className="group relative overflow-hidden bg-orange-600 dark:bg-orange-500 text-white rounded-xl p-5 text-center shadow-lg transition-all duration-300 hover:bg-orange-700 dark:hover:bg-orange-400 cursor-pointer hover:shadow-orange-500/20 active:scale-[0.98]"
                             >
                                 <div className="absolute top-0 left-0 w-full h-1 bg-white/20"></div>
