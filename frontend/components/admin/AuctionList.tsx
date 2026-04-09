@@ -72,6 +72,7 @@ const AuctionList: React.FC<AuctionListProps> = ({ filters, readOnly = false }) 
 
     const handleViewClick = (row: AuctionEvent) => {
         setViewingEvent({
+            id: row.id,
             title: row.name,
             start: row.auction_date ? new Date(row.auction_date).toISOString() : '',
             extendedProps: {

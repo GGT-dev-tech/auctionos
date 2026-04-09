@@ -37,11 +37,12 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
 
     if (!eventData) return null;
 
-    const props = eventData.extendedProps;
+    const props = eventData.extendedProps || {};
+    const auctionId = eventData.id || props.id || props.auction_id;
     const dateStr = eventData.start ? new Date(eventData.start).toLocaleDateString(undefined, { timeZone: 'UTC' }) : '';
     const rawDate = eventData.startStr ? eventData.startStr.split('T')[0] : (eventData.start ? new Date(eventData.start).toISOString().split('T')[0] : undefined);
     const timeStr = eventData.start ? new Date(eventData.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-    const cleanAuctionName = eventData.title.replace(/\(\d+\)$/, '').trim();
+    const cleanAuctionName = (eventData.title || '').replace(/\(\d+\)$/, '').trim();
 
     const handleClose = () => {
         setShowProperties(false);
@@ -50,13 +51,14 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
     };
 
     const handleReconcile = async () => {
-        if (!eventData.id) {
+        if (!auctionId) {
             console.error("No auction ID found in eventData", eventData);
+            alert("This auction record is missing an ID. Try refreshing the calendar.");
             return;
         }
         setReconciling(true);
         try {
-            const res = await AdminService.reconcileGoAuctperties(eventData.id);
+            const res = await AdminService.reconcileAuctionProperties(auctionId);
             setReconcileCount(res.linked_count);
         } catch (err: any) {
             alert(`Reconciliation failed: ${err.message}`);
@@ -81,7 +83,7 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
                     <AuctionPropertiesList
                         auctionName={cleanAuctionName}
                         auctionDate={rawDate}
-                        auctionId={eventData.id}
+                        auctionId={auctionId}
                         onClose={() => setShowProperties(false)}
                     />
                 ) : (
