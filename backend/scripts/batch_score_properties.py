@@ -289,15 +289,14 @@ def main():
 
         upsert_sql = text("""
             INSERT INTO property_scores
-                (parcel_id, deal_score, rating, status, state, county,
+                (parcel_id, deal_score, rating, state, county,
                  score_factors, model_version, computed_at, updated_at)
             VALUES
-                (:parcel_id, :deal_score, :rating, :status, :state, :county,
+                (:parcel_id, :deal_score, :rating, :state, :county,
                  :score_factors, :model_version, :computed_at, :updated_at)
             ON CONFLICT (parcel_id) DO UPDATE SET
                 deal_score    = EXCLUDED.deal_score,
                 rating        = EXCLUDED.rating,
-                status        = EXCLUDED.status,
                 state         = EXCLUDED.state,
                 county        = EXCLUDED.county,
                 score_factors = EXCLUDED.score_factors,
@@ -348,7 +347,6 @@ def main():
                     "parcel_id":    row_dict["parcel_id"],
                     "deal_score":   float(s),
                     "rating":       r,
-                    "status":       row_dict.get("availability_status"),
                     "state":        row_dict.get("state"),
                     "county":       row_dict.get("county"),
                     "score_factors": json.dumps(result["factors"]),

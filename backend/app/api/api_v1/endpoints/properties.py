@@ -96,9 +96,9 @@ def read_properties(
         where_clauses.append("p.improvement_value <= :max_improvements")
         params["max_improvements"] = max_improvements
     if availability:
-        # Normalize to 'available' if 'available' is passed, or use the string as is
-        where_clauses.append("p.availability_status ILIKE :availability")
-        params["availability"] = f"%{availability}%"
+        # Exact match — ILIKE with % would match 'unavailable' when searching 'available'
+        where_clauses.append("LOWER(p.availability_status) = LOWER(:availability)")
+        params["availability"] = availability
     if min_county_appraisal is not None:
         where_clauses.append("p.assessed_value >= :min_county_appraisal")
         params["min_county_appraisal"] = min_county_appraisal

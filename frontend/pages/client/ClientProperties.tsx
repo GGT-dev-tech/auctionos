@@ -46,7 +46,9 @@ const ClientProperties: React.FC = () => {
         }
     }, [searchParams]);
 
-    const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '');
+    // availability='available' is the default — always show results when it's set
+    const hasActiveFilters = filters.availability !== undefined || 
+        Object.entries(filters).some(([k, v]) => k !== 'availability' && v !== undefined && v !== '');
 
     return (
         <div className="p-6 w-full space-y-6 px-4 sm:px-8 lg:px-12">
