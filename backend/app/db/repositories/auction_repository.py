@@ -53,12 +53,18 @@ class AuctionRepository:
         if county:
             query = query.filter(AuctionEvent.county.ilike(f"%{county}%"))
         if is_presential is not None:
+            from sqlalchemy import and_, not_
             if is_presential:
-                query = query.filter(or_(
-                    ~AuctionEvent.location.ilike("%online%"),
-                    AuctionEvent.location.is_(None)
-                ))
+                # In-Person: location must be explicitly set AND not contain 'online'
+                query = query.filter(
+                    and_(
+                        AuctionEvent.location.isnot(None),
+                        AuctionEvent.location != '',
+                        ~AuctionEvent.location.ilike("%online%")
+                    )
+                )
             else:
+                # Online: location contains 'online' OR url field contains 'http' (if available)
                 query = query.filter(AuctionEvent.location.ilike("%online%"))
         if start_date:
             query = query.filter(AuctionEvent.auction_date >= start_date)
@@ -125,7 +131,7 @@ class AuctionRepository:
             params['county'] = f"%{county}%"
         if is_presential is not None:
             if is_presential:
-                where_clauses.append("(location NOT ILIKE '%online%' OR location IS NULL)")
+                where_clauses.append("(location IS NOT NULL AND location != '' AND location NOT ILIKE '%online%')")
             else:
                 where_clauses.append("location ILIKE '%online%'")
         if start_date:

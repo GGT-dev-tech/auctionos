@@ -43,7 +43,8 @@ def read_properties(
     keyword: Optional[str] = None,
     # Advanced Filters
     added_since: Optional[str] = None,
-    is_unavailable: Optional[bool] = None
+    is_unavailable: Optional[bool] = None,
+    min_score: Optional[float] = None,
 ) -> Any:
     
     # 1. Build Base Filter Query
@@ -162,9 +163,16 @@ def read_properties(
             params["keyword"] = f"%{k}%"
 
     if is_unavailable is True:
-        where_clauses.append("p.availability_status = 'not available'")
+        where_clauses.append("p.availability_status = 'unavailable'")
+
+    if min_score is not None:
+        where_clauses.append("ps.deal_score >= :min_score")
+        params["min_score"] = min_score
 
     where_str = " AND ".join(where_clauses)
+
+    # Always LEFT JOIN property_scores so deal_score/rating are always available in SELECT
+    score_join = "LEFT JOIN property_scores ps ON ps.parcel_id = p.parcel_id"
 
     # If filtering by a specific auction (name or id), we join against the full history. 
     # Otherwise, we use DISTINCT ON to ensure 1 property = 1 row for general dashboard.
@@ -173,7 +181,7 @@ def read_properties(
     else:
         history_table = "(SELECT DISTINCT ON (property_id) * FROM property_auction_history ORDER BY property_id, auction_date DESC)"
     
-    count_query = f"SELECT count(*) FROM property_details p LEFT JOIN {history_table} pah ON pah.property_id = p.property_id WHERE {where_str}"
+    count_query = f"SELECT count(*) FROM property_details p LEFT JOIN {history_table} pah ON pah.property_id = p.property_id {score_join} WHERE {where_str}"
     total = db.execute(text(count_query), params).scalar()
 
     # 3. Get Items
@@ -216,9 +224,13 @@ def read_properties(
             p.property_type_detail,
             p.import_error_msg,
             p.is_processed,
-            p.map_link
+            p.map_link,
+            COALESCE(ps.deal_score, NULL) as deal_score,
+            COALESCE(ps.rating, NULL) as deal_rating,
+            p.property_category
         FROM property_details p
         LEFT JOIN {history_table} pah ON pah.property_id = p.property_id
+        {score_join}
         WHERE {where_str}
         ORDER BY {"{order_by_clause}"}
         OFFSET :skip LIMIT :limit
@@ -297,7 +309,10 @@ def read_properties(
             "property_type_detail": r[34],
             "import_error_msg": r[35],
             "is_processed": bool(r[36]) if r[36] is not None else False,
-            "map_link": r[37]
+            "map_link": r[37],
+            "deal_score": float(r[38]) if r[38] is not None else None,
+            "deal_rating": r[39],
+            "property_category": r[40],
         }
         for r in result
     ]

@@ -110,10 +110,14 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
         {
             field: 'deal_grade',
             headerName: 'Grade',
-            width: 80,
+            width: 90,
             renderCell: (params) => {
-                const score = calculateDealScore(params.row);
-                const rating = params.row.deal_rating || score.rating;
+                // Prefer persisted backend score, fall back to local engine
+                const backendRating = params.row.deal_rating;
+                const backendScore = params.row.deal_score;
+                const local = calculateDealScore(params.row);
+                const rating = backendRating || local.rating;
+                const score = backendScore !== null && backendScore !== undefined ? Math.round(backendScore) : local.score;
                 const colors: Record<string, string> = {
                     'A+': 'bg-emerald-600 text-white',
                     'A': 'bg-emerald-500 text-white',
@@ -123,8 +127,11 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
                     'F': 'bg-red-500 text-white',
                 };
                 return (
-                    <div className={`px-2 py-0.5 rounded font-black text-[10px] ${colors[rating] || 'bg-slate-400 text-white'}`}>
-                        {rating}
+                    <div className="flex items-center gap-1">
+                        <div className={`px-2 py-0.5 rounded font-black text-[10px] ${colors[rating] || 'bg-slate-400 text-white'}`}>
+                            {rating}
+                        </div>
+                        <span className="text-[10px] text-slate-400">{score}%</span>
                     </div>
                 );
             }
@@ -180,6 +187,28 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
             }
         },
         { field: 'property_type', headerName: 'Parcel Type', width: 160, type: 'singleSelect', valueOptions: ['Land & Structures', 'Land Only', 'Improvements Only'] },
+        {
+            field: 'property_category',
+            headerName: 'Category',
+            width: 120,
+            type: 'singleSelect',
+            valueOptions: ['Lien', 'Deed', 'Foreclosure', 'Cert', 'Quit Claim'],
+            renderCell: (params) => {
+                const cat = params.value || '';
+                const catColors: Record<string, string> = {
+                    'Lien': 'bg-blue-100 text-blue-700',
+                    'Deed': 'bg-purple-100 text-purple-700',
+                    'Foreclosure': 'bg-red-100 text-red-700',
+                    'Cert': 'bg-amber-100 text-amber-700',
+                    'Quit Claim': 'bg-slate-100 text-slate-600',
+                };
+                return cat ? (
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${catColors[cat] || 'bg-slate-100 text-slate-500'}`}>
+                        {cat}
+                    </span>
+                ) : <span className="text-slate-300">—</span>;
+            }
+        },
         { field: 'address', headerName: 'Address', width: 180 },
         { field: 'auction_name', headerName: 'Next Auction', width: 220 },
         { field: 'occupancy', headerName: 'Occupancy', width: 150, type: 'singleSelect', valueOptions: ['Occupied', 'Vacant', 'Unknown'] },
