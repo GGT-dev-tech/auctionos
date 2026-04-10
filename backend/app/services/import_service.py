@@ -78,7 +78,10 @@ class ImportService:
                         def parse_availability(raw_val):
                             if not raw_val or pd.isna(raw_val): return "available"
                             s = str(raw_val).lower().strip()
-                            return "not available" if s == "not available" else "available"
+                            # Standardize all negative terms to 'unavailable'
+                            if s in ["unavailable", "not available", "sold", "redeemed"]:
+                                return "unavailable"
+                            return "available"
 
                         # Parse dense text blocks from zoning and legal_description
                         def extract_dense_data(z_str, l_str):
@@ -473,7 +476,10 @@ class ImportService:
                                         SELECT :prop_id, a.id, a.name, a.auction_date, :created_at
                                         FROM auction_events a
                                         WHERE a.id = :auction_id
-                                        ON CONFLICT (property_id, auction_name) DO NOTHING
+                                        ON CONFLICT (property_id, auction_name) DO UPDATE SET
+                                            auction_id = EXCLUDED.auction_id,
+                                            auction_date = EXCLUDED.auction_date,
+                                            created_at = EXCLUDED.created_at
                                     """)
                                     conn.execute(query, {
                                         "prop_id": prop_id,
@@ -485,6 +491,8 @@ class ImportService:
                                     errors.append(f"Row {i + index + 2}: {str(e)}")
                         
                         success_count += len(chunk)
+                        if success_count % 500 == 0 or success_count == total_rows:
+                            logger.info(f"Job {job_id}: Processed {success_count} / {total_rows} history mappings...")
                         break
                     except OperationalError:
                         if attempt == max_retries - 1: raise

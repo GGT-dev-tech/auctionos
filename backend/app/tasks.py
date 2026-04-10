@@ -53,11 +53,54 @@ def resolve_property_auction_links_task(job_id: str):
         logger.error(f"Failed to resolve linkages: {e}")
         return {"status": "error", "message": str(e)}
 
-@celery_app.task(acks_late=True, name="app.tasks.import_properties_celery_task")
-def import_properties_celery_task(file_path: str, job_id: str):
+@celery_app.task(acks_late=True, name="app.tasks.reconcile_property_statuses_task")
+def reconcile_property_statuses_task():
     """
-    Worker task to process large CSV property imports.
+    Automatic task to reconcile property statuses based on passed auction dates.
+    Runs daily via Celery Beat.
     """
-    logger.info(f"Worker starting import task {job_id} for file {file_path}")
-    from app.services.import_service import import_service
-    return run_async(import_service.process_properties_csv_file(file_path, job_id))
+    logger.info("Starting automatic status reconciliation task.")
+    from app.db.session import engine
+    from sqlalchemy import text
+    from datetime import datetime
+    
+    current_date = datetime.utcnow().date()
+    now = datetime.utcnow()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    try:
+        with engine.begin() as conn:
+            # 1. Update status
+            update_query = text("""
+                UPDATE property_details p
+                SET availability_status = 'unavailable'
+                FROM property_auction_history pah
+                WHERE p.property_id = pah.property_id
+                  AND pah.auction_date < :current_date
+                  AND p.availability_status = 'available';
+            """)
+            result = conn.execute(update_query, {"current_date": current_date})
+            
+            # 2. Log History
+            if result.rowcount > 0:
+                history_query = text("""
+                    INSERT INTO property_availability_history (property_id, previous_status, new_status, change_source, changed_at)
+                    SELECT p.property_id, 'available', 'unavailable', 'auto_reconciliation_past_auction', :now
+                    FROM property_details p
+                    JOIN property_auction_history pah ON p.property_id = pah.property_id
+                    WHERE pah.auction_date < :current_date
+                      AND p.availability_status = 'unavailable'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM property_availability_history pah2 
+                          WHERE pah2.property_id = p.property_id 
+                          AND pah2.change_source = 'auto_reconciliation_past_auction'
+                          AND pah2.changed_at > :today_start
+                      );
+                """)
+                conn.execute(history_query, {"current_date": current_date, "now": now, "today_start": today_start})
+                
+            logger.info(f"Auto-reconciliation complete. Updated {result.rowcount} properties.")
+            return {"status": "success", "updated_count": result.rowcount}
+    except Exception as e:
+        logger.error(f"Auto-reconciliation failed: {e}")
+        return {"status": "error", "message": str(e)}

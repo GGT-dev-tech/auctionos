@@ -15,16 +15,25 @@ resolved_url = get_redis_url()
 broker_url = os.getenv("CELERY_BROKER_URL", resolved_url)
 backend_url = os.getenv("CELERY_RESULT_BACKEND", resolved_url)
 
+from celery.schedules import crontab
+
 celery_app = Celery(
     "worker",
     broker=broker_url,
     backend=backend_url,
     include=["app.tasks"]
 )
+
 celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    beat_schedule={
+        "reconcile-property-statuses-daily": {
+            "task": "app.tasks.reconcile_property_statuses_task",
+            "schedule": crontab(hour=4, minute=0),
+        },
+    },
 )
