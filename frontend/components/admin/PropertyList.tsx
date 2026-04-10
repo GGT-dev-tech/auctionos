@@ -138,13 +138,13 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
         {
             field: 'availability_status', headerName: 'Status', width: 110,
             type: 'singleSelect',
-            valueOptions: ['available', 'sold', 'pending', 'withdrawn'],
+            valueOptions: ['available', 'unavailable'],
             renderCell: (params) => {
                 const status = (params.value || 'unknown').toLowerCase();
                 const isAvail = status === 'available';
                 return (
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${isAvail ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {status.toUpperCase()}
+                        {isAvail ? 'AVAILABLE' : 'UNAVAILABLE'}
                     </span>
                 );
             }
@@ -179,7 +179,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
                 return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
             }
         },
-        { field: 'property_type', headerName: 'Parcel Type', width: 140, type: 'singleSelect', valueOptions: ['Vacant Land', 'Single Family', 'Multi-Family', 'Commercial', 'Agricultural', 'Industrial', 'Tax Sale', 'Over the Counter', 'Sealed Bid', 'Public Outcry', 'Tax Deed', 'Tax Lien', 'Foreclosure', 'Other'] },
+        { field: 'property_type', headerName: 'Parcel Type', width: 160, type: 'singleSelect', valueOptions: ['Land & Structures', 'Land Only', 'Improvements Only'] },
         { field: 'address', headerName: 'Address', width: 180 },
         { field: 'auction_name', headerName: 'Next Auction', width: 220 },
         { field: 'occupancy', headerName: 'Occupancy', width: 150, type: 'singleSelect', valueOptions: ['Occupied', 'Vacant', 'Unknown'] },

@@ -653,8 +653,7 @@ const ClientLists: React.FC = () => {
                                         ? selectedListProperties.filter(p => p.county === selectedCountyName).length
                                         : selectedListProperties.length} Properties
                                 </span>
-                                <div className="h-1 w-1 bg-slate-300 rounded-full"></div>
-                                <span className="text-xs text-slate-400">Synced to iCloud</span>
+
                             </div>
                         </div>
                     </div>

@@ -149,10 +149,13 @@ def read_properties(
                 (
                     p.address ILIKE :fuzzy_k OR 
                     p.county ILIKE :fuzzy_k OR
+                    p.state ILIKE :fuzzy_k OR
                     p.owner_address ILIKE :fuzzy_k OR
                     p.description ILIKE :fuzzy_k OR
                     p.legal_description ILIKE :fuzzy_k OR
-                    p.parcel_id ILIKE :keyword
+                    p.parcel_id ILIKE :keyword OR
+                    p.cs_number ILIKE :fuzzy_k OR
+                    pah.auction_name ILIKE :fuzzy_k
                 )
             ''')
             params["fuzzy_k"] = f"%{fuzzy_k}%"
