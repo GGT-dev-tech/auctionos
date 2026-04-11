@@ -83,7 +83,8 @@ class AuctionRepository:
                 AuctionEvent.county.ilike(search_param),
                 AuctionEvent.state.ilike(search_param),
                 AuctionEvent.notes.ilike(search_param),
-                AuctionEvent.location.ilike(search_param)
+                AuctionEvent.location.ilike(search_param),
+                AuctionEvent.tax_status.ilike(search_param)
             ))
             
         if tax_status:

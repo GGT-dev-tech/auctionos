@@ -137,8 +137,8 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
             }
         },
         { field: 'parcel_id', headerName: 'Parcel Number', width: 140 },
-        { field: 'cs_number', headerName: 'C/S#', width: 90, valueGetter: (value, row) => row.cs_number || row.case_number || '-' },
-        { field: 'account_number', headerName: 'PIN', width: 110, valueGetter: (value, row) => row.account_number || row.pin_ppin || '-' },
+        { field: 'cs_number', headerName: 'C/S#', width: 90, valueGetter: (value, row) => row.cs_number || row.account_number || '-' },
+        { field: 'account_number', headerName: 'PIN', width: 140, valueGetter: (value, row) => row.parcel_id || row.account_number || row.pin_ppin || '-' },
         { field: 'owner_address', headerName: 'Name', width: 160 },
         { field: 'county', headerName: 'County', width: 130 },
         { field: 'state_code', headerName: 'State', width: 70 },
@@ -170,10 +170,12 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
         },
         {
             field: 'land_value', headerName: 'Land', width: 100, type: 'number',
+            valueGetter: (value, row) => value || row.market_land_value || 0,
             valueFormatter: (value: any) => (value !== null && value !== undefined) ? `$${Number(value).toLocaleString()}` : '-'
         },
         {
             field: 'improvement_value', headerName: 'Building', width: 100, type: 'number',
+            valueGetter: (value, row) => value || row.market_improvement_value || 0,
             valueFormatter: (value: any) => (value !== null && value !== undefined) ? `$${Number(value).toLocaleString()}` : '-'
         },
         { field: 'property_type', headerName: 'Parcel Type', width: 160, type: 'singleSelect', valueOptions: ['Land & Structures', 'Land Only', 'Improvements Only'] },
@@ -201,7 +203,19 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
         },
         { field: 'address', headerName: 'Address', width: 180 },
         { field: 'auction_name', headerName: 'Next Auction', width: 220, valueGetter: (value) => value || 'None Scheduled' },
-        { field: 'occupancy', headerName: 'Occupancy', width: 150, type: 'singleSelect', valueOptions: ['Occupied', 'Vacant', 'Unknown'], valueGetter: (value) => value || 'Unknown' },
+        { 
+            field: 'occupancy', 
+            headerName: 'Occupancy', 
+            width: 150, 
+            type: 'singleSelect', 
+            valueOptions: ['Occupied', 'Vacant', 'Unknown'], 
+            valueGetter: (value, row) => {
+                if (value) return value;
+                if (row.owner_occupied === true) return 'Occupied';
+                if (row.owner_occupied === false) return 'Vacant';
+                return 'Unknown';
+            } 
+        },
         {
             field: 'actions',
             type: 'actions',

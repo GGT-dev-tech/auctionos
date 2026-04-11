@@ -171,7 +171,14 @@ def get_top_scores(
         FROM property_scores s
         JOIN property_details p ON p.parcel_id = s.parcel_id
         WHERE {where_str}
-        ORDER BY s.deal_score DESC
+        ORDER BY 
+            CASE 
+                WHEN s.rating LIKE 'A%' THEN 1 
+                WHEN s.rating = 'B' THEN 2 
+                WHEN s.rating = 'C' THEN 3 
+                ELSE 4 
+            END ASC,
+            s.deal_score DESC
         LIMIT :limit
     """)
 

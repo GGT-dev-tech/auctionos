@@ -227,7 +227,10 @@ def read_properties(
             p.map_link,
             COALESCE(ps.deal_score, NULL) as deal_score,
             COALESCE(ps.rating, NULL) as deal_rating,
-            p.property_category
+            p.property_category,
+            p.market_land_value,
+            p.market_improvement_value,
+            p.owner_occupied
         FROM property_details p
         LEFT JOIN {history_table} pah ON pah.property_id = p.property_id
         {score_join}
@@ -313,6 +316,9 @@ def read_properties(
             "deal_score": float(r[38]) if r[38] is not None else None,
             "deal_rating": r[39],
             "property_category": r[40],
+            "market_land_value": r[41],
+            "market_improvement_value": r[42],
+            "owner_occupied": r[43],
         }
         for r in result
     ]

@@ -257,7 +257,14 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
               const score = calculateDealScore(p);
               const displayRating = (p as any).deal_rating || score.rating;
               const displayScore = (p as any).deal_score ?? score.score;
-              const ratingColor = displayRating.startsWith('A') ? 'bg-emerald-500' : displayRating === 'B' ? 'bg-blue-500' : 'bg-slate-400';
+              
+              const ratingColor = displayRating.startsWith('A') 
+                ? 'bg-emerald-500' 
+                : displayRating.startsWith('B') 
+                  ? 'bg-blue-500' 
+                  : displayRating.startsWith('C') 
+                    ? 'bg-amber-500' 
+                    : 'bg-slate-400';
 
               return (
                 <div 
@@ -276,15 +283,22 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate uppercase tracking-widest font-bold">
                       {p.county || 'Unknown County'}, {(p as any).state || (p as any).state_code}
                     </p>
-                    {(p as any).amount_due && (
-                      <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold mt-0.5">
-                        ${Number((p as any).amount_due).toLocaleString()} due
-                      </p>
-                    )}
+                    <div className="flex items-center gap-2 mt-0.5">
+                       {(p as any).amount_due && (
+                        <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold whitespace-nowrap">
+                          ${Number((p as any).amount_due).toLocaleString()} due
+                        </p>
+                      )}
+                      {(p as any).lot_acres && (
+                        <p className="text-[10px] text-slate-400 font-bold whitespace-nowrap underline decoration-slate-300">
+                          {Number((p as any).lot_acres).toFixed(2)} acres
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[10px] text-slate-400 uppercase font-bold">Score</div>
-                    <div className="text-xs font-bold text-emerald-600">{Math.round(displayScore)}%</div>
+                  <div className="text-right flex flex-col items-end">
+                    <div className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Deal Match</div>
+                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{Math.round(displayScore)}%</div>
                   </div>
                 </div>
               );
@@ -452,16 +466,22 @@ const AuctionSearch: React.FC = () => {
                   <div
                     key={a.id}
                     onClick={() => {
-                      const d = a.auction_date ? a.auction_date.split('T')[0] : '';
-                      navigate(`/client/auctions?name=${encodeURIComponent(a.name || '')}&startDate=${d}&endDate=${d}`);
+                      const d = a.auction_date ? String(a.auction_date).split('T')[0] : '';
+                      const params = new URLSearchParams();
+                      if (a.name) params.append('name', a.name);
+                      if (d) {
+                        params.append('startDate', d);
+                        params.append('endDate', d);
+                      }
+                      navigate(`/client/auctions?${params.toString()}`);
                     }}
-                    className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors"
+                    className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors group"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">{a.name}</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white truncate group-hover:text-primary transition-colors">{a.name}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         {[a.county, a.state].filter(Boolean).join(', ')}
-                        {a.auction_date && ` · ${formatDate(a.auction_date)}`}
+                        {a.auction_date && ` · ${formatDate(String(a.auction_date))}`}
                       </p>
                     </div>
                     <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${color}`}>{label}</span>
@@ -549,6 +569,15 @@ const ClientDashboard: React.FC = () => {
 
     return baseList
       .sort((a, b) => {
+        const ratingMap: Record<string, number> = { 'A+': 1, 'A': 2, 'B': 3, 'C': 4 };
+        const ratingA = (a as any).deal_rating || calculateDealScore(a).rating;
+        const ratingB = (b as any).deal_rating || calculateDealScore(b).rating;
+        
+        const rankA = ratingMap[ratingA] || 5;
+        const rankB = ratingMap[ratingB] || 5;
+        
+        if (rankA !== rankB) return rankA - rankB; // A < B < C (lower rank is better)
+
         const scoreA = (a as any).deal_score || calculateDealScore(a).score;
         const scoreB = (b as any).deal_score || calculateDealScore(b).score;
         if (scoreB !== scoreA) return scoreB - scoreA;
