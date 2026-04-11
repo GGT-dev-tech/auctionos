@@ -113,6 +113,13 @@ export interface StateStat {
     state_code: string;
     volume: number;
     average_score: number;
+    distribution: {
+        A: number;
+        B: number;
+        C: number;
+        D: number;
+        F: number;
+    };
 }
 
 export const getStateStats = async (): Promise<StateStat[]> => {

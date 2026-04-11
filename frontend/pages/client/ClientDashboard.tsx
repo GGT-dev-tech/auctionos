@@ -198,12 +198,19 @@ const sectionMeta = {
 
 // ─── Suggested Deals Section ─────────────────────────────────────────────────
 
-const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = ({ properties, loading }) => {
+const US_STATES = [
+  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+  'VA','WA','WV','WI','WY'
+];
+
+const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, stateFilter: string, onStateChange: (s: string) => void }> = ({ properties, loading, stateFilter, onStateChange }) => {
   const navigate = useNavigate();
 
   return (
     <section className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden h-full flex flex-col">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-start mb-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-wide">
             <span className="material-symbols-outlined text-emerald-500">auto_awesome</span>
@@ -212,11 +219,23 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = (
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Intelligence-filtered opportunities</p>
         </div>
         <button 
-          onClick={() => navigate('/client/properties?top=true')}
+          onClick={() => navigate(stateFilter ? `/client/properties?top=true&state=${stateFilter}` : '/client/properties?top=true')}
           className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline uppercase tracking-widest"
         >
           Explore All
         </button>
+      </div>
+
+      {/* State Filter */}
+      <div className="mb-4">
+        <select
+          value={stateFilter}
+          onChange={(e) => onStateChange(e.target.value)}
+          className="w-full text-sm px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+        >
+          <option value="">🇺🇸 All States</option>
+          {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
       </div>
 
       <div className="flex-1">
@@ -227,42 +246,45 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = (
             ))}
           </div>
         ) : properties.length === 0 ? (
-          <div className="h-64 bg-slate-50 dark:bg-slate-900/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center text-slate-400 p-6 text-center">
+          <div className="h-48 bg-slate-50 dark:bg-slate-900/50 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center text-slate-400 p-6 text-center">
             <span className="material-symbols-outlined text-4xl mb-2 text-slate-300">inventory_2</span>
-            <p className="text-sm font-bold">Adjusting Algorithm...</p>
-            <p className="text-xs mt-1">We couldn't find matches in your current filters. Try relaxing your search or checking back later.</p>
+            <p className="text-sm font-bold">{stateFilter ? `No top deals for ${stateFilter}` : 'Adjusting Algorithm...'}</p>
+            <p className="text-xs mt-1">Run the batch score script to populate recommendations, or try a different state.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-3">
             {properties.slice(0, 5).map((p) => {
               const score = calculateDealScore(p);
-              const displayRating = p.deal_rating || score.rating;
-              const displayScore = p.deal_score || score.score;
+              const displayRating = (p as any).deal_rating || score.rating;
+              const displayScore = (p as any).deal_score ?? score.score;
+              const ratingColor = displayRating.startsWith('A') ? 'bg-emerald-500' : displayRating === 'B' ? 'bg-blue-500' : 'bg-slate-400';
 
               return (
                 <div 
-                  key={p.parcel_id || p.id}
-                  onClick={() => navigate(`/client/properties/${p.parcel_id || p.id}`)}
+                  key={p.parcel_id || (p as any).id}
+                  onClick={() => navigate(`/client/properties/${p.parcel_id || (p as any).id}`)}
                   className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer group"
                 >
-                  <div className={`size-12 rounded-lg flex flex-col items-center justify-center text-white font-black text-sm shadow-sm ${
-                    displayRating.startsWith('A') ? 'bg-emerald-500' :
-                    displayRating === 'B' ? 'bg-blue-500' :
-                    'bg-slate-400'
-                  }`}>
-                    <span>{displayRating}</span>
+                  <div className={`size-12 rounded-lg flex flex-col items-center justify-center text-white font-black text-xs shadow-sm ${ratingColor}`}>
+                    <span className="text-sm">{displayRating}</span>
+                    <span className="text-[9px] opacity-80">{Math.round(displayScore)}%</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-slate-800 dark:text-white truncate group-hover:text-emerald-600">
                       {p.address || p.parcel_id}
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate uppercase tracking-widest font-bold">
-                      {p.county || 'Unknown County'}, {p.state}
+                      {p.county || 'Unknown County'}, {(p as any).state || (p as any).state_code}
                     </p>
+                    {(p as any).amount_due && (
+                      <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold mt-0.5">
+                        ${Number((p as any).amount_due).toLocaleString()} due
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] text-slate-400 uppercase font-bold">Match</div>
-                    <div className="text-xs font-bold text-emerald-600">{p.deal_score || score.score}%</div>
+                    <div className="text-[10px] text-slate-400 uppercase font-bold">Score</div>
+                    <div className="text-xs font-bold text-emerald-600">{Math.round(displayScore)}%</div>
                   </div>
                 </div>
               );
@@ -273,8 +295,8 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean }> = (
 
       {properties.length > 0 && (
         <button 
-          onClick={() => navigate('/client/properties?top=true')}
-          className="mt-6 w-full py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors uppercase tracking-widest"
+          onClick={() => navigate(stateFilter ? `/client/properties?top=true&state=${stateFilter}` : '/client/properties?top=true')}
+          className="mt-4 w-full py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors uppercase tracking-widest"
         >
           Discover More Opportunities
         </button>
@@ -329,130 +351,136 @@ const TopAuctions: React.FC<TopAuctionsProps> = ({ type, allAuctions, loading })
   );
 };
 
-// ─── Auction Search ──────────────────────────────────────────────────────────
+// ─── Auction Search (Backend-powered) ────────────────────────────────────────
 
-interface AuctionSearchResult extends AuctionEvent {}
-
-const AuctionSearch: React.FC<{ allAuctions: AuctionEvent[] }> = ({ allAuctions }) => {
+const AuctionSearch: React.FC = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<AuctionSearchResult[]>([]);
+  const [typeFilter, setTypeFilter] = useState('');
+  const [results, setResults] = useState<AuctionEvent[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const navigate = useNavigate();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleSearch = useCallback(() => {
-    if (!query.trim()) { setResults([]); setSearched(false); return; }
-    const q = query.toLowerCase();
-    const found = allAuctions.filter(a =>
-      (a.name || '').toLowerCase().includes(q) ||
-      (a.state || '').toLowerCase().includes(q) ||
-      (a.county || '').toLowerCase().includes(q) ||
-      (a.tax_status || '').toLowerCase().includes(q) ||
-      (a.location || '').toLowerCase().includes(q)
-    ).slice(0, 8);
-    setResults(found);
-    setSearched(true);
-  }, [query, allAuctions]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSearch();
-    if (e.key === 'Escape') { setQuery(''); setResults([]); setSearched(false); }
-  };
+  // Debounced live search — calls backend on each keystroke with 400ms delay
+  useEffect(() => {
+    if (!query.trim() && !typeFilter) {
+      setResults([]);
+      setSearched(false);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const params: any = { limit: 10, skip: 0 };
+        if (query.trim()) params.q = query.trim();
+        if (typeFilter) params.tax_status = typeFilter;
+        const res = await AuctionService.getAuctionEvents(params);
+        setResults(res.items || []);
+        setSearched(true);
+      } catch { setResults([]); }
+      finally { setLoading(false); }
+    }, 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, typeFilter]);
 
   return (
     <section>
       <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">
         Search Auctions
       </h2>
-      <div className="relative">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">
-              search
-            </span>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search by name, state, county, or auction type…"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-            />
-            {query && (
-              <button
-                onClick={() => { setQuery(''); setResults([]); setSearched(false); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            )}
-          </div>
-          <button
-            onClick={handleSearch}
-            className="px-4 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-colors flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined text-[18px]">search</span>
-            <span className="hidden sm:inline">Search</span>
-          </button>
+      <div className="flex gap-2 flex-wrap">
+        {/* Text search */}
+        <div className="relative flex-1 min-w-[200px]">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') { setQuery(''); setResults([]); setSearched(false); } }}
+            placeholder="Search by name, state, county…"
+            className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+          />
+          {(query || loading) && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              {loading
+                ? <span className="material-symbols-outlined text-[18px] text-slate-400 animate-spin">progress_activity</span>
+                : <button onClick={() => { setQuery(''); setResults([]); setSearched(false); }} className="text-slate-400 hover:text-slate-600"><span className="material-symbols-outlined text-[18px]">close</span></button>
+              }
+            </div>
+          )}
         </div>
 
-        {/* Results */}
-        {searched && (
-          <div className="mt-3">
-            {results.length === 0 ? (
-              <div className="flex items-center gap-2 p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-500 dark:text-slate-400">
-                <span className="material-symbols-outlined text-[18px]">search_off</span>
-                No auctions found for "{query}"
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-700">
-                <div className="px-4 py-2 bg-slate-50 dark:bg-slate-700/50 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    {results.length} result{results.length !== 1 ? 's' : ''} for "{query}"
-                  </span>
-                  <button
-                    onClick={() => navigate('/client/auctions')}
-                    className="text-xs text-primary font-semibold hover:underline"
-                  >
-                    View all auctions →
-                  </button>
-                </div>
-                {results.map((a) => {
-                  const { label, color } = getTypeLabel(a.tax_status);
-                  return (
-                    <div
-                      key={a.id}
-                      onClick={() => {
-                        const d = a.auction_date ? a.auction_date.split('T')[0] : '';
-                        navigate(`/client/auctions?name=${encodeURIComponent(a.name || '')}&startDate=${d}&endDate=${d}`);
-                      }}
-                      className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">{a.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          {[a.county, a.state].filter(Boolean).join(', ')} · {formatDate(a.auction_date)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${color}`}>{label}</span>
-                        {(a.parcels_count || a.properties_count) && (
-                          <span className="text-xs text-slate-400 flex items-center gap-0.5">
-                            <span className="material-symbols-outlined text-[13px]">home</span>
-                            {a.parcels_count || a.properties_count}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Auction Type Filter */}
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary min-w-[140px]"
+        >
+          <option value="">All Types</option>
+          <option value="Tax Deed">Tax Deed</option>
+          <option value="Tax Lien">Tax Lien</option>
+          <option value="Foreclosure">Foreclosure</option>
+        </select>
       </div>
+
+      {/* Results */}
+      {searched && (
+        <div className="mt-3">
+          {results.length === 0 ? (
+            <div className="flex items-center gap-2 p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-500 dark:text-slate-400">
+              <span className="material-symbols-outlined text-[18px]">search_off</span>
+              No auctions found{query ? ` for "${query}"` : ''}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-700">
+              <div className="px-4 py-2 bg-slate-50 dark:bg-slate-700/50 flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  {results.length} result{results.length !== 1 ? 's' : ''}{query ? ` for "${query}"` : ''}
+                </span>
+                <button
+                  onClick={() => navigate(`/client/auctions${query ? `?q=${encodeURIComponent(query)}` : ''}`)}
+                  className="text-xs text-primary font-semibold hover:underline"
+                >
+                  View all auctions →
+                </button>
+              </div>
+              {results.map((a) => {
+                const { label, color } = getTypeLabel(a.tax_status);
+                return (
+                  <div
+                    key={a.id}
+                    onClick={() => {
+                      const d = a.auction_date ? a.auction_date.split('T')[0] : '';
+                      navigate(`/client/auctions?name=${encodeURIComponent(a.name || '')}&startDate=${d}&endDate=${d}`);
+                    }}
+                    className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/40 cursor-pointer transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">{a.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {[a.county, a.state].filter(Boolean).join(', ')}
+                        {a.auction_date && ` · ${formatDate(a.auction_date)}`}
+                      </p>
+                    </div>
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${color}`}>{label}</span>
+                    {a.parcels_count ? (
+                      <span className="text-xs text-slate-500 font-semibold flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">home</span>{a.parcels_count}
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 };
+
 
 // ─── System Announcements ───────────────────────────────────────────────────
 
@@ -488,14 +516,15 @@ const ClientDashboard: React.FC = () => {
   const userName = getFirstName();
 
   const [allAuctions, setAllAuctions] = useState<AuctionEvent[]>([]);
-  const [typeAuctions, setTypeAuctions] = useState<{deed: AuctionEvent[], foreclosure: AuctionEvent[], lien: AuctionEvent[]}>({
-    deed: [], foreclosure: [], lien: []
-  });
+  const [typeAuctions, setTypeAuctions] = useState<{deed: AuctionEvent[], foreclosure: AuctionEvent[], lien: AuctionEvent[]}>({ deed: [], foreclosure: [], lien: [] });
   const [stats, setStats] = useState({ deed: 0, foreclosure: 0, lien: 0 });
   const [rawProperties, setRawProperties] = useState<Property[]>([]);
   const [dbTopDeals, setDbTopDeals] = useState<Property[]>([]);
   const [stateStats, setStateStats] = useState<StateStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedState, setSelectedState] = useState('');
+  const [filteredDeals, setFilteredDeals] = useState<Property[]>([]);
+  const [dealsLoading, setDealsLoading] = useState(false);
   const isFetchingBus = useRef(false);
 
   // ─── Reactive Data Pipeline ────────────────────────────────────────────────
@@ -599,6 +628,25 @@ const ClientDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
+  // --- State-filtered top deals ---
+  useEffect(() => {
+    const loadFilteredDeals = async () => {
+      setDealsLoading(true);
+      try {
+        const params: any = { limit: 5, skip: 0 };
+        if (selectedState) params.state = selectedState;
+        const topped = await getTopScoredProperties(5, selectedState ? { state: selectedState } : {});
+        setFilteredDeals(topped as any[]);
+      } catch {
+        // fallback to global top deals
+        setFilteredDeals(dbTopDeals);
+      } finally {
+        setDealsLoading(false);
+      }
+    };
+    loadFilteredDeals();
+  }, [selectedState, dbTopDeals]);
+
   return (
     <div className="p-4 sm:p-6 w-full space-y-8 px-4 sm:px-8 lg:px-12">
 
@@ -625,7 +673,7 @@ const ClientDashboard: React.FC = () => {
       <QuickActions />
 
       {/* Auction Search */}
-      <AuctionSearch allAuctions={allAuctions} />
+      <AuctionSearch />
 
       {/* Stats Summary Row */}
       {!loading && allAuctions.length > 0 && (
@@ -646,10 +694,23 @@ const ClientDashboard: React.FC = () => {
 
       {/* Intelligence Layer Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <SuggestedDeals properties={suggestedDeals} loading={loading} />
+        <SuggestedDeals 
+          properties={filteredDeals.length > 0 ? filteredDeals : suggestedDeals} 
+          loading={loading || dealsLoading} 
+          stateFilter={selectedState}
+          onStateChange={(s) => setSelectedState(s)}
+        />
         <InvestmentHeatmap 
           stats={stateStats}
-          onStateClick={(code) => code ? navigate(`/client/properties?state=${code}`) : navigate('/client/properties')} 
+          onStateClick={(code) => {
+            if (code) {
+              setSelectedState(code);
+              navigate(`/client/properties?state=${code}`);
+            } else {
+              setSelectedState('');
+              navigate('/client/properties');
+            }
+          }} 
         />
       </div>
 

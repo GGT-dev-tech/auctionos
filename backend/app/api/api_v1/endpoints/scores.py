@@ -241,7 +241,14 @@ def get_state_stats(
         SELECT 
             p.state as state_code,
             COUNT(*) as volume,
-            AVG(COALESCE(s.deal_score, 0)) as avg_score
+            AVG(COALESCE(s.deal_score, 0)) as avg_score,
+            JSONB_BUILD_OBJECT(
+                'A', COUNT(*) FILTER (WHERE s.rating LIKE 'A%'),
+                'B', COUNT(*) FILTER (WHERE s.rating = 'B'),
+                'C', COUNT(*) FILTER (WHERE s.rating = 'C'),
+                'D', COUNT(*) FILTER (WHERE s.rating = 'D'),
+                'F', COUNT(*) FILTER (WHERE s.rating = 'F')
+            ) as distribution
         FROM property_details p
         LEFT JOIN property_scores s ON p.parcel_id = s.parcel_id
         WHERE LOWER(TRIM(p.availability_status)) = 'available'
@@ -257,6 +264,7 @@ def get_state_stats(
             "state_code": r[0].upper() if r[0] else "Unknown",
             "volume": r[1],
             "average_score": float(r[2]) if r[2] is not None else 0.0,
+            "distribution": r[3] if r[3] else {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0}
         }
         for r in results
     ]

@@ -137,8 +137,8 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
             }
         },
         { field: 'parcel_id', headerName: 'Parcel Number', width: 140 },
-        { field: 'cs_number', headerName: 'C/S#', width: 90 },
-        { field: 'account_number', headerName: 'PIN', width: 100 },
+        { field: 'cs_number', headerName: 'C/S#', width: 90, valueGetter: (value, row) => row.cs_number || row.case_number || '-' },
+        { field: 'account_number', headerName: 'PIN', width: 110, valueGetter: (value, row) => row.account_number || row.pin_ppin || '-' },
         { field: 'owner_address', headerName: 'Name', width: 160 },
         { field: 'county', headerName: 'County', width: 130 },
         { field: 'state_code', headerName: 'State', width: 70 },
@@ -156,35 +156,25 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
                 );
             }
         },
-        { field: 'tax_year', headerName: 'Sale Year', width: 100, type: 'number', valueFormatter: (params: any) => params?.value ?? '-' },
+        { field: 'tax_year', headerName: 'Sale Year', width: 100, type: 'number', valueFormatter: (value: any) => value ?? '-' },
         {
             field: 'amount_due', headerName: 'Amount Due', width: 110, type: 'number',
-            valueFormatter: (params: any) => {
-                const val = typeof params === 'object' ? params?.value : params;
-                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
+            valueFormatter: (value: any) => {
+                return (value !== null && value !== undefined) ? `$${Number(value).toLocaleString()}` : '-';
             }
         },
-        { field: 'lot_acres', headerName: 'Acres', width: 80, type: 'number', valueFormatter: (params: any) => params?.value ?? '-' },
+        { field: 'lot_acres', headerName: 'Acres', width: 80, type: 'number', valueFormatter: (value: any) => value != null ? `${Number(value).toFixed(2)} ac` : '-' },
         {
             field: 'assessed_value', headerName: 'Total Value', width: 110, type: 'number',
-            valueFormatter: (params: any) => {
-                const val = typeof params === 'object' ? params?.value : params;
-                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
-            }
+            valueFormatter: (value: any) => (value !== null && value !== undefined) ? `$${Number(value).toLocaleString()}` : '-'
         },
         {
             field: 'land_value', headerName: 'Land', width: 100, type: 'number',
-            valueFormatter: (params: any) => {
-                const val = typeof params === 'object' ? params?.value : params;
-                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
-            }
+            valueFormatter: (value: any) => (value !== null && value !== undefined) ? `$${Number(value).toLocaleString()}` : '-'
         },
         {
             field: 'improvement_value', headerName: 'Building', width: 100, type: 'number',
-            valueFormatter: (params: any) => {
-                const val = typeof params === 'object' ? params?.value : params;
-                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
-            }
+            valueFormatter: (value: any) => (value !== null && value !== undefined) ? `$${Number(value).toLocaleString()}` : '-'
         },
         { field: 'property_type', headerName: 'Parcel Type', width: 160, type: 'singleSelect', valueOptions: ['Land & Structures', 'Land Only', 'Improvements Only'] },
         {
@@ -210,8 +200,8 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
             }
         },
         { field: 'address', headerName: 'Address', width: 180 },
-        { field: 'auction_name', headerName: 'Next Auction', width: 220 },
-        { field: 'occupancy', headerName: 'Occupancy', width: 150, type: 'singleSelect', valueOptions: ['Occupied', 'Vacant', 'Unknown'] },
+        { field: 'auction_name', headerName: 'Next Auction', width: 220, valueGetter: (value) => value || 'None Scheduled' },
+        { field: 'occupancy', headerName: 'Occupancy', width: 150, type: 'singleSelect', valueOptions: ['Occupied', 'Vacant', 'Unknown'], valueGetter: (value) => value || 'Unknown' },
         {
             field: 'actions',
             type: 'actions',

@@ -72,26 +72,55 @@ export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ stats: raw
                         <div 
                             key={state.code} 
                             onClick={() => onStateClick?.(state.code)}
-                            className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all cursor-pointer group border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+                            className="flex flex-col p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all cursor-pointer group border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
                         >
-                            <div className={`w-10 h-10 rounded-lg ${state.color} flex items-center justify-center text-white font-bold text-xs shadow-sm group-hover:scale-110 transition-transform`}>
-                                {state.name.substring(0, 2).toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-baseline justify-between mb-1">
-                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{state.name}</span>
-                                    <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">{state.score}% Grade</span>
+                            <div className="flex items-center gap-4 mb-3">
+                                <div className={`w-10 h-10 rounded-lg ${state.color} flex items-center justify-center text-white font-bold text-xs shadow-sm group-hover:scale-110 transition-transform`}>
+                                    {state.code.toUpperCase()}
                                 </div>
-                                <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                                    <div 
-                                        className={`h-full ${state.color} transition-all duration-1000`} 
-                                        style={{ width: `${state.score}%` }}
-                                    ></div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-baseline justify-between mb-1">
+                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{state.name}</span>
+                                        <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">{state.score}% Grade</span>
+                                    </div>
+                                    <div className="w-full bg-slate-100 dark:bg-slate-700 h-1 rounded-full overflow-hidden">
+                                        <div 
+                                            className={`h-full ${state.color} transition-all duration-1000`} 
+                                            style={{ width: `${state.score}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-[10px] text-slate-400 uppercase font-bold leading-none mb-1">Vol.</div>
+                                    <div className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/50 px-2 py-0.5 rounded-md">{state.volume}</div>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <div className="text-[10px] text-slate-400 uppercase font-bold leading-none mb-1">Vol.</div>
-                                <div className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/50 px-2 py-0.5 rounded-md">{state.volume}</div>
+
+                            {/* Score Distribution Breakdown */}
+                            <div className="flex items-center justify-between gap-1 mt-1 px-1">
+                                {[
+                                    { k: 'A', c: 'bg-emerald-500', label: 'A' },
+                                    { k: 'B', c: 'bg-blue-500', label: 'B' },
+                                    { k: 'C', c: 'bg-amber-500', label: 'C' },
+                                    { k: 'D', c: 'bg-orange-500', label: 'D' },
+                                    { k: 'F', c: 'bg-red-500', label: 'F' }
+                                ].map((grade) => {
+                                    const count = (state as any).distribution?.[grade.k] || 0;
+                                    return (
+                                        <div key={grade.k} className="flex-1 flex flex-col items-center">
+                                            <div className="text-[8px] font-bold text-slate-400 mb-0.5">{grade.label}</div>
+                                            <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full ${grade.c} opacity-70`} 
+                                                    style={{ width: state.volume > 0 ? `${(count / state.volume) * 100}%` : '0%' }}
+                                                ></div>
+                                            </div>
+                                            <div className={`text-[9px] font-bold mt-0.5 ${count > 0 ? 'text-slate-600 dark:text-slate-300' : 'text-slate-300 dark:text-slate-600'}`}>
+                                                {count}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}
