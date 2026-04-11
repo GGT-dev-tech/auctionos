@@ -253,7 +253,7 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3">
-            {properties.slice(0, 5).map((p) => {
+            {properties.slice(0, 10).map((p) => {
               const score = calculateDealScore(p);
               const displayRating = (p as any).deal_rating || score.rating;
               const displayScore = (p as any).deal_score ?? score.score;
@@ -583,7 +583,7 @@ const ClientDashboard: React.FC = () => {
         if (scoreB !== scoreA) return scoreB - scoreA;
         return (b.parcel_id || '').localeCompare(a.parcel_id || '');
       })
-      .slice(0, 5);
+      .slice(0, 10);
   }, [dbTopDeals, marketInventory]);
 
   const fetchDashboardData = useCallback(async () => {
@@ -626,7 +626,7 @@ const ClientDashboard: React.FC = () => {
       setAllAuctions(generalRes.items);
 
       // 2. Load Top Scored Properties from DB
-      const topScored = await getTopScoredProperties(5);
+      const topScored = await getTopScoredProperties(10);
       setDbTopDeals(topScored as any[]);
 
       // 3. Load Regional Aggregated Stats (Heatmap)
@@ -662,9 +662,9 @@ const ClientDashboard: React.FC = () => {
     const loadFilteredDeals = async () => {
       setDealsLoading(true);
       try {
-        const params: any = { limit: 5, skip: 0 };
+        const params: any = { limit: 10, skip: 0 };
         if (selectedState) params.state = selectedState;
-        const topped = await getTopScoredProperties(5, selectedState ? { state: selectedState } : {});
+        const topped = await getTopScoredProperties(10, selectedState ? { state: selectedState } : {});
         setFilteredDeals(topped as any[]);
       } catch {
         // fallback to global top deals

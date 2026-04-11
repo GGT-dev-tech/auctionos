@@ -13,17 +13,12 @@ interface InvestmentHeatmapProps {
 
 export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ stats: rawStats, onStateClick }) => {
     const displayStats = useMemo(() => {
-        const mapped = rawStats.map(s => {
-            let color = 'bg-amber-400';
-            if (s.average_score > 85) color = 'bg-emerald-600';
-            else if (s.average_score > 70) color = 'bg-emerald-500';
-            else if (s.average_score > 50) color = 'bg-emerald-400';
-
             return {
                 name: s.state_code,
                 code: s.state_code,
                 score: Math.round(s.average_score),
                 volume: s.volume,
+                distribution: s.distribution,
                 color
             };
         }).sort((a, b) => b.volume - a.volume).slice(0, 5);

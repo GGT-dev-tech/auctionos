@@ -174,6 +174,7 @@ def read_properties(
     # Always LEFT JOIN property_scores so deal_score/rating are always available in SELECT
     score_join = "LEFT JOIN property_scores ps ON ps.parcel_id = p.parcel_id"
 
+    # 2. Join structure for Auction Lookup
     # If filtering by a specific auction (name or id), we join against the full history. 
     # Otherwise, we use DISTINCT ON to ensure 1 property = 1 row for general dashboard.
     if auction_name or auction_id:
@@ -181,7 +182,17 @@ def read_properties(
     else:
         history_table = "(SELECT DISTINCT ON (property_id) * FROM property_auction_history ORDER BY property_id, auction_date DESC)"
     
-    count_query = f"SELECT count(*) FROM property_details p LEFT JOIN {history_table} pah ON pah.property_id = p.property_id {score_join} WHERE {where_str}"
+    # Smart Auction Lookup Join (ae_lookup)
+    # This matches properties that have a next_auction_date imported from CSV 
+    # with the actual Auction Events in the system.
+    ae_join = """
+        LEFT JOIN auction_events ae_lookup ON 
+            ae_lookup.auction_date = p.next_auction_date AND 
+            ae_lookup.state ILIKE p.state AND 
+            ae_lookup.county ILIKE p.county
+    """
+
+    count_query = f"SELECT count(*) FROM property_details p LEFT JOIN {history_table} pah ON pah.property_id = p.property_id {ae_join} {score_join} WHERE {where_str}"
     total = db.execute(text(count_query), params).scalar()
 
     # 3. Get Items
@@ -192,8 +203,12 @@ def read_properties(
             p.state as state_code, 
             p.amount_due, 
             p.assessed_value,
-            pah.auction_date, 
-            pah.auction_name,
+            COALESCE(pah.auction_date, p.next_auction_date) as auction_date, 
+            COALESCE(
+                pah.auction_name, 
+                ae_lookup.name, 
+                CASE WHEN p.next_auction_date IS NOT NULL THEN 'Upcoming: ' || TO_CHAR(p.next_auction_date, 'MM/DD/YYYY') ELSE NULL END
+            ) as auction_name,
             p.cs_number,
             p.account_number,
             p.owner_address,
@@ -233,6 +248,7 @@ def read_properties(
             p.owner_occupied
         FROM property_details p
         LEFT JOIN {history_table} pah ON pah.property_id = p.property_id
+        {ae_join}
         {score_join}
         WHERE {where_str}
         ORDER BY {"{order_by_clause}"}
