@@ -204,15 +204,7 @@ def read_properties(
             p.amount_due, 
             p.assessed_value,
             COALESCE(pah.auction_date, p.next_auction_date) as auction_date, 
-            CASE 
-                WHEN (pah.auction_name IS NOT NULL OR ae_lookup.name IS NOT NULL) AND (pah.auction_date IS NOT NULL OR p.next_auction_date IS NOT NULL)
-                    THEN COALESCE(pah.auction_name, ae_lookup.name) || ' (' || TO_CHAR(COALESCE(pah.auction_date, p.next_auction_date), 'MM/DD/YYYY') || ')'
-                WHEN pah.auction_date IS NOT NULL OR p.next_auction_date IS NOT NULL
-                    THEN TO_CHAR(COALESCE(pah.auction_date, p.next_auction_date), 'MM/DD/YYYY')
-                WHEN pah.auction_name IS NOT NULL OR ae_lookup.name IS NOT NULL
-                    THEN COALESCE(pah.auction_name, ae_lookup.name)
-                ELSE NULL
-            END as auction_name,
+            TO_CHAR(p.next_auction_date, 'MM/DD/YYYY') as auction_name,
             p.cs_number,
             p.account_number,
             p.owner_address,
