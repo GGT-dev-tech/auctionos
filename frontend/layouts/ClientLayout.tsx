@@ -67,7 +67,7 @@ const ClientLayout: React.FC = () => {
                 onClick={() => navigate('/client')}
               >
                 <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                  A
+                  <span className="material-symbols-outlined text-[20px]">gavel</span>
                 </div>
                 <span className="text-[#0d131b] dark:text-white text-lg font-bold hidden md:block">
                   GoAuct

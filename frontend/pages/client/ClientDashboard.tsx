@@ -731,13 +731,13 @@ const ClientDashboard: React.FC = () => {
         />
         <InvestmentHeatmap 
           stats={stateStats}
+          selectedState={selectedState}
           onStateClick={(code) => {
             if (code) {
               setSelectedState(code);
-              navigate(`/client/properties?state=${code}`);
+              // navigate(`/client/properties?state=${code}`); // Removing auto-navigate to allow inspection on home
             } else {
               setSelectedState('');
-              navigate('/client/properties');
             }
           }} 
         />

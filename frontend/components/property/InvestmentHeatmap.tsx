@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Typography } from '@mui/material';
+import { Typography, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { StateStat as StateStatData } from '../../services/scores.service';
 
 interface StateStat extends StateStatData {
@@ -8,133 +8,158 @@ interface StateStat extends StateStatData {
 
 interface InvestmentHeatmapProps {
     stats: StateStatData[];
+    selectedState?: string;
     onStateClick?: (stateCode: string) => void;
 }
 
-export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ stats: rawStats, onStateClick }) => {
-    const displayStats = useMemo(() => {
-        const mapped = rawStats.map(s => {
-            let color = 'bg-amber-400';
-            if (s.average_score > 85) color = 'bg-emerald-600';
-            else if (s.average_score > 70) color = 'bg-emerald-500';
-            else if (s.average_score > 50) color = 'bg-emerald-400';
+const GET_COLOR = (score: number) => {
+    if (score > 85) return 'bg-emerald-600';
+    if (score > 70) return 'bg-emerald-500';
+    if (score > 50) return 'bg-emerald-400';
+    return 'bg-amber-400';
+};
 
-            return {
-                name: s.state_code,
-                code: s.state_code,
-                score: Math.round(s.average_score),
-                volume: s.volume,
-                distribution: s.distribution,
-                color
-            };
-        }).sort((a, b) => b.volume - a.volume).slice(0, 5);
+export const InvestmentHeatmap: React.FC<InvestmentHeatmapProps> = ({ stats: rawStats, selectedState, onStateClick }) => {
+    
+    // All available states for the dropdown
+    const availableStates = useMemo(() => {
+        return [...rawStats].sort((a, b) => b.volume - a.volume);
+    }, [rawStats]);
 
-        if (mapped.length > 0) return mapped;
+    // The currently focused state data
+    const focusedState = useMemo(() => {
+        if (!selectedState) return null;
+        const found = rawStats.find(s => s.state_code === selectedState);
+        if (!found) return null;
+        
+        return {
+            ...found,
+            score: Math.round(found.average_score),
+            color: GET_COLOR(found.average_score)
+        };
+    }, [rawStats, selectedState]);
 
-    // Fallback static data if no live stats are available
-    return [
-        { name: 'NC', code: 'NC', score: 85, volume: 12, color: 'bg-emerald-500' },
-        { name: 'FL', code: 'FL', score: 72, volume: 8, color: 'bg-emerald-400' },
-        { name: 'GA', code: 'GA', score: 65, volume: 4, color: 'bg-emerald-300' }
-    ];
-}, [rawStats]);
-
-return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm h-full flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between mb-6">
-            <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-500 text-2xl">distance</span>
-                    Investment Heatmap
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">Market intensity & deal quality by state</p>
-            </div>
-            <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span> High Score
+    return (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm h-full flex flex-col overflow-hidden transition-all duration-300">
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="material-symbols-outlined text-emerald-500 text-2xl">monitoring</span>
+                        Market Intelligence
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">Select a state to inspect deal quality</p>
                 </div>
-            </div>
-        </div>
-
-        <div className="space-y-4 flex-1 overflow-auto pr-1">
-            {/* Visual Placeholder for a real map */}
-            <div className="relative h-40 bg-slate-50 dark:bg-slate-900/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-center overflow-hidden group mb-4">
-                <div className="absolute inset-0 opacity-10 grayscale group-hover:grayscale-0 transition-all duration-700 scale-125 group-hover:scale-100 bg-[url('https://upload.wikimedia.org/wikipedia/commons/3/32/USA_States_with_labels.svg')] bg-no-repeat bg-center bg-contain"></div>
-                <div className="relative z-10 flex flex-col items-center text-center px-6">
-                    <span className="material-symbols-outlined text-4xl text-emerald-500 mb-2 animate-pulse">map</span>
-                    <Typography variant="subtitle2" className="font-bold text-slate-700 dark:text-slate-300">Market Coverage</Typography>
-                    <Typography variant="caption" className="text-slate-500">Click a state to explore deals</Typography>
-                </div>
-            </div>
-
-            {/* State Ranking List */}
-            <div className="grid grid-cols-1 gap-2">
-                {displayStats.map((state) => (
-                    <div
-                        key={state.code}
-                        onClick={() => onStateClick?.(state.code)}
-                        className="flex flex-col p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all cursor-pointer group border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+                
+                <FormControl size="small" className="min-w-[140px]">
+                    <Select
+                        value={selectedState || ""}
+                        onChange={(e) => onStateClick?.(e.target.value)}
+                        displayEmpty
+                        sx={{
+                            borderRadius: '10px',
+                            fontSize: '13px',
+                            fontWeight: 'bold',
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'rgba(226, 232, 240, 1)',
+                            },
+                        }}
                     >
-                        <div className="flex items-center gap-4 mb-3">
-                            <div className={`w-10 h-10 rounded-lg ${state.color} flex items-center justify-center text-white font-bold text-xs shadow-sm group-hover:scale-110 transition-transform`}>
-                                {state.code.toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-baseline justify-between mb-1">
-                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{state.name}</span>
-                                    <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">{state.score}% Grade</span>
+                        <MenuItem value=""><em>Select State</em></MenuItem>
+                        {availableStates.map(s => (
+                            <MenuItem key={s.state_code} value={s.state_code}>
+                                {s.state_code} ({s.volume})
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            </div>
+
+            <div className="flex-1 flex flex-col items-center justify-center p-4">
+                {!focusedState ? (
+                    <div className="text-center py-10 opacity-60">
+                        <span className="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600 mb-4 animate-bounce">location_on</span>
+                        <Typography variant="h6" className="text-slate-400 dark:text-slate-500 font-bold">Select a State</Typography>
+                        <Typography variant="caption" className="text-slate-400">Choose a state above to see local scoring intelligence</Typography>
+                    </div>
+                ) : (
+                    <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {/* State Header Card */}
+                        <div className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 mb-6 group hover:shadow-lg transition-all duration-500">
+                            <div className="flex items-center gap-5">
+                                <div className={`size-16 rounded-2xl ${focusedState.color} flex flex-col items-center justify-center text-white shadow-xl shadow-emerald-500/10 group-hover:scale-105 transition-transform duration-500`}>
+                                    <span className="text-2xl font-black">{focusedState.state_code.toUpperCase()}</span>
+                                    <span className="text-[10px] font-bold opacity-80 uppercase tracking-tighter">Market</span>
                                 </div>
-                                <div className="w-full bg-slate-100 dark:bg-slate-700 h-1 rounded-full overflow-hidden">
-                                    <div
-                                        className={`h-full ${state.color} transition-all duration-1000`}
-                                        style={{ width: `${state.score}%` }}
-                                    ></div>
+                                <div>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-4xl font-black text-slate-900 dark:text-white">{focusedState.score}%</span>
+                                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-md">Av. Grade</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 mt-1.5 font-bold text-xs text-slate-400">
+                                        <span className="flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[14px]">home</span>
+                                            {focusedState.volume.toLocaleString()} Properties
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
+                            
                             <div className="text-right">
-                                <div className="text-[10px] text-slate-400 uppercase font-bold leading-none mb-1">Vol.</div>
-                                <div className="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/50 px-2 py-0.5 rounded-md">{state.volume}</div>
+                                <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1">Volume Rank</div>
+                                <div className="text-lg font-bold text-slate-700 dark:text-slate-200">
+                                    #{availableStates.findIndex(s => s.state_code === focusedState.state_code) + 1}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Score Distribution Breakdown */}
-                        <div className="flex items-center justify-between gap-1 mt-1 px-1">
-                            {[
-                                { k: 'A', c: 'bg-emerald-500', label: 'A' },
-                                { k: 'B', c: 'bg-blue-500', label: 'B' },
-                                { k: 'C', c: 'bg-amber-500', label: 'C' },
-                                { k: 'D', c: 'bg-orange-500', label: 'D' },
-                                { k: 'F', c: 'bg-red-500', label: 'F' }
-                            ].map((grade) => {
-                                const count = (state as any).distribution?.[grade.k] || 0;
-                                return (
-                                    <div key={grade.k} className="flex-1 flex flex-col items-center">
-                                        <div className="text-[8px] font-bold text-slate-400 mb-0.5">{grade.label}</div>
-                                        <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full ${grade.c} opacity-70`}
-                                                style={{ width: state.volume > 0 ? `${(count / state.volume) * 100}%` : '0%' }}
-                                            ></div>
+                        {/* Grade Distribution */}
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between px-1">
+                                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Inventory Quality Breakdown</h4>
+                                <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">Scoring rule-v2</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-5 gap-3">
+                                {[
+                                    { grade: 'A', color: 'bg-emerald-500', shadow: 'shadow-emerald-500/30' },
+                                    { grade: 'B', color: 'bg-blue-500', shadow: 'shadow-blue-500/30' },
+                                    { grade: 'C', color: 'bg-amber-500', shadow: 'shadow-amber-500/30' },
+                                    { grade: 'D', color: 'bg-orange-500', shadow: 'shadow-orange-500/30' },
+                                    { grade: 'F', color: 'bg-red-500', shadow: 'shadow-red-500/30' }
+                                ].map((item) => {
+                                    const count = (focusedState.distribution?.[item.grade] as number) || 0;
+                                    const percentage = focusedState.volume > 0 ? (count / focusedState.volume) * 100 : 0;
+                                    
+                                    return (
+                                        <div key={item.grade} className="flex flex-col items-center">
+                                            <div className="relative w-full h-32 bg-slate-100 dark:bg-slate-700/50 rounded-xl overflow-hidden mb-2">
+                                                <div 
+                                                    className={`absolute bottom-0 left-0 right-0 ${item.color} ${item.shadow} shadow-lg transition-all duration-1000 ease-out flex items-center justify-center`}
+                                                    style={{ height: `${Math.max(percentage, 5)}%` }}
+                                                >
+                                                    {percentage > 20 && (
+                                                        <span className="text-[10px] font-black text-white/50 -rotate-90">{Math.round(percentage)}%</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="text-xs font-black text-slate-800 dark:text-slate-200">{item.grade}</div>
+                                            <div className="text-[9px] font-bold text-slate-400">{count}</div>
                                         </div>
-                                        <div className={`text-[9px] font-bold mt-0.5 ${count > 0 ? 'text-slate-600 dark:text-slate-300' : 'text-slate-300 dark:text-slate-600'}`}>
-                                            {count}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
-                ))}
+                )}
             </div>
-        </div>
 
-        <button
-            onClick={() => onStateClick?.('')}
-            className="w-full mt-6 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all uppercase tracking-widest flex items-center justify-center gap-2"
-        >
-            <span className="material-symbols-outlined text-[14px]">analytics</span>
-            View All Market Data
-        </button>
-    </div>
-);
+            <button
+                onClick={() => onStateClick?.('')}
+                className="w-full mt-6 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all uppercase tracking-[0.2em] flex items-center justify-center gap-2 group"
+            >
+                <span className="material-symbols-outlined text-[16px] group-hover:rotate-180 transition-transform duration-500">sync</span>
+                Reset All Filters
+            </button>
+        </div>
+    );
 };
