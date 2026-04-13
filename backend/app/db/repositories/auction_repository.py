@@ -25,37 +25,22 @@ class AuctionRepository:
         tax_status: Optional[str] = None,
         sort_by_date: bool = True
     ) -> tuple[List[Any], int]:
-        # Subquery to count available parcels for each auction
-        available_count_subq = db.query(func.count(PropertyDetails.id))\
-            .join(PropertyAuctionHistory, PropertyDetails.property_id == PropertyAuctionHistory.property_id)\
-            .filter(
-                or_(
-                    PropertyAuctionHistory.auction_id == AuctionEvent.id,
-                    PropertyAuctionHistory.auction_name == AuctionEvent.name,
-                    PropertyAuctionHistory.auction_name == AuctionEvent.short_name
-                ),
-                PropertyAuctionHistory.auction_date == AuctionEvent.auction_date,
-                PropertyDetails.availability_status == 'available'
-            ).correlate(AuctionEvent).as_scalar()
-
-        query = db.query(
-            AuctionEvent,
-            available_count_subq.label("live_available_count")
-        )
+        query = db.query(AuctionEvent)
 
         if name:
             query = query.filter(or_(
                 AuctionEvent.name.ilike(f"%{name}%"),
                 AuctionEvent.short_name.ilike(f"%{name}%")
             ))
+        # ... (rest of filtering logic remains same)
         if state:
             query = query.filter(AuctionEvent.state.ilike(f"%{state}%"))
         if county:
             query = query.filter(AuctionEvent.county.ilike(f"%{county}%"))
+        # ...
         if is_presential is not None:
             from sqlalchemy import and_, not_
             if is_presential:
-                # In-Person: location must be explicitly set AND not contain 'online'
                 query = query.filter(
                     and_(
                         AuctionEvent.location.isnot(None),
@@ -64,7 +49,6 @@ class AuctionRepository:
                     )
                 )
             else:
-                # Online: location contains 'online' OR url field contains 'http' (if available)
                 query = query.filter(AuctionEvent.location.ilike("%online%"))
         if start_date:
             query = query.filter(AuctionEvent.auction_date >= start_date)
@@ -93,19 +77,16 @@ class AuctionRepository:
         if sort_by_date:
             query = query.order_by(asc(AuctionEvent.auction_date))
         else:
-            query = query.order_by(AuctionEvent.auction_date.desc()) # desc by default
+            query = query.order_by(AuctionEvent.auction_date.desc())
 
         total = query.count()
         results = query.offset(skip).limit(limit).all()
         
-        # Format results to attach the scalar value to the object
-        items = []
-        for auction, live_count in results:
-            # We add it as a dynamic attribute so the schema can pick it up
-            auction.live_available_count = live_count
-            items.append(auction)
+        # Alias available_count to live_available_count for the schema
+        for auction in results:
+            auction.live_available_count = auction.available_count
             
-        return items, total
+        return results, total
 
     def get_calendar_events(
         self, db: Session,

@@ -12,12 +12,23 @@ engine = create_engine(DATABASE_URL)
 
 def sync_counts():
     print("-" * 50)
-    print("SYNCING AUCTION PROPERTY COUNTS")
+    print("SYNCING AUCTION PROPERTY COUNTS (TOTAL & AVAILABLE)")
     print("-" * 50)
     
-    sync_query = text("""
+    # 1. Update TOTAL parcels_count (regardless of status)
+    sync_total_query = text("""
         UPDATE auction_events ae
         SET parcels_count = (
+            SELECT count(*)
+            FROM property_auction_history pah
+            WHERE pah.auction_id = ae.id
+        )
+    """)
+    
+    # 2. Update AVAILABLE available_count (status == 'available')
+    sync_available_query = text("""
+        UPDATE auction_events ae
+        SET available_count = (
             SELECT count(*)
             FROM property_auction_history pah
             JOIN property_details p ON p.property_id = pah.property_id
@@ -28,11 +39,20 @@ def sync_counts():
     
     try:
         with engine.begin() as conn:
-            result = conn.execute(sync_query)
-            print(f"Success: Updated counts for all auctions.")
-            print(f"Affected rows: {result.rowcount}")
+            # Sync Totals
+            print("Updating total parcels counts...")
+            res_total = conn.execute(sync_total_query)
+            print(f"Success: Updated totals for {res_total.rowcount} auctions.")
+            
+            # Sync Available
+            print("Updating available counts...")
+            res_avail = conn.execute(sync_available_query)
+            print(f"Success: Updated available counts for {res_avail.rowcount} auctions.")
+            
     except Exception as e:
         print(f"Error syncing counts: {e}")
+        import traceback
+        traceback.print_exc()
     print("-" * 50)
 
 if __name__ == "__main__":
