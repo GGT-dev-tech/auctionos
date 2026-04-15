@@ -104,3 +104,89 @@ def reconcile_property_statuses_task():
     except Exception as e:
         logger.error(f"Auto-reconciliation failed: {e}")
         return {"status": "error", "message": str(e)}
+
+@celery_app.task(acks_late=True, name="app.tasks.check_watchlists_task")
+def check_watchlists_task():
+    """
+    Scans client lists for properties with upcoming auctions
+    and generates notifications for users.
+    """
+    logger.info("Starting watchlist check task.")
+    from app.db.session import engine
+    from sqlalchemy import text
+    from datetime import datetime, timedelta
+    
+    current_date = datetime.utcnow().date()
+    target_date = current_date + timedelta(days=7)
+    now = datetime.utcnow()
+    
+    try:
+        with engine.begin() as conn:
+            query = text("""
+                SELECT 
+                    cl.user_id, 
+                    clp.property_id, 
+                    pd.parcel_id, 
+                    pah.auction_date, 
+                    pah.auction_id,
+                    pd.address
+                FROM client_lists cl
+                JOIN client_list_property clp ON cl.id = clp.list_id
+                JOIN property_details pd ON clp.property_id = pd.id
+                JOIN property_auction_history pah ON pd.property_id = pah.property_id
+                WHERE pah.auction_date BETWEEN :current_date AND :target_date
+                  AND LOWER(TRIM(pd.availability_status)) = 'available'
+            """)
+            results = conn.execute(query, {
+                "current_date": current_date, 
+                "target_date": target_date
+            }).fetchall()
+            
+            notifications = []
+            for row in results:
+                user_id, property_pk, parcel_id, auction_date, auction_id, address = row
+                
+                days_left = (auction_date.date() - current_date).days if hasattr(auction_date, 'date') else (datetime.strptime(str(auction_date), "%Y-%m-%d").date() - current_date).days
+                
+                if days_left <= 2:
+                    msg_type = "auction_starting_soon"
+                    message = f"Auction starting soon! {address or parcel_id} is up for auction in {days_left} day(s)."
+                else:
+                    msg_type = "auction_approaching"
+                    message = f"Auction approaching: {address or parcel_id} will be auctioned on {auction_date}."
+                
+                # Deduplicate: Check if a notification for this user, property, and auction_date already exists
+                check_query = text("""
+                    SELECT id FROM notifications 
+                    WHERE user_id = :user_id 
+                      AND property_id = :property_id 
+                      AND type = :type 
+                      AND DATE(created_at) = :today
+                """)
+                exists = conn.execute(check_query, {
+                    "user_id": user_id, 
+                    "property_id": parcel_id, 
+                    "type": msg_type,
+                    "today": current_date
+                }).fetchone()
+                
+                if not exists:
+                    insert_query = text("""
+                        INSERT INTO notifications (user_id, type, message, property_id, auction_id, created_at)
+                        VALUES (:user_id, :type, :message, :property_id, :auction_id, :now)
+                    """)
+                    conn.execute(insert_query, {
+                        "user_id": user_id,
+                        "type": msg_type,
+                        "message": message,
+                        "property_id": parcel_id,
+                        "auction_id": auction_id,
+                        "now": now
+                    })
+                    notifications.append(row)
+                    
+            logger.info(f"Watchlist check complete. Generated {len(notifications)} notifications.")
+            return {"status": "success", "notifications_generated": len(notifications)}
+    except Exception as e:
+        logger.error(f"Watchlist check failed: {e}")
+        return {"status": "error", "message": str(e)}

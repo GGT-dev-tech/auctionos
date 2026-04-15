@@ -8,6 +8,7 @@ from app.api import deps
 from app.core import security
 from app.models.user import User
 from app.schemas.user import User as UserSchema, UserCreate, UserUpdate
+from app.models.activity_log import ActivityLog
 
 router = APIRouter()
 
@@ -88,6 +89,8 @@ def update_user(
         user.full_name = user_in.full_name
     if user_in.is_active is not None:
         user.is_active = user_in.is_active
+    if user_in.role is not None:
+        user.role = user_in.role
     
     db.add(user)
     db.commit()
@@ -107,3 +110,38 @@ def delete_user(
     db.delete(user)
     db.commit()
     return user
+
+@router.get("/{user_id}/logs")
+def read_user_logs(
+    user_id: int,
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    return db.query(ActivityLog).filter(ActivityLog.user_id == user_id).order_by(ActivityLog.created_at.desc()).offset(skip).limit(limit).all()
+
+@router.get("/logs/all")
+def read_all_logs(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 200,
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """Fetch global activity logs for Admin visualization"""
+    logs = db.query(ActivityLog).order_by(ActivityLog.created_at.desc()).offset(skip).limit(limit).all()
+    # Need to return user details as well
+    result = []
+    for log in logs:
+        user = db.query(User).filter(User.id == log.user_id).first()
+        result.append({
+            "id": log.id,
+            "user_id": log.user_id,
+            "action": log.action,
+            "resource": log.resource,
+            "details": log.details,
+            "ip_address": log.ip_address,
+            "created_at": log.created_at,
+            "user": {"email": user.email, "full_name": user.full_name} if user else None
+        })
+    return result

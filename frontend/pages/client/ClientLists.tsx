@@ -811,6 +811,22 @@ const ClientLists: React.FC = () => {
 
                         return (
                             <div className="space-y-3">
+                                {selectedList?.has_upcoming_auction && (
+                                    <div className="mb-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border border-orange-200 dark:border-orange-800/30 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-orange-100 dark:bg-orange-800/40 rounded-lg text-orange-600 dark:text-orange-400 shadow-inner">
+                                                <span className="material-symbols-outlined pt-0.5">notification_important</span>
+                                            </div>
+                                            <div>
+                                                <h5 className="font-extrabold text-orange-800 dark:text-orange-300 text-sm tracking-tight">Upcoming Auctions Detected!</h5>
+                                                <p className="text-xs text-orange-700 dark:text-orange-400 mt-0.5 font-medium">There are {selectedList.upcoming_auctions_count} properties in this folder scheduled for auction soon. Review them immediately.</p>
+                                            </div>
+                                        </div>
+                                        <Button variant="contained" color="warning" size="small" className="whitespace-nowrap shadow-none font-bold text-xs" onClick={() => {}}>
+                                            Review Agenda
+                                        </Button>
+                                    </div>
+                                )}
                                 {displayProperties.map((prop: any) => (
                                     <SwipeToDeleteItem key={prop.id} onDelete={() => handleRemoveProperty(prop.id)}>
                                         <div

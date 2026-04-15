@@ -6,8 +6,18 @@ import { AuctionEvent, Property } from '../../types';
 import { AuthService } from '../../services/auth.service';
 import { recommendProperties, rankAuctions } from '../../intelligence/rankingEngine';
 import { calculateDealScore } from '../../intelligence/scoringEngine';
-import { InvestmentHeatmap } from '../../components/property/InvestmentHeatmap';
 import { getTopScoredProperties, getStateStats, StateStat } from '../../services/scores.service';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix for default marker icons in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -252,7 +262,7 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
             <p className="text-xs mt-1">Run the batch score script to populate recommendations, or try a different state.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3">
+          <div className="flex overflow-x-auto snap-x scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 gap-4 pb-4">
             {properties.slice(0, 10).map((p) => {
               const score = calculateDealScore(p);
               const displayRating = (p as any).deal_rating || score.rating;
@@ -270,11 +280,17 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
                 <div 
                   key={p.parcel_id || (p as any).id}
                   onClick={() => navigate(`/client/properties/${p.parcel_id || (p as any).id}`)}
-                  className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer group"
+                  className="flex-shrink-0 w-80 snap-start flex flex-col gap-3 p-4 bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer group"
                 >
-                  <div className={`size-12 rounded-lg flex flex-col items-center justify-center text-white font-black text-xs shadow-sm ${ratingColor}`}>
-                    <span className="text-sm">{displayRating}</span>
-                    <span className="text-[9px] opacity-80">{Math.round(displayScore)}%</span>
+                  <div className="flex items-start justify-between">
+                    <div className={`size-12 rounded-lg flex flex-col items-center justify-center text-white font-black text-xs shadow-sm ${ratingColor}`}>
+                      <span className="text-sm">{displayRating}</span>
+                      <span className="text-[9px] opacity-80">{Math.round(displayScore)}%</span>
+                    </div>
+                    <div className="text-right flex flex-col items-end">
+                      <div className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Deal Match</div>
+                      <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{Math.round(displayScore)}%</div>
+                    </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-slate-800 dark:text-white truncate group-hover:text-emerald-600">
@@ -283,22 +299,18 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate uppercase tracking-widest font-bold">
                       {p.county || 'Unknown County'}, {(p as any).state || (p as any).state_code}
                     </p>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-2 mt-2">
                        {(p as any).amount_due && (
-                        <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold whitespace-nowrap">
+                        <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold whitespace-nowrap bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded">
                           ${Number((p as any).amount_due).toLocaleString()} due
                         </p>
                       )}
                       {(p as any).lot_acres && (
-                        <p className="text-[10px] text-slate-400 font-bold whitespace-nowrap underline decoration-slate-300">
+                        <p className="text-[10px] text-slate-400 font-bold whitespace-nowrap bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
                           {Number((p as any).lot_acres).toFixed(2)} acres
                         </p>
                       )}
                     </div>
-                  </div>
-                  <div className="text-right flex flex-col items-end">
-                    <div className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Deal Match</div>
-                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{Math.round(displayScore)}%</div>
                   </div>
                 </div>
               );
@@ -721,25 +733,31 @@ const ClientDashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Unified Map Header */}
+      <div className="w-full h-80 bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden relative border border-slate-200 dark:border-slate-700 shadow-sm z-[1]">
+          <MapContainer center={[39.8283, -98.5795]} zoom={4} scrollWheelZoom={false} className="w-full h-full z-[1]">
+              <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {/* Optional: Add clustered markers here if coordinates are globally available */}
+          </MapContainer>
+          <div className="absolute top-4 left-4 z-[999] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-3 rounded-xl border border-white/20 dark:border-slate-700/50 shadow-lg">
+             <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                 <span className="material-symbols-outlined text-primary text-[18px]">map</span>
+                 National Opportunity Map
+             </h3>
+             <p className="text-[10px] text-slate-500 mt-0.5">Explore deals visually across regions</p>
+          </div>
+      </div>
+
       {/* Intelligence Layer Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8 z-0 relative">
         <SuggestedDeals 
           properties={filteredDeals.length > 0 ? filteredDeals : suggestedDeals} 
           loading={loading || dealsLoading} 
           stateFilter={selectedState}
           onStateChange={(s) => setSelectedState(s)}
-        />
-        <InvestmentHeatmap 
-          stats={stateStats}
-          selectedState={selectedState}
-          onStateClick={(code) => {
-            if (code) {
-              setSelectedState(code);
-              // navigate(`/client/properties?state=${code}`); // Removing auto-navigate to allow inspection on home
-            } else {
-              setSelectedState('');
-            }
-          }} 
         />
       </div>
 

@@ -10,6 +10,18 @@ export const UserService = {
         return response.json();
     },
 
+    getUsers: async (): Promise<User[]> => {
+        return UserService.list();
+    },
+
+    getAllLogs: async (): Promise<any[]> => {
+        const response = await fetch(`${API_URL}/users/logs/all`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch logs');
+        return response.json();
+    },
+
     create: async (data: { email: string, password: string, role: UserRole, company_ids?: number[] }): Promise<User> => {
         const response = await fetch(`${API_URL}/users/`, {
             method: 'POST',

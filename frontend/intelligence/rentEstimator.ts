@@ -23,8 +23,39 @@ export const estimateRent = (property: Property): RentEstimate => {
         };
     }
 
-    // Basic Rule-of-Thumb: 0.8% of ARV per month
-    const monthlyRent = arv.value * 0.008;
+    // Calculate Internal Base Rent Yield Percentage
+    let yieldMod = 0.008; // Base 0.8%
+
+    const type = (property.property_type || '').toLowerCase();
+    const beds = property.bedrooms || 0;
+    const sqft = property.sqft || (property as any).building_area_sqft || 0;
+
+    // Adjust based on property type internal data
+    if (type.includes('multi') || type.includes('duplex') || type.includes('triplex')) {
+        yieldMod = 0.01; // 1% multi-family
+    } else if (type.includes('commercial')) {
+        yieldMod = 0.009; 
+    } else if (type.includes('single')) {
+        yieldMod = 0.0075;
+    }
+
+    // Adjust based on beds
+    if (beds > 0) {
+        if (beds >= 4) yieldMod -= 0.0005; // Larger homes have slightly lower yield ratios
+        if (beds <= 2) yieldMod += 0.0005; // Smaller units have slightly higher yield ratios
+    }
+
+    // Calculate structural rent baseline
+    let monthlyRent = arv.value * yieldMod;
+
+    // Sanity check against sqft minimums (e.g. $1/sqft minimum if sqft is known)
+    if (sqft > 0) {
+        const sqftMinimum = sqft * 1.0; 
+        if (monthlyRent < sqftMinimum && arv.confidence !== 'High') {
+            monthlyRent = sqftMinimum;
+        }
+    }
+
     const annualRent = monthlyRent * 12;
 
     // Calculate Yield based on Estimated Acquisition Cost (Taxes Due)
@@ -43,6 +74,6 @@ export const estimateRent = (property: Property): RentEstimate => {
         annualRent: Math.round(annualRent),
         yieldPercentage: Number(yieldPercentage.toFixed(2)),
         confidence: arv.confidence === 'High' ? 'Medium' : 'Low',
-        calculationMethod: 'Proxy: 0.8% of Estimated Value'
+        calculationMethod: `Internal RVN Yield Matrix (${(yieldMod * 100).toFixed(2)}%)`
     };
 };

@@ -6,40 +6,67 @@ export interface ARVEstimate {
     calculationMethod: string;
 }
 
-export const estimateARV = (property: Property): ARVEstimate => {
-    // Priority 1: Direct estimate from external sources (e.g. Zillow/Redfin)
-    // Note: Assuming these fields might be added or are available in property.details
-    const zillowEstimate = (property.details as any)?.zillow_estimate || property.redfin_estimate;
-    
-    if (zillowEstimate && typeof zillowEstimate === 'number') {
-        return {
-            value: zillowEstimate,
-            confidence: 'High',
-            calculationMethod: 'External AVM (Zillow/Redfin)'
-        };
-    }
+const STATE_MULTIPLIERS: Record<string, number> = {
+    'CA': 1.6, 'NY': 1.4, 'FL': 1.2, 'TX': 1.1, 'IL': 1.1, 'WA': 1.3
+};
 
-    // Priority 2: Mathematical proxy via Assessed Value
+export const estimateARV = (property: Property): ARVEstimate => {
+    // RVN (Real Value Number) Engine using Internal Data ONLY
+
     const assessed = property.assessed_value || 0;
     const landValue = property.land_value || 0;
     const improvements = property.improvement_value || 0;
+    const sqft = property.sqft || (property as any).building_area_sqft || 0;
+    const type = (property.property_type || '').toLowerCase();
+    
+    // Retrieve State Multiplier
+    const state = (property as any).state || (property as any).state_code || '';
+    const regionalModifier = STATE_MULTIPLIERS[state] || 1.0;
 
-    // Basic rule: Market value is typically 1.25x - 2.0x assessed value depending on the county.
-    // For this engine we use a 1.5x multiplier.
-    if (assessed > 0) {
-        // If there are improvements, we have higher confidence
-        const confidence = improvements > 0 ? 'Medium' : 'Low';
-        return {
-            value: assessed * 1.5,
-            confidence,
-            calculationMethod: 'Proxy: Assessed Value x 1.5'
-        };
+    let baseValue = 0;
+    let confidence: ARVEstimate['confidence'] = 'Insufficient Data';
+    let method = 'Need more data to calculate RVN';
+
+    // 1. High Confidence: We have sqft and property structural details
+    if (sqft > 0 && assessed > 0) {
+        // Base value combines assessed and market average per sqft
+        const impliedPpsf = (assessed / sqft) * 1.5; // Estimated market PPSF
+        const adjustedPpsf = impliedPpsf * regionalModifier;
+        baseValue = sqft * adjustedPpsf;
+        
+        // Property type adjustments
+        if (type.includes('commercial')) baseValue *= 1.2;
+        if (type.includes('multi')) baseValue *= 1.1;
+        
+        confidence = 'High';
+        method = 'RVN: Hybrid Area & Assessment Model';
+    } 
+    // 2. Medium Confidence: Rely on structural improvements vs land value split
+    else if (assessed > 0 && improvements > 0) {
+        // Improvements are typically undervalued more than land
+        baseValue = (landValue * 1.2) + (improvements * 1.8);
+        baseValue *= regionalModifier;
+        confidence = 'Medium';
+        method = 'RVN: Improvement Multiplier Model';
+    } 
+    // 3. Low Confidence: Only basic assessed value available
+    else if (assessed > 0) {
+        // Generic historical multiplier
+        baseValue = assessed * 1.5 * regionalModifier;
+        confidence = 'Low';
+        method = 'RVN: Assessed Proxy x1.5';
     }
 
-    // Priority 3: Insufficient Data
+    // Safety fallback: if previous external fields are requested, they serve only as reference, RVN rules.
+    if (baseValue === 0 && (property.redfin_estimate || (property.details as any)?.zillow_estimate)) {
+        baseValue = property.redfin_estimate || (property.details as any)?.zillow_estimate;
+        confidence = 'Low';
+        method = 'External Fallback (Low Accuracy)';
+    }
+
     return {
-        value: 0,
-        confidence: 'Insufficient Data',
-        calculationMethod: 'Need more data to estimate'
+        value: Math.round(baseValue),
+        confidence,
+        calculationMethod: method
     };
 };

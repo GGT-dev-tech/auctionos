@@ -35,5 +35,9 @@ celery_app.conf.update(
             "task": "app.tasks.reconcile_property_statuses_task",
             "schedule": crontab(hour=4, minute=0),
         },
+        "check-watchlists-daily": {
+            "task": "app.tasks.check_watchlists_task",
+            "schedule": crontab(hour=5, minute=0),
+        },
     },
 )

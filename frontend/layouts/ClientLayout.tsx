@@ -141,9 +141,19 @@ const ClientLayout: React.FC = () => {
               <div className="size-9 rounded-full bg-blue-100 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-primary dark:text-blue-300 font-bold cursor-pointer text-sm">
                 {userInitial}
               </div>
+              {/* Notification Bell */}
+              <div className="relative cursor-pointer mr-2 flex items-center justify-center p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Notifications" onClick={() => navigate('/client/lists')}>
+                <span className="material-symbols-outlined text-[24px]">notifications</span>
+                {/* Active indicator ping */}
+                <span className="absolute top-1.5 right-1.5 flex size-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full size-2.5 bg-red-500 border-2 border-white dark:border-[#1a2634]"></span>
+                </span>
+              </div>
+
               <button
                 onClick={handleLogout}
-                className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors hidden md:block"
                 title="Sign Out"
               >
                 <span className="material-symbols-outlined text-[22px]">logout</span>

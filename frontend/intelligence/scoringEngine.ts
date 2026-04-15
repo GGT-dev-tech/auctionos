@@ -11,6 +11,12 @@ export interface DealScoreResult {
  * Acts as a placeholder for future ML-based predictive modeling.
  */
 export const calculateDealScore = (property: Property): DealScoreResult => {
+    // Hard filter for invalid/sold/inactive listings
+    const status = (property.availability_status || '').toLowerCase().trim();
+    if (status === 'sold' || status === 'inactive' || status === 'invalid' || status === 'unavailable') {
+        return { score: 0, rating: 'F', factors: ['Listing is no longer available'] };
+    }
+
     let score = 0;
     const factors: string[] = [];
 

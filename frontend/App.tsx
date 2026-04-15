@@ -16,6 +16,8 @@ import AboutPage from './pages/AboutPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import DisclaimerPage from './pages/DisclaimerPage';
+import { TaxSystemsLandingPage } from './pages/connect/TaxSystemsLandingPage';
+import { TrainingLandingPage } from './pages/connect/TrainingLandingPage';
 
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
@@ -23,6 +25,7 @@ import AdminAuctions from './pages/admin/AdminAuctions';
 import PropertyDetailPage from './pages/admin/PropertyDetailPage';
 import AdminLists from './pages/admin/AdminLists';
 import AdminResearch from './pages/admin/AdminResearch';
+import AdminUsers from './pages/admin/AdminUsers';
 import AdminImportProperties from './pages/admin/AdminImportProperties';
 import AdminImportAuctions from './pages/admin/AdminImportAuctions';
 import AdminBroadcasts from './pages/admin/AdminBroadcasts';
@@ -72,6 +75,10 @@ const App: React.FC = () => {
           <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/disclaimer" element={<DisclaimerPage />} />
+          
+          {/* Public Ecosystem Connect Pages */}
+          <Route path="/connect/tax-systems" element={<TaxSystemsLandingPage />} />
+          <Route path="/connect/training" element={<TrainingLandingPage />} />
 
           {/* Protected Routes (Admin/Agent) */}
           <Route element={<ProtectedRoute allowedRoles={['admin', 'superuser', 'agent']}><Layout /></ProtectedRoute>}>
@@ -86,6 +93,7 @@ const App: React.FC = () => {
             <Route path="/admin/import/properties" element={<AdminImportProperties />} />
             <Route path="/admin/import/auctions" element={<AdminImportAuctions />} />
             <Route path="/admin/broadcasts" element={<AdminBroadcasts />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/properties/new" element={<PropertyManualEntry />} />
             <Route path="/properties/:id" element={<PropertyDetails />} />

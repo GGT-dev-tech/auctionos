@@ -1,6 +1,6 @@
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
+from typing import Optional, Union, List
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "GoAuct"
@@ -17,11 +17,11 @@ class Settings(BaseSettings):
     FACEBOOK_CLIENT_SECRET: Optional[str] = None
     
     # CORS
-    BACKEND_CORS_ORIGINS: list[str] | str = []
+    BACKEND_CORS_ORIGINS: Union[List[str], str] = []
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(cls, v: str | list[str]) -> list[str] | str:
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, (list, str)):
