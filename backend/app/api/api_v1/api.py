@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.api.api_v1.endpoints import (
-    auth, users, properties, dashboard, auctions, gis, admin, counties, announcements, client_data, states, scores
+    auth, users, properties, dashboard, auctions, gis, admin, counties, announcements, client_data, states, scores, marketing
 )
 
 api_router = APIRouter()
@@ -16,3 +16,4 @@ api_router.include_router(announcements.router, prefix="/admin/announcements", t
 api_router.include_router(client_data.router, prefix="/client-data", tags=["client_portal"])
 api_router.include_router(states.router, prefix="/states", tags=["states"])
 api_router.include_router(scores.router, prefix="/scores", tags=["scores"])
+api_router.include_router(marketing.router, prefix="/leads", tags=["marketing"])

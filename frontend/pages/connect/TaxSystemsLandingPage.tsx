@@ -1,8 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const TaxSystemsLandingPage: React.FC = () => {
     const navigate = useNavigate();
+    const [totalTracked, setTotalTracked] = useState<number | null>(null);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'}/scores/stats/state`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const sum = data.reduce((acc: number, curr: any) => acc + curr.volume, 0);
+                    setTotalTracked(sum);
+                }
+            } catch (e) {
+                console.error("Failed to fetch state stats", e);
+            }
+        };
+        fetchStats();
+    }, []);
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] font-sans text-slate-900 dark:text-slate-50">
@@ -48,6 +65,11 @@ export const TaxSystemsLandingPage: React.FC = () => {
                     <h2 className="text-2xl font-bold mb-4">GoAuct Integration</h2>
                     <p className="mb-6 leading-relaxed text-slate-700 dark:text-slate-300">
                         Instead of manually tracking which county uses which system, our algorithm inherently understands the geographic rules. The platform scores deals based on state-specific yield maximums and structural risks.
+                        {totalTracked !== null && totalTracked > 0 && (
+                            <span className="block mt-4 font-bold text-emerald-600 dark:text-emerald-400">
+                                Over {totalTracked.toLocaleString()} assets currently tracked and scored nationwide.
+                            </span>
+                        )}
                     </p>
 
                     <div className="mt-12 text-center p-8 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700">

@@ -1,8 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const TrainingLandingPage: React.FC = () => {
     const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) return;
+
+        setSubmitting(true);
+        try {
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'}/leads/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, source: 'training-preregistration' })
+            });
+
+            if (res.ok) {
+                setSubmitted(true);
+                setEmail('');
+            }
+        } catch (error) {
+            console.error("Failed to submit lead", error);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] font-sans text-slate-900 dark:text-slate-50">
@@ -64,9 +90,40 @@ export const TrainingLandingPage: React.FC = () => {
                         <span className="material-symbols-outlined text-4xl text-emerald-600 dark:text-emerald-400 mb-4">diamond</span>
                         <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">Included with Client Access</h3>
                         <p className="text-slate-600 dark:text-slate-400 mb-6">The full investor curriculum is automatically unlocked when you activate your GoAuct subscription.</p>
-                        <button onClick={() => navigate('/signup')} className="bg-emerald-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transform">
-                            Unlock Platform + Training
-                        </button>
+                        
+                        <div className="flex flex-col md:flex-row justify-center items-center gap-6">
+                            <button onClick={() => navigate('/signup')} className="bg-emerald-600 text-white font-bold px-8 py-3 rounded-xl hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transform whitespace-nowrap">
+                                Unlock Platform + Training
+                            </button>
+                            
+                            <span className="text-slate-400 font-bold text-sm">OR</span>
+                            
+                            <form className="flex w-full md:w-auto" onSubmit={handleFormSubmit}>
+                                {submitted ? (
+                                    <div className="bg-emerald-100 dark:bg-emerald-800/50 text-emerald-800 dark:text-emerald-300 px-6 py-3 rounded-xl font-bold text-sm flex items-center justify-center w-full">
+                                        <span className="material-symbols-outlined mr-2">check_circle</span>
+                                        You're on the list!
+                                    </div>
+                                ) : (
+                                    <div className="flex w-full">
+                                        <input 
+                                            type="email" 
+                                            placeholder="Get notified of next cohort..." 
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            className="px-4 py-3 rounded-l-xl bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/50 focus:ring-2 focus:ring-emerald-500 outline-none text-slate-900 dark:text-white font-medium min-w-[250px]"
+                                        />
+                                        <button 
+                                            disabled={submitting} 
+                                            className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold px-6 py-3 rounded-r-xl hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
+                                        >
+                                            {submitting ? '...' : 'Notify Me'}
+                                        </button>
+                                    </div>
+                                )}
+                            </form>
+                        </div>
                     </div>
                 </div>
             </main>

@@ -34,6 +34,33 @@ export const Landing: React.FC = () => {
         }
     }, []);
 
+    const [email, setEmail] = React.useState('');
+    const [submitting, setSubmitting] = React.useState(false);
+    const [submitted, setSubmitted] = React.useState(false);
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!email) return;
+
+        setSubmitting(true);
+        try {
+            const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1'}/leads/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, source: 'developer-blueprint' })
+            });
+
+            if (res.ok) {
+                setSubmitted(true);
+                setEmail('');
+            }
+        } catch (error) {
+            console.error("Failed to submit lead", error);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] font-sans text-slate-900 dark:text-slate-50 overflow-hidden selection:bg-blue-500 selection:text-white">
             
@@ -194,15 +221,33 @@ export const Landing: React.FC = () => {
                                 Real estate tax sales are highly localized and complex. That's why we maintain the industry's most comprehensive Tax System guides and investor training modules.
                             </p>
                             
-                            <form className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-700/50" onSubmit={(e) => e.preventDefault()}>
+                            <form className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-700/50" onSubmit={handleFormSubmit}>
                                 <h4 className="font-bold text-slate-900 dark:text-white mb-2">Get the 2026 Developer Blueprint</h4>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Enter your email to receive our free 40-page technical guide to algorithmic real-estate investing.</p>
-                                <div className="flex gap-2">
-                                    <input type="email" placeholder="investor@example.com" className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white font-medium" />
-                                    <button className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:opacity-90 transition-opacity">
-                                        Send It
-                                    </button>
-                                </div>
+                                
+                                {submitted ? (
+                                    <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 p-4 rounded-xl font-bold flex items-center gap-2">
+                                        <span className="material-symbols-outlined">check_circle</span>
+                                        Blueprint sent to your inbox!
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="email" 
+                                            placeholder="investor@example.com" 
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white font-medium" 
+                                        />
+                                        <button 
+                                            disabled={submitting}
+                                            className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+                                        >
+                                            {submitting ? 'Sending...' : 'Send It'}
+                                        </button>
+                                    </div>
+                                )}
                             </form>
                         </div>
                         

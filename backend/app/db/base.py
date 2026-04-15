@@ -11,3 +11,4 @@ from app.models.state_contact import StateContact
 from app.models.scoring import PropertyScore  # noqa — ML scoring engine
 from app.models.notification import Notification
 from app.models.activity_log import ActivityLog
+from app.models.lead import Lead
