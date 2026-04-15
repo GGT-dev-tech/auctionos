@@ -352,8 +352,8 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readO
                                     <InputLabel>Category</InputLabel>
                                     <Select label="Category" value={filters.property_category || ''} onChange={(e) => handleChange('property_category', e.target.value)}>
                                         <MenuItem value=""><em>Any</em></MenuItem>
-                                        <MenuItem value="Lien">Tax Lien</MenuItem>
-                                        <MenuItem value="Deed">Tax Deed</MenuItem>
+                                        <MenuItem value="Tax Lien">Tax Lien</MenuItem>
+                                        <MenuItem value="Tax Deed">Tax Deed</MenuItem>
                                         <MenuItem value="Foreclosure">Foreclosure</MenuItem>
                                         <MenuItem value="Cert">Certificate</MenuItem>
                                         <MenuItem value="Quit Claim">Quit Claim</MenuItem>

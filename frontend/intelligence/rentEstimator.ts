@@ -26,9 +26,10 @@ export const estimateRent = (property: Property): RentEstimate => {
     // Calculate Internal Base Rent Yield Percentage
     let yieldMod = 0.008; // Base 0.8%
 
-    const type = (property.property_type || '').toLowerCase();
-    const beds = property.bedrooms || 0;
-    const sqft = property.sqft || (property as any).building_area_sqft || 0;
+    const details = property.details as any || {};
+    const type = (property.property_type || details.property_type || '').toLowerCase();
+    const beds = Number(property.bedrooms || details.bedrooms || 0);
+    const sqft = Number(property.sqft || details.sqft || details.building_area_sqft || (property as any).building_area_sqft || 0);
 
     // Adjust based on property type internal data
     if (type.includes('multi') || type.includes('duplex') || type.includes('triplex')) {
@@ -57,6 +58,13 @@ export const estimateRent = (property: Property): RentEstimate => {
     }
 
     const annualRent = monthlyRent * 12;
+
+    if (monthlyRent > 0 && monthlyRent < 100) {
+        return {
+            monthlyRent: 0, annualRent: 0, yieldPercentage: 0,
+            confidence: 'Low', calculationMethod: 'Below minimum viability'
+        }
+    }
 
     // Calculate Yield based on Estimated Acquisition Cost (Taxes Due)
     // Yield = (Annual Rent / Acquisition Cost) * 100

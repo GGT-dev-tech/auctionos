@@ -13,11 +13,12 @@ const STATE_MULTIPLIERS: Record<string, number> = {
 export const estimateARV = (property: Property): ARVEstimate => {
     // RVN (Real Value Number) Engine using Internal Data ONLY
 
-    const assessed = property.assessed_value || 0;
-    const landValue = property.land_value || 0;
-    const improvements = property.improvement_value || 0;
-    const sqft = property.sqft || (property as any).building_area_sqft || 0;
-    const type = (property.property_type || '').toLowerCase();
+    const details = property.details as any || {};
+    const assessed = Number(property.assessed_value || details.assessed_value || details.county_appraisal || 0);
+    const landValue = Number(property.land_value || details.land_value || 0);
+    const improvements = Number(property.improvement_value || details.improvement_value || 0);
+    const sqft = Number(property.sqft || details.sqft || details.building_area_sqft || (property as any).building_area_sqft || 0);
+    const type = (property.property_type || details.property_type || '').toLowerCase();
     
     // Retrieve State Multiplier
     const state = (property as any).state || (property as any).state_code || '';
@@ -64,8 +65,15 @@ export const estimateARV = (property: Property): ARVEstimate => {
         method = 'External Fallback (Low Accuracy)';
     }
 
+    let finalValue = Math.round(baseValue);
+    
+    // Safety cutoffs (CRITICAL: prevent ridiculously low valuations)
+    if (finalValue > 0 && finalValue < 1000) {
+        return { value: 0, confidence: 'Insufficient Data', calculationMethod: 'Value below threshold ($1000)' };
+    }
+
     return {
-        value: Math.round(baseValue),
+        value: finalValue,
         confidence,
         calculationMethod: method
     };

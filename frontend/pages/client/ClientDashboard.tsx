@@ -7,17 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { recommendProperties, rankAuctions } from '../../intelligence/rankingEngine';
 import { calculateDealScore } from '../../intelligence/scoringEngine';
 import { getTopScoredProperties, getStateStats, StateStat } from '../../services/scores.service';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-// Fix for default marker icons in Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+import { InvestmentHeatmap } from '../../components/property/InvestmentHeatmap';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -733,22 +723,13 @@ const ClientDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Unified Map Header */}
-      <div className="w-full h-80 bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden relative border border-slate-200 dark:border-slate-700 shadow-sm z-[1]">
-          <MapContainer center={[39.8283, -98.5795]} zoom={4} scrollWheelZoom={false} className="w-full h-full z-[1]">
-              <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {/* Optional: Add clustered markers here if coordinates are globally available */}
-          </MapContainer>
-          <div className="absolute top-4 left-4 z-[999] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-3 rounded-xl border border-white/20 dark:border-slate-700/50 shadow-lg">
-             <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                 <span className="material-symbols-outlined text-primary text-[18px]">map</span>
-                 National Opportunity Map
-             </h3>
-             <p className="text-[10px] text-slate-500 mt-0.5">Explore deals visually across regions</p>
-          </div>
+      {/* State Intelligence Heatmap */}
+      <div className="w-full h-auto min-h-[350px] z-[1]">
+          <InvestmentHeatmap 
+            stats={stateStats}
+            selectedState={selectedState}
+            onStateClick={(s) => setSelectedState(s)} 
+          />
       </div>
 
       {/* Intelligence Layer Grid */}

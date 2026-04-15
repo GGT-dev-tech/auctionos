@@ -51,15 +51,40 @@ export const TaxSystemsLandingPage: React.FC = () => {
                         Unlike traditional real estate, property tax enforcement is uniquely governed at the state and county level. If a property owner defaults on their tax obligations, the county enforces the sovereign right to recover those funds. 
                     </p>
                     
-                    <div className="grid md:grid-cols-2 gap-8 my-10">
+                    <div className="grid md:grid-cols-3 gap-8 my-10">
                         <div className="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-2xl border border-amber-200 dark:border-amber-800/30">
-                            <h3 className="font-bold text-amber-800 dark:text-amber-400 mb-2 text-lg">Tax Lien States</h3>
+                            <h3 className="font-bold text-amber-800 dark:text-amber-400 mb-2 text-lg">1. Tax Liens</h3>
                             <p className="text-sm text-slate-600 dark:text-slate-300">Investors purchase the right to collect the tax debt plus a statutory interest rate (up to 36% in some states). If unredeemed, the investor can foreclose.</p>
                         </div>
                         <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-2xl border border-purple-200 dark:border-purple-800/30">
-                            <h3 className="font-bold text-purple-800 dark:text-purple-400 mb-2 text-lg">Tax Deed States</h3>
+                            <h3 className="font-bold text-purple-800 dark:text-purple-400 mb-2 text-lg">2. Tax Deeds</h3>
                             <p className="text-sm text-slate-600 dark:text-slate-300">The county directly forecloses and auctions the deed to the property to the highest bidder, meaning instant ownership (with caveats like quiet title).</p>
                         </div>
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-2xl border border-emerald-200 dark:border-emerald-800/30">
+                            <h3 className="font-bold text-emerald-800 dark:text-emerald-400 mb-2 text-lg">3. Redeemable Deeds</h3>
+                            <p className="text-sm text-slate-600 dark:text-slate-300">A hybrid model (e.g., Texas, Georgia) where you buy the deed, but the owner has a set period to redeem it by paying a substantial penalty percentage.</p>
+                        </div>
+                    </div>
+
+                    <h2 className="text-2xl font-bold mb-4 mt-8">Training Modules Overview</h2>
+                    <div className="space-y-4 mb-10">
+                        {[
+                            { title: "Module 1: The Sovereign Right to Tax", desc: "Understanding the priority of tax liens over mortgages.", time: "15 min read" },
+                            { title: "Module 2: State-by-State Structuring", desc: "Navigating the 50-state matrix and identifying high-yield vs high-acquisition models.", time: "25 min read" },
+                            { title: "Module 3: Overages & Surplus Funds", desc: "How excess bids are handled and strategies for surplus recovery.", time: "20 min read" },
+                            { title: "Module 4: Risk Mitigation & Quiet Title", desc: "The legal process to secure insurable title post-tax sale.", time: "30 min read" },
+                        ].map((mod, i) => (
+                            <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900/50 transition bg-white dark:bg-slate-800">
+                                <div>
+                                    <h4 className="font-bold text-slate-800 dark:text-slate-200">{mod.title}</h4>
+                                    <p className="text-sm text-slate-500">{mod.desc}</p>
+                                </div>
+                                <div className="mt-2 sm:mt-0 flex items-center gap-3">
+                                    <span className="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">{mod.time}</span>
+                                    <button onClick={() => navigate('/signup')} className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">Start &rarr;</button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
                     <h2 className="text-2xl font-bold mb-4">GoAuct Integration</h2>

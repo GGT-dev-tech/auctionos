@@ -59,13 +59,24 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: strin
   return <>{children}</>;
 };
 
+const RootRoute: React.FC = () => {
+  const user = AuthService.getCurrentUser();
+  if (!user) {
+    return <Landing />;
+  }
+  if (user.role === 'client') {
+    return <Navigate to="/client" replace />;
+  }
+  return <Navigate to="/dashboard" replace />;
+};
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <HashRouter>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<RootRoute />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
