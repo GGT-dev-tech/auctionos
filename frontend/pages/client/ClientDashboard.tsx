@@ -628,7 +628,7 @@ const ClientDashboard: React.FC = () => {
       setAllAuctions(generalRes.items);
 
       // 2. Load Top Scored Properties from DB
-      const topScored = await getTopScoredProperties(10);
+      const topScored = await getTopScoredProperties(10, { availability_status: 'available' });
       setDbTopDeals(topScored as any[]);
 
       // 3. Load Regional Aggregated Stats (Heatmap)
@@ -666,7 +666,7 @@ const ClientDashboard: React.FC = () => {
       try {
         const params: any = { limit: 10, skip: 0 };
         if (selectedState) params.state = selectedState;
-        const topped = await getTopScoredProperties(10, selectedState ? { state: selectedState } : {});
+        const topped = await getTopScoredProperties(10, selectedState ? { state: selectedState, availability_status: 'available' } : { availability_status: 'available' });
         setFilteredDeals(topped as any[]);
       } catch {
         // fallback to global top deals
@@ -723,17 +723,31 @@ const ClientDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* State Intelligence Heatmap */}
-      <div className="w-full h-auto min-h-[350px] z-[1]">
-          <InvestmentHeatmap 
-            stats={stateStats}
-            selectedState={selectedState}
-            onStateClick={(s) => setSelectedState(s)} 
-          />
-      </div>
+      {/* Intelligence Layer Grid (Map & Recommendations side by side) */}
+      <div className="grid lg:grid-cols-2 gap-6 z-[1] relative min-h-[450px]">
+        {/* State Intelligence Heatmap */}
+        <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-500">public</span>
+                    National Yield Heatmap
+                </h2>
+                {selectedState && (
+                    <button onClick={() => setSelectedState('')} className="text-[10px] bg-slate-200/50 text-slate-600 px-2 py-0.5 rounded-full hover:bg-slate-300/50 transition">
+                        Clear: {selectedState}
+                    </button>
+                )}
+            </div>
+            <div className="flex-1 w-full h-[350px]">
+                <InvestmentHeatmap 
+                    stats={stateStats}
+                    selectedState={selectedState}
+                    onStateClick={(s) => setSelectedState(s)} 
+                />
+            </div>
+        </div>
 
-      {/* Intelligence Layer Grid */}
-      <div className="grid grid-cols-1 gap-8 z-0 relative">
+        {/* Suggested Deals Panel */}
         <SuggestedDeals 
           properties={filteredDeals.length > 0 ? filteredDeals : suggestedDeals} 
           loading={loading || dealsLoading} 

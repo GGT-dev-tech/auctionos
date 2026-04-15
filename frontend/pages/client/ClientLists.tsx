@@ -658,6 +658,21 @@ const ClientLists: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* Upcoming Auction Alert Banner */}
+                    {(selectedList?.has_upcoming_auction || selectedListProperties.some(p => p.auction_status === "started" || (p.auction_date && new Date(p.auction_date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000))) && (
+                        <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/50 rounded-xl p-4 flex gap-4 items-start">
+                            <div className="size-10 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0">
+                                <span className="material-symbols-outlined text-xl">warning</span>
+                            </div>
+                            <div>
+                                <h4 className="text-orange-800 dark:text-orange-400 font-bold text-sm">Action Required: Approaching Auctions</h4>
+                                <p className="text-orange-700 dark:text-orange-500 text-xs mt-1">
+                                    One or more properties in this watchlist have an upcoming auction date within the next 7 days or have already started. Please verify funds and register to bid on the respective county portal.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* State Folder Header */}
                     {/* State/County Folder Header */}
                     {selectedStateName && (() => {

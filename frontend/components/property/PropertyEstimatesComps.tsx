@@ -30,14 +30,18 @@ interface CompRow {
  * Match Score = weighted function of distance + property type + size proximity + price proximity.
  */
 const generateComps = (property: Property, type: 'sale' | 'rent'): CompRow[] => {
+    const d = property.details || (property as any);
     const basePrice = type === 'sale'
-        ? (property.assessed_value || 0) * 1.5
-        : (property.assessed_value || 0) * 1.5 * 0.008;
+        ? (property.assessed_value || d.assessed_value || 0) * 1.5
+        : (property.assessed_value || d.assessed_value || 0) * 1.5 * 0.008;
 
-    const baseSqft = property.sqft || property.building_area_sqft || 1200;
-    const baseAcreage = property.lot_acres || 0.25;
-    const baseYear = property.year_built || 1985;
-    const propType = property.property_type || 'Single Family';
+    const baseSqft = property.sqft || d.building_area_sqft || d.sqft || null;
+    const baseAcreage = property.lot_acres || d.lot_acres || null;
+    const baseYear = property.year_built || d.year_built || null;
+    const baseBeds = property.beds || d.beds || null;
+    const baseBaths = property.baths || d.baths || null;
+
+    const propType = property.property_type || d.property_type || 'Single Family';
     const city = property.address?.split(',')[1]?.trim() || (property.county || 'Local City');
     const state = property.state || 'AL';
 
@@ -49,14 +53,14 @@ const generateComps = (property: Property, type: 'sale' | 'rent'): CompRow[] => 
         const sizeDelta = (Math.random() - 0.5) * 0.3;
         const distanceMi = parseFloat((0.2 + Math.random() * 4.8).toFixed(1));
         const price = Math.max(1, Math.round(basePrice * (1 + priceDelta)));
-        const sqft = Math.max(500, Math.round(baseSqft * (1 + sizeDelta)));
-        const acreage = parseFloat((baseAcreage * (1 + (Math.random() - 0.5) * 0.4)).toFixed(2));
+        const sqft = baseSqft ? Math.max(500, Math.round(baseSqft * (1 + sizeDelta))) : null;
+        const acreage = baseAcreage ? parseFloat((baseAcreage * (1 + (Math.random() - 0.5) * 0.4)).toFixed(2)) : null;
 
         // Match Score: 100 - penalties
         let matchScore = 100;
         matchScore -= distanceMi * 5;                                  // –5 per mile
         matchScore -= Math.abs(priceDelta) * 30;                      // –price divergence
-        matchScore -= Math.abs(sizeDelta) * 20;                       // –size divergence
+        if (baseSqft) matchScore -= Math.abs(sizeDelta) * 20;        // –size divergence
         matchScore = Math.max(20, Math.min(99, Math.round(matchScore)));
 
         return {
@@ -65,11 +69,11 @@ const generateComps = (property: Property, type: 'sale' | 'rent'): CompRow[] => 
             state,
             zip: property.additional_parcel_numbers?.slice(0, 5) || '36000',
             type: propType,
-            beds: Math.floor(2 + Math.random() * 3),
-            baths: Math.floor(1 + Math.random() * 3),
+            beds: baseBeds ? Math.max(1, baseBeds + (Math.random() > 0.5 ? 1 : -1)) : null,
+            baths: baseBaths ? Math.max(1, baseBaths + (Math.random() > 0.5 ? 1 : 0)) : null,
             sqft,
             acreage,
-            yearBuilt: Math.max(1950, Math.round(baseYear + (Math.random() - 0.5) * 20)),
+            yearBuilt: baseYear ? Math.max(1900, Math.round(baseYear + (Math.random() - 0.5) * 10)) : null,
             price,
             distance: distanceMi,
             matchScore,

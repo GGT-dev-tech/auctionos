@@ -2,11 +2,22 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../components/Footer';
 import { AuthService } from '../services/auth.service';
+import { ClientDataService } from '../services/property.service';
 
 const ClientLayout: React.FC = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [upcomingAuctions, setUpcomingAuctions] = useState<number>(0);
+
+  React.useEffect(() => {
+    // Basic ping to count if any user list has upcoming auctions
+    ClientDataService.getLists().then(lists => {
+       const hasUpcoming = lists.filter((l: any) => l.has_upcoming_auction).reduce((acc: number, curr: any) => acc + (curr.upcoming_auctions_count || 0), 0);
+       setUpcomingAuctions(hasUpcoming);
+    }).catch(() => {});
+  }, []);
 
   const user = AuthService.getCurrentUser();
   const userDisplayName = user?.email ? user.email.split('@')[0] : 'Client';
@@ -142,13 +153,57 @@ const ClientLayout: React.FC = () => {
                 {userInitial}
               </div>
               {/* Notification Bell */}
-              <div className="relative cursor-pointer mr-2 flex items-center justify-center p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Notifications" onClick={() => navigate('/client/lists')}>
+              <div 
+                  className="relative cursor-pointer mr-2 flex items-center justify-center p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" 
+                  title="Notifications" 
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+              >
                 <span className="material-symbols-outlined text-[24px]">notifications</span>
-                {/* Active indicator ping */}
-                <span className="absolute top-1.5 right-1.5 flex size-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full size-2.5 bg-red-500 border-2 border-white dark:border-[#1a2634]"></span>
-                </span>
+                {upcomingAuctions > 0 && (
+                  <span className="absolute top-1.5 right-1.5 flex size-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full size-2.5 bg-red-500 border-2 border-white dark:border-[#1a2634]"></span>
+                  </span>
+                )}
+
+                {/* Notifications Dropdown */}
+                {notificationsOpen && (
+                    <div className="absolute top-full right-0 mt-4 w-72 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden cursor-default" onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+                            <span className="font-bold text-sm text-slate-800 dark:text-white">Alerts</span>
+                            {upcomingAuctions > 0 && (
+                                <span className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-black px-2 py-0.5 rounded-full">{upcomingAuctions} New</span>
+                            )}
+                        </div>
+                        <div className="max-h-[300px] overflow-y-auto">
+                            {upcomingAuctions > 0 ? (
+                                <div 
+                                    className="p-4 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition cursor-pointer flex gap-3"
+                                    onClick={() => { setNotificationsOpen(false); navigate('/client/lists'); }}
+                                >
+                                    <div className="mt-0.5 size-8 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0">
+                                        <span className="material-symbols-outlined text-[16px]">gavel</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1 leading-tight">Upcoming Auctions Detected</p>
+                                        <p className="text-[10px] text-slate-500">You have {upcomingAuctions} properties in your My List that are going to auction within the next 7 days.</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-8 text-center text-slate-400">
+                                    <span className="material-symbols-outlined text-3xl mb-2 opacity-50">notifications_paused</span>
+                                    <p className="text-xs">You're all caught up!</p>
+                                </div>
+                            )}
+                        </div>
+                        <div 
+                            className="bg-slate-50 dark:bg-slate-900/30 p-2 text-center text-[10px] font-bold text-blue-500 uppercase tracking-widest cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900/50 transition-colors"
+                            onClick={() => { setNotificationsOpen(false); navigate('/client/lists'); }}
+                        >
+                            Manage Watchlists
+                        </div>
+                    </div>
+                )}
               </div>
 
               <button

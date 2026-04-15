@@ -37,7 +37,7 @@ import ClientAuctions from './pages/client/ClientAuctions';
 import ClientProperties from './pages/client/ClientProperties';
 import ClientLists from './pages/client/ClientLists';
 import ClientSupportPage from './pages/client/SupportPage';
-import { TrainingPage, CommunityPage, GroupsPage } from './pages/client/EcosystemPages';
+import { TrainingPage, CommunityPage, GroupsPage, TaxSystemsPage } from './pages/client/EcosystemPages';
 import ChangePasswordPage from './pages/client/ChangePasswordPage';
 import CancelSubscriptionPage from './pages/client/CancelSubscriptionPage';
 
@@ -120,6 +120,7 @@ const App: React.FC = () => {
             {/* Target same detail page internally handling client view restrictions */}
             <Route path="properties/:id" element={<PropertyDetailPage readOnly={true} />} />
             {/* Ecosystem Pages */}
+            <Route path="tax-systems" element={<TaxSystemsPage />} />
             <Route path="training" element={<TrainingPage />} />
             <Route path="community" element={<CommunityPage />} />
             <Route path="groups" element={<GroupsPage />} />
