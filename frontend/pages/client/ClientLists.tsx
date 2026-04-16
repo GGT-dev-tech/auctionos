@@ -489,7 +489,14 @@ const ClientLists: React.FC = () => {
                                                     {/* Expanded Dynamic County Lists */}
                                                     {expandedStates[list.name] && isSelectedState && sortedCounties.length > 0 && (
                                                         <div className="mt-1 ml-4 border-l-2 border-slate-200 dark:border-slate-800 pl-2 space-y-0.5">
-                                                            {sortedCounties.map(([county, count]) => (
+                                                            {sortedCounties.map(([county, count]) => {
+                                                                // Check if any property in this county has an upcoming auction
+                                                                const hasAuction = stateProperties.some(p => 
+                                                                    p.county === county && 
+                                                                    (p.auction_status === "started" || (p.auction_date && new Date(p.auction_date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000))
+                                                                );
+
+                                                                return (
                                                                 <div
                                                                     key={`${list.id}-${county}`}
                                                                     onClick={(e) => {
@@ -507,9 +514,15 @@ const ClientLists: React.FC = () => {
                                                                 >
                                                                     <span className={`material-symbols-outlined text-[16px] ${selectedCountyName === county ? 'text-white' : 'text-emerald-500'}`}>map</span>
                                                                     <span className="flex-1 text-sm font-medium truncate">{county}</span>
+                                                                    {hasAuction && (
+                                                                        <div className="flex items-center gap-0.5 bg-orange-500 text-white px-1.5 py-0.5 rounded-full animate-pulse shadow-sm">
+                                                                            <span className="material-symbols-outlined text-[10px]">gavel</span>
+                                                                        </div>
+                                                                    )}
                                                                     <span className={`text-xs ${selectedCountyName === county ? 'text-emerald-100' : 'text-slate-400'}`}>{count}</span>
                                                                 </div>
-                                                            ))}
+                                                                );
+                                                            })}
                                                         </div>
                                                     )}
                                                 </div>

@@ -10,55 +10,111 @@ interface AboutPageProps {
 // ─── Embedded Client View (Logged In) ────────────────────────────────────────────────────────
 const ClientAboutView: React.FC = () => {
     return (
-        <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full space-y-8">
             <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-8 sm:p-12 text-white shadow-xl relative overflow-hidden">
                 {/* Decorative background glow */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] pointer-events-none"></div>
                 
                 <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                            <span className="material-symbols-outlined text-blue-600 text-[28px]">gavel</span>
+                            <span className="material-symbols-outlined text-blue-600 text-[28px]">account_balance</span>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black tracking-tight">GoAuct Intelligence OS</h1>
-                            <p className="text-sm text-slate-400 uppercase tracking-widest font-bold">Version 2.0.4 — Build 4982</p>
+                            <h1 className="text-2xl font-black tracking-tight">About AuctionOS</h1>
+                            <p className="text-sm text-slate-400 uppercase tracking-widest font-bold">Tax Property Intelligence Platform</p>
                         </div>
                     </div>
 
                     <p className="text-lg text-slate-300 leading-relaxed max-w-2xl mb-8">
-                        The ultimate data layer for tax delinquent and distressed property investors. 
-                        GoAuct utilizes advanced data aggregation to pull from thousands of local municipalities, standardizing the chaos of the U.S. property tax system into a single intelligence pipeline.
+                        A unified platform for discovering, analyzing, and acting on tax delinquent property opportunities across the United States.
+                        <br/><br/>Access the platform: <a href="https://auctionos.up.railway.app.com" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">auctionos.up.railway.app.com</a>
                     </p>
 
-                    <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-sm">
-                            <span className="material-symbols-outlined text-emerald-400 mb-2">storage</span>
-                            <h3 className="font-bold text-white mb-1">Data Providers</h3>
-                            <p className="text-sm text-slate-400">Direct ETL pipelines connected to 47 State Treasury Departments and 3,100+ local county assessors.</p>
-                        </div>
-                        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-sm">
-                            <span className="material-symbols-outlined text-blue-400 mb-2">psychology</span>
-                            <h3 className="font-bold text-white mb-1">Valuation Engine</h3>
-                            <p className="text-sm text-slate-400">Yield and ARV logic built natively on localized property tax assessments and standardized comps matching.</p>
-                        </div>
+                    <h3 className="font-bold text-white mb-4 uppercase tracking-widest text-sm text-blue-400">AuctionOS : By the Numbers</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                        {[
+                            { v: '1', l: 'Integrated Intelligence Platform' },
+                            { v: '50', l: 'States Covered' },
+                            { v: '3,147', l: 'Counties Mapped' },
+                            { v: '3,895', l: 'Data Sources Connected' },
+                            { v: '3,508', l: 'Days of Historical Tracking' },
+                            { v: '51,146', l: 'Active Tax Auction Parcels' },
+                            { v: '588,647', l: 'Active Tax Delinquent Parcels*' },
+                            { v: '2,727,819', l: 'Historical Tax Delinquent Parcels' },
+                            { v: '248,723,791+', l: 'Structured Data Points' }
+                        ].map(stat => (
+                            <div key={stat.l} className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                                <h4 className="text-2xl font-black text-white">{stat.v}</h4>
+                                <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">{stat.l}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            <div className="mt-8 grid sm:grid-cols-3 gap-4">
-                <Link to="/client/support" className="flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-blue-500 hover:shadow-md transition-all group">
-                    <span className="material-symbols-outlined text-3xl text-slate-400 group-hover:text-blue-500 mb-2 transition-colors">support_agent</span>
-                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Contact Support</span>
-                </Link>
-                <Link to="/client/training" className="flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-emerald-500 hover:shadow-md transition-all group">
-                    <span className="material-symbols-outlined text-3xl text-slate-400 group-hover:text-emerald-500 mb-2 transition-colors">school</span>
-                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Training Center</span>
-                </Link>
-                <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl opacity-50 cursor-not-allowed">
-                    <span className="material-symbols-outlined text-3xl text-slate-400 mb-2">api</span>
-                    <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Developer API (Soon)</span>
+            <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="material-symbols-outlined text-emerald-500">travel_explore</span>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Discovery</h2>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
+                        AuctionOS empowers investors, researchers, and institutions to identify high-value opportunities in tax liens, tax deeds, land bank properties, and foreclosures — all in one place.
+                    </p>
+                    <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400 list-disc pl-4">
+                        <li>Nationwide interactive mapping of tax delinquent properties and auctions</li>
+                        <li>Cross-state search across active and redeemed parcels</li>
+                        <li>Property visualization through map overlays and street-level imagery</li>
+                        <li>Intelligent transformation of geospatial data into structured, actionable lists</li>
+                        <li>Real-time parcel tracking and portfolio monitoring</li>
+                        <li>Custom list creation for pipeline and acquisition strategy management</li>
+                        <li>Centralized workspace to attach notes, documents, and images to each asset</li>
+                    </ul>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="material-symbols-outlined text-blue-500">analytics</span>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Analysis</h2>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
+                        Built for scale, AuctionOS transforms fragmented public data into actionable intelligence — reducing research time and increasing decision accuracy.
+                    </p>
+                    <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400 list-disc pl-4">
+                        <li>Export-ready datasets (CSV) for integration with internal systems</li>
+                        <li>Detailed parcel intelligence reports covering over 2.7 million properties</li>
+                        <li>High-performance analysis across 248+ million structured data points</li>
+                        <li>Historical auction insights across major U.S. counties</li>
+                        <li>Deep-link integration with official county and state data sources</li>
+                        <li>Multi-year inventory tracking up to 8 years</li>
+                        <li>Direct access to state-level pricing and valuation requests</li>
+                        <li>Accelerated due diligence (Probate, Obituaries, Comps, Public notices, News)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border border-blue-100 dark:border-blue-800">
+                    <h2 className="text-lg font-bold text-blue-900 dark:text-blue-300 mb-3 block">Positioning</h2>
+                    <p className="text-sm text-blue-800 dark:text-blue-400 leading-relaxed mb-4">
+                        AuctionOS is designed to bridge the gap between fragmented public records and scalable real estate investment strategies.
+                        By combining data aggregation, automation, and intelligent analysis, the platform enables:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-3 py-1 text-xs font-bold rounded-full">Faster deal discovery</span>
+                        <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-3 py-1 text-xs font-bold rounded-full">Smarter investment decisions</span>
+                        <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-3 py-1 text-xs font-bold rounded-full">Scalable acquisition pipelines</span>
+                    </div>
+                </div>
+
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                    <h2 className="text-lg font-bold text-emerald-900 dark:text-emerald-300 mb-3 block flex items-center gap-2">
+                        <span className="material-symbols-outlined text-emerald-500">visibility</span> Vision
+                    </h2>
+                    <p className="text-sm text-emerald-800 dark:text-emerald-400 leading-relaxed">
+                        Our mission is to build the foundational data infrastructure for tax delinquent property investment in the United States — enabling individuals, companies, and institutions to operate with clarity, speed, and confidence.
+                    </p>
                 </div>
             </div>
         </div>

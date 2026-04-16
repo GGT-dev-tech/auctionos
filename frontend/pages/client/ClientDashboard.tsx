@@ -391,7 +391,8 @@ const AuctionSearch: React.FC = () => {
       try {
         const params: any = { limit: 10, skip: 0 };
         if (query.trim()) params.q = query.trim();
-        if (typeFilter) params.tax_status = typeFilter;
+        // The backend matches generic terms on the name column reliably for broad queries
+        if (typeFilter) params.name = typeFilter;
         const res = await AuctionService.getAuctionEvents(params);
         setResults(res.items || []);
         setSearched(true);
@@ -435,9 +436,9 @@ const AuctionSearch: React.FC = () => {
           className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary min-w-[140px]"
         >
           <option value="">All Types</option>
-          <option value="Tax Deed">Tax Deed</option>
-          <option value="Tax Lien">Tax Lien</option>
-          <option value="Foreclosure">Foreclosure</option>
+          <option value="deed">Tax Deed</option>
+          <option value="lien">Tax Lien</option>
+          <option value="foreclosure">Foreclosure</option>
         </select>
       </div>
 
@@ -723,10 +724,10 @@ const ClientDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Intelligence Layer Grid (Map & Recommendations side by side) */}
-      <div className="grid lg:grid-cols-2 gap-6 z-[1] relative min-h-[450px]">
+      {/* Intelligence Layer Grid (Map & Recommendations Stacked vertically) */}
+      <div className="flex flex-col gap-8 z-[1] relative">
         {/* State Intelligence Heatmap */}
-        <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+        <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[400px]">
             <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                     <span className="material-symbols-outlined text-blue-500">public</span>
@@ -738,7 +739,7 @@ const ClientDashboard: React.FC = () => {
                     </button>
                 )}
             </div>
-            <div className="flex-1 w-full h-[350px]">
+            <div className="flex-1 w-full relative">
                 <InvestmentHeatmap 
                     stats={stateStats}
                     selectedState={selectedState}

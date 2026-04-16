@@ -41,7 +41,7 @@ window.fetch = async (...args) => {
             console.warn('Authentication token expired or invalid. Redirecting to login.');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            window.location.href = '/#/login';
+            window.location.href = '/#/';
         }
     } catch (e) {
         console.error('Error in fetch interceptor', e);
