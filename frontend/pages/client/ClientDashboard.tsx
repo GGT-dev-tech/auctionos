@@ -727,7 +727,7 @@ const ClientDashboard: React.FC = () => {
       {/* Intelligence Layer Grid (Map & Recommendations Stacked vertically) */}
       <div className="flex flex-col gap-8 z-[1] relative">
         {/* State Intelligence Heatmap */}
-        <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[400px]">
+        <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px]">
             <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                     <span className="material-symbols-outlined text-blue-500">public</span>
