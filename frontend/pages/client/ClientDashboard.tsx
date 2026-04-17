@@ -762,11 +762,11 @@ const ClientDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Intelligence Layer Grid (Map & Recommendations Lateralizados) */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] 2xl:grid-cols-[1fr_420px] gap-6 z-[1] relative h-auto xl:h-[600px]">
+      {/* Intelligence Layer Grid (Map & Recommendations lado a lado) */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] 2xl:grid-cols-[1fr_420px] gap-6">
         {/* State Intelligence Heatmap */}
-        <div className="w-full h-[500px] xl:h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 h-14">
+        <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col" style={{ minHeight: '480px' }}>
+            <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 shrink-0">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                     <span className="material-symbols-outlined text-blue-500">public</span>
                     National Yield Heatmap
@@ -777,20 +777,20 @@ const ClientDashboard: React.FC = () => {
                     </button>
                 )}
             </div>
-            <div className="flex-1 w-full relative">
-                <InvestmentHeatmap 
+            <div className="flex-1 w-full relative" style={{ minHeight: '400px' }}>
+                <InvestmentHeatmap
                     stats={stateStats}
                     selectedState={selectedState}
-                    onStateClick={(s) => setSelectedState(s)} 
+                    onStateClick={(s) => setSelectedState(s)}
                 />
             </div>
         </div>
 
-        {/* Suggested Deals Panel Lateralizado */}
-        <div className="w-full h-[500px] xl:h-full">
-          <SuggestedDeals 
-            properties={filteredDeals.length > 0 ? filteredDeals : suggestedDeals} 
-            loading={loading || dealsLoading} 
+        {/* Suggested Deals Panel */}
+        <div className="w-full" style={{ minHeight: '480px' }}>
+          <SuggestedDeals
+            properties={filteredDeals.length > 0 ? filteredDeals : suggestedDeals}
+            loading={loading || dealsLoading}
             stateFilter={selectedState}
             onStateChange={(s) => setSelectedState(s)}
           />

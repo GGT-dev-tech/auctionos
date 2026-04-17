@@ -121,7 +121,8 @@ export const CompanySelector: React.FC<CompanySelectorProps> = ({ compact = fals
     const [editingCompany, setEditingCompany] = useState<Company | undefined>(undefined);
     const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
-    if (loading) {
+    // Only show skeleton on true first load with no cached data at all
+    if (loading && companies.length === 0) {
         return (
             <div className="h-9 w-40 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
         );

@@ -13,31 +13,42 @@ interface CompanyContextType {
     deleteCompany: (id: number) => Promise<void>;
 }
 
+const CACHE_KEY = 'goauct_companies';
+
 const CompanyContext = createContext<CompanyContextType | null>(null);
 
 export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [companies, setCompanies] = useState<Company[]>([]);
-    const [loading, setLoading] = useState(false);
+    // Initialize from cache to prevent first-render flicker
+    const cached = (() => {
+        try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '[]') as Company[]; }
+        catch { return [] as Company[]; }
+    })();
+
+    const [companies, setCompanies] = useState<Company[]>(cached);
+    const [loading, setLoading] = useState(cached.length === 0); // Only show loading if no cached data
     const user = AuthService.getCurrentUser();
 
     const refresh = useCallback(async () => {
         if (!user) return;
-        setLoading(true);
         try {
             const data = await CompanyService.list();
             setCompanies(data);
+            // Persist to localStorage to avoid next-session flicker
+            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         } catch {
-            setCompanies([]);
+            // Keep previous data on error
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user?.id]);
 
     useEffect(() => {
         if (user?.role === 'client') {
             refresh();
+        } else {
+            setLoading(false);
         }
-    }, [user, refresh]);
+    }, [user?.id, refresh]);
 
     const activeCompany = companies.find(c => c.is_active) || companies[0] || null;
 

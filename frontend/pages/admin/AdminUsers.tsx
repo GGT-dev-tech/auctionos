@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { UserService } from '../../services/user.service';
 import { CircularProgress } from '@mui/material';
+import { API_URL, getHeaders } from '../../services/httpClient';
 
-type UserRole = 'client' | 'admin' | 'superuser' | 'agent';
+type UserRole = 'client' | 'admin' | 'superuser' | 'agent' | 'consultant';
 
 interface AdminUser {
     id: number;
@@ -22,7 +23,18 @@ interface ActivityLog {
     user?: { email: string; full_name?: string };
 }
 
-const ROLE_OPTIONS: UserRole[] = ['client', 'agent', 'admin', 'superuser'];
+interface ConsultantApplication {
+    id: number;
+    name: string;
+    email: string;
+    phone?: string;
+    verification_status: 'pending' | 'verified' | 'rejected';
+    commission_model?: string;
+    created_at?: string;
+    user_email?: string;
+}
+
+const ROLE_OPTIONS: UserRole[] = ['client', 'consultant', 'agent', 'admin', 'superuser'];
 
 const roleBadge = (role: string) => {
     const map: Record<string, string> = {
@@ -155,13 +167,16 @@ const UserEditModal: React.FC<{
 const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [logs, setLogs] = useState<ActivityLog[]>([]);
+    const [consultants, setConsultants] = useState<ConsultantApplication[]>([]);
     const [loading, setLoading] = useState(true);
-    const [tab, setTab] = useState<'users' | 'logs'>('users');
+    const [tab, setTab] = useState<'users' | 'logs' | 'consultants'>('users');
     const [search, setSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
     const [logSearch, setLogSearch] = useState('');
+    const [consultantFilter, setConsultantFilter] = useState<string>('pending');
+    const [actionLoading, setActionLoading] = useState<number | null>(null);
 
     const loadData = async () => {
         setLoading(true);
@@ -169,9 +184,15 @@ const AdminUsers: React.FC = () => {
             if (tab === 'users') {
                 const data = await UserService.getUsers();
                 setUsers(data as AdminUser[]);
-            } else {
+            } else if (tab === 'logs') {
                 const data = await UserService.getAllLogs();
                 setLogs(data);
+            } else if (tab === 'consultants') {
+                const res = await fetch(`${API_URL}/admin/consultants?status=${consultantFilter}&limit=100`, { headers: getHeaders() });
+                if (res.ok) {
+                    const data = await res.json();
+                    setConsultants(data.items || []);
+                }
             }
         } catch (error) {
             console.error('Failed to load data', error);
@@ -180,7 +201,30 @@ const AdminUsers: React.FC = () => {
         }
     };
 
-    useEffect(() => { loadData(); }, [tab]);
+    const handleVerify = async (id: number, status: 'verified' | 'rejected') => {
+        setActionLoading(id);
+        try {
+            await fetch(`${API_URL}/admin/consultants/${id}/verify`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify({ status }),
+            });
+            loadData();
+        } catch {}
+        finally { setActionLoading(null); }
+    };
+
+    const handleDeleteConsultant = async (id: number) => {
+        if (!window.confirm('Delete this application?')) return;
+        setActionLoading(id);
+        try {
+            await fetch(`${API_URL}/admin/consultants/${id}`, { method: 'DELETE', headers: getHeaders() });
+            loadData();
+        } catch {}
+        finally { setActionLoading(null); }
+    };
+
+    useEffect(() => { loadData(); }, [tab, consultantFilter]);
 
     const filteredUsers = useMemo(() => {
         return users.filter(u => {
@@ -246,21 +290,26 @@ const AdminUsers: React.FC = () => {
             )}
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit">
-                {(['users', 'logs'] as const).map(t => (
+            <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit flex-wrap">
+                {[
+                    { key: 'users', icon: 'manage_accounts', label: 'Users & Roles' },
+                    { key: 'consultants', icon: 'handshake', label: 'Consultant Apps', badge: consultants.filter(c => c.verification_status === 'pending').length },
+                    { key: 'logs', icon: 'history', label: 'Activity Logs' },
+                ].map(t => (
                     <button
-                        key={t}
-                        onClick={() => setTab(t)}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
-                            tab === t
+                        key={t.key}
+                        onClick={() => setTab(t.key as any)}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                            tab === t.key
                                 ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                         }`}
                     >
-                        <span className="material-symbols-outlined text-[16px]">
-                            {t === 'users' ? 'manage_accounts' : 'history'}
-                        </span>
-                        {t === 'users' ? 'Users & Roles' : 'Activity Logs'}
+                        <span className="material-symbols-outlined text-[16px]">{t.icon}</span>
+                        {t.label}
+                        {t.badge ? (
+                            <span className="ml-1 size-5 rounded-full bg-amber-500 text-white text-[10px] font-black flex items-center justify-center">{t.badge}</span>
+                        ) : null}
                     </button>
                 ))}
             </div>
@@ -269,6 +318,103 @@ const AdminUsers: React.FC = () => {
                 <div className="flex justify-center py-20">
                     <CircularProgress size={32} />
                 </div>
+            ) : tab === 'consultants' ? (
+                <>
+                    {/* Consultant Filter */}
+                    <div className="flex gap-2 flex-wrap">
+                        {['pending', 'verified', 'rejected', ''].map(s => (
+                            <button
+                                key={s || 'all'}
+                                onClick={() => setConsultantFilter(s)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-colors ${
+                                    consultantFilter === s
+                                        ? 'bg-primary text-white'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                                }`}
+                            >
+                                {s || 'All'}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full">
+                                <thead>
+                                    <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80">
+                                        <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Name</th>
+                                        <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Email</th>
+                                        <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Phone</th>
+                                        <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
+                                        <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Applied</th>
+                                        <th className="px-5 py-3 text-left text-[10px] font-black uppercase tracking-widest text-slate-400">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                                    {consultants.map(c => (
+                                        <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                            <td className="px-5 py-3">
+                                                <div className="text-sm font-bold text-slate-800 dark:text-white">{c.name}</div>
+                                                {c.user_email && <div className="text-[10px] text-slate-400">Account: {c.user_email}</div>}
+                                            </td>
+                                            <td className="px-5 py-3 text-sm text-slate-600 dark:text-slate-300">{c.email}</td>
+                                            <td className="px-5 py-3 text-sm text-slate-500">{c.phone || '—'}</td>
+                                            <td className="px-5 py-3">
+                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                                                    c.verification_status === 'verified'
+                                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                        : c.verification_status === 'rejected'
+                                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                }`}>{c.verification_status}</span>
+                                            </td>
+                                            <td className="px-5 py-3 text-xs text-slate-400">
+                                                {c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}
+                                            </td>
+                                            <td className="px-5 py-3">
+                                                <div className="flex gap-1.5">
+                                                    {c.verification_status !== 'verified' && (
+                                                        <button
+                                                            onClick={() => handleVerify(c.id, 'verified')}
+                                                            disabled={actionLoading === c.id}
+                                                            className="px-3 py-1 text-[10px] font-bold rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 transition-colors disabled:opacity-60"
+                                                        >
+                                                            ✓ Approve
+                                                        </button>
+                                                    )}
+                                                    {c.verification_status !== 'rejected' && (
+                                                        <button
+                                                            onClick={() => handleVerify(c.id, 'rejected')}
+                                                            disabled={actionLoading === c.id}
+                                                            className="px-3 py-1 text-[10px] font-bold rounded-lg bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors disabled:opacity-60"
+                                                        >
+                                                            ✗ Reject
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteConsultant(c.id)}
+                                                        disabled={actionLoading === c.id}
+                                                        className="p-1 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-60"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {consultants.length === 0 && (
+                                        <tr>
+                                            <td colSpan={6} className="py-16 text-center text-slate-400">
+                                                <span className="material-symbols-outlined text-3xl mb-2 block opacity-50">handshake</span>
+                                                No consultant applications found.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </>
             ) : tab === 'users' ? (
                 <>
                     {/* Filters */}
