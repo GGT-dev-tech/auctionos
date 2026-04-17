@@ -14,5 +14,7 @@ class Company(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
-    owner = relationship("User", back_populates="companies")
+    # foreign_keys is required because User also has active_company_id → companies.id
+    owner = relationship("User", foreign_keys=[user_id], back_populates="companies")
     lists = relationship("ClientList", back_populates="company", cascade="all, delete-orphan")
+

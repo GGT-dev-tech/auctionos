@@ -15,6 +15,36 @@ from app.schemas.user import UserCreate, User as UserSchema
 
 router = APIRouter()
 
+
+@router.post("/login/consultant", response_model=Token)
+def login_consultant(
+    db: Session = Depends(deps.get_db),
+    form_data: OAuth2PasswordRequestForm = Depends(),
+) -> Any:
+    """
+    Dedicated login for consultant partners.
+    Only allows users with role='consultant' to authenticate.
+    Prevents investors/admins from accidentally using the consultant portal.
+    """
+    email = form_data.username.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user or not security.verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive account")
+    if user.role != "consultant":
+        raise HTTPException(
+            status_code=403,
+            detail="This endpoint is for consultant accounts only. Please use the standard login."
+        )
+
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    return {
+        "access_token": security.create_access_token(user.id, expires_delta=access_token_expires),
+        "token_type": "bearer",
+    }
+
 @router.post("/login/access-token", response_model=Token)
 def login_access_token(
     db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()
@@ -163,13 +193,14 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
     access_token = security.create_access_token(
         user.id, expires_delta=access_token_expires
     )
-    
-    # Redirect to frontend with token
-    # We use HashRouter, so we append the query after the hash: /#/login?token=...
+
     frontend_url = settings.FRONTEND_URL
     if "localhost" in str(request.base_url) or "127.0.0.1" in str(request.base_url):
         frontend_url = "http://localhost:5173"
-        
-    # Correct URL construction for HashRouter
-    redirect_url = f"{frontend_url}/#/login?token={access_token}"
+
+    # Route based on role: consultants go to their own portal
+    if user.role == "consultant":
+        redirect_url = f"{frontend_url}/#/login?token={access_token}&mode=consultant"
+    else:
+        redirect_url = f"{frontend_url}/#/login?token={access_token}"
     return RedirectResponse(url=redirect_url)

@@ -51,12 +51,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: strin
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // Redirect to appropriate dashboard if they try to access a route they shouldn't
-    if (user.role === 'client') {
-      return <Navigate to="/client" replace />;
-    } else {
-      return <Navigate to="/dashboard" replace />;
-    }
+    // Redirect each role to its own home
+    if (user.role === 'client') return <Navigate to="/client" replace />;
+    if (user.role === 'consultant') return <Navigate to="/consultant" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
@@ -64,12 +62,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: strin
 
 const RootRoute: React.FC = () => {
   const user = AuthService.getCurrentUser();
-  if (!user) {
-    return <Landing />;
-  }
-  if (user.role === 'client') {
-    return <Navigate to="/client" replace />;
-  }
+  if (!user) return <Landing />;
+  if (user.role === 'client') return <Navigate to="/client" replace />;
+  if (user.role === 'consultant') return <Navigate to="/consultant" replace />;
   return <Navigate to="/dashboard" replace />;
 };
 

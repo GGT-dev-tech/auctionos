@@ -1,47 +1,54 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthService } from '../services/auth.service';
 import { API_BASE_URL } from '../services/httpClient';
 
+type LoginMode = 'investor' | 'consultant';
+
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultMode = (searchParams.get('mode') as LoginMode) || 'investor';
+
+  const [mode, setMode] = useState<LoginMode>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // 1. Handle OAuth Token from URL
-  React.useEffect(() => {
+  // ── Handle OAuth Token returned from backend callback ──────────────────────
+  useEffect(() => {
     const handleOAuth = async () => {
-      // With HashRouter, the query params are after the hash: /#/login?token=xyz
       const hash = window.location.hash;
-      if (hash.includes('?token=')) {
-        const token = hash.split('?token=')[1];
-        if (token) {
-          setIsLoading(true);
-          try {
-            localStorage.setItem('token', token);
-            // Fetch User Profile using the new token
-            const user = await AuthService.getMe();
-            localStorage.setItem('user', JSON.stringify(user));
-            
-            // Route based on role
-            if (user.role === 'client') {
-              navigate('/client');
-            } else {
-              navigate('/dashboard');
-            }
-          } catch (err) {
-            console.error('OAuth Error:', err);
-            setError('Failed to sync with Google. Please try again.');
-          } finally {
-            setIsLoading(false);
-          }
-        }
+      if (!hash.includes('?token=')) return;
+
+      const token = hash.split('?token=')[1];
+      if (!token) return;
+
+      setIsLoading(true);
+      try {
+        localStorage.setItem('token', token);
+        const user = await AuthService.getMe();
+        localStorage.setItem('user', JSON.stringify(user));
+        routeAfterLogin(user);
+      } catch {
+        setError('Failed to sync with Google. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
     };
     handleOAuth();
   }, [navigate]);
+
+  const routeAfterLogin = (user: any) => {
+    if (user.role === 'consultant') {
+      navigate('/consultant');
+    } else if (user.role === 'client') {
+      navigate('/client');
+    } else {
+      navigate('/dashboard');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,112 +56,190 @@ export const Login: React.FC = () => {
     setError('');
 
     try {
-      // 1. Login to get token
-      const { access_token } = await AuthService.login(email, password);
+      // Use the dedicated endpoint based on mode
+      const loginFn = mode === 'consultant' ? AuthService.loginConsultant : AuthService.login;
+      const { access_token } = await loginFn(email, password);
       localStorage.setItem('token', access_token);
 
-      // 2. Fetch User Profile
       const user = await AuthService.getMe();
       localStorage.setItem('user', JSON.stringify(user));
-
-      // 3. Route based on role
-      if (user.role === 'client') {
-        navigate('/client');
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (err) {
-      console.error(err);
-      setError('Invalid credentials. Please check your email and password.');
+      routeAfterLogin(user);
+    } catch (err: any) {
+      setError(err.message || 'Invalid credentials. Please check your email and password.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleGoogleLogin = () => {
+    // Passes the intended mode so backend callback can set role hint if needed
+    const callbackUrl = `${API_BASE_URL}/api/v1/auth/login/google`;
+    window.location.href = callbackUrl;
+  };
+
+  const isConsultant = mode === 'consultant';
+  const accentClass = isConsultant
+    ? 'from-emerald-500 to-teal-600'
+    : 'from-blue-600 to-indigo-600';
+  const accentLight = isConsultant
+    ? 'bg-emerald-600 hover:bg-emerald-700'
+    : 'bg-primary hover:bg-blue-700';
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background-light dark:bg-background-dark relative overflow-hidden">
-      {/* Abstract Background */}
-      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-100 dark:bg-blue-900/20 blur-3xl"></div>
-        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-slate-200 dark:bg-slate-800/30 blur-3xl"></div>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-[#070d1a] relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className={`absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full blur-3xl opacity-30 ${isConsultant ? 'bg-emerald-200 dark:bg-emerald-900' : 'bg-blue-100 dark:bg-blue-900/20'}`} />
+        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-slate-200 dark:bg-slate-800/30 blur-3xl opacity-40" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden">
-        <div className="px-8 pt-10 pb-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-6 text-slate-900 dark:text-white">
-            <div className="size-8 text-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-[32px]">gavel</span>
+      <div className="relative z-10 w-full max-w-md">
+        {/* Card */}
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+
+          {/* Header */}
+          <div className={`px-8 pt-10 pb-6 bg-gradient-to-br ${accentClass} text-center`}>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <span className="material-symbols-outlined text-white text-[32px]">
+                {isConsultant ? 'handshake' : 'gavel'}
+              </span>
+              <span className="text-white font-extrabold text-2xl tracking-tight">GoAuct</span>
             </div>
-            <h2 className="text-2xl font-bold leading-tight tracking-tight">GoAuct</h2>
+            <h1 className="text-white font-bold text-lg">
+              {isConsultant ? 'Consultant Partner Portal' : 'Investor Platform'}
+            </h1>
+            <p className="text-white/70 text-sm mt-1">
+              {isConsultant ? 'Sign in to your partner account' : 'Welcome back — sign in to continue'}
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Welcome Back</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Please enter your details to sign in.</p>
-        </div>
 
-        <div className="px-8 pb-8">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            {error && <div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded">{error}</div>}
-
-            <label className="flex flex-col">
-              <span className="text-slate-900 dark:text-slate-200 text-sm font-medium leading-normal pb-2">Email Address</span>
-              <input
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white h-12 px-4 focus:ring-primary focus:border-primary"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </label>
-
-            <label className="flex flex-col">
-              <span className="text-slate-900 dark:text-slate-200 text-sm font-medium leading-normal pb-2">Password</span>
-              <input
-                className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white h-12 px-4 focus:ring-primary focus:border-primary"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </label>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-slate-300 text-primary focus:ring-primary" />
-                <span className="text-slate-600 dark:text-slate-400 text-sm font-medium">Remember me</span>
-              </label>
-              <Link to="/forgot-password" className="text-primary text-sm font-bold hover:underline">Forgot Password?</Link>
-            </div>
-
+          {/* Mode Switcher */}
+          <div className="flex border-b border-slate-100 dark:border-slate-700">
             <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-12 bg-primary hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+              onClick={() => { setMode('investor'); setError(''); }}
+              className={`flex-1 py-3.5 text-sm font-bold transition-colors flex items-center justify-center gap-1.5 ${
+                mode === 'investor'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
             >
-              <span>{isLoading ? 'Logging in...' : 'Log In'}</span>
-              {!isLoading && <span className="material-symbols-outlined text-[18px]">arrow_forward</span>}
+              <span className="material-symbols-outlined text-[16px]">trending_up</span>
+              Investor Login
             </button>
-
-            <div className="text-center mt-2">
-              <span className="text-slate-600 dark:text-slate-400 text-sm">Don't have an account? </span>
-              <Link to="/signup" className="text-primary text-sm font-bold hover:underline">Sign up</Link>
-            </div>
-          </form>
-
-          <div className="relative flex py-4 items-center">
-            <div className="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
-            <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-medium uppercase tracking-wider">Or continue with</span>
-            <div className="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+            <button
+              onClick={() => { setMode('consultant'); setError(''); }}
+              className={`flex-1 py-3.5 text-sm font-bold transition-colors flex items-center justify-center gap-1.5 ${
+                mode === 'consultant'
+                  ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/10'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">handshake</span>
+              Consultant Login
+            </button>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <button 
-              type="button" 
-              onClick={() => { window.location.href = `${API_BASE_URL}/api/v1/auth/login/google`; }}
-              className="flex items-center justify-center w-full h-12 px-4 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors gap-3"
+          <div className="px-8 py-8">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {error && (
+                <div className="text-red-600 dark:text-red-400 text-sm text-center bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 p-3 rounded-xl">
+                  {error}
+                </div>
+              )}
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-slate-700 dark:text-slate-300 text-sm font-semibold">Email Address</span>
+                <input
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white h-12 px-4 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-primary transition-shadow"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder={isConsultant ? 'partner@email.com' : 'investor@email.com'}
+                  required
+                />
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-slate-700 dark:text-slate-300 text-sm font-semibold">Password</span>
+                <input
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 text-slate-900 dark:text-white h-12 px-4 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-primary transition-shadow"
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </label>
+
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="rounded border-slate-300 text-primary" />
+                  <span className="text-slate-600 dark:text-slate-400 text-sm">Remember me</span>
+                </label>
+                <Link to="/forgot-password" className="text-primary text-sm font-bold hover:underline">
+                  Forgot Password?
+                </Link>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full h-12 text-white font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-70 ${accentLight}`}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                    Signing in…
+                  </>
+                ) : (
+                  <>
+                    {isConsultant ? 'Access Partner Portal' : 'Sign In'}
+                    <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative flex py-5 items-center">
+              <div className="flex-grow border-t border-slate-200 dark:border-slate-700" />
+              <span className="flex-shrink-0 mx-4 text-slate-400 text-xs font-medium uppercase tracking-wider">Or continue with</span>
+              <div className="flex-grow border-t border-slate-200 dark:border-slate-700" />
+            </div>
+
+            {/* Google OAuth */}
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="flex items-center justify-center w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700/30 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors gap-3 shadow-sm"
             >
-              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5 rounded-sm bg-white p-0.5" />
+              {/* Google SVG Icon */}
+              <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
               <span className="text-slate-700 dark:text-slate-200 text-sm font-semibold">Continue with Google</span>
             </button>
+
+            {/* Footer links */}
+            <div className="mt-6 text-center space-y-2">
+              {mode === 'investor' ? (
+                <p className="text-slate-600 dark:text-slate-400 text-sm">
+                  Don't have an account?{' '}
+                  <Link to="/signup" className="text-primary font-bold hover:underline">Sign up free</Link>
+                </p>
+              ) : (
+                <p className="text-slate-600 dark:text-slate-400 text-sm">
+                  Not a partner yet?{' '}
+                  <Link to="/#consultants" className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">Apply as Consultant</Link>
+                </p>
+              )}
+              <p className="text-slate-400 text-xs">
+                <Link to="/login?mode=admin" className="hover:text-slate-600 transition-colors">Admin portal →</Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
