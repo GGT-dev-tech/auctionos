@@ -575,6 +575,71 @@ def get_availability_history(
     results = db.execute(history_query, {"limit": limit}).fetchall()
     return [dict(r._mapping) for r in results]
 
+@router.get("/valuation/metrics", response_model=dict)
+def get_valuation_metrics(
+    county: str,
+    state: str,
+    city: str = None,
+    db: Session = Depends(deps.get_db),
+) -> Any:
+    """
+    Returns aggregated real-data valuation metrics (ARV and Rent estimate)
+    based on comparable properties in the same county/state (and optionally city).
+    Business rule: Values below $1000 are returned as null to prevent distortions.
+    Only 'available' properties are used as comps.
+    """
+    # Build city filter if provided
+    city_clause = "AND LOWER(address) LIKE LOWER(:city_pattern)" if city else ""
+    params: dict = {"county": county, "state": state}
+    if city:
+        params["city_pattern"] = f"%{city}%"
+
+    query = text(f"""
+        SELECT
+            AVG(NULLIF(assessed_value, 0))    AS avg_arv,
+            AVG(NULLIF(improvement_value, 0)) AS avg_improvement,
+            AVG(NULLIF(amount_due, 0))        AS avg_tax_due,
+            COUNT(id)                         AS sample_size
+        FROM property_details
+        WHERE LOWER(county) = LOWER(:county)
+          AND LOWER(state)  = LOWER(:state)
+          AND LOWER(availability_status) = 'available'
+          AND assessed_value > 0
+          {city_clause}
+    """)
+
+    res = db.execute(query, params).fetchone()
+
+    if not res or res[0] is None:
+        return {"arv": None, "rent": None, "confidence": 0, "sample_size": 0}
+
+    avg_arv         = float(res[0] or 0)
+    avg_improvement = float(res[1] or 0)
+    sample_size     = int(res[3] or 0)
+
+    # Rent estimate: 1% of ARV/month (conservative market heuristic).
+    # When improvement data is available use 60% weight on it for better accuracy.
+    if avg_improvement > 0:
+        weighted_base = (avg_arv * 0.4) + (avg_improvement * 0.6)
+    else:
+        weighted_base = avg_arv
+
+    est_rent = weighted_base * 0.01
+
+    # Business rule: Do not expose values below $1,000
+    if avg_arv < 1000 or est_rent < 1000:
+        return {"arv": None, "rent": None, "confidence": 0, "sample_size": sample_size}
+
+    confidence = min(100, sample_size * 2)  # Confidence grows with more comps
+    return {
+        "arv":         round(avg_arv, 2),
+        "rent":        round(est_rent, 2),
+        "sample_size": sample_size,
+        "confidence":  confidence,
+        "city_filtered": bool(city),
+    }
+
+
 @router.get("/{parcel_id}")
 def get_property(
     parcel_id: str,

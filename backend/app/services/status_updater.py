@@ -5,70 +5,78 @@ from app.db.session import SessionLocal
 
 logger = logging.getLogger(__name__)
 
+
 def transition_past_auctions():
     """
-    Finds properties that are currently 'available' and linked to an auction
-    that occurred yesterday or earlier. Transitions their status to 'sold'
-    and logs the change in the history table.
+    Transitions properties to 'unavailable' when they are:
+    1. Currently 'available'
+    2. Linked to at least one auction event via property_auction_history
+    3. ALL linked auctions have dates strictly before today (no future/current auction)
+
+    This prevents marking properties as unavailable if they have an upcoming auction
+    scheduled (e.g., rescheduled or multi-event properties).
     """
     db = SessionLocal()
     try:
-        # We define "past" as strictly before today. 
-        # So if today is the 15th, an auction on the 14th will be transitioned today.
         today = datetime.now().date()
-        
-        # 1. Find eligible properties
+
+        # Find properties that:
+        # - are currently 'available' (case-insensitive to be safe)
+        # - have at least one past auction (auction_date < today)
+        # - do NOT have any FUTURE auction scheduled (auction_date >= today)
+        query = text("""
+            SELECT DISTINCT p.property_id
+            FROM property_details p
+            INNER JOIN property_auction_history pah
+                ON pah.property_id = p.property_id
+                AND pah.auction_date < :today
+            WHERE LOWER(p.availability_status) = 'available'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM property_auction_history pah_future
+                  WHERE pah_future.property_id = p.property_id
+                    AND pah_future.auction_date >= :today
+              )
+        """)
+
         try:
-            query = text("""
-                SELECT p.property_id
-                FROM property_details p
-                WHERE p.availability_status IN ('available', 'Available', 'AVAILABLE')
-                  AND NOT EXISTS (
-                      SELECT 1 FROM property_auction_history pah 
-                      WHERE pah.property_id = p.property_id 
-                      AND pah.auction_date >= :today
-                  )
-                  -- Optional: Grace period for recently updated records
-                  -- AND (p.updated_at IS NULL OR p.updated_at < :yesterday)
-            """)
             results = db.execute(query, {"today": today}).fetchall()
         except Exception as query_err:
-            logger.error(f"Auto-Transition: Could not execute query: {query_err}")
+            logger.error(f"Auto-Transition: Query error: {query_err}")
             return {"status": "error", "message": f"Query Error: {str(query_err)}"}
-        
+
         if not results:
-            logger.info("Auto-Transition: No past auction properties to transition today.")
+            logger.info("Auto-Transition: No past-auction properties to transition today.")
             return {"status": "success", "processed": 0, "message": "No eligible properties found."}
 
         count = 0
         for row in results:
             prop_id = row[0]
-            
-            # 2. Update Status
-            update_q = text("""
-                UPDATE property_details 
-                SET availability_status = 'sold' 
+
+            # Update status to unavailable
+            db.execute(text("""
+                UPDATE property_details
+                SET availability_status = 'unavailable'
                 WHERE property_id = :prop_id
-            """)
-            db.execute(update_q, {"prop_id": prop_id})
-            
-            # 3. Log Audit Trail
-            audit_q = text("""
-                INSERT INTO property_availability_history 
-                (property_id, previous_status, new_status, change_source) 
-                VALUES (:prop_id, 'available', 'sold', 'system_auto_transition')
-            """)
-            db.execute(audit_q, {"prop_id": prop_id})
-            
+                  AND LOWER(availability_status) = 'available'
+            """), {"prop_id": prop_id})
+
+            # Audit trail
+            db.execute(text("""
+                INSERT INTO property_availability_history
+                    (property_id, previous_status, new_status, change_source)
+                VALUES (:prop_id, 'available', 'unavailable', 'system_auto_past_auction')
+            """), {"prop_id": prop_id})
+
             count += 1
-            
+
         db.commit()
-        logger.info(f"Auto-Transition: Successfully transitioned {count} properties to 'sold' status.")
+        logger.info(f"Auto-Transition: {count} properties → 'unavailable' (past auction linkage).")
         return {"status": "success", "processed": count}
-        
+
     except Exception as e:
         db.rollback()
-        logger.error(f"Auto-Transition: Failed with error: {str(e)}")
-        return {"status": "error", "message": f"Transaction Error: {str(e)}"}
+        logger.error(f"Auto-Transition: Failed — {e}")
+        return {"status": "error", "message": str(e)}
     finally:
         db.close()

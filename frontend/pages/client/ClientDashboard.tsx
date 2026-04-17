@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuctionService } from '../../services/auction.service';
-import { PropertyService } from '../../services/property.service';
+import { PropertyService, ClientDataService } from '../../services/property.service';
 import { AuctionEvent, Property } from '../../types';
 import { AuthService } from '../../services/auth.service';
 import { recommendProperties, rankAuctions } from '../../intelligence/rankingEngine';
@@ -252,7 +252,7 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
             <p className="text-xs mt-1">Run the batch score script to populate recommendations, or try a different state.</p>
           </div>
         ) : (
-          <div className="flex overflow-x-auto snap-x scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 gap-4 pb-4">
+          <div className="flex flex-col overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 gap-4 pb-4 h-[calc(100%-40px)]">
             {properties.slice(0, 10).map((p) => {
               const score = calculateDealScore(p);
               const displayRating = (p as any).deal_rating || score.rating;
@@ -270,7 +270,7 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
                 <div 
                   key={p.parcel_id || (p as any).id}
                   onClick={() => navigate(`/client/properties/${p.parcel_id || (p as any).id}`)}
-                  className="flex-shrink-0 w-80 snap-start flex flex-col gap-3 p-4 bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer group"
+                  className="flex-shrink-0 w-full flex flex-col gap-3 p-4 bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer group"
                 >
                   <div className="flex items-start justify-between">
                     <div className={`size-12 rounded-lg flex flex-col items-center justify-center text-white font-black text-xs shadow-sm ${ratingColor}`}>
@@ -660,6 +660,44 @@ const ClientDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
+  // --- Dynamic Dashboard Event: Extract states/counties from My Lists ---
+  // Polls saved lists → finds most common state → auto-filters dashboard
+  useEffect(() => {
+    const extractPreferences = async () => {
+      try {
+        const lists = await ClientDataService.getLists();
+        if (!lists || lists.length === 0) return; // Empty My Lists → show general content
+
+        // Find the state that appears most across all lists
+        const stateFreq: Record<string, number> = {};
+        for (const list of lists) {
+          // Each list may have a state embedded (Standard lists are named after states)
+          const listState = (list.name || '').toUpperCase().trim();
+          if (listState.length === 2) {
+            // Looks like a state code
+            stateFreq[listState] = (stateFreq[listState] || 0) + 1;
+          }
+          // Also count tags-based state hints
+          if (list.tags && list.tags !== 'STANDARD') {
+            const tagState = list.tags.toUpperCase().trim();
+            if (tagState.length === 2) {
+              stateFreq[tagState] = (stateFreq[tagState] || 0) + 1;
+            }
+          }
+        }
+
+        // Use state with highest frequency
+        const topState = Object.entries(stateFreq).sort((a, b) => b[1] - a[1])[0]?.[0];
+        if (topState && !selectedState) {
+          setSelectedState(topState);
+        }
+      } catch {
+        // Fail silently — user may not be logged in or have no lists yet
+      }
+    };
+    extractPreferences();
+  }, []);
+
   // --- State-filtered top deals ---
   useEffect(() => {
     const loadFilteredDeals = async () => {
@@ -724,17 +762,17 @@ const ClientDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Intelligence Layer Grid (Map & Recommendations Stacked vertically) */}
-      <div className="flex flex-col gap-8 z-[1] relative">
+      {/* Intelligence Layer Grid (Map & Recommendations Lateralizados) */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] 2xl:grid-cols-[1fr_420px] gap-6 z-[1] relative h-auto xl:h-[600px]">
         {/* State Intelligence Heatmap */}
-        <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[600px]">
-            <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+        <div className="w-full h-[500px] xl:h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 h-14">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                     <span className="material-symbols-outlined text-blue-500">public</span>
                     National Yield Heatmap
                 </h2>
                 {selectedState && (
-                    <button onClick={() => setSelectedState('')} className="text-[10px] bg-slate-200/50 text-slate-600 px-2 py-0.5 rounded-full hover:bg-slate-300/50 transition">
+                    <button onClick={() => setSelectedState('')} className="text-[10px] bg-slate-200/50 text-slate-600 px-2 py-0.5 rounded-full hover:bg-slate-300/50 transition font-bold">
                         Clear: {selectedState}
                     </button>
                 )}
@@ -748,13 +786,15 @@ const ClientDashboard: React.FC = () => {
             </div>
         </div>
 
-        {/* Suggested Deals Panel */}
-        <SuggestedDeals 
-          properties={filteredDeals.length > 0 ? filteredDeals : suggestedDeals} 
-          loading={loading || dealsLoading} 
-          stateFilter={selectedState}
-          onStateChange={(s) => setSelectedState(s)}
-        />
+        {/* Suggested Deals Panel Lateralizado */}
+        <div className="w-full h-[500px] xl:h-full">
+          <SuggestedDeals 
+            properties={filteredDeals.length > 0 ? filteredDeals : suggestedDeals} 
+            loading={loading || dealsLoading} 
+            stateFilter={selectedState}
+            onStateChange={(s) => setSelectedState(s)}
+          />
+        </div>
       </div>
 
       {/* Top Auctions Sections */}

@@ -12,61 +12,97 @@ if not DATABASE_URL:
 engine = create_engine(DATABASE_URL)
 CSV_FILE = "backend/data/postgres_property_details.csv"
 
+# Accepted status values (strict — no 'sold' or others)
+VALID_STATUSES = {'available', 'unavailable'}
+
+# Maps any CSV variant to canonical DB value
+STATUS_MAP = {
+    'available': 'available',
+    'Available': 'available',
+    'AVAILABLE': 'available',
+    '1': 'available',
+    'true': 'available',
+    'yes': 'available',
+    'unavailable': 'unavailable',
+    'Unavailable': 'unavailable',
+    'UNAVAILABLE': 'unavailable',
+    'not available': 'unavailable',
+    'Not Available': 'unavailable',
+    'sold': 'unavailable',       # Legacy: treat 'sold' as unavailable
+    'Sold': 'unavailable',
+    'SOLD': 'unavailable',
+    'inactive': 'unavailable',
+    'Inactive': 'unavailable',
+}
+
+
 def sync_statuses():
     if not os.path.exists(CSV_FILE):
         print(f"ERROR: {CSV_FILE} not found.")
         return
 
-    print(f"\n--- SINCRONIZANDO STATUS DE PROPRIEDADES A PARTIR DE {CSV_FILE} ---\n")
-    
-    # We use chunking to handle large files
+    print(f"\n--- SYNCING PROPERTY STATUSES FROM {CSV_FILE} ---\n")
+
     chunk_size = 500
-    updated_count = 0
+    updated_available = 0
+    updated_unavailable = 0
     total_processed = 0
-    
-    # Define columns since CSV might not have headers or we want to be explicit
-    # Based on our previous check, column 12 (0-indexed) is availability
-    # But usually it's better to load the whole row if we have a header
-    
+    skipped = 0
+
     with engine.connect() as conn:
         for chunk in pd.read_csv(CSV_FILE, chunksize=chunk_size, dtype=str):
-            # If CSV has no headers, use column indices. 
-            # Let's check headers first. 
-            # Our previous grep showed headers might be missing or different.
-            # Head of file: property_id,parcel_id,address,county,state,lot_acres,property_category,estimated_value,assessed_value,tax_year,owner_name,property_type,availability,purchase_option_type,is_processed
-            
-            # Map parcel_id -> availability
             status_map = {}
             for _, row in chunk.iterrows():
                 p_id = row.get('parcel_id')
-                status = row.get('availability_status')
-                if p_id and status:
-                    status_map[p_id.strip()] = status.strip().lower()
-            
+                if not p_id:
+                    skipped += 1
+                    continue
+
+                # Try both possible CSV column names for availability
+                raw_status = (
+                    row.get('availability_status')
+                    or row.get('availability')
+                    or row.get('status')
+                    or ''
+                ).strip()
+
+                canonical = STATUS_MAP.get(raw_status)
+                if canonical:
+                    status_map[p_id.strip()] = canonical
+                else:
+                    skipped += 1
+
             if not status_map:
                 continue
 
-            # Bulk update
-            # We only update if it matches 'available' or 'not available' to follow logic
             for pid, status in status_map.items():
-                # Map 'available' -> 'available'
-                # But allow 'sold' from CSV to be 'not available' or 'sold' if needed
-                # User specifically wants 'available' from CSV to reflect in DB
-                if status == 'available':
-                    result = conn.execute(text("""
-                        UPDATE property_details 
-                        SET availability_status = 'available' 
-                        WHERE parcel_id = :pid AND availability_status != 'available'
-                    """), {"pid": pid})
-                    if result.rowcount > 0:
-                        updated_count += result.rowcount
-            
+                result = conn.execute(text("""
+                    UPDATE property_details
+                    SET availability_status = :status
+                    WHERE parcel_id = :pid AND availability_status != :status
+                """), {"pid": pid, "status": status})
+
+                if result.rowcount > 0:
+                    if status == 'available':
+                        updated_available += result.rowcount
+                    else:
+                        updated_unavailable += result.rowcount
+
             conn.commit()
             total_processed += len(chunk)
-            print(f"Processados: {total_processed}... Corrigidos para 'available': {updated_count}")
+            print(
+                f"Processed: {total_processed} | "
+                f"→available: {updated_available} | "
+                f"→unavailable: {updated_unavailable} | "
+                f"Skipped (no match): {skipped}"
+            )
 
-    print(f"\n--- SUCESSO ---")
-    print(f"Total de propriedades corrigidas para 'available': {updated_count}")
+    print(f"\n--- COMPLETE ---")
+    print(f"Total processed: {total_processed}")
+    print(f"Updated → available:   {updated_available}")
+    print(f"Updated → unavailable: {updated_unavailable}")
+    print(f"Skipped (unknown status or missing parcel_id): {skipped}")
+
 
 if __name__ == "__main__":
     sync_statuses()

@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { Footer } from '../components/Footer';
 import { AuthService } from '../services/auth.service';
 import { ClientDataService } from '../services/property.service';
+import { CompanySelector } from '../components/CompanySelector';
 
 const ClientLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -144,6 +145,11 @@ const ClientLayout: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Company Selector */}
+              <div className="hidden md:block">
+                <CompanySelector compact />
+              </div>
+
               {/* User Info */}
               <div className="hidden md:flex flex-col items-end">
                 <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{userDisplayName}</span>

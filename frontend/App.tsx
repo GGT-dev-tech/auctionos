@@ -40,6 +40,9 @@ import ClientSupportPage from './pages/client/SupportPage';
 import { TrainingPage, CommunityPage, GroupsPage, TaxSystemsPage } from './pages/client/EcosystemPages';
 import ChangePasswordPage from './pages/client/ChangePasswordPage';
 import CancelSubscriptionPage from './pages/client/CancelSubscriptionPage';
+import { CompanyProvider } from './context/CompanyContext';
+import ConsultantLayout from './layouts/ConsultantLayout';
+import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: string[] }> = ({ children, allowedRoles }) => {
   const user = AuthService.getCurrentUser();
@@ -112,7 +115,13 @@ const App: React.FC = () => {
           </Route>
 
           {/* Client Portal Routes */}
-          <Route path="/client" element={<ProtectedRoute allowedRoles={['client']}><ClientLayout /></ProtectedRoute>}>
+          <Route path="/client" element={
+            <ProtectedRoute allowedRoles={['client']}>
+              <CompanyProvider>
+                <ClientLayout />
+              </CompanyProvider>
+            </ProtectedRoute>
+          }>
             <Route index element={<ClientDashboard />} />
             <Route path="auctions" element={<ClientAuctions />} />
             <Route path="properties" element={<ClientProperties />} />
@@ -130,6 +139,19 @@ const App: React.FC = () => {
             <Route path="about" element={<AboutPage standalone={false} />} />
             <Route path="support" element={<SupportPage standalone={false} />} />
             <Route path="cancel-subscription" element={<CancelSubscriptionPage />} />
+          </Route>
+
+          {/* Consultant Portal Routes */}
+          <Route path="/consultant" element={
+            <ProtectedRoute allowedRoles={['consultant']}>
+              <ConsultantLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<ConsultantDashboard />} />
+            <Route path="listings" element={<ConsultantDashboard />} />
+            <Route path="tasks" element={<ConsultantDashboard />} />
+            <Route path="commissions" element={<ConsultantDashboard />} />
+            <Route path="profile" element={<ConsultantDashboard />} />
           </Route>
         </Routes>
       </HashRouter>

@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PropertyDetails as Property } from '../../types';
-import { estimateARV } from '../../intelligence/arvEstimator';
-import { estimateRent } from '../../intelligence/rentEstimator';
+import { PropertyService } from '../../services/property.service';
 import { Modal } from '../Modal';
 
 interface Props {
@@ -141,14 +140,46 @@ const CompTable: React.FC<{ comps: CompRow[]; type: 'sale' | 'rent' }> = ({ comp
 export const PropertyEstimatesComps: React.FC<Props> = ({ property }) => {
     const [arvOpen, setArvOpen] = useState(false);
     const [rentOpen, setRentOpen] = useState(false);
+    const [metrics, setMetrics] = useState<{ arv: number | null, rent: number | null, confidence: number, sample_size: number } | null>(null);
 
-    const arvEstimate = useMemo(() => estimateARV(property as any), [property]);
-    const rentEstimate = useMemo(() => estimateRent(property as any), [property]);
+    React.useEffect(() => {
+        const fetchMetrics = async () => {
+            try {
+                const c = property.county || 'Unknown';
+                const s = property.state || 'Unknown';
+                const res = await PropertyService.getValuationMetrics(c, s);
+                setMetrics(res);
+            } catch (err) {
+                console.error("Failed to load metrics", err);
+            }
+        };
+        fetchMetrics();
+    }, [property]);
+
     const arvComps = useMemo(() => generateComps(property, 'sale'), [property]);
     const rentComps = useMemo(() => generateComps(property, 'rent'), [property]);
 
     const d = property.details || (property as any);
-    const hasData = arvEstimate.confidence !== 'Insufficient Data';
+    const hasData = metrics && metrics.arv !== null && metrics.rent !== null;
+
+    // Fake structure to keep modal UI compatible for now
+    const arvEstimate = { 
+        value: metrics?.arv || 0, 
+        confidence: (metrics?.confidence || 0) > 50 ? 'High' : 'Medium', 
+        calculationMethod: `County Averaging (${metrics?.sample_size || 0} comps)` 
+    };
+    
+    // Safety yield calc for the modal: yield = (annual rent / amount_due)
+    let safeYield = 0;
+    if (metrics?.rent && property.amount_due) {
+        safeYield = ((metrics.rent * 12) / property.amount_due) * 100;
+    }
+
+    const rentEstimate = { 
+        monthlyRent: metrics?.rent || 0, 
+        annualRent: (metrics?.rent || 0) * 12, 
+        yieldPercentage: safeYield 
+    };
 
     return (
         <>

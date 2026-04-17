@@ -15,6 +15,7 @@ class ClientList(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="SET NULL"), nullable=True, index=True)
     name = Column(String(255), nullable=False)
     is_favorite_list = Column(Boolean, default=False)
     is_broadcasted = Column(Boolean, default=False)
@@ -22,6 +23,7 @@ class ClientList(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", backref="client_lists")
+    company = relationship("Company", back_populates="lists")
     properties = relationship(
         "PropertyDetails",
         secondary=client_list_property,

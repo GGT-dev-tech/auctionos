@@ -181,6 +181,14 @@ export const PropertyService = {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
             body: formData
         });
+    },
+
+    getValuationMetrics: async (county: string, state: string): Promise<{ arv: number | null, rent: number | null, confidence: number, sample_size: number }> => {
+        const response = await fetch(`${API_URL}/properties/valuation/metrics?county=${encodeURIComponent(county)}&state=${encodeURIComponent(state)}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch valuation metrics');
+        return response.json();
     }
 };
 
