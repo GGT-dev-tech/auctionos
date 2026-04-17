@@ -8,6 +8,7 @@ import { geocodeAddress } from '../../services/geocoding.service';
 import { useNavigate } from 'react-router-dom';
 import { SwipeToDeleteItem } from '../../components/SwipeToDeleteItem';
 import { PropertyPreviewDrawer } from '../../components/PropertyPreviewDrawer';
+import { useCompany } from '../../context/CompanyContext';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -50,8 +51,7 @@ const BoundsFitter = ({ markers }: { markers: { lat: number, lng: number }[] }) 
     return null;
 };
 
-const ClientLists: React.FC = () => {
-    const navigate = useNavigate();
+    const { activeCompany } = useCompany();
     const [lists, setLists] = useState<CustomList[]>([]);
     const [selectedListId, setSelectedListId] = useState<number | null>(null);
     const [selectedListProperties, setSelectedListProperties] = useState<any[]>([]);
@@ -134,7 +134,7 @@ const ClientLists: React.FC = () => {
     useEffect(() => {
         loadLists();
         StatesService.getContacts().then(setStateContacts).catch(() => { });
-    }, []);
+    }, [activeCompany?.id]);
 
     useEffect(() => {
         if (selectedListId) {
@@ -162,7 +162,7 @@ const ClientLists: React.FC = () => {
     const loadLists = async () => {
         try {
             setLoading(true);
-            const data = await ClientDataService.getLists();
+            const data = await ClientDataService.getLists(activeCompany?.id);
             setLists(data);
             if (data.length > 0 && !selectedListId) {
                 // Select favorites by default if available
@@ -276,10 +276,10 @@ const ClientLists: React.FC = () => {
         try {
             if (creationMode === 'custom') {
                 if (!newListName) return;
-                await ClientDataService.createList(newListName);
+                await ClientDataService.createList(newListName, undefined, activeCompany?.id);
             } else {
                 if (!selectedState) return;
-                await ClientDataService.createList(selectedState.state, 'STANDARD');
+                await ClientDataService.createList(selectedState.state, 'STANDARD', activeCompany?.id);
             }
             setNewListName('');
             setNewCountyName('');
@@ -898,10 +898,17 @@ const ClientLists: React.FC = () => {
                                                         <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Acres</span>
                                                         <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{prop.lot_acres || 'N/A'}</span>
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Improvements</span>
-                                                        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">${prop.improvement_value?.toLocaleString() || '0'}</span>
-                                                    </div>
+                                                    {prop.is_auction_upcoming && (
+                                                        <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-950/40 px-2 py-1 rounded-lg border border-orange-100 dark:border-orange-900/30">
+                                                            <span className="material-symbols-outlined text-[16px] text-orange-600 animate-bounce">gavel</span>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[9px] text-orange-600 font-black uppercase tracking-tighter">Auction Soon</span>
+                                                                <span className="text-xs font-bold text-orange-700 dark:text-orange-400">
+                                                                    {prop.days_until_auction === 0 ? 'TODAY' : `${prop.days_until_auction} days left`}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 

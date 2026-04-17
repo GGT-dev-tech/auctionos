@@ -347,6 +347,7 @@ def add_property_to_standard_list(
     *,
     db: Session = Depends(deps.get_db),
     property_id: int,
+    company_id: Optional[int] = None,
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Add a property to an auto-managed State/County Standard List."""
@@ -363,11 +364,19 @@ def add_property_to_standard_list(
     lst = db.query(ClientList).filter(
         ClientList.user_id == current_user.id,
         ClientList.name == list_name,
-        ClientList.tags == "STANDARD"
+        ClientList.tags == "STANDARD",
+        ClientList.company_id == company_id
     ).first()
 
     if not lst:
-        lst = ClientList(name=list_name, user_id=current_user.id, is_favorite_list=False, is_broadcasted=False, tags="STANDARD")
+        lst = ClientList(
+            name=list_name, 
+            user_id=current_user.id, 
+            company_id=company_id,
+            is_favorite_list=False, 
+            is_broadcasted=False, 
+            tags="STANDARD"
+        )
         db.add(lst)
         db.commit()
         db.refresh(lst)

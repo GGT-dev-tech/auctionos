@@ -12,18 +12,8 @@ import { calculateDealScore, DealScoreResult } from '../../intelligence/scoringE
 import { submitScore } from '../../services/scores.service';
 
 import { PropertyBasicInfo } from '../../components/property/PropertyBasicInfo';
-import { PropertyPurchaseOptions } from '../../components/property/PropertyPurchaseOptions';
-import { PropertyResearchLinks } from '../../components/property/PropertyResearchLinks';
-import { PropertyUserActions } from '../../components/property/PropertyUserActions';
-import { PropertyFinancialsModal } from '../../components/property/PropertyFinancialsModal';
-import { PropertyMetadataModal } from '../../components/property/PropertyMetadataModal';
-import { PropertyMap } from '../../components/property/PropertyMap';
-import { PropertyNextSteps } from '../../components/property/PropertyNextSteps';
-import { PropertyContactInfo } from '../../components/property/PropertyContactInfo';
-import { PropertyInventoryHistory } from '../../components/property/PropertyInventoryHistory';
-import { PropertyEstimatesComps } from '../../components/property/PropertyEstimatesComps';
-import { RedemptionDisclaimerCard } from '../../components/property/RedemptionDisclaimerCard';
-import { CountyContactCard } from '../../components/property/CountyContactCard';
+import { PropertyStructureCard } from '../../components/property/PropertyStructureCard';
+import { useCompany } from '../../context/CompanyContext';
 
 interface PropertyDetailPageProps {
     readOnly?: boolean;
@@ -32,6 +22,7 @@ interface PropertyDetailPageProps {
 const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = false }) => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { activeCompany } = useCompany();
     const [property, setProperty] = useState<Property | null>(null);
     const [countyContacts, setCountyContacts] = useState<CountyContact[]>([]);
     const [loading, setLoading] = useState(true);
@@ -49,11 +40,11 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
         if (!id) return;
         loadProperty(id);
         loadLists();
-    }, [id]);
+    }, [id, activeCompany?.id]);
 
     const loadLists = async () => {
         try {
-            const data = await ClientDataService.getLists();
+            const data = await ClientDataService.getLists(activeCompany?.id);
             setLists(data);
         } catch (err) {
             console.error("Error loading lists", err);
@@ -211,8 +202,9 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
         if (!property?.id) return;
         try {
             setActionLoading(true);
-            await ClientDataService.addPropertyToStandardList(property.id);
+            await ClientDataService.addPropertyToStandardList(property.id, activeCompany?.id);
             alert(`Property added to Standard List successfully!`);
+            loadLists(); // Refresh counts
             handleCloseListMenu();
         } catch (err: any) {
             alert(`Error: ${err.message}`);
@@ -226,7 +218,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
         if (!name || !property?.id) return;
         try {
             setActionLoading(true);
-            const newList = await ClientDataService.createList(name);
+            const newList = await ClientDataService.createList(name, undefined, activeCompany?.id);
             await ClientDataService.addPropertyToList(newList.id, property.id);
             alert(`List "${name}" created & property added!`);
             loadLists();
