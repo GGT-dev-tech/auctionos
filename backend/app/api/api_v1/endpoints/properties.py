@@ -820,5 +820,9 @@ def enrich_property_endpoint(
     On-demand API endpoint to enrich property details using ATTOM Property Data.
     Verifica se existem campos faltando e, se sim, busca na API da ATTOM, usa cache no Redis e salva tudo na base de dados.
     """
-    result = enrich_property(db, property_id)
-    return result
+    try:
+        result = enrich_property(db, property_id)
+        return result
+    except Exception as e:
+        logger.error(f"Erro no endpoint de enriquecimento para {property_id}: {e}")
+        return {"status": "error", "message": str(e), "property_id": property_id}

@@ -9,7 +9,7 @@ import redis
 import requests
 from sqlalchemy.orm import Session
 from sqlalchemy import update
-from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type, RetryError
 from fastapi import HTTPException
 
 # Assuming the model is imported from here based on the standard project structure
@@ -292,13 +292,16 @@ def enrich_property(db: Session, property_id: str) -> Dict[str, Any]:
                 
         except requests.exceptions.RequestException as e:
             logger.error(f"ATTOM API erro de requisição: {e}")
-            raise HTTPException(status_code=502, detail="Error communicating with ATTOM API")
+            return {"status": "error", "message": "ATTOM API request failed", "error": str(e)}
         except CircuitBreakerException:
             logger.error("ATTOM API erro: Rate Limit Excedido (429).")
-            raise HTTPException(status_code=429, detail="ATTOM API Rate limit exceeded")
+            return {"status": "error", "message": "ATTOM API rate limit exceeded"}
+        except RetryError as e:
+            logger.error(f"ATTOM API erro: Falha após múltiplas tentativas: {e}")
+            return {"status": "error", "message": "ATTOM API retry failed after multiple attempts"}
         except Exception as e:
             logger.error(f"Erro inesperado durante enriquecimento: {e}")
-            raise HTTPException(status_code=500, detail="Internal server error during enrichment")
+            return {"status": "error", "message": "Unexpected error during enrichment", "error": str(e)}
 
     # 6. Mapeamento dos dados retornados e UPSERT
     if attom_data:
