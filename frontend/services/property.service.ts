@@ -148,8 +148,9 @@ export const PropertyService = {
         return response.json();
     },
 
-    toggleFavorite: async (propertyId: number): Promise<{ is_favorite: boolean }> => {
-        const response = await fetch(`${API_URL}/client-data/favorites/toggle/${propertyId}`, {
+    toggleFavorite: async (propertyId: number, companyId?: number): Promise<{ is_favorite: boolean }> => {
+        const qs = companyId ? `?company_id=${companyId}` : '';
+        const response = await fetch(`${API_URL}/client-data/favorites/toggle/${propertyId}${qs}`, {
             method: 'POST',
             headers: getHeaders()
         });
@@ -157,8 +158,9 @@ export const PropertyService = {
         return response.json();
     },
 
-    getFavorites: async (): Promise<number[]> => {
-        const response = await fetch(`${API_URL}/client-data/favorites`, {
+    getFavorites: async (companyId?: number): Promise<number[]> => {
+        const qs = companyId ? `?company_id=${companyId}` : '';
+        const response = await fetch(`${API_URL}/client-data/favorites${qs}`, {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Failed to fetch favorites');
@@ -249,7 +251,7 @@ export const ClientDataService = {
     },
 
     addPropertyToStandardList: async (propertyId: number, companyId?: number): Promise<any> => {
-        const url = `${API_URL}/client-data/lists/standard/properties/${propertyId}${companyId ? `?company_id=${companyId}` : ''}`;
+        const url = `${API_URL}/client-data/lists/standard/add/${propertyId}${companyId ? `?company_id=${companyId}` : ''}`;
         const response = await fetch(url, {
             method: 'POST',
             headers: getHeaders()

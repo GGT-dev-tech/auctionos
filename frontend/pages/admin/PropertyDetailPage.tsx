@@ -118,7 +118,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     const fetchSecondaryData = async (data: any) => {
         if (localStorage.getItem('token')) {
             try {
-                const favorites = await PropertyService.getFavorites();
+                const favorites = await PropertyService.getFavorites(activeCompany?.id);
                 if (data.id && favorites.includes(data.id)) {
                     setIsFavorite(true);
                 }
@@ -181,7 +181,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
 
     const handleToggleFavorite = async () => {
         try {
-            const res = await PropertyService.toggleFavorite(property.id);
+            const res = await PropertyService.toggleFavorite(property.id, activeCompany?.id);
             setIsFavorite(res.is_favorite);
         } catch (err: any) {
             alert(err.message);

@@ -98,9 +98,12 @@ def get_client_lists(
     """Get all lists for the current client, optionally filtered by active company."""
     query = db.query(ClientList).filter(ClientList.user_id == current_user.id)
     if company_id:
-        # Return lists for this company + lists without company (shared)
-        from sqlalchemy import or_
-        query = query.filter(or_(ClientList.company_id == company_id, ClientList.company_id == None))
+        # Strict isolation: return only lists for this company
+        query = query.filter(ClientList.company_id == company_id)
+    else:
+        # Legacy/Personal: return lists with NO company
+        query = query.filter(ClientList.company_id == None)
+        
     lists = query.all()
 
     # Auto-migration for legacy standard folders using acronyms (e.g., "TX" -> "Texas")
@@ -509,16 +512,22 @@ def toggle_favorite(
     *,
     db: Session = Depends(deps.get_db),
     property_id: int,
+    company_id: int | None = None,
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
-    """Toggle a property in the user's auto-generated Favorites list."""
+    """Toggle a property in the user's auto-generated Favorites list (company scoped)."""
     prop = db.query(PropertyDetails).filter(PropertyDetails.id == property_id).first()
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
 
-    fav_list = db.query(ClientList).filter(ClientList.user_id == current_user.id, ClientList.is_favorite_list == True).first()
+    fav_list = db.query(ClientList).filter(
+        ClientList.user_id == current_user.id, 
+        ClientList.is_favorite_list == True,
+        ClientList.company_id == company_id
+    ).first()
+    
     if not fav_list:
-        fav_list = ClientList(name="Favorites", user_id=current_user.id, is_favorite_list=True)
+        fav_list = ClientList(name="Favorites", user_id=current_user.id, is_favorite_list=True, company_id=company_id)
         db.add(fav_list)
         db.commit()
         db.refresh(fav_list)
@@ -535,11 +544,17 @@ def toggle_favorite(
 
 @router.get("/favorites")
 def get_favorites(
+    company_id: int | None = None,
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
-    """Get all property IDs that are favorited by the user."""
-    fav_list = db.query(ClientList).filter(ClientList.user_id == current_user.id, ClientList.is_favorite_list == True).first()
+    """Get all property IDs that are favorited by the user (company scoped)."""
+    fav_list = db.query(ClientList).filter(
+        ClientList.user_id == current_user.id, 
+        ClientList.is_favorite_list == True,
+        ClientList.company_id == company_id
+    ).first()
+    
     if not fav_list:
         return []
     
