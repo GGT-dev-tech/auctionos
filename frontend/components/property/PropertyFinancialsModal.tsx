@@ -15,7 +15,7 @@ export const PropertyFinancialsModal: React.FC<Props> = ({ property, isOpen, onC
     const assessed = Number(property.assessed_value || details.assessed_value || details.county_appraisal || 0);
     const land = Number(property.land_value || details.land_value || 0);
     const improvements = Number(property.improvement_value || details.improvement_value || 0);
-    const estimated = Number(property.estimated_value || details.estimated_value || assessed * 1.5 || 0);
+    const estimated = Number(property.estimated_value || details.estimated_value || 0);
 
     const formatCurrency = (val: number) => val > 0 ? `$${val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '-';
 

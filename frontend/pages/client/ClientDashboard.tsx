@@ -4,6 +4,7 @@ import { AuctionService } from '../../services/auction.service';
 import { PropertyService, ClientDataService } from '../../services/property.service';
 import { AuctionEvent, Property } from '../../types';
 import { AuthService } from '../../services/auth.service';
+import { useCompany } from '../../context/CompanyContext';
 import { recommendProperties, rankAuctions } from '../../intelligence/rankingEngine';
 import { calculateDealScore } from '../../intelligence/scoringEngine';
 import { getTopScoredProperties, getStateStats, StateStat } from '../../services/scores.service';
@@ -522,6 +523,7 @@ const SystemAnnouncements: React.FC = () => (
 const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
   const user = AuthService.getCurrentUser();
+  const { activeCompany } = useCompany();
   const formatName = (str?: string) => {
     if (!str) return 'There';
     const base = str.split('@')[0];
@@ -667,7 +669,7 @@ const ClientDashboard: React.FC = () => {
   useEffect(() => {
     const loadPreferences = async () => {
       try {
-        const prefs = await ClientDataService.getPreferences();
+        const prefs = await ClientDataService.getPreferences(activeCompany?.id);
         if (!prefs || prefs.states.length === 0) {
           setMyListsPreferences(null);
           setIsPersonalized(false);
@@ -686,7 +688,7 @@ const ClientDashboard: React.FC = () => {
       }
     };
     loadPreferences();
-  }, []); // Only on mount — don't re-run every selectedState change
+  }, [activeCompany?.id]); // Re-run when active company changes
 
   // --- State-filtered top deals ---
   useEffect(() => {
