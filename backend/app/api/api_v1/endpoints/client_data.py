@@ -22,6 +22,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 class ClientListCreate(BaseModel):
     name: str
     tags: str | None = None
+    company_id: int | None = None
 
 class ClientListResponse(BaseModel):
     id: int
@@ -30,6 +31,7 @@ class ClientListResponse(BaseModel):
     is_favorite_list: bool
     is_broadcasted: bool
     tags: str | None = None
+    company_id: int | None = None
     has_upcoming_auction: bool = False
     upcoming_auctions_count: int = 0
 
@@ -37,6 +39,7 @@ class ClientListUpdate(BaseModel):
     name: str | None = None
     tags: str | None = None
     is_broadcasted: bool | None = None
+    company_id: int | None = None
 
 class ClientNoteCreate(BaseModel):
     property_id: int
@@ -64,48 +67,63 @@ def create_client_list(
     list_in: ClientListCreate,
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
-    """Create a new List folder for the client."""
-    new_list = ClientList(name=list_in.name, user_id=current_user.id, is_favorite_list=False, is_broadcasted=False, tags=list_in.tags)
+    """Create a new List folder for the client. Optionally scoped to a company."""
+    new_list = ClientList(
+        name=list_in.name,
+        user_id=current_user.id,
+        company_id=list_in.company_id,
+        is_favorite_list=False,
+        is_broadcasted=False,
+        tags=list_in.tags
+    )
     db.add(new_list)
     db.commit()
     db.refresh(new_list)
-    return {"id": new_list.id, "name": new_list.name, "property_count": 0, "is_favorite_list": new_list.is_favorite_list, "is_broadcasted": new_list.is_broadcasted, "tags": new_list.tags}
+    return {
+        "id": new_list.id,
+        "name": new_list.name,
+        "property_count": 0,
+        "is_favorite_list": new_list.is_favorite_list,
+        "is_broadcasted": new_list.is_broadcasted,
+        "tags": new_list.tags,
+        "company_id": new_list.company_id,
+    }
 
 @router.get("/lists")
 def get_client_lists(
+    company_id: int | None = None,
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
-    """Get all lists for the current client. Auto-migrates legacy state acryonyms."""
-    lists = db.query(ClientList).filter(ClientList.user_id == current_user.id).all()
-    
+    """Get all lists for the current client, optionally filtered by active company."""
+    query = db.query(ClientList).filter(ClientList.user_id == current_user.id)
+    if company_id:
+        # Return lists for this company + lists without company (shared)
+        from sqlalchemy import or_
+        query = query.filter(or_(ClientList.company_id == company_id, ClientList.company_id == None))
+    lists = query.all()
+
     # Auto-migration for legacy standard folders using acronyms (e.g., "TX" -> "Texas")
     standard_lists = [l for l in lists if l.tags == "STANDARD"]
     for lst in standard_lists:
         normalized_name = lst.name.strip().upper()
         if normalized_name in STATE_MAPPING:
             full_name = STATE_MAPPING[normalized_name]
-            # See if the full name list already exists
             existing_full = next((l for l in standard_lists if l.name == full_name and l.id != lst.id), None)
             if existing_full:
-                # Merge properties into existing
                 for prop in lst.properties:
                     if prop not in existing_full.properties:
                         existing_full.properties.append(prop)
                 db.delete(lst)
                 db.commit()
-                # Remove from tracking array to avoid further processing
                 lists.remove(lst)
             else:
-                # Just rename this one to the full name
                 lst.name = full_name
                 db.commit()
 
     results = []
     for lst in lists:
         count = db.query(client_list_property).filter(client_list_property.c.list_id == lst.id).count()
-        
-        # Calculate upcoming auctions flag
         auction_q = text("""
             SELECT COUNT(DISTINCT pah.property_id)
             FROM client_list_property clp
@@ -114,18 +132,59 @@ def get_client_lists(
             WHERE clp.list_id = :list_id AND pah.auction_date >= CURRENT_DATE
         """)
         upcoming_count = db.execute(auction_q, {"list_id": lst.id}).scalar() or 0
-        
         results.append({
-            "id": lst.id, 
-            "name": lst.name, 
-            "property_count": count, 
-            "is_favorite_list": lst.is_favorite_list, 
-            "is_broadcasted": lst.is_broadcasted, 
+            "id": lst.id,
+            "name": lst.name,
+            "property_count": count,
+            "is_favorite_list": lst.is_favorite_list,
+            "is_broadcasted": lst.is_broadcasted,
             "tags": lst.tags,
+            "company_id": lst.company_id,
             "has_upcoming_auction": upcoming_count > 0,
             "upcoming_auctions_count": upcoming_count
         })
     return results
+
+
+@router.get("/lists/preferences")
+def get_list_preferences(
+    company_id: int | None = None,
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Returns the distinct states and counties from all properties saved by
+    the current user (optionally scoped to company) — used by the Home
+    dashboard to dynamically personalize the experience.
+    """
+    from sqlalchemy import or_
+    query = db.query(ClientList).filter(ClientList.user_id == current_user.id)
+    if company_id:
+        query = query.filter(or_(ClientList.company_id == company_id, ClientList.company_id == None))
+    user_lists = query.all()
+    list_ids = [l.id for l in user_lists]
+
+    if not list_ids:
+        return {"states": [], "counties": [], "total_properties": 0}
+
+    placeholders = ", ".join(str(i) for i in list_ids)
+    rows = db.execute(text(f"""
+        SELECT DISTINCT p.state, p.county
+        FROM client_list_property clp
+        JOIN property_details p ON p.id = clp.property_id
+        WHERE clp.list_id IN ({placeholders})
+          AND p.state IS NOT NULL
+    """)).fetchall()
+
+    states = sorted(set(r[0] for r in rows if r[0]))
+    counties = sorted(set(r[1] for r in rows if r[1]))
+    total = db.execute(text(f"""
+        SELECT COUNT(DISTINCT clp.property_id)
+        FROM client_list_property clp
+        WHERE clp.list_id IN ({placeholders})
+    """)).scalar() or 0
+
+    return {"states": states, "counties": counties, "total_properties": total}
 
 @router.get("/broadcasted")
 def get_broadcasted_lists(
@@ -328,28 +387,37 @@ def get_list_properties(
     list_id: int,
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
-    """Get all properties in a specific list."""
+    """Get all properties in a specific list, including auction proximity alert."""
     lst = db.query(ClientList).filter(ClientList.id == list_id).first()
     if not lst:
         raise HTTPException(status_code=404, detail="List not found")
-    
-    # Check ownership or broadcast status
     if lst.user_id != current_user.id and not lst.is_broadcasted:
         raise HTTPException(status_code=403, detail="Not authorized to view this list")
-    
-    # We want the same detailed view as the properties database
+
     results = []
     for p in lst.properties:
-        # Get latest auction info if available
+        # Get NEAREST future auction
         auction_query = text("""
-            SELECT auction_name, auction_date 
-            FROM property_auction_history 
-            WHERE property_id = :prop_id 
-            ORDER BY auction_date DESC LIMIT 1
+            SELECT auction_name, auction_date
+            FROM property_auction_history
+            WHERE property_id = :prop_id
+              AND auction_date >= CURRENT_DATE
+            ORDER BY auction_date ASC LIMIT 1
         """)
         auction = db.execute(auction_query, {"prop_id": p.property_id}).fetchone()
-        
-        # Build dict matching PropertyDashboardSchema/Frontend expectations
+
+        # Calculate days until auction
+        days_until_auction = None
+        is_auction_upcoming = False
+        if auction and auction[1]:
+            try:
+                from datetime import date
+                auction_dt = auction[1] if isinstance(auction[1], date) else datetime.strptime(str(auction[1]), "%Y-%m-%d").date()
+                days_until_auction = (auction_dt - date.today()).days
+                is_auction_upcoming = 0 <= days_until_auction <= 30  # Alert within 30 days
+            except Exception:
+                pass
+
         prop_dict = {
             "id": p.id,
             "parcel_id": p.parcel_id,
@@ -357,7 +425,7 @@ def get_list_properties(
             "owner_address": p.owner_address,
             "county": p.county,
             "state": p.state,
-            "state_code": p.state, # compatibility for some views
+            "state_code": p.state,
             "description": p.description or p.legal_description,
             "amount_due": p.amount_due,
             "lot_acres": p.lot_acres,
@@ -365,14 +433,21 @@ def get_list_properties(
             "assessed_value": p.assessed_value,
             "availability_status": p.availability_status,
             "auction_name": auction[0] if auction else None,
-            "auction_date": auction[1] if auction else None,
+            "auction_date": str(auction[1]) if auction and auction[1] else None,
+            "days_until_auction": days_until_auction,
+            "is_auction_upcoming": is_auction_upcoming,
             "property_type": p.property_type,
             "occupancy": p.occupancy,
             "latitude": p.latitude,
-            "longitude": p.longitude
+            "longitude": p.longitude,
         }
         results.append(prop_dict)
-        
+
+    # Sort: upcoming auctions first, then by days_until
+    results.sort(key=lambda x: (
+        0 if x.get("is_auction_upcoming") else 1,
+        x.get("days_until_auction") if x.get("days_until_auction") is not None else 9999
+    ))
     return results
 
 @router.post("/lists/{list_id}/move/{property_id}")

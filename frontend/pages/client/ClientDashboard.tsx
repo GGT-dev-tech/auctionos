@@ -548,6 +548,8 @@ const ClientDashboard: React.FC = () => {
   const [selectedState, setSelectedState] = useState('');
   const [filteredDeals, setFilteredDeals] = useState<Property[]>([]);
   const [dealsLoading, setDealsLoading] = useState(false);
+  const [myListsPreferences, setMyListsPreferences] = useState<{ states: string[]; counties: string[]; total: number } | null>(null);
+  const [isPersonalized, setIsPersonalized] = useState(false);
   const isFetchingBus = useRef(false);
 
   // ─── Reactive Data Pipeline ────────────────────────────────────────────────
@@ -660,43 +662,31 @@ const ClientDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
-  // --- Dynamic Dashboard Event: Extract states/counties from My Lists ---
-  // Polls saved lists → finds most common state → auto-filters dashboard
+  // --- Dynamic Dashboard Event: Extract real states/counties from My Lists ---
+  // Uses the /lists/preferences endpoint → gets actual states from saved properties
   useEffect(() => {
-    const extractPreferences = async () => {
+    const loadPreferences = async () => {
       try {
-        const lists = await ClientDataService.getLists();
-        if (!lists || lists.length === 0) return; // Empty My Lists → show general content
-
-        // Find the state that appears most across all lists
-        const stateFreq: Record<string, number> = {};
-        for (const list of lists) {
-          // Each list may have a state embedded (Standard lists are named after states)
-          const listState = (list.name || '').toUpperCase().trim();
-          if (listState.length === 2) {
-            // Looks like a state code
-            stateFreq[listState] = (stateFreq[listState] || 0) + 1;
-          }
-          // Also count tags-based state hints
-          if (list.tags && list.tags !== 'STANDARD') {
-            const tagState = list.tags.toUpperCase().trim();
-            if (tagState.length === 2) {
-              stateFreq[tagState] = (stateFreq[tagState] || 0) + 1;
-            }
-          }
+        const prefs = await ClientDataService.getPreferences();
+        if (!prefs || prefs.states.length === 0) {
+          setMyListsPreferences(null);
+          setIsPersonalized(false);
+          return;
         }
+        setMyListsPreferences({ states: prefs.states, counties: prefs.counties, total: prefs.total_properties });
 
-        // Use state with highest frequency
-        const topState = Object.entries(stateFreq).sort((a, b) => b[1] - a[1])[0]?.[0];
-        if (topState && !selectedState) {
-          setSelectedState(topState);
+        // Only auto-apply if user hasn't manually selected a state
+        if (!selectedState && prefs.states.length > 0) {
+          // Pick the first state (most common per property frequency)
+          setSelectedState(prefs.states[0]);
+          setIsPersonalized(true);
         }
       } catch {
         // Fail silently — user may not be logged in or have no lists yet
       }
     };
-    extractPreferences();
-  }, []);
+    loadPreferences();
+  }, []); // Only on mount — don't re-run every selectedState change
 
   // --- State-filtered top deals ---
   useEffect(() => {
@@ -735,6 +725,27 @@ const ClientDashboard: React.FC = () => {
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
         </div>
       </div>
+
+      {/* Personalization Banner — shown when Home is filtered by My Lists */}
+      {isPersonalized && myListsPreferences && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+          <span className="material-symbols-outlined text-blue-500 text-[20px]">auto_awesome</span>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+              Personalized for your portfolio
+            </p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+              Showing market data for <strong>{myListsPreferences.states.join(', ')}</strong> based on your {myListsPreferences.total} saved properties.
+            </p>
+          </div>
+          <button
+            onClick={() => { setSelectedState(''); setIsPersonalized(false); }}
+            className="text-[10px] font-bold text-blue-500 hover:text-blue-700 bg-blue-100 dark:bg-blue-900/50 px-2 py-1 rounded-lg"
+          >
+            Reset to Global
+          </button>
+        </div>
+      )}
 
       {/* System Announcements */}
       <SystemAnnouncements />

@@ -193,19 +193,30 @@ export const PropertyService = {
 };
 
 export const ClientDataService = {
-    getLists: async (): Promise<any[]> => {
-        const response = await fetch(`${API_URL}/client-data/lists`, {
+    getLists: async (companyId?: number): Promise<any[]> => {
+        const qs = companyId ? `?company_id=${companyId}` : '';
+        const response = await fetch(`${API_URL}/client-data/lists${qs}`, {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Failed to fetch lists');
         return response.json();
     },
 
-    createList: async (name: string, tags?: string): Promise<any> => {
+    /** Returns distinct states + counties from user's saved properties (for dynamic Home). */
+    getPreferences: async (companyId?: number): Promise<{ states: string[]; counties: string[]; total_properties: number }> => {
+        const qs = companyId ? `?company_id=${companyId}` : '';
+        const response = await fetch(`${API_URL}/client-data/lists/preferences${qs}`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) return { states: [], counties: [], total_properties: 0 };
+        return response.json();
+    },
+
+    createList: async (name: string, tags?: string, companyId?: number): Promise<any> => {
         const response = await fetch(`${API_URL}/client-data/lists`, {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({ name, tags })
+            body: JSON.stringify({ name, tags, company_id: companyId ?? null })
         });
         if (!response.ok) throw new Error('Failed to create list');
         return response.json();
