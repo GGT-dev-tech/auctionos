@@ -51,6 +51,8 @@ const BoundsFitter = ({ markers }: { markers: { lat: number, lng: number }[] }) 
     return null;
 };
 
+const ClientLists: React.FC = () => {
+    const navigate = useNavigate();
     const { activeCompany } = useCompany();
     const [lists, setLists] = useState<CustomList[]>([]);
     const [selectedListId, setSelectedListId] = useState<number | null>(null);
