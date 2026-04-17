@@ -13,6 +13,14 @@ import { submitScore } from '../../services/scores.service';
 
 import { PropertyBasicInfo } from '../../components/property/PropertyBasicInfo';
 import { PropertyStructureCard } from '../../components/property/PropertyStructureCard';
+import { PropertyEstimatesComps } from '../../components/property/PropertyEstimatesComps';
+import { PropertyPurchaseOptions } from '../../components/property/PropertyPurchaseOptions';
+import { RedemptionDisclaimerCard } from '../../components/property/RedemptionDisclaimerCard';
+import { PropertyMap } from '../../components/property/PropertyMap';
+import { PropertyResearchLinks } from '../../components/property/PropertyResearchLinks';
+import { PropertyNextSteps } from '../../components/property/PropertyNextSteps';
+import { PropertyUserActions } from '../../components/property/PropertyUserActions';
+import { PropertyContactInfo } from '../../components/property/PropertyContactInfo';
 import { useCompany } from '../../context/CompanyContext';
 
 interface PropertyDetailPageProps {
@@ -69,6 +77,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
+                .then(res => res.json())
                 .then(res => {
                     if (res?.enriched_fields && typeof res.enriched_fields === 'object' && Object.keys(res.enriched_fields).length > 0) {
                         setProperty((prev: any) => prev ? { ...prev, ...res.enriched_fields } : prev);

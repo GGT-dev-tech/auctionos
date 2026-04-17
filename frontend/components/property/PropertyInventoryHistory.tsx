@@ -15,23 +15,23 @@ export const PropertyInventoryHistory: React.FC<PropertyInventoryHistoryProps> =
     
     const events = [
         {
-            date: '2026-03-01',
+            date: property.state_inventory_entered_date ? new Date(property.state_inventory_entered_date).toISOString().split('T')[0] : 'Historical',
             label: 'Initial Listing',
             desc: 'Property ingested into GoAuct.',
             status: 'completed',
             icon: 'inventory_2'
         },
         {
-            date: '2026-03-15',
-            label: 'Scoring Analysis',
-            desc: 'Intelligence layer calculation complete.',
+            date: property.last_sale_date ? new Date(property.last_sale_date).toISOString().split('T')[0] : 'Data Analyzed',
+            label: 'Recorded Sale / Transfer',
+            desc: 'Last recorded public transfer event.',
             status: 'completed',
             icon: 'analytics'
         },
         {
-            date: '2026-03-20',
+            date: 'System Time',
             label: 'Market Update',
-            desc: 'Availability status changed to ' + status + '.',
+            desc: 'Availability status currently ' + status + '.',
             status: isSold || isPurchased ? 'completed' : 'active',
             icon: 'update'
         }

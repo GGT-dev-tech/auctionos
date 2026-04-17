@@ -63,19 +63,6 @@ export const PropertyContactInfo: React.FC<PropertyContactInfoProps> = ({ proper
                 ))}
             </div>
             
-            <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
-                <div className="flex -space-x-2">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-800 bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[10px] text-slate-400">person</span>
-                        </div>
-                    ))}
-                    <div className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-800 bg-blue-500 flex items-center justify-center text-[8px] text-white font-bold">
-                        +2
-                    </div>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400">Contact History</span>
-            </div>
         </div>
     );
 };

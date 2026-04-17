@@ -37,8 +37,8 @@ def parse_raw_text(raw_text):
     
     # Status
     if "Auction Sold" in raw_text:
-        data['status'] = "Sold"
-        # Extract date/time of sale if present on next line
+        data['status'] = "unavailable"
+        # Optional: capture "Sold To" if present within the sold block
         match = re.search(r'Auction Sold\n(.*)', raw_text)
         data['status_detail'] = match.group(1).strip() if match else None
     elif "Auction Starts" in raw_text:
