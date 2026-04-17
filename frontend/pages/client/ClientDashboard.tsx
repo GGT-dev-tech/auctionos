@@ -210,7 +210,7 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
   const navigate = useNavigate();
 
   return (
-    <section className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden h-full flex flex-col">
+    <section className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden flex flex-col">
       <div className="flex justify-between items-start mb-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 uppercase tracking-wide">
@@ -253,8 +253,8 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
             <p className="text-xs mt-1">Run the batch score script to populate recommendations, or try a different state.</p>
           </div>
         ) : (
-          <div className="flex flex-col overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 gap-4 pb-4 h-[calc(100%-40px)]">
-            {properties.slice(0, 10).map((p) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+            {properties.slice(0, 9).map((p) => {
               const score = calculateDealScore(p);
               const displayRating = (p as any).deal_rating || score.rating;
               const displayScore = (p as any).deal_score ?? score.score;
@@ -271,7 +271,7 @@ const SuggestedDeals: React.FC<{ properties: Property[], loading: boolean, state
                 <div 
                   key={p.parcel_id || (p as any).id}
                   onClick={() => navigate(`/client/properties/${p.parcel_id || (p as any).id}`)}
-                  className="flex-shrink-0 w-full flex flex-col gap-3 p-4 bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer group"
+                  className="flex flex-col gap-3 p-4 bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-emerald-500/30 rounded-xl transition-all cursor-pointer group hover:shadow-lg"
                 >
                   <div className="flex items-start justify-between">
                     <div className={`size-12 rounded-lg flex flex-col items-center justify-center text-white font-black text-xs shadow-sm ${ratingColor}`}>
@@ -775,10 +775,10 @@ const ClientDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Intelligence Layer Grid (Map & Recommendations lado a lado) */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] 2xl:grid-cols-[1fr_420px] gap-6">
+      {/* Intelligence Layer Stack (Mapa acima de Recomendações) */}
+      <div className="flex flex-col gap-8">
         {/* State Intelligence Heatmap */}
-        <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col" style={{ minHeight: '480px' }}>
+        <div className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden flex flex-col" style={{ minHeight: '520px' }}>
             <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 shrink-0">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
                     <span className="material-symbols-outlined text-blue-500">public</span>
@@ -790,7 +790,7 @@ const ClientDashboard: React.FC = () => {
                     </button>
                 )}
             </div>
-            <div className="flex-1 w-full relative" style={{ minHeight: '400px' }}>
+            <div className="flex-1 w-full relative" style={{ minHeight: '440px' }}>
                 <InvestmentHeatmap
                     stats={stateStats}
                     selectedState={selectedState}
@@ -800,7 +800,7 @@ const ClientDashboard: React.FC = () => {
         </div>
 
         {/* Suggested Deals Panel */}
-        <div className="w-full" style={{ minHeight: '480px' }}>
+        <div className="w-full">
           <SuggestedDeals
             properties={filteredDeals.length > 0 ? filteredDeals : suggestedDeals}
             loading={loading || dealsLoading}
