@@ -70,17 +70,23 @@ def register_user(
     db: Session = Depends(deps.get_db),
     user_in: UserCreate,
 ) -> Any:
+    # Only allow public signup for client and consultant roles
+    allowed_roles = {"client", "consultant"}
+    requested_role = (user_in.role or "client").strip().lower()
+    if requested_role not in allowed_roles:
+        requested_role = "client"   # Silently default — no escalation via public API
+
     email = user_in.email.strip().lower()
-    user = db.query(User).filter(User.email == email).first()
-    if user:
-        raise HTTPException(status_code=400, detail="The user already exists.")
-    
+    existing = db.query(User).filter(User.email == email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="An account with this email already exists.")
+
     user = User(
         email=email,
         hashed_password=security.get_password_hash(user_in.password),
         full_name=user_in.full_name,
-        is_superuser=user_in.is_superuser,
-        role=user_in.role,
+        is_superuser=False,         # Never allow self-registration as superuser
+        role=requested_role,
     )
     db.add(user)
     db.commit()

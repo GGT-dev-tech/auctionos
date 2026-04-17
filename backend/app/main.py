@@ -24,28 +24,69 @@ from app.services.status_updater import transition_past_auctions
 async def run_daily_task():
     while True:
         try:
-            # Run the transition task in a separate thread so it doesn't block
             await asyncio.to_thread(transition_past_auctions)
         except Exception as e:
             print(f"Error in daily background task: {e}")
-            
-        # Sleep for 12 hours before checking again
         await asyncio.sleep(12 * 3600)
+
+
+def run_safe_migrations():
+    """
+    Safely adds new columns to existing tables without Alembic.
+    Uses IF NOT EXISTS syntax supported by both PostgreSQL and SQLite.
+    Called once on startup — idempotent (safe to run multiple times).
+    """
+    from sqlalchemy import text, inspect
+    db_url = str(engine.url)
+    is_postgres = db_url.startswith("postgresql")
+
+    migrations = [
+        # (table, column, column_definition_postgres, column_definition_sqlite)
+        ("users", "active_company_id",
+         "INTEGER REFERENCES companies(id) ON DELETE SET NULL",
+         "INTEGER"),
+        ("client_lists", "company_id",
+         "INTEGER REFERENCES companies(id) ON DELETE SET NULL",
+         "INTEGER"),
+    ]
+
+    with engine.connect() as conn:
+        inspector = inspect(engine)
+        for table, column, pg_def, sqlite_def in migrations:
+            try:
+                existing_tables = inspector.get_table_names()
+                if table not in existing_tables:
+                    continue
+                existing_cols = [c["name"] for c in inspector.get_columns(table)]
+                if column in existing_cols:
+                    continue  # Already exists — skip
+
+                col_def = pg_def if is_postgres else sqlite_def
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_def}"))
+                conn.commit()
+                print(f"✅ Migration: Added column '{column}' to '{table}'")
+            except Exception as e:
+                print(f"⚠️  Migration warning for {table}.{column}: {e}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Auto-create any new tables (e.g., property_scores) on startup
+    # 1. Run safe column migrations FIRST (before create_all)
+    try:
+        run_safe_migrations()
+    except Exception as e:
+        print(f"Migration error (non-fatal): {e}")
+
+    # 2. Auto-create any new tables on startup
     Base.metadata.create_all(bind=engine)
 
     redis = aioredis.from_url(settings.REDIS_URL)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-    
-    # Start the background task loop
+
     task = asyncio.create_task(run_daily_task())
-    
+
     yield
-    
-    # Cancel the task when shutting down
+
     task.cancel()
 
 app = FastAPI(

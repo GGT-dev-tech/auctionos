@@ -224,7 +224,7 @@ export const Login: React.FC = () => {
             </button>
 
             {/* Footer links */}
-            <div className="mt-6 text-center space-y-2">
+            <div className="mt-6 text-center">
               {mode === 'investor' ? (
                 <p className="text-slate-600 dark:text-slate-400 text-sm">
                   Don't have an account?{' '}
@@ -233,12 +233,9 @@ export const Login: React.FC = () => {
               ) : (
                 <p className="text-slate-600 dark:text-slate-400 text-sm">
                   Not a partner yet?{' '}
-                  <Link to="/#consultants" className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">Apply as Consultant</Link>
+                  <Link to="/signup?role=consultant" className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">Register as Consultant</Link>
                 </p>
               )}
-              <p className="text-slate-400 text-xs">
-                <Link to="/login?mode=admin" className="hover:text-slate-600 transition-colors">Admin portal →</Link>
-              </p>
             </div>
           </div>
         </div>
