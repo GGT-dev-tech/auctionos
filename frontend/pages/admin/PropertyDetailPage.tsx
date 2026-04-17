@@ -69,9 +69,8 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
-                .then(res => res.json())
                 .then(res => {
-                    if (res?.enriched_fields && Object.keys(res.enriched_fields).length > 0) {
+                    if (res?.enriched_fields && typeof res.enriched_fields === 'object' && Object.keys(res.enriched_fields).length > 0) {
                         setProperty((prev: any) => prev ? { ...prev, ...res.enriched_fields } : prev);
                         console.log("ATTOM Auto-Enriched Property for Client View:", res.enriched_fields);
                     }
