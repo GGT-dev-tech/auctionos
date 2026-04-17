@@ -21,6 +21,10 @@ import { PropertyResearchLinks } from '../../components/property/PropertyResearc
 import { PropertyNextSteps } from '../../components/property/PropertyNextSteps';
 import { PropertyUserActions } from '../../components/property/PropertyUserActions';
 import { PropertyContactInfo } from '../../components/property/PropertyContactInfo';
+import { CountyContactCard } from '../../components/property/CountyContactCard';
+import { PropertyInventoryHistory } from '../../components/property/PropertyInventoryHistory';
+import { PropertyFinancialsModal } from '../../components/property/PropertyFinancialsModal';
+import { PropertyMetadataModal } from '../../components/property/PropertyMetadataModal';
 import { useCompany } from '../../context/CompanyContext';
 
 interface PropertyDetailPageProps {
