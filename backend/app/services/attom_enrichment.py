@@ -250,14 +250,30 @@ def enrich_property(db: Session, property_id: str) -> Dict[str, Any]:
         logger.info(f"Property {property_id} já está completa. Nenhum enriquecimento necessário.")
         return {"status": "skipped", "message": "No missing fields", "property_id": property_id}
 
-    # 3. Monta a chave de Cache
-    # Se existe attom_id usamos na chave, caso contrário fazemos hash do endereço
+    # 3. Monta a chave de Cache e parâmetros de busca
+    # PRIORIDADE: 1. attomId, 2. APN (Parcel ID) + County, 3. Address
+    query_params = {}
+    cache_key = ""
+
     if prop.attom_id:
         cache_key = f"attom:property:{prop.attom_id}"
         query_params = {"attomId": prop.attom_id}
+    elif prop.parcel_id:
+        # Search by APN (parcel_id) which is much more precise
+        cache_key = f"attom:property:apn:{prop.parcel_id}:{prop.state}"
+        query_params = {
+            "apn": prop.parcel_id,
+            "state": prop.state,
+            "county": prop.county
+        }
     else:
-        # Assumindo que endereço exista
+        # Fallback to address search
         addr = prop.address or ""
+        # Check if address is suspiciously short (like just a state code 'AL')
+        if len(addr.strip()) <= 3:
+            logger.warning(f"Endereço '{addr}' parece inválido para busca. Abortando enriquecimento por endereço.")
+            return {"status": "skipped", "message": "Invalid address for search", "property_id": property_id}
+            
         city_state = f"{prop.county or ''} {prop.state or ''}" 
         full_address = f"{addr} {city_state}".strip().lower()
         
