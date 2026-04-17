@@ -1,15 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PropertyService, ClientDataService } from '../../services/property.service';
+import { AuthService } from '../../services/auth.service';
 import { API_BASE_URL } from '../../services/httpClient';
 import { countyService, CountyContact } from '../../services/county.service';
-import { PropertyDetails } from '../../types';
-import { Button, CircularProgress, Chip, Divider } from '@mui/material';
+import { Button, CircularProgress, Divider, Menu, MenuItem } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import MapIcon from '@mui/icons-material/Map';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import { Menu, MenuItem, Tooltip } from '@mui/material';
-import { FolderPlusIcon, PlusIcon } from 'lucide-react';
+import { PlusIcon } from 'lucide-react';
+import { Property, PropertyDetails, ClientList } from '../../types';
+import { calculateDealScore, DealScoreResult } from '../../intelligence/scoringEngine';
+import { submitScore } from '../../services/scores.service';
+
+import { PropertyBasicInfo } from '../../components/property/PropertyBasicInfo';
+import { PropertyPurchaseOptions } from '../../components/property/PropertyPurchaseOptions';
+import { PropertyResearchLinks } from '../../components/property/PropertyResearchLinks';
+import { PropertyUserActions } from '../../components/property/PropertyUserActions';
+import { PropertyFinancialsModal } from '../../components/property/PropertyFinancialsModal';
+import { PropertyMetadataModal } from '../../components/property/PropertyMetadataModal';
+import { PropertyMap } from '../../components/property/PropertyMap';
+import { PropertyNextSteps } from '../../components/property/PropertyNextSteps';
+import { PropertyContactInfo } from '../../components/property/PropertyContactInfo';
+import { PropertyInventoryHistory } from '../../components/property/PropertyInventoryHistory';
+import { PropertyEstimatesComps } from '../../components/property/PropertyEstimatesComps';
+import { RedemptionDisclaimerCard } from '../../components/property/RedemptionDisclaimerCard';
+import { CountyContactCard } from '../../components/property/CountyContactCard';
 
 interface PropertyDetailPageProps {
     readOnly?: boolean;
@@ -18,14 +32,18 @@ interface PropertyDetailPageProps {
 const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = false }) => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [property, setProperty] = useState<any>(null);
+    const [property, setProperty] = useState<Property | null>(null);
     const [countyContacts, setCountyContacts] = useState<CountyContact[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
-    const [lists, setLists] = useState<any[]>([]);
+    const [lists, setLists] = useState<ClientList[]>([]);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [localScore, setLocalScore] = useState<DealScoreResult | null>(null);
+
+    const [isFinOpen, setIsFinOpen] = useState(false);
+    const [isMetaOpen, setIsMetaOpen] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -47,11 +65,47 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
             setLoading(true);
             const data = await PropertyService.getProperty(propertyId);
             setProperty(data);
-            setLoading(false); // Render the main UI as soon as we have data
+            setLoading(false);
 
-            // Secondary background loads - non-blocking
             fetchSecondaryData(data);
             setError(null);
+
+            // Background Check: Auto-Enrich via ATTOM if crucial details are missing
+            const checkMissing = !data.year_built || !data.bedrooms || !data.owner_name || !data.assessed_value;
+            if (checkMissing && data.property_id) {
+                const token = localStorage.getItem('token');
+                fetch(`${API_BASE_URL}/api/v1/properties/${data.property_id}/enrich`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res?.enriched_fields && Object.keys(res.enriched_fields).length > 0) {
+                        setProperty((prev: any) => prev ? { ...prev, ...res.enriched_fields } : prev);
+                        console.log("ATTOM Auto-Enriched Property for Client View:", res.enriched_fields);
+                    }
+                }).catch(() => {});
+            }
+
+
+            // Auto-sync score to backend (silent, non-blocking)
+            // Only compute if backend hasn't stored one yet
+            if (data?.parcel_id) {
+                const computed = calculateDealScore(data);
+                setLocalScore(computed);
+                submitScore(data.parcel_id, computed, { 
+                    status: data.availability_status,
+                    state: data.state,
+                    county: data.county
+                }); // fire-and-forget
+            } else {
+                // Use the stored backend score for display consistency
+                setLocalScore({
+                    score: data.deal_score,
+                    rating: data.deal_rating,
+                    factors: data.score_factors || [],
+                });
+            }
         } catch (err: any) {
             setError(err.message || 'Error loading property details');
             setLoading(false);
@@ -59,26 +113,20 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     };
 
     const fetchSecondaryData = async (data: any) => {
-        // Check if favorited (Gracefully handle failures silently)
         if (localStorage.getItem('token')) {
             try {
                 const favorites = await PropertyService.getFavorites();
                 if (data.id && favorites.includes(data.id)) {
                     setIsFavorite(true);
                 }
-            } catch (favErr) {
-                // Silently ignore favorites load failure to keep page functional
-            }
+            } catch (favErr) {}
         }
 
-        // Dynamically load county contacts based on property state and county
         if (data.state && data.county) {
             try {
                 const contacts = await countyService.getContacts(data.state, data.county);
                 setCountyContacts(contacts);
-            } catch (contactErr) {
-                // Silently ignore contacts failure
-            }
+            } catch (contactErr) {}
         }
     };
 
@@ -96,7 +144,6 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     }
 
     const handlePurchaseOnline = async () => {
-        // Redirection logic first
         try {
             const { url } = await PropertyService.getAuctionRedirect(property.parcel_id);
             if (url && window.confirm(`Redirecting to official auction site: ${url}\n\nDo you want to proceed?`)) {
@@ -104,35 +151,30 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                 window.open(url, '_blank');
                 return;
             }
-        } catch (e) {
-            console.log("No dynamic link found, falling back to simulation.");
-        }
+        } catch (e) {}
 
-        if (!window.confirm(`Are you sure you want to purchase the lien for ${property.parcel_id}? This is a simulated transaction.`)) {
+        if (!window.confirm(`Are you sure you want to simulate purchase for ${property.parcel_id}?`)) {
             return;
         }
         setActionLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:8000/api/v1/properties/${property.parcel_id}/purchase`, {
+            const res = await fetch(`${API_BASE_URL}/api/v1/properties/${property.parcel_id}/purchase`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) {
                 const data = await res.json();
                 throw new Error(data.detail || 'Purchase failed');
             }
-            alert("Property successfully purchased!");
-            loadProperty(property.parcel_id); // Reload to mirror new state
+            alert("Property successfully simulation purchased!");
+            loadProperty(property.parcel_id);
         } catch (err: any) {
             alert(err.message);
         } finally {
             setActionLoading(false);
         }
     };
-
 
     const handleToggleFavorite = async () => {
         try {
@@ -141,10 +183,6 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
         } catch (err: any) {
             alert(err.message);
         }
-    };
-
-    const handleAddressVerification = () => {
-        alert("Address validation matrix initiated. Fetching latest postal data for " + property.address);
     };
 
     const handleOpenListMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -156,36 +194,28 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     };
 
     const handleAddToList = async (listId: number) => {
-        if (!property?.id) {
-            alert("Error: Property ID missing. Try refreshing the page.");
-            return;
-        }
+        if (!property?.id) return;
         try {
             setActionLoading(true);
             await ClientDataService.addPropertyToList(listId, property.id);
-            alert(`Property added to list successfully!`);
+            alert(`Property added to list safely!`);
             handleCloseListMenu();
         } catch (err: any) {
-            console.error("Failed to add property to list:", err);
-            alert(`Error: ${err.message || 'Failed to add property to list'}`);
+            alert(`Error: ${err.message}`);
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleAddToStandardList = async () => {
-        if (!property?.id) {
-            alert("Error: Property ID missing. Try refreshing the page.");
-            return;
-        }
+        if (!property?.id) return;
         try {
             setActionLoading(true);
             await ClientDataService.addPropertyToStandardList(property.id);
-            alert(`Property added to Standard List (${property.state} - ${property.county}) successfully!`);
+            alert(`Property added to Standard List successfully!`);
             handleCloseListMenu();
         } catch (err: any) {
-            console.error("Failed to add property to standard list:", err);
-            alert(`Error: ${err.message || 'Failed to add property to standard list'}`);
+            alert(`Error: ${err.message}`);
         } finally {
             setActionLoading(false);
         }
@@ -193,566 +223,228 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
 
     const handleCreateAndAdd = async () => {
         const name = window.prompt("Enter name for new list:");
-        if (!name) return;
-
-        if (!property?.id) {
-            alert("Error: Property ID missing. Try refreshing the page.");
-            return;
-        }
-
+        if (!name || !property?.id) return;
         try {
             setActionLoading(true);
-            console.log("Creating list:", name);
             const newList = await ClientDataService.createList(name);
-            console.log("Adding property to new list:", newList.id, property.id);
             await ClientDataService.addPropertyToList(newList.id, property.id);
-            alert(`List "${name}" created and property added!`);
+            alert(`List "${name}" created & property added!`);
             loadLists();
             handleCloseListMenu();
         } catch (err: any) {
-            console.error("Failed to create list and add property:", err);
-            alert(`Error: ${err.message || 'Failed to create list'}`);
+            alert(`Error: ${err.message}`);
         } finally {
             setActionLoading(false);
         }
     };
 
-    // Attempt to extract owner name from address block (rudimentary approach)
     const ownerNameFallback = property.owner_address ? property.owner_address.split('\n')[0] : 'UNKNOWN OWNER';
 
     return (
-        <div className="p-6 max-w-7xl mx-auto mb-20">
+        <div className="w-full px-4 sm:px-8 lg:px-12 py-6 space-y-6 mb-20 animate-in fade-in duration-700">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-6">
-                <Button variant="text" startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)}>Back</Button>
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">
-                    {ownerNameFallback}
-                </h1>
+            <div className="flex items-center gap-4 mb-2">
+                <Button variant="text" startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} className="text-slate-500 hover:text-slate-700 normal-case">
+                    Back to Inventory
+                </Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Import Error Banner */}
+            {AuthService.getCurrentUser()?.role === 'admin' && property.is_processed === false && (
+                <div className="bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800 rounded-lg shadow-sm">
+                    <h3 className="text-red-800 dark:text-red-300 font-bold mb-1 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[20px]">error</span>
+                        Import Processing Error
+                    </h3>
+                    <p className="text-sm text-red-600 dark:text-red-400">{property.import_error_msg || 'An unknown error occurred during the CSV import phase. Please review.'}</p>
+                </div>
+            )}
 
-                {/* Left Column */}
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Import Status Banner */}
-                    {property.is_processed === false && (
-                        <div className="bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800 rounded-lg shadow-sm">
-                            <h3 className="text-red-800 dark:text-red-300 font-bold mb-1 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[20px]">error</span>
-                                Import Processing Error
-                            </h3>
-                            <p className="text-sm text-red-600 dark:text-red-400">{property.import_error_msg || 'An unknown error occurred during the CSV import mapping phase. Please review the raw data.'}</p>
-                        </div>
+            <div className="flex items-baseline justify-between border-b border-slate-100 dark:border-slate-800 pb-6">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">
+                        {ownerNameFallback !== 'UNKNOWN OWNER' ? ownerNameFallback : (property.parcel_address || property.parcel_id)}
+                    </h1>
+                    <div className="flex items-center gap-3 mt-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{property.county} County, {property.state}</span>
+                        <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                        <span className="text-xs font-mono font-bold text-blue-500">ID: {property.parcel_id}</span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    {property.is_qoz && (
+                        <span className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-amber-200 dark:border-amber-800">Opportunity Zone</span>
                     )}
-
-                    {/* Main Stats Card */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-primary-600 text-white p-3 text-center font-bold text-lg">
-                            {property.county}, {property.state}: {property.parcel_id}
-                        </div>
-                        <div className="p-6">
-                            <div className="mb-6 space-y-1">
-                                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wide">
-                                    {ownerNameFallback}
-                                </h1>
-                                <h2 className="text-lg font-bold text-slate-600 dark:text-slate-400">
-                                    • {property.property_type || 'parcel type'}
-                                </h2>
-                                <h3 className="text-md text-slate-500 font-semibold">{property.lot_acres || 'N/A'} acres</h3>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm mt-4">
-                                <div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold">Tax Sale Year:</span>
-                                        <span>{property.tax_year || 'N/A'}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold text-red-600 dark:text-red-400">Tax Delinquent:</span>
-                                        <span>{property.availability_status === 'available' ? 'Yes' : 'No'}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold">Type:</span>
-                                        <span>{property.type || property.property_type || 'N/A'} {property.property_type_detail ? `(${property.property_type_detail})` : ''}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold">SqFt:</span>
-                                        <span>{property.lot_sqft ? property.lot_sqft.toLocaleString() : 'N/A'}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold">Utilities:</span>
-                                        <span>{property.water_type || property.sewer_type ? `${property.water_type || 'Unknown'} / ${property.sewer_type || 'Unknown'}` : 'N/A'}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold">C/S Number:</span>
-                                        <span>{property.cs_number || 'N/A'}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold">Account #:</span>
-                                        <span>{property.account_number || 'N/A'}</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">Land Only</div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold">Amount Due:</span>
-                                        <span>${property.amount_due?.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold">Assessed:</span>
-                                        <span>${property.assessed_value?.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold">Land Value:</span>
-                                        <span>${property.land_value?.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700">
-                                        <span className="font-semibold">Improvements:</span>
-                                        <span>{property.improvement_value ? `$${property.improvement_value.toLocaleString()}` : 'N/A'}</span>
-                                    </div>
-                                    <div className="flex justify-between py-2 mt-2 bg-green-50 dark:bg-green-900/20 px-2 rounded font-bold">
-                                        <span>Total Value:</span>
-                                        <span className="text-green-700 dark:text-green-400">
-                                            ${((property.land_value || 0) + (property.improvement_value || 0)).toLocaleString()}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-orange-50 dark:bg-orange-900/20 p-4 border border-orange-100 dark:border-orange-800 rounded-lg text-center">
-                        <span className="text-orange-800 dark:text-orange-300 font-bold">Tax history: </span>
-                        <span>{property.availability_status === 'available' ? 'Tax Lien Available' : 'Tax Lien Unavailable'} ({property.tax_year || new Date().getFullYear()}) </span>
-                        <a href={`https://www.google.com/search?q=${property.county}+County+Tax+Collector`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline ml-2 text-sm italic">
-                            click for tax lien details
-                        </a>
-                    </div>
-
-                    <div className="bg-sky-50 dark:bg-sky-900/20 p-4 border border-sky-100 dark:border-sky-800 rounded-lg text-center">
-                        <span className="text-sky-800 dark:text-sky-300 font-bold">Occupant Status: </span>
-                        {property.occupancy || 'Unknown'}
-                        <span className="text-xs italic ml-2">
-                            {property.occupancy_checked_date ? `(last checked on ${new Date(property.occupancy_checked_date).toLocaleDateString()})` : '(date unknown)'}
-                        </span>
-                    </div>
-
-                    <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow border border-slate-200 dark:border-slate-700">
-                        <p className="mb-2"><span className="font-bold">Description: </span>{property.legal_description || property.description || 'No legal description available.'}</p>
-                        {property.is_qoz && (
-                            <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
-                                <span className="font-bold text-slate-900 dark:text-white">Opportunity Zone: </span>
-                                {property.qoz_description || 'Low-Income Community & Opportunity Zone Information'}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="flex gap-4">
-                        <Button variant="contained" color="success" startIcon={<MapIcon />}>View on Map</Button>
-                        <Button
-                            variant={isFavorite ? "contained" : "outlined"}
-                            color={isFavorite ? "error" : "inherit"}
-                            startIcon={<FavoriteBorderIcon />}
-                            onClick={handleToggleFavorite}
-                        >
-                            {isFavorite ? 'Favorited' : 'Add Favorite'}
-                        </Button>
-
+                    {!readOnly && (
                         <Button
                             variant="outlined"
-                            color="primary"
-                            startIcon={<FolderPlusIcon size={18} />}
-                            onClick={handleOpenListMenu}
+                            size="small"
+                            onClick={() => navigate(`/admin/properties/${property.parcel_id}/edit`)}
+                            className="normal-case font-bold text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
                         >
-                            Add to List
+                            Edit
                         </Button>
-                        <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl)}
-                            onClose={handleCloseListMenu}
-                            PaperProps={{ className: "mt-1 shadow-lg rounded-xl border border-slate-100 dark:border-slate-800 dark:bg-slate-900" }}
-                        >
-                            <MenuItem
-                                onClick={handleAddToStandardList}
-                                className="text-sm py-2 px-4 text-emerald-600 font-medium hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                            >
-                                <span className="material-symbols-outlined text-[18px] mr-3">auto_awesome</span> Smart Standard Add
-                            </MenuItem>
-                            {lists.some(l => l.tags === 'STANDARD') && (
-                                <div>
-                                    <Divider className="my-1" />
-                                    <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Standard Folders</div>
-                                    {lists.filter(l => l.tags === 'STANDARD').map(list => (
-                                        <MenuItem
-                                            key={list.id}
-                                            onClick={() => handleAddToList(list.id)}
-                                            className="text-sm py-2 px-4 hover:bg-slate-50 dark:hover:bg-slate-800"
-                                        >
-                                            <span className="material-symbols-outlined text-[18px] mr-3 text-emerald-500">map</span>
-                                            {list.name}
-                                        </MenuItem>
-                                    ))}
-                                </div>
-                            )}
-                            <Divider className="my-1" />
-                            <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Custom Folders</div>
-                            {lists.filter(l => l.tags !== 'STANDARD').map(list => (
-                                <MenuItem
-                                    key={list.id}
-                                    onClick={() => handleAddToList(list.id)}
-                                    className="text-sm py-2 px-4 hover:bg-slate-50 dark:hover:bg-slate-800"
-                                >
-                                    <span className="material-symbols-outlined text-[18px] mr-3 text-blue-500">folder</span>
-                                    {list.name}
-                                </MenuItem>
-                            ))}
-                            <Divider className="my-1" />
-                            <MenuItem
-                                onClick={handleCreateAndAdd}
-                                className="text-sm py-2 px-4 text-blue-600 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                            >
-                                <PlusIcon size={16} className="mr-3" /> New List...
-                            </MenuItem>
-                        </Menu>
-                    </div>
-
-                    {/* Auction History */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
-                            Auction History
-                        </div>
-                        <div className="p-4">
-                            {property.auction_history && property.auction_history.length > 0 ? (
-                                <div className="space-y-4">
-                                    {property.auction_history.map((hist: any, i: number) => (
-                                        <div key={i} className="bg-slate-50 dark:bg-slate-900 p-4 rounded border border-slate-100 dark:border-slate-800">
-                                            <h4 className="font-bold text-primary-600 dark:text-primary-400 mb-2">{hist.auction_name} : {hist.auction_date ? new Date(hist.auction_date).toLocaleDateString() : 'Unknown Date'}</h4>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                                                <div><strong>Where:</strong> {hist.location || 'Online'}</div>
-                                                <div><strong>Listed As:</strong> {hist.listed_as || property.parcel_id}</div>
-                                                <div><strong>Taxes Due:</strong> ${hist.taxes_due?.toFixed(2) || property.amount_due}</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-slate-500 italic">No previous auction history found.</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Source: Parcel Shape Data */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
-                            Source: Parcel Shape Data & Features
-                        </div>
-                        <div className="p-4 border-b border-slate-100 dark:border-slate-700">
-                            <div className="grid grid-cols-2 gap-y-2 text-sm text-slate-700 dark:text-slate-300">
-                                <div><span className="font-semibold text-slate-500">Zoning:</span> {property.zoning || 'N/A'}</div>
-                                <div><span className="font-semibold text-slate-500">Subdivision:</span> {property.subdivision || 'N/A'}</div>
-                                <div className="col-span-2"><span className="font-semibold text-slate-500">Legal Description:</span> {property.legal_description || 'N/A'}</div>
-                                <div><span className="font-semibold text-slate-500">Sewer Type:</span> {property.sewer_type || 'N/A'}</div>
-                                <div><span className="font-semibold text-slate-500">Water Type:</span> {property.water_type || 'N/A'}</div>
-                                <div className="col-span-2"><span className="font-semibold text-slate-500">Property Type Detail:</span> {property.property_type_detail || 'N/A'}</div>
-                            </div>
-                        </div>
-                        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 text-xs font-mono text-slate-600 dark:text-slate-400 max-h-48 overflow-y-auto whitespace-pre-wrap">
-                            {property.parcel_shape_data || 'No raw shape data available.'}
-                        </div>
-                    </div>
-
-                    {/* Parcel Numbers */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
-                            Parcel Numbers
-                        </div>
-                        <div className="p-4 text-sm space-y-2">
-                            <div className="flex justify-between border-b border-slate-100 dark:border-slate-700 pb-1">
-                                <span className="font-semibold text-slate-600 dark:text-slate-400">Formatted Number:</span>
-                                <span>{property.parcel_id || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between border-b border-slate-100 dark:border-slate-700 pb-1">
-                                <span className="font-semibold text-slate-600 dark:text-slate-400">PIN/PPIN:</span>
-                                <span>{property.pin_ppin || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between border-b border-slate-100 dark:border-slate-700 pb-1">
-                                <span className="font-semibold text-slate-600 dark:text-slate-400">Raw Number:</span>
-                                <span>{property.raw_parcel_number || property.parcel_id || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between border-b border-slate-100 dark:border-slate-700 pb-1">
-                                <span className="font-semibold text-slate-600 dark:text-slate-400">County FIPS:</span>
-                                <span>{property.county_fips || 'N/A'}</span>
-                            </div>
-
-                            {property.additional_parcel_numbers && (
-                                <div className="mt-4 pt-2">
-                                    <h5 className="font-bold text-slate-700 dark:text-slate-300 mb-2">Additional Parcel Number Formats</h5>
-                                    <div className="text-xs font-mono text-slate-500 whitespace-pre-line bg-slate-50 dark:bg-slate-900 p-2 rounded border border-slate-100 dark:border-slate-800">
-                                        {property.additional_parcel_numbers}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-6">
-                    {/* Google Maps Embed */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 p-2">
-                        <div className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-center py-2 font-bold rounded mb-2">
-                            Map View
-                        </div>
-                        {/* Example embedded map since we don't have true coordinates consistently available without GIS, using a placeholder logic. */}
-                        <iframe
-                            src={`https://www.google.com/maps?q=${property.address ? encodeURIComponent(property.address) : property.parcel_id}&output=embed`}
-                            width="100%"
-                            height="300"
-                            style={{ border: 0, borderRadius: '4px' }}
-                            allowFullScreen
-                            loading="lazy"
-                            referrerPolicy="no-referrer-when-downgrade"
-                            title="Property Map"
-                        ></iframe>
-                    </div>
-
-                    {/* Purchase Online Actions Box (Hidden for Clients) */}
-                    {!readOnly && property.availability_status === 'available' && (
-                        <div
-                            className={`bg-green-600 text-white rounded-lg p-6 text-center shadow-lg transition ${actionLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700 cursor-pointer'}`}
-                            onClick={actionLoading ? undefined : handlePurchaseOnline}
-                        >
-                            <h3 className="font-bold text-xl mb-1">{actionLoading ? 'Processing...' : 'Purchase Online'}</h3>
-                            <p className="text-sm opacity-90">{property.county} County-Held Certificates</p>
-                            <p className="text-xs font-semibold mt-2 underline">Click to simulate OTC purchase transaction</p>
-                        </div>
                     )}
-
-                    {!readOnly && property.availability_status === 'purchased' && (
-                        <div className="bg-slate-200 text-slate-500 rounded-lg p-6 text-center shadow-inner cursor-not-allowed">
-                            <h3 className="font-bold text-xl mb-1">Already Purchased</h3>
-                            <p className="text-sm">This property is no longer available.</p>
-                        </div>
-                    )}
-
-                    {/* Recommended Next Steps (Hidden for Clients) */}
-                    {!readOnly && (
-                        <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                            <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
-                                • Recommended Next Steps
-                            </div>
-                            <div className="p-4 space-y-4">
-                                {property.recommended_next_steps && property.recommended_next_steps.length > 0 ? (
-                                    property.recommended_next_steps.map((step: any, idx: number) => (
-                                        <div key={idx} className="flex items-center justify-between p-2 rounded hover:bg-slate-50 dark:hover:bg-slate-700 transition">
-                                            <div>
-                                                <h4 className="font-bold text-slate-800 dark:text-slate-100">{step.action}</h4>
-                                                <span className={`text-xs px-2 py-0.5 rounded ${step.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                    {step.priority} Priority
-                                                </span>
-                                            </div>
-                                            <Button size="small" variant="text" onClick={() => PropertyService.logAction(property.parcel_id, `step_${idx}`)}>Clear</Button>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-slate-500 italic text-center">No recommendations at this time.</p>
-                                )}
-
-                                <Divider />
-                                <div className="text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded transition">
-                                    <h4 className="font-bold text-blue-800 dark:text-blue-300">Investment Property Funding: Free Consultation</h4>
-                                    <p className="text-sm text-blue-600 dark:text-blue-400 hover:underline">click for more info</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
-                            * Contact Information & Location
-                        </div>
-                        <div className="p-4 text-sm space-y-4">
-                            <div>
-                                <strong className="block text-slate-500 uppercase text-xs mb-1">Owner Address</strong>
-                                <p className="whitespace-pre-line text-slate-800 dark:text-slate-200">{property.owner_address || 'Unavailable'}</p>
-                                <button className="mt-2 text-blue-600 hover:underline text-xs" onClick={handleAddressVerification}>
-                                    Address Verification <br /> click for history
-                                </button>
-                            </div>
-                            {property.alternate_owner_address && (
-                                <>
-                                    <Divider />
-                                    <div>
-                                        <strong className="block text-slate-500 uppercase text-xs mb-1">Alternate Owner Address</strong>
-                                        <p className="whitespace-pre-line text-slate-800 dark:text-slate-200">{property.alternate_owner_address}</p>
-                                    </div>
-                                </>
-                            )}
-                            <Divider />
-                            <div>
-                                <strong className="block text-slate-500 uppercase text-xs mb-1">Parcel Address</strong>
-                                <p className="whitespace-pre-line text-slate-800 dark:text-slate-200">{property.address || 'Unavailable'}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="bg-slate-100 dark:bg-slate-700 p-3 font-bold text-slate-700 dark:text-slate-200">
-                            Research Links
-                        </div>
-                        <div className="p-4 text-sm space-y-4">
-                            {countyContacts.length > 0 && (
-                                <div>
-                                    <strong className="block text-slate-700 dark:text-slate-300 mb-1">{property.county} County Links:</strong>
-                                    <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
-                                        {countyContacts.map((contact, idx) => (
-                                            <li key={idx}>
-                                                <a href={contact.url} target="_blank" rel="noreferrer" className="hover:underline">
-                                                    {contact.name} {contact.phone ? `(${contact.phone})` : ''}
-                                                </a>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                            {/* Standard Static Links Fallback or Additions */}
-                            <div>
-                                <strong className="block text-slate-700 dark:text-slate-300 mb-1">Owner Research:</strong>
-                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
-                                    <li><a href={`https://www.google.com/search?q=${encodeURIComponent(ownerNameFallback)}`} target="_blank" rel="noreferrer" className="hover:underline">Google Search</a></li>
-                                    <li><a href={`https://news.google.com/search?q=${encodeURIComponent(ownerNameFallback)}`} target="_blank" rel="noreferrer" className="hover:underline">Google News</a></li>
-                                    <li><a href={`https://www.google.com/search?q=${encodeURIComponent(ownerNameFallback + ' obituary')}`} target="_blank" rel="noreferrer" className="hover:underline">Obituary Search</a></li>
-                                </ul>
-                            </div>
-                            <div>
-                                <strong className="block text-slate-700 dark:text-slate-300 mb-1">Owner Skip Trace:</strong>
-                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
-                                    <li><a href={`https://www.fastpeoplesearch.com/name/${encodeURIComponent(ownerNameFallback)}`} target="_blank" rel="noreferrer" className="hover:underline">Fast People Search</a></li>
-                                    <li><a href={`https://www.truepeoplesearch.com/results?name=${encodeURIComponent(ownerNameFallback)}`} target="_blank" rel="noreferrer" className="hover:underline">True People Search</a></li>
-                                    <li><a href={`https://www.cyberbackgroundchecks.com/people/${encodeURIComponent(ownerNameFallback.replace(/ /g, '-'))}`} target="_blank" rel="noreferrer" className="hover:underline">Cyber Background Checks</a></li>
-                                </ul>
-                            </div>
-                            <div>
-                                <strong className="block text-slate-700 dark:text-slate-300 mb-1">Property Research:</strong>
-                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
-                                    <li><a href={`https://www.zillow.com/homes/${encodeURIComponent(property.address || '')}_rb`} target="_blank" rel="noreferrer" className="hover:underline">Zillow Property Report</a></li>
-                                    <li><a href={`https://www.epa.gov/enviro/myenvironment`} target="_blank" rel="noreferrer" className="hover:underline">EPA Report</a></li>
-                                    <li><a href={`https://news.google.com/search?q=${encodeURIComponent(property.address || property.parcel_id)}`} target="_blank" rel="noreferrer" className="hover:underline">Google News</a></li>
-                                    <li><a href={`https://msc.fema.gov/portal/search?AddressQuery=${encodeURIComponent(property.address || '')}`} target="_blank" rel="noreferrer" className="hover:underline">FEMA Flood Map Details</a></li>
-                                    {property.map_link && (
-                                        <li>
-                                            <a href={property.map_link} target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                                                <MapIcon fontSize="small" /> View Official GIS Map
-                                            </a>
-                                        </li>
-                                    )}
-                                </ul>
-                            </div>
-                            <div>
-                                <strong className="block text-slate-700 dark:text-slate-300 mb-1">Research Comparables:</strong>
-                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
-                                    <li><a href={`https://www.realtor.com/realestateandhomes-search/${encodeURIComponent(property.zip_code || property.city || '')}`} target="_blank" rel="noreferrer" className="hover:underline">Realtor.com Comps</a></li>
-                                    <li><a href={`https://www.redfin.com/city/${encodeURIComponent(property.city || '')}/${property.state}`} target="_blank" rel="noreferrer" className="hover:underline">Redfin Comps</a></li>
-                                    {property.redfin_url && (
-                                        <li>
-                                            <a href={property.redfin_url} target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
-                                                Redfin Value: {property.redfin_estimate ? `$${Number(property.redfin_estimate).toLocaleString()}` : 'Link'}
-                                            </a>
-                                        </li>
-                                    )}
-                                    <li><a href={`https://www.trulia.com/${property.state}/${encodeURIComponent(property.city || '')}/`} target="_blank" rel="noreferrer" className="hover:underline">Trulia Comps</a></li>
-                                    <li><a href={`https://www.zillow.com/homes/${encodeURIComponent(property.zip_code || property.city || '')}_rb/`} target="_blank" rel="noreferrer" className="hover:underline">Zillow Comps</a></li>
-                                </ul>
-                            </div>
-                            <div>
-                                <strong className="block text-slate-700 dark:text-slate-300 mb-1">Research Local Housing Market:</strong>
-                                <ul className="space-y-1 text-blue-600 dark:text-blue-400 text-xs list-disc pl-4">
-                                    <li><a href={`https://www.realtor.com/realestateandhomes-search/${encodeURIComponent(property.zip_code || property.city || '')}/overview`} target="_blank" rel="noreferrer" className="hover:underline">Realtor.com Market Report</a></li>
-                                    <li><a href={`https://www.redfin.com/city/${encodeURIComponent(property.city || '')}/${property.state}/housing-market`} target="_blank" rel="noreferrer" className="hover:underline">Redfin Market Report</a></li>
-                                    <li><a href={`https://www.zillow.com/home-values/`} target="_blank" rel="noreferrer" className="hover:underline">Zillow Property Value Report</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    {/* State Inventory History */}
-                    {property.state_inventory_entered_date && (
-                        <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                            <div className="bg-sky-100 dark:bg-sky-900/30 font-bold p-3 text-sky-800 dark:text-sky-300">State Inventory History</div>
-                            <div className="p-4 text-sm">
-                                <h4 className="font-semibold text-slate-700 dark:text-slate-300 mb-2">Timeline:</h4>
-                                <div className="pl-4 border-l-2 border-blue-400 relative">
-                                    <div className="absolute w-3 h-3 bg-blue-500 rounded-full -left-[7px] top-1"></div>
-                                    <p className="text-slate-600 dark:text-slate-400">
-                                        {new Date(property.state_inventory_entered_date).toLocaleDateString()} to Present
-                                    </p>
-                                    <p className="text-blue-600 dark:text-blue-400 font-medium mt-1">
-                                        &nbsp;&nbsp;In State Inventory
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <div className="p-4 space-y-4">
-                            <div className="flex flex-col gap-2 border-b pb-2">
-                                <span className="font-bold text-slate-700 dark:text-slate-300">My Notes:</span>
-                                <textarea
-                                    className="w-full p-2 text-sm border rounded dark:bg-slate-900 dark:border-slate-700 dark:text-white"
-                                    placeholder="Add private Markdown notes..."
-                                    defaultValue={property.notes || ""}
-                                    onBlur={async (e) => {
-                                        const noteText = e.target.value;
-                                        if (noteText !== property.notes) {
-                                            try {
-                                                await ClientDataService.createNote(property.id, noteText);
-                                                // Optional: update local state if needed, but the current value is already in the textarea
-                                            } catch (err) {
-                                                console.error("Failed to save note", err);
-                                            }
-                                        }
-                                    }}
-                                />
-                                <p className="text-[10px] text-slate-400 italic">Auto-saves on blur. Supports Markdown formatting.</p>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <span className="font-bold text-slate-700 dark:text-slate-300">My Attachments:</span>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="file"
-                                        className="text-xs"
-                                        onChange={async (e) => {
-                                            if (e.target.files && e.target.files[0]) {
-                                                try {
-                                                    await ClientDataService.uploadAttachment(property.id, e.target.files[0]);
-                                                    alert("Attachment uploaded successfully");
-                                                    loadProperty(property.parcel_id); // Refresh to show new attachment
-                                                } catch (err: any) {
-                                                    alert(err.message);
-                                                }
-                                            }
-                                        }}
-                                    />
-                                </div>
-                                <div className="text-xs space-y-1">
-                                    {property.attachments?.map((att: any, idx: number) => (
-                                        <div key={idx} className="flex justify-between text-blue-600 hover:underline cursor-pointer py-1 border-b border-slate-50 dark:border-slate-800 last:border-0">
-                                            <a
-                                                href={att.file_path.startsWith('http') ? att.file_path : `${API_BASE_URL}${att.file_path}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="flex items-center gap-2"
-                                            >
-                                                <span className="material-symbols-outlined text-[16px]">description</span>
-                                                {att.filename}
-                                            </a>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
+                
+                {/* Main Content Column (Left/Center) */}
+                <div className="xl:col-span-2 space-y-8">
+                    <PropertyBasicInfo 
+                        property={property} 
+                        onOpenFinancials={() => setIsFinOpen(true)}
+                        onOpenMetadata={() => setIsMetaOpen(true)}
+                        dealScore={localScore}
+                    />
+
+                    <PropertyEstimatesComps property={property} />
+
+                    <div className="grid grid-cols-1 gap-8">
+                        <PropertyPurchaseOptions 
+                            property={property} 
+                            readOnly={readOnly}
+                            actionLoading={actionLoading}
+                            onSimulatePurchase={handlePurchaseOnline}
+                        />
+                    </div>
+
+                    <RedemptionDisclaimerCard state={property.state} auctionType={property.auction_type} />
+
+                    <PropertyMap property={property} />
+
+                    {/* Preserved Raw Data Block */}
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 px-6 font-bold text-slate-700 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-slate-400 text-lg">database</span>
+                            Full Parcel Features
+                        </div>
+                        <div className="p-6 px-7">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-8 text-sm text-slate-700 dark:text-slate-300">
+                                <div><span className="font-bold text-slate-400 uppercase text-[10px] tracking-widest block mb-1">Zoning</span> {property.zoning || 'Residential (Default)'}</div>
+                                <div><span className="font-bold text-slate-400 uppercase text-[10px] tracking-widest block mb-1">Subdivision</span> {property.subdivision || 'Unrecorded'}</div>
+                                <div><span className="font-bold text-slate-400 uppercase text-[10px] tracking-widest block mb-1">Sewer Type</span> {property.sewer_type || 'Public'}</div>
+                                <div><span className="font-bold text-slate-400 uppercase text-[10px] tracking-widest block mb-1">Water Type</span> {property.water_type || 'Municipal'}</div>
+                                <div className="col-span-2"><span className="font-bold text-slate-400 uppercase text-[10px] tracking-widest block mb-1">Property Type Detail</span> {property.property_type_detail || property.description || 'Single Family Residence'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sidebar Column (Right) */}
+                <div className="space-y-8 mt-0">
+                    <PropertyResearchLinks property={property} />
+                    
+                    <PropertyNextSteps property={property} />
+
+                    <PropertyUserActions 
+                        property={property} 
+                        isFavorite={isFavorite}
+                        onToggleFavorite={handleToggleFavorite}
+                        onAddToList={handleOpenListMenu}
+                        onUpdateNotes={async (noteText) => {
+                            try {
+                                await ClientDataService.createNote(property.id, noteText);
+                            } catch (err) {}
+                        }}
+                        onUploadAttachment={async (file) => {
+                            try {
+                                await ClientDataService.uploadAttachment(property.id, file);
+                                loadProperty(property.parcel_id);
+                            } catch (err: any) { alert(err.message); }
+                        }}
+                    />
+
+                    <PropertyContactInfo property={property} />
+
+                    <CountyContactCard 
+                        contacts={countyContacts} 
+                        countyName={property.details?.county || property.county} 
+                    />
+
+                    <PropertyInventoryHistory property={property} />
+
+                    {/* Admin Actions - Preserved/Minimized */}
+                    {!readOnly && (
+                        <div className="bg-slate-50 dark:bg-slate-900/30 rounded-2xl p-6 border border-slate-100 dark:border-slate-800">
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-1">System Administration</h3>
+                            <div className="space-y-3">
+                                <button
+                                    onClick={async () => {
+                                        setActionLoading(true);
+                                        try {
+                                            const res = await PropertyService.validateGSI(property.id.toString());
+                                            alert(`GSI Status: ${res.gsi_status}`);
+                                            loadProperty(property.parcel_id);
+                                        } catch (e) {
+                                            alert("GSI Validation failed.");
+                                        } finally {
+                                            setActionLoading(false);
+                                        }
+                                    }}
+                                    disabled={actionLoading}
+                                    className="w-full py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 font-bold text-xs transition-all flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-[16px]">verified</span>
+                                    Force GSI Validation
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* List Menu Modals/Dropdowns */}
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleCloseListMenu}
+                PaperProps={{ className: "mt-1 shadow-lg rounded-xl border border-slate-100 dark:border-slate-800 dark:bg-slate-900" }}
+            >
+                <MenuItem
+                    onClick={handleAddToStandardList}
+                    className="text-sm py-2 px-4 text-emerald-600 font-medium hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                >
+                    <span className="material-symbols-outlined text-[18px] mr-3">auto_awesome</span> Smart Standard Add
+                </MenuItem>
+                {lists.some(l => l.tags === 'STANDARD') && (
+                    <div>
+                        <Divider className="my-1" />
+                        <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Standard Folders</div>
+                        {lists.filter(l => l.tags === 'STANDARD').map(list => (
+                            <MenuItem key={list.id} onClick={() => handleAddToList(list.id)} className="text-sm py-2 px-4 hover:bg-slate-50 dark:hover:bg-slate-800">
+                                <span className="material-symbols-outlined text-[18px] mr-3 text-emerald-500">map</span>
+                                {list.name}
+                            </MenuItem>
+                        ))}
+                    </div>
+                )}
+                <Divider className="my-1" />
+                <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Custom Folders</div>
+                {lists.filter(l => l.tags !== 'STANDARD').map(list => (
+                    <MenuItem key={list.id} onClick={() => handleAddToList(list.id)} className="text-sm py-2 px-4 hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <span className="material-symbols-outlined text-[18px] mr-3 text-blue-500">folder</span>
+                        {list.name}
+                    </MenuItem>
+                ))}
+                <Divider className="my-1" />
+                <MenuItem onClick={handleCreateAndAdd} className="text-sm py-2 px-4 text-blue-600 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                    <PlusIcon size={16} className="mr-3" /> New List...
+                </MenuItem>
+            </Menu>
+
+            <PropertyFinancialsModal 
+                isOpen={isFinOpen} 
+                onClose={() => setIsFinOpen(false)} 
+                property={property} 
+            />
+            
+            <PropertyMetadataModal 
+                isOpen={isMetaOpen} 
+                onClose={() => setIsMetaOpen(false)} 
+                property={property} 
+            />
         </div>
     );
 };

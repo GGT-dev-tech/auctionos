@@ -12,6 +12,9 @@ services:
       - SECRET_KEY=changethiskeyinproduction
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - ATTOM_API_KEY=2b58c3c8510e15f25d468c3ed0b6d7c1
+      - REDIS_URL=redis://default:ikMlAtnToQZHOCrcWhbUtwhpdRDbzBIK@redis.railway.internal:6379
+
     depends_on:
       - db
       - redis

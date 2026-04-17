@@ -8,13 +8,32 @@ import PropertyForm from '../../components/admin/PropertyForm';
 import PropertyList from '../../components/admin/PropertyList';
 import PropertyFilters, { PropertyFilterParams } from '../../components/admin/PropertyFilters';
 import SystemAnnouncementForm from '../../components/admin/SystemAnnouncementForm';
+import UserList from '../../components/admin/UserList';
 import { Box } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 
-const AdminAuctions: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'auctions' | 'properties' | 'import_props' | 'import_auctions' | 'broadcasts'>('auctions');
+interface AdminAuctionsProps {
+    defaultTab?: 'auctions' | 'properties' | 'import_props' | 'import_auctions' | 'broadcasts' | 'users';
+}
+
+const AdminAuctions: React.FC<AdminAuctionsProps> = ({ defaultTab = 'auctions' }) => {
+    const [activeTab, setActiveTab] = useState<'auctions' | 'properties' | 'import_props' | 'import_auctions' | 'broadcasts' | 'users'>(defaultTab as any);
     const [filters, setFilters] = useState<AuctionFilterParams>({});
-    const [propertyFilters, setPropertyFilters] = useState<PropertyFilterParams>({});
+    const [propertyFilters, setPropertyFilters] = useState<PropertyFilterParams>(() => {
+        try {
+            const saved = sessionStorage.getItem('admin_property_filters');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                return Object.keys(parsed).length > 0 ? parsed : { availability: 'available' };
+            }
+        } catch {}
+        return { availability: 'available' };
+    });
+
+    React.useEffect(() => {
+        sessionStorage.setItem('admin_property_filters', JSON.stringify(propertyFilters));
+    }, [propertyFilters]);
+
     const [, setSearchParams] = useSearchParams();
 
     const handleDateTypeSelect = (date: string, type: string) => {
@@ -41,6 +60,7 @@ const AdminAuctions: React.FC = () => {
                 <TabButton active={activeTab === 'import_props'} onClick={() => setActiveTab('import_props')} label="Import Properties (CSV)" />
                 <TabButton active={activeTab === 'import_auctions'} onClick={() => setActiveTab('import_auctions')} label="Import Auctions (CSV)" />
                 <TabButton active={activeTab === 'broadcasts'} onClick={() => setActiveTab('broadcasts')} label="System Broadcasts" />
+                <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="User Management" />
             </div>
 
             {activeTab === 'auctions' && (
@@ -66,7 +86,7 @@ const AdminAuctions: React.FC = () => {
                         <div className="w-full max-w-4xl mx-auto">
                             <PropertyForm onSuccess={() => { }} />
                         </div>
-                        <div className="w-full">
+                        <div className="w-full h-[calc(100vh-350px)] flex flex-col min-h-[500px]">
                             <PropertyList filters={propertyFilters} />
                         </div>
                     </div>
@@ -77,6 +97,10 @@ const AdminAuctions: React.FC = () => {
                 <div className="max-w-3xl mx-auto">
                     <SystemAnnouncementForm />
                 </div>
+            )}
+
+            {activeTab === 'users' && (
+                <UserList />
             )}
 
             {activeTab === 'import_props' && (

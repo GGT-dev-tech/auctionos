@@ -1,10 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.core.config import settings
 from app.core.config import settings
 from app.api.api_v1.api import api_router
-# Import base to register all models
+# Import base to register all models (including new property_scores)
 from app.db import base  # noqa
+from app.db.base_class import Base
+from app.db.session import engine
 
 from fastapi.staticfiles import StaticFiles
 import os
@@ -20,25 +24,69 @@ from app.services.status_updater import transition_past_auctions
 async def run_daily_task():
     while True:
         try:
-            # Run the transition task in a separate thread so it doesn't block
             await asyncio.to_thread(transition_past_auctions)
         except Exception as e:
             print(f"Error in daily background task: {e}")
-            
-        # Sleep for 12 hours before checking again
         await asyncio.sleep(12 * 3600)
+
+
+def run_safe_migrations():
+    """
+    Safely adds new columns to existing tables without Alembic.
+    Uses IF NOT EXISTS syntax supported by both PostgreSQL and SQLite.
+    Called once on startup — idempotent (safe to run multiple times).
+    """
+    from sqlalchemy import text, inspect
+    db_url = str(engine.url)
+    is_postgres = db_url.startswith("postgresql")
+
+    migrations = [
+        # (table, column, column_definition_postgres, column_definition_sqlite)
+        ("users", "active_company_id",
+         "INTEGER REFERENCES companies(id) ON DELETE SET NULL",
+         "INTEGER"),
+        ("client_lists", "company_id",
+         "INTEGER REFERENCES companies(id) ON DELETE SET NULL",
+         "INTEGER"),
+    ]
+
+    with engine.connect() as conn:
+        inspector = inspect(engine)
+        for table, column, pg_def, sqlite_def in migrations:
+            try:
+                existing_tables = inspector.get_table_names()
+                if table not in existing_tables:
+                    continue
+                existing_cols = [c["name"] for c in inspector.get_columns(table)]
+                if column in existing_cols:
+                    continue  # Already exists — skip
+
+                col_def = pg_def if is_postgres else sqlite_def
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_def}"))
+                conn.commit()
+                print(f"✅ Migration: Added column '{column}' to '{table}'")
+            except Exception as e:
+                print(f"⚠️  Migration warning for {table}.{column}: {e}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 1. Run safe column migrations FIRST (before create_all)
+    try:
+        run_safe_migrations()
+    except Exception as e:
+        print(f"Migration error (non-fatal): {e}")
+
+    # 2. Auto-create any new tables on startup
+    Base.metadata.create_all(bind=engine)
+
     redis = aioredis.from_url(settings.REDIS_URL)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-    
-    # Start the background task loop
+
     task = asyncio.create_task(run_daily_task())
-    
+
     yield
-    
-    # Cancel the task when shutting down
+
     task.cancel()
 
 app = FastAPI(
@@ -56,23 +104,35 @@ origins = [
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
-    "https://auctionos.up.railway.app",
-    "https://auctionos-production.up.railway.app"
+    "https://goauct.up.railway.app",
+    "https://goauct-production.up.railway.app",
+    "http://goauct-production.up.railway.app",
+    "https://goauct-production-82cf.up.railway.app", # Potential staging alias
+    "https://goauct.com",
+    "https://www.goauct.com",
 ]
 
 if settings.BACKEND_CORS_ORIGINS:
-    origins.extend([str(origin) for origin in settings.BACKEND_CORS_ORIGINS])
+    if isinstance(settings.BACKEND_CORS_ORIGINS, str):
+        origins.append(settings.BACKEND_CORS_ORIGINS)
+    else:
+        origins.extend([str(origin) for origin in settings.BACKEND_CORS_ORIGINS])
 
-# Deduplicate
-origins = list(set(origins))
+# Deduplicate and ensure no trailing slashes confuse the browser
+origins = list(set([o.rstrip('/') for o in origins if o]))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex="https://(goauct.*\\.up\\.railway\\.app|.*\\.goauct\\.com|goauct\\.com)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+
 
 # Ensure static directory exists
 static_dir = os.path.join(os.getcwd(), "data")
@@ -111,4 +171,4 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to AuctionOS API"}
+    return {"message": "GoAuct API is running", "environment": "production"}

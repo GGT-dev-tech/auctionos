@@ -14,6 +14,10 @@ export const AuctionService = {
         if (filters.maxParcels) queryParams.append('max_parcels', String(filters.maxParcels));
         if (filters.skip !== undefined) queryParams.append('skip', String(filters.skip));
         if (filters.limit !== undefined) queryParams.append('limit', String(filters.limit));
+        if (filters.sortBy) queryParams.append('sort_by', filters.sortBy);
+        if (filters.order) queryParams.append('order', filters.order);
+        if (filters.q) queryParams.append('q', filters.q);
+        if (filters.tax_status) queryParams.append('tax_status', filters.tax_status);
 
         const response = await fetch(`${API_URL}/auctions/?${queryParams.toString()}`, {
             headers: getHeaders()
@@ -67,6 +71,8 @@ export const AuctionService = {
         if (filters.isPresencial !== undefined) queryParams.append('is_presential', String(filters.isPresencial));
         if (filters.startDate) queryParams.append('start_date', filters.startDate);
         if (filters.endDate) queryParams.append('end_date', filters.endDate);
+        if (filters.q) queryParams.append('q', filters.q);
+        if (filters.tax_status) queryParams.append('tax_status', filters.tax_status);
 
         const response = await fetch(`${API_URL}/auctions/calendar?${queryParams.toString()}`, {
             headers: getHeaders()

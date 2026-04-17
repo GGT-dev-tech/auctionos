@@ -1,0 +1,365 @@
+import React from 'react';
+
+const PlaceholderPage: React.FC<{
+  icon: string;
+  title: string;
+  description: string;
+  badge?: string;
+}> = ({ icon, title, description, badge }) => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+    <div className="size-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+      <span className="material-symbols-outlined text-primary text-[36px]">{icon}</span>
+    </div>
+    {badge && (
+      <span className="inline-block px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-semibold uppercase tracking-widest mb-3">
+        {badge}
+      </span>
+    )}
+    <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">{title}</h1>
+    <p className="text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">{description}</p>
+  </div>
+);
+
+const VIDEOS = [
+  { title: "Introduction to AuctionOS", length: "05:30", id: "intro_sys", desc: "Welcome to the central intelligence platform." },
+  { title: "Live Auction & Properties", length: "14:20", id: "live_auction", desc: "How to consult an auction and its properties in real time." },
+  { title: "Property Search & Details", length: "10:15", id: "prop_search", desc: "How to search precisely and access full property documents/comps." },
+  { title: "My Lists & Organization", length: "08:45", id: "my_lists", desc: "How to access, create, organize, and preview your pipelines." },
+  { title: "Due Diligence Consulting", length: "18:00", id: "dd_consulting", desc: "How our partners assist you in closing the deal safely." },
+  { title: "Meet the Team", length: "04:10", id: "meet_team", desc: "Behind the scenes at AuctionOS." }
+];
+
+export const TrainingPage: React.FC = () => {
+    const [view, setView] = React.useState<'folders' | 'tax' | 'system'>('folders');
+    const [activeVideo, setActiveVideo] = React.useState(VIDEOS[0]);
+
+    if (view === 'folders') {
+        return (
+            <div className="max-w-5xl mx-auto py-12 px-4">
+                <div className="text-center mb-12">
+                    <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-4">Training Center</h1>
+                    <p className="text-lg text-slate-600 dark:text-slate-400">Select a learning path to master distress property investing.</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* Tax Systems Folder */}
+                    <div 
+                        onClick={() => setView('tax')}
+                        className="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-500/50 transition-all cursor-pointer group"
+                    >
+                        <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <span className="material-symbols-outlined text-3xl text-blue-600 dark:text-blue-400">menu_book</span>
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Tax Systems Mastery</h2>
+                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Everything you need to know about how tax liens, tax deeds, and redeemable deeds work across all 50 states. Read the complete manual.
+                        </p>
+                    </div>
+
+                    {/* System Training Folder */}
+                    <div 
+                        onClick={() => setView('system')}
+                        className="bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-emerald-500/50 transition-all cursor-pointer group"
+                    >
+                        <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <span className="material-symbols-outlined text-3xl text-emerald-600 dark:text-emerald-400">play_circle</span>
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Platform Tutorials</h2>
+                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                            Step-by-step video guides on navigating the dashboard, running property searches, managing watchlists, and utilizing our partner consulting services.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="mt-12 bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 text-center">
+                    <span className="material-symbols-outlined text-slate-400 mb-2">support_agent</span>
+                    <h3 className="font-bold text-slate-800 dark:text-white mb-1">Need help? Email us.</h3>
+                    <p className="text-sm text-slate-500 mb-4">Any questions about accessing the platform or due diligence consulting, just send us a message.</p>
+                    <a href="mailto:support@auctionos.com" className="inline-block px-6 py-2 bg-slate-800 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-sm hover:opacity-90">Contact Support</a>
+                </div>
+            </div>
+        );
+    }
+
+    if (view === 'tax') {
+        return (
+            <div className="relative w-full h-[calc(100vh-120px)] overflow-y-auto">
+                <button onClick={() => setView('folders')} className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 font-bold text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50">
+                    <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Back to Folders
+                </button>
+                <div className="pt-20">
+                    <TaxSystemsView />
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="w-full h-[calc(100vh-120px)] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center">
+                <button onClick={() => setView('folders')} className="flex items-center gap-2 font-bold text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">arrow_back</span> Back to Folders
+                </button>
+            </div>
+            <div className="flex-1 flex flex-col md:flex-row gap-6 p-6 overflow-hidden">
+                {/* Main Video Area */}
+                <div className="flex-1 flex flex-col overflow-y-auto">
+                    <div className="w-full aspect-video bg-slate-900 rounded-2xl flex items-center justify-center relative shadow-md border border-slate-700/50 group">
+                    <span className="material-symbols-outlined text-6xl text-white/50 group-hover:text-emerald-500 transition-colors cursor-pointer group-hover:scale-110 drop-shadow-xl z-10 transition-transform">play_circle</span>
+                    <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity z-0 pointer-events-none"></div>
+                    <div className="absolute bottom-4 left-4 text-white font-mono text-sm bg-black/60 px-2 py-1 rounded">00:00 / {activeVideo.length}</div>
+                    </div>
+                    <div className="mt-6 px-2">
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{activeVideo.title}</h2>
+                        <p className="text-slate-600 dark:text-slate-400">{activeVideo.desc}</p>
+                    </div>
+                </div>
+
+                {/* Video List */}
+                <div className="w-full md:w-80 flex flex-col gap-3 font-sans overflow-y-auto pr-2 pb-12">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2 pl-2">Platform Tutorials</h3>
+                    {VIDEOS.map((v, i) => (
+                        <button
+                            key={v.id}
+                            onClick={() => setActiveVideo(v)}
+                            className={`flex gap-4 p-4 rounded-xl items-start transition-all text-left ${activeVideo.id === v.id ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-emerald-500/50'}`}
+                        >
+                            <div className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${activeVideo.id === v.id ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'}`}>
+                                <span className="material-symbols-outlined text-[16px]">{activeVideo.id === v.id ? 'play_arrow' : 'lock_open'}</span>
+                            </div>
+                            <div>
+                                <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{i+1}. {v.title}</div>
+                                <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">{v.length}</div>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// -- TAX SYSTEMS CONNECT (EMBEDDED VIEWER) --
+
+const TAX_CHAPTERS = [
+  {
+    title: "1. The Foundation of Property Taxes",
+    content: "Unlike many countries with centralized property tax systems, the United States relies heavily on local governance. Property taxes are the primary financial engine for local municipalities (schools, police, infrastructure). Property taxes are calculated using Assessed Value and Mill Rates."
+  },
+  {
+    title: "2. Foreclosures vs Tax Sales",
+    content: "Mortgage Foreclosure occurs when an owner defaults on a private loan. Tax Foreclosure occurs when an owner defaults on local taxes. The government holds the supreme lien position, often wiping out mortgages."
+  },
+  {
+    title: "3. The Tax Lien System (Yields)",
+    content: "The county sells the tax debt as a certificate. Investors pay the debt, and the county guarantees a statutory interest rate (8% to 36%). If unredeemed, investors can foreclose to take ownership."
+  },
+  {
+    title: "4. The Tax Deed System (Direct)",
+    content: "The county directly forecloses and auctions the deed to the property to the highest bidder. Immediate ownership is acquired, but investors inherit the property 'as-is' and face title clouds."
+  },
+  {
+    title: "5. Redeemable Deeds (Hybrid)",
+    content: "States like Texas and Georgia sell the deed, but the original owner retains a redemption right for a specific period, paying a massive flat penalty rate (e.g., 25% in TX) to redeem."
+  },
+  {
+    title: "6. Leveraging GoAuct Data",
+    content: "With over 3,000 counties in the U.S., compiling auction lists manually is impossible. GoAuct tracks 500,000+ properties across 47 states, identifying high-probability targets with integrated data."
+  }
+];
+
+export const TaxSystemsView: React.FC = () => {
+    const [openChapter, setOpenChapter] = React.useState<number | null>(0);
+
+    return (
+        <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-10 max-w-4xl mx-auto mb-16">
+            <div className="mb-10 text-center">
+               <span className="material-symbols-outlined text-4xl text-blue-500 mb-3 block">menu_book</span>
+               <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2">U.S. Tax Sale Systems Matrix</h1>
+               <p className="text-slate-500 max-w-xl mx-auto">Compiled insights from the GoAuct internal knowledge base on state regulations, differences between liens and deeds, and basic methodology.</p>
+            </div>
+            
+            <div className="space-y-4">
+                {TAX_CHAPTERS.map((chap, i) => {
+                    const isOpen = openChapter === i;
+                    return (
+                        <div key={i} className={`border rounded-2xl overflow-hidden transition-colors ${isOpen ? 'border-primary dark:border-blue-500 shadow-lg shadow-blue-500/10' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'}`}>
+                            <button
+                                onClick={() => setOpenChapter(isOpen ? null : i)}
+                                className={`w-full flex items-center justify-between p-5 text-left transition-colors ${isOpen ? 'bg-primary/5 dark:bg-blue-900/20' : 'bg-transparent'}`}
+                            >
+                                <span className="font-bold text-slate-800 dark:text-slate-100">{chap.title}</span>
+                                <span className={`material-symbols-outlined text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-blue-500' : ''}`}>expand_more</span>
+                            </button>
+                            {isOpen && (
+                                <div className="p-5 pt-2 border-t border-slate-100 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-900/30">
+                                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium">{chap.content}</p>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+export const TaxSystemsPage: React.FC = () => {
+    return (
+        <div className="w-full h-full overflow-y-auto pt-8">
+            <TaxSystemsView />
+        </div>
+    );
+};
+
+const NEWS_UPDATES = [
+    {
+        id: 1,
+        date: "April 14, 2026",
+        tag: "Market Update",
+        title: "Florida Tax Deed Surplus Laws Under Review",
+        content: "Governor's office is currently reviewing a new bill that could significantly accelerate the surplus claims process after tax deed auctions. We urge investors looking at Orange and Miami-Dade counties to monitor the timeline. We will integrate any changes into our Yield estimator immediately.",
+        author: "AuctionOS Admin"
+    },
+    {
+        id: 2,
+        date: "April 10, 2026",
+        tag: "System Note",
+        title: "Texas Data Pipeline Upgrade Complete",
+        content: "We have finalized the integration with 15 new Texas counties, bringing our total coverage in the state to 98%. All new redeemable deed listings will now feature automated title scanning for secondary IRS liens.",
+        author: "System Operations"
+    },
+    {
+        id: 3,
+        date: "April 02, 2026",
+        tag: "Strategy",
+        title: "Navigating Indiana Commissioner Sales",
+        content: "A major influx of commissioner sale properties is expected next month in Marion County. Unlike traditional tax sales, these properties are cleared of all taxes and sold free and clear at highly discounted minimum bids. Ensure your search filters in AuctionOS are set to capture 'Commissioner Sale' tags.",
+        author: "Investment Strategy Team"
+    }
+];
+
+export const CommunityPage: React.FC = () => (
+    <div className="max-w-4xl mx-auto py-8 px-4 h-[calc(100vh-120px)] overflow-y-auto">
+        <div className="flex items-center gap-4 mb-8">
+            <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center">
+                <span className="material-symbols-outlined text-3xl text-blue-600 dark:text-blue-400">forum</span>
+            </div>
+            <div>
+                <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Community & Updates</h1>
+                <p className="text-sm text-slate-500 font-medium">Real-estate news, system updates, and strategies directly from the AuctionOS team.</p>
+            </div>
+        </div>
+
+        <div className="space-y-6 pb-12">
+            {NEWS_UPDATES.map(news => (
+                <div key={news.id} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 shadow-sm relative overflow-hidden">
+                    <div className="flex items-center gap-3 mb-4">
+                        <span className="px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-widest rounded-full">{news.tag}</span>
+                        <span className="text-sm text-slate-400 font-medium">{news.date}</span>
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{news.title}</h2>
+                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                        {news.content}
+                    </p>
+                    <div className="flex items-center gap-2 border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
+                        <div className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
+                            <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-[14px]">admin_panel_settings</span>
+                        </div>
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{news.author}</span>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
+const GROUPS_TESTIMONIALS = [
+    {
+        name: "Marcus T.",
+        role: "Institutional Fund Manager",
+        social: "@marcus_invests",
+        content: "AuctionOS completely changed our scaling model. We were manually tracking 12 counties in Florida and taking 3 days to calculate yields. Now we track 80 counties instantly."
+    },
+    {
+        name: "Sarah K.",
+        role: "Independent Investor",
+        social: "@sarah.deeds",
+        content: "The ability to have the comps engine right next to the parcel map is insane. I picked up 3 tax deeds in Indiana last month using just the 'Top Deals' dashboard filter."
+    },
+    {
+        name: "David R.",
+        role: "Title Researcher",
+        social: "@david_title",
+        content: "As someone who does due diligence for a living, the integration with probate and obituary signals saves me easily 15 hours a week."
+    }
+];
+
+export const GroupsPage: React.FC = () => (
+    <div className="max-w-5xl mx-auto py-8 px-4 h-[calc(100vh-120px)] overflow-y-auto">
+        {/* Header section with Social Links */}
+        <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between mb-12 bg-gradient-to-r from-blue-900 to-indigo-900 rounded-3xl p-8 sm:p-12 text-white shadow-lg">
+            <div>
+                <h1 className="text-3xl sm:text-4xl font-black mb-3 text-white tracking-tight">Join the Inner Circle</h1>
+                <p className="text-blue-200 max-w-lg mb-6 leading-relaxed">
+                    Connect with over 2,500 active distress property investors. Get access to exclusive mastermind groups, daily deal breakdowns, and direct support from the AuctionOS team.
+                </p>
+                <div className="flex gap-4">
+                    <a href="#" className="flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2 rounded-xl text-sm font-bold backdrop-blur-sm border border-white/10">
+                        <span className="material-symbols-outlined text-lg">public</span> Facebook Group
+                    </a>
+                    <a href="#" className="flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2 rounded-xl text-sm font-bold backdrop-blur-sm border border-white/10">
+                        <span className="material-symbols-outlined text-lg">chat</span> Discord Matrix
+                    </a>
+                </div>
+            </div>
+            {/* Visual Decorative */}
+            <div className="hidden md:flex gap-4 opacity-50 pointer-events-none">
+                <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center -rotate-6">
+                    <span className="material-symbols-outlined text-3xl font-bold">trending_up</span>
+                </div>
+                <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center rotate-12 mt-8">
+                    <span className="material-symbols-outlined text-3xl font-bold">handshake</span>
+                </div>
+            </div>
+        </div>
+
+        {/* Member Approved Section */}
+        <div className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+                <span className="material-symbols-outlined text-emerald-500">verified</span>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Investor Approved</h2>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-6">
+                {GROUPS_TESTIMONIALS.map((t, idx) => (
+                    <div key={idx} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-shadow">
+                        <p className="text-slate-600 dark:text-slate-300 italic mb-6 leading-relaxed text-sm">
+                            "{t.content}"
+                        </p>
+                        <div className="flex items-center gap-3 border-t border-slate-100 dark:border-slate-700 pt-4">
+                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-700 dark:text-blue-400 font-bold">
+                                {t.name.charAt(0)}
+                            </div>
+                            <div>
+                                <div className="font-bold text-slate-900 dark:text-white text-sm">{t.name}</div>
+                                <div className="text-xs text-slate-500">{t.role}</div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        {/* Pro Mastermind Teaser */}
+        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 text-center max-w-2xl mx-auto">
+            <span className="material-symbols-outlined text-4xl text-amber-500 mb-3 block">workspace_premium</span>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">AuctionOS Platinum Mastermind</h3>
+            <p className="text-slate-500 text-sm mb-6">Applications for our Q4 Mastermind cohort will open soon. This is reserved for enterprise and high-volume independent investors.</p>
+            <button disabled className="px-6 py-2 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl text-sm font-bold opacity-50 cursor-not-allowed">
+                Applications Closed
+            </button>
+        </div>
+    </div>
+);

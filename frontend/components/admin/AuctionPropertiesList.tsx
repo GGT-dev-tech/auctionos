@@ -7,10 +7,12 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 interface AuctionPropertiesListProps {
     auctionName: string;
+    auctionDate?: string;
+    auctionId?: number;
     onClose?: () => void;
 }
 
-const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionName, onClose }) => {
+const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionName, auctionDate, auctionId, onClose }) => {
     const [rows, setRows] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [rowCount, setRowCount] = useState(0);
@@ -32,7 +34,15 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
             const limit = paginationModel.pageSize;
 
             // Fetch properties specifically for this auction
-            const params: any = { auction_name: auctionName, limit, skip };
+            const params: any = { limit, skip };
+            if (auctionId) {
+                params.auction_id = auctionId;
+            } else {
+                params.auction_name = auctionName;
+                if (auctionDate) {
+                    params.auction_date = auctionDate;
+                }
+            }
 
             filterModel.items.forEach(item => {
                 if (item.value === undefined || item.value === null || item.value === '') return;
@@ -71,10 +81,10 @@ const AuctionPropertiesList: React.FC<AuctionPropertiesListProps> = ({ auctionNa
     };
 
     useEffect(() => {
-        if (auctionName) {
+        if (auctionId || auctionName) {
             fetchProperties();
         }
-    }, [auctionName, paginationModel, filterModel]);
+    }, [auctionId, auctionName, paginationModel, filterModel]);
 
     const columns: GridColDef[] = [
         { field: 'parcel_id', headerName: 'Parcel Number', width: 140 },

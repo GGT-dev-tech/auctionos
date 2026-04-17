@@ -9,6 +9,7 @@ export interface PropertyFilterParams {
     county?: string;
     state?: string;
     keyword?: string;
+    min_score?: number;
 
     // Optional Filters
     auction_name?: string;
@@ -38,13 +39,28 @@ export interface PropertyFilterParams {
 interface PropertyFiltersProps {
     onFilterChange: (filters: PropertyFilterParams) => void;
     readOnly?: boolean;
+    initialFilters?: PropertyFilterParams;
 }
 
-const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readOnly = false }) => {
+const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readOnly = false, initialFilters }) => {
     const navigate = useNavigate();
-    const [filters, setFilters] = useState<PropertyFilterParams>({});
+    const [filters, setFilters] = useState<PropertyFilterParams>(initialFilters || {});
     const [showFilters, setShowFilters] = useState(false);
     const [debouncedFilters] = useDebounce(filters, 500);
+
+    const isInternalUpdate = React.useRef(false);
+
+    // Sync external initialFilters changes only if they differ
+    useEffect(() => {
+        if (initialFilters && Object.keys(initialFilters).length > 0) {
+            // Check if values are actually different to prevent unnecessary updates
+            const hasChanged = JSON.stringify(filters) !== JSON.stringify(initialFilters);
+            if (hasChanged) {
+                isInternalUpdate.current = true;
+                setFilters(initialFilters);
+            }
+        }
+    }, [initialFilters]);
 
     // Autocomplete state
     const [open, setOpen] = useState(false);
@@ -81,14 +97,20 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readO
     }, [inputValue]);
 
     useEffect(() => {
+        if (isInternalUpdate.current) {
+            isInternalUpdate.current = false;
+            return;
+        }
         onFilterChange(debouncedFilters);
     }, [debouncedFilters, onFilterChange]);
 
     const handleChange = (key: keyof PropertyFilterParams, value: any) => {
+        isInternalUpdate.current = false;
         setFilters(prev => ({ ...prev, [key]: value || undefined }));
     };
 
     const handleClear = () => {
+        isInternalUpdate.current = false;
         setFilters({});
         setInputValue('');
     };
@@ -209,8 +231,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readO
                                     >
                                         <MenuItem value=""><em>Any</em></MenuItem>
                                         <MenuItem value="available">Available</MenuItem>
-                                        <MenuItem value="sold">Sold</MenuItem>
-                                        <MenuItem value="pending">Pending</MenuItem>
+                                        <MenuItem value="unavailable">Not Available</MenuItem>
                                     </Select>
                                 </FormControl>
 
@@ -235,20 +256,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readO
                                         onChange={(e) => handleChange('property_type', e.target.value)}
                                     >
                                         <MenuItem value=""><em>Any</em></MenuItem>
-                                        <MenuItem value="Vacant Land">Vacant Land</MenuItem>
-                                        <MenuItem value="Single Family">Single Family</MenuItem>
-                                        <MenuItem value="Multi-Family">Multi-Family</MenuItem>
-                                        <MenuItem value="Commercial">Commercial</MenuItem>
-                                        <MenuItem value="Agricultural">Agricultural</MenuItem>
-                                        <MenuItem value="Industrial">Industrial</MenuItem>
-                                        <MenuItem value="Tax Sale">Tax Sale</MenuItem>
-                                        <MenuItem value="Tax Deed">Tax Deed</MenuItem>
-                                        <MenuItem value="Tax Lien">Tax Lien</MenuItem>
-                                        <MenuItem value="Foreclosure">Foreclosure</MenuItem>
-                                        <MenuItem value="Over the Counter">Over the Counter</MenuItem>
-                                        <MenuItem value="Sealed Bid">Sealed Bid</MenuItem>
-                                        <MenuItem value="Public Outcry">Public Outcry</MenuItem>
-                                        <MenuItem value="Other">Other</MenuItem>
+                                        <MenuItem value="Land & Structures">Land &amp; Structures</MenuItem>
+                                        <MenuItem value="Land Only">Land Only</MenuItem>
+                                        <MenuItem value="Improvements Only">Improvements Only</MenuItem>
                                     </Select>
                                 </FormControl>
 
@@ -342,13 +352,35 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readO
                                     <InputLabel>Category</InputLabel>
                                     <Select label="Category" value={filters.property_category || ''} onChange={(e) => handleChange('property_category', e.target.value)}>
                                         <MenuItem value=""><em>Any</em></MenuItem>
-                                        <MenuItem value="Residential">Residential</MenuItem>
-                                        <MenuItem value="Commercial">Commercial</MenuItem>
-                                        <MenuItem value="Land">Land</MenuItem>
+                                        <MenuItem value="Tax Lien">Tax Lien</MenuItem>
+                                        <MenuItem value="Tax Deed">Tax Deed</MenuItem>
+                                        <MenuItem value="Foreclosure">Foreclosure</MenuItem>
+                                        <MenuItem value="Cert">Certificate</MenuItem>
+                                        <MenuItem value="Quit Claim">Quit Claim</MenuItem>
                                     </Select>
                                 </FormControl>
 
                                 <TextField label="Tax Year" type="number" size="small" fullWidth value={filters.tax_year || ''} onChange={(e) => handleChange('tax_year', e.target.value)} />
+
+                                <FormControl size="small" fullWidth className="col-span-2">
+                                    <InputLabel>Min Grade</InputLabel>
+                                    <Select
+                                        label="Min Grade"
+                                        value={filters.min_score !== undefined ? String(filters.min_score) : ''}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            handleChange('min_score', val !== '' ? Number(val) : undefined);
+                                        }}
+                                    >
+                                        <MenuItem value=""><em>Any Grade</em></MenuItem>
+                                        <MenuItem value="90">A+ (≥ 90%)</MenuItem>
+                                        <MenuItem value="80">A (≥ 80%)</MenuItem>
+                                        <MenuItem value="70">B (≥ 70%)</MenuItem>
+                                        <MenuItem value="60">C (≥ 60%)</MenuItem>
+                                        <MenuItem value="50">D (≥ 50%)</MenuItem>
+                                        <MenuItem value="0">F (All)</MenuItem>
+                                    </Select>
+                                </FormControl>
                             </div>
                         </div>
                     </div>

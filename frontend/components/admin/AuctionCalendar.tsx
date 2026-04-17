@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { AuctionService } from '../../services/auction.service';
 import type { AuctionEvent } from '../../types';
@@ -12,80 +11,87 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
 
 interface AuctionCalendarProps {
-    filters?: any;
+    filters?: {
+        startDate?: string;
+        endDate?: string;
+        name?: string;
+        [key: string]: any;
+    };
     onDateTypeSelect?: (date: string, type: string) => void;
 }
 
-const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateTypeSelect }) => {
-    const [events, setEvents] = useState<any[]>([]);
+const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = { startDate: undefined }, onDateTypeSelect }) => {
+    const [rawEvents, setRawEvents] = useState<any[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
     const [groupedDialogOpen, setGroupedDialogOpen] = useState(false);
     const [groupedDateType, setGroupedDateType] = useState<{date: string, type: string} | null>(null);
     const navigate = useNavigate();
 
+    // Use a stable string for effect dependency to prevent redundant fetches
+    const filterKey = JSON.stringify(filters);
+
     useEffect(() => {
         AuctionService.getCalendarEvents(filters)
-            .then(data => {
-                const groups: Record<string, { date: string, type: string, auctionCount: number, propertyCount: number }> = {};
-
-                data.forEach((item: any) => {
-                    const titleLower = (item.event_title || '').toLowerCase();
-                    let type = 'Other';
-                    if (titleLower.includes('tax deed') || titleLower.includes('taxdeed')) type = 'Tax Deed';
-                    else if (titleLower.includes('foreclosure')) type = 'Foreclosure';
-                    else if (titleLower.includes('lien')) type = 'Tax Lien';
-                    else if (titleLower.includes('sheriff')) type = 'Sheriff Sale';
-                    else type = item.event_title || 'Auction'; 
-                    
-                    const cleanDate = item.event_date ? item.event_date.split('T')[0] : '';
-                    if (!cleanDate) return;
-
-                    const groupKey = `${cleanDate}-${type}`;
-                    if (!groups[groupKey]) {
-                        groups[groupKey] = { date: cleanDate, type, auctionCount: 0, propertyCount: 0 };
-                    }
-                    groups[groupKey].auctionCount += 1;
-                    groups[groupKey].propertyCount += (item.property_count || 1);
-                });
-
-                const aggregatedEvents = Object.values(groups).map(g => ({
-                    title: `${g.type} (${g.auctionCount})`,
-                    start: g.date,
-                    allDay: true,
-                    extendedProps: {
-                        isGrouped: true,
-                        type: g.type,
-                        date: g.date,
-                        auctionCount: g.auctionCount,
-                        propertyCount: g.propertyCount
-                    }
-                }));
-
-                setEvents(aggregatedEvents);
-            })
+            .then(data => setRawEvents(data))
             .catch(err => console.error("Failed to load calendar", err));
-    }, [filters]);
+    }, [filterKey]);
+
+    // Memoize the heavy aggregation logic for smoother performance
+    const processedEvents = React.useMemo(() => {
+        const groups: Record<string, { date: string, type: string, auctionCount: number, propertyCount: number }> = {};
+
+        rawEvents.forEach((item: any) => {
+            const taxStatus = item.tax_status || 'Other';
+            const cleanDate = item.event_date ? item.event_date.split('T')[0] : '';
+            if (!cleanDate) return;
+
+            const groupKey = `${cleanDate}-${taxStatus}`;
+            if (!groups[groupKey]) {
+                groups[groupKey] = { date: cleanDate, type: taxStatus, auctionCount: 0, propertyCount: 0 };
+            }
+            groups[groupKey].auctionCount += 1;
+            groups[groupKey].propertyCount += (item.property_count || 0);
+        });
+
+        return Object.values(groups).map(g => ({
+            title: `${g.type} (${g.auctionCount})`,
+            start: g.date,
+            allDay: true,
+            extendedProps: {
+                isGrouped: true,
+                type: g.type,
+                date: g.date,
+                auctionCount: g.auctionCount,
+                propertyCount: g.propertyCount
+            }
+        }));
+    }, [rawEvents]);
 
     const handleEventClick = (info: any) => {
         const props = info.event.extendedProps;
         if (props.isGrouped) {
-            // Display internal modal list instead of external parameter routing
             setGroupedDateType({ date: props.date, type: props.type });
             setGroupedDialogOpen(true);
         } else {
-            setSelectedEvent(info.event);
+            // For single non-grouped events (though we group them all now)
+            const normalizedEvent = {
+                id: info.event.id,
+                title: info.event.title,
+                start: info.event.startStr || info.event.start,
+                extendedProps: props
+            };
+            setSelectedEvent(normalizedEvent);
         }
     };
 
     const handleDateClick = (arg: any) => {
-        // Handle clicking the empty day box
         if (onDateTypeSelect) {
             onDateTypeSelect(arg.dateStr, ''); 
         } else {
             const params = new URLSearchParams(window.location.search);
             params.set('startDate', arg.dateStr);
             params.set('endDate', arg.dateStr);
-            params.delete('q'); // Clear search query to show all types for that date
+            params.delete('q');
             window.location.search = '?' + params.toString();
         }
     };
@@ -97,15 +103,16 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateT
     return (
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm h-[600px] relative">
             <FullCalendar
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                plugins={[dayGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
+                initialDate={filters.startDate}
                 timeZone="UTC"
                 headerToolbar={{
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
+                    right: 'dayGridMonth'
                 }}
-                events={events}
+                events={processedEvents}
                 eventClick={handleEventClick}
                 dateClick={handleDateClick}
                 height="100%"
@@ -133,7 +140,7 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateT
             >
                 <DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc' }}>
                     <Typography variant="h6" className="font-bold text-slate-800">
-                        {groupedDateType ? `${groupedDateType.type} Auctions on ${new Date(groupedDateType.date).toLocaleDateString()}` : 'Auctions'}
+                        {groupedDateType ? `${groupedDateType.type} Auctions on ${new Date(groupedDateType.date + 'T00:00:00').toLocaleDateString()}` : 'Auctions'}
                     </Typography>
                     <IconButton onClick={() => setGroupedDialogOpen(false)}>
                         <CloseIcon />
@@ -145,7 +152,7 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = {}, onDateT
                             filters={{ 
                                 startDate: groupedDateType.date, 
                                 endDate: groupedDateType.date, 
-                                q: groupedDateType.type === 'Other' ? '' : groupedDateType.type 
+                                tax_status: groupedDateType.type
                             }} 
                             readOnly={true} 
                         />

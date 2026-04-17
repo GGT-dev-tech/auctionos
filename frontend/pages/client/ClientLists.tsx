@@ -27,6 +27,8 @@ interface CustomList {
     is_favorite_list: boolean;
     is_broadcasted: boolean;
     tags?: string;
+    has_upcoming_auction?: boolean;
+    upcoming_auctions_count?: number;
 }
 
 // Automatically fits the map to show all rendered markers
@@ -65,6 +67,12 @@ const ClientLists: React.FC = () => {
     const [importing, setImporting] = useState<number | null>(null);
     const [countyContacts, setCountyContacts] = useState<CountyContact[]>([]);
     const [expandedStates, setExpandedStates] = useState<Record<string, boolean>>({});
+    const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+        smart: false,
+        standard: false,
+        custom: false,
+        broadcasted: false
+    });
 
     const [creationMode, setCreationMode] = useState<'custom' | 'standard'>('custom');
     const [stateContacts, setStateContacts] = useState<StateContact[]>([]);
@@ -358,7 +366,7 @@ const ClientLists: React.FC = () => {
     }
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto overflow-hidden bg-slate-50 dark:bg-slate-950 border-x border-slate-200 dark:border-slate-800">
+        <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-slate-50 dark:bg-slate-950 border-x border-slate-200 dark:border-slate-800">
             {/* Left Sidebar */}
             <div className="w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-xl">
                 <div className="p-4 flex justify-between items-center">
@@ -373,9 +381,169 @@ const ClientLists: React.FC = () => {
                         {/* smart lists / favorites */}
                         {lists.some(l => l.is_favorite_list) && (
                             <div>
-                                <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Smart Lists</Typography>
+                                <div 
+                                    className="flex items-center justify-between px-3 cursor-pointer group"
+                                    onClick={() => setCollapsedSections(prev => ({ ...prev, smart: !prev.smart }))}
+                                >
+                                    <Typography variant="overline" className="text-slate-400 font-bold text-[10px]">Smart Lists</Typography>
+                                    <span className={`material-symbols-outlined text-[14px] text-slate-400 transition-transform ${collapsedSections.smart ? '-rotate-90' : ''}`}>expand_more</span>
+                                </div>
+                                {!collapsedSections.smart && (
+                                    <div className="mt-1 space-y-0.5">
+                                        {lists.filter(l => l.is_favorite_list).map(list => (
+                                            <div
+                                                key={list.id}
+                                                onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
+                                                onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
+                                                onDragLeave={() => setDragOverListId(null)}
+                                                onDrop={(e) => handleDrop(e, list.id)}
+                                                className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
+                                                    ${selectedListId === list.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
+                                                    ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
+                                            >
+                                                <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-red-500'}`}>favorite</span>
+                                                <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
+                                                {list.has_upcoming_auction && (
+                                                    <div className="flex items-center gap-0.5 bg-orange-500 text-white px-1.5 py-0.5 rounded-full animate-pulse">
+                                                        <span className="material-symbols-outlined text-[10px]">gavel</span>
+                                                        <span className="text-[9px] font-black">{list.upcoming_auctions_count}</span>
+                                                    </div>
+                                                )}
+                                                <span className={`text-xs ${selectedListId === list.id ? 'text-blue-100' : 'text-slate-400'}`}>{list.property_count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {lists.some(l => l.tags === 'STANDARD') && (
+                            <div>
+                                <div 
+                                    className="flex items-center justify-between px-3 cursor-pointer group"
+                                    onClick={() => setCollapsedSections(prev => ({ ...prev, standard: !prev.standard }))}
+                                >
+                                    <Typography variant="overline" className="text-slate-400 font-bold text-[10px]">Standard Folders</Typography>
+                                    <span className={`material-symbols-outlined text-[14px] text-slate-400 transition-transform ${collapsedSections.standard ? '-rotate-90' : ''}`}>expand_more</span>
+                                </div>
+                                {!collapsedSections.standard && (
+                                    <div className="mt-1 space-y-1">
+                                        {lists.filter(l => l.tags === 'STANDARD').sort((a, b) => a.name.localeCompare(b.name)).map(list => {
+                                            // Compute dynamic county groupings if this state is selected
+                                            const isSelectedState = selectedStateName === list.name;
+                                            const stateProperties = isSelectedState ? selectedListProperties : [];
+                                            const countyMap = new Map<string, number>();
+                                            stateProperties.forEach(p => {
+                                                const c = p.county || 'Unknown County';
+                                                countyMap.set(c, (countyMap.get(c) || 0) + 1);
+                                            });
+                                            const sortedCounties = Array.from(countyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+                                            return (
+                                                <div key={list.id} className="flex flex-col">
+                                                    {/* State Header (Click to select) */}
+                                                    <div
+                                                        onClick={() => {
+                                                            setSelectedListId(null);
+                                                            setSelectedStateName(list.name);
+                                                            setSelectedCountyName(null);
+                                                            setCountyContacts([]);
+                                                            handleExpandStateList(list.id, list.name);
+                                                        }}
+                                                        onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
+                                                        onDragLeave={() => setDragOverListId(null)}
+                                                        onDrop={(e) => handleDrop(e, list.id)}
+                                                        className={`group flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer text-slate-700 dark:text-slate-300 transition-colors 
+                                                            ${selectedStateName === list.name && !selectedCountyName ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 shadow-sm' : 'hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
+                                                            ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${expandedStates[list.name] ? 'rotate-90 text-blue-500' : 'text-slate-400'}`}>
+                                                                chevron_right
+                                                            </span>
+                                                            <span className="text-sm font-bold truncate tracking-tight">{list.name}</span>
+                                                            {list.has_upcoming_auction && (
+                                                                <div className="flex items-center gap-0.5 bg-orange-500 text-white px-1.5 py-0.5 rounded-full">
+                                                                    <span className="material-symbols-outlined text-[10px]">gavel</span>
+                                                                    <span className="text-[9px] font-black">{list.upcoming_auctions_count}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    className="p-0.5"
+                                                                    onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
+                                                                >
+                                                                    <Trash2Icon size={12} className={selectedStateName === list.name && !selectedCountyName ? 'text-blue-600' : 'text-slate-400'} />
+                                                                </IconButton>
+                                                            </div>
+                                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${selectedStateName === list.name && !selectedCountyName ? 'text-blue-600 bg-blue-200/50 dark:bg-blue-800/50 dark:text-blue-300' : 'text-slate-400 bg-slate-200 dark:bg-slate-800'}`}>
+                                                                {list.property_count} Props
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Expanded Dynamic County Lists */}
+                                                    {expandedStates[list.name] && isSelectedState && sortedCounties.length > 0 && (
+                                                        <div className="mt-1 ml-4 border-l-2 border-slate-200 dark:border-slate-800 pl-2 space-y-0.5">
+                                                            {sortedCounties.map(([county, count]) => {
+                                                                // Check if any property in this county has an upcoming auction
+                                                                const hasAuction = stateProperties.some(p => 
+                                                                    p.county === county && 
+                                                                    (p.auction_status === "started" || (p.auction_date && new Date(p.auction_date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000))
+                                                                );
+
+                                                                return (
+                                                                <div
+                                                                    key={`${list.id}-${county}`}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setSelectedListId(null);
+                                                                        setSelectedStateName(list.name);
+                                                                        setSelectedCountyName(county);
+                                                                        // Fetch county contacts using the existing service logic
+                                                                        countyService.getContacts(list.name, county)
+                                                                            .then(setCountyContacts)
+                                                                            .catch(() => setCountyContacts([]));
+                                                                    }}
+                                                                    className={`group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 
+                                                                        ${selectedCountyName === county ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
+                                                                >
+                                                                    <span className={`material-symbols-outlined text-[16px] ${selectedCountyName === county ? 'text-white' : 'text-emerald-500'}`}>map</span>
+                                                                    <span className="flex-1 text-sm font-medium truncate">{county}</span>
+                                                                    {hasAuction && (
+                                                                        <div className="flex items-center gap-0.5 bg-orange-500 text-white px-1.5 py-0.5 rounded-full animate-pulse shadow-sm">
+                                                                            <span className="material-symbols-outlined text-[10px]">gavel</span>
+                                                                        </div>
+                                                                    )}
+                                                                    <span className={`text-xs ${selectedCountyName === county ? 'text-emerald-100' : 'text-slate-400'}`}>{count}</span>
+                                                                </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div>
+                            <div 
+                                className="flex items-center justify-between px-3 cursor-pointer group"
+                                onClick={() => setCollapsedSections(prev => ({ ...prev, custom: !prev.custom }))}
+                            >
+                                <Typography variant="overline" className="text-slate-400 font-bold text-[10px]">Custom Folders</Typography>
+                                <span className={`material-symbols-outlined text-[14px] text-slate-400 transition-transform ${collapsedSections.custom ? '-rotate-90' : ''}`}>expand_more</span>
+                            </div>
+                            {!collapsedSections.custom && (
                                 <div className="mt-1 space-y-0.5">
-                                    {lists.filter(l => l.is_favorite_list).map(list => (
+                                    {lists.filter(l => !l.is_favorite_list && l.tags !== 'STANDARD').sort((a, b) => a.name.localeCompare(b.name)).map(list => (
                                         <div
                                             key={list.id}
                                             onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
@@ -386,184 +554,89 @@ const ClientLists: React.FC = () => {
                                                 ${selectedListId === list.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
                                                 ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
                                         >
-                                            <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-red-500'}`}>favorite</span>
-                                            <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
-                                            <span className={`text-xs ${selectedListId === list.id ? 'text-blue-100' : 'text-slate-400'}`}>{list.property_count}</span>
+                                            <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-blue-500'}`}>folder</span>
+                                            {list.has_upcoming_auction && !editingListId && (
+                                                <div className="absolute -top-1 -right-1 bg-orange-500 text-white rounded-full p-0.5 shadow-sm z-10">
+                                                    <span className="material-symbols-outlined text-[12px]">gavel</span>
+                                                </div>
+                                            )}
+                                            {editingListId === list.id ? (
+                                                <input
+                                                    autoFocus
+                                                    className="flex-1 bg-transparent border-none outline-none text-sm text-inherit p-0"
+                                                    value={editName}
+                                                    onChange={(e) => setEditName(e.target.value)}
+                                                    onBlur={handleRename}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            ) : (
+                                                <>
+                                                    <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
+                                                    {list.has_upcoming_auction && (
+                                                        <span className="text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded-md font-black">
+                                                            AUCTION
+                                                        </span>
+                                                    )}
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <IconButton
+                                                            size="small"
+                                                            className="p-0.5"
+                                                            onClick={(e) => { e.stopPropagation(); handleStartRename(list); }}
+                                                        >
+                                                            <Edit2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
+                                                        </IconButton>
+                                                        <IconButton
+                                                            size="small"
+                                                            className="p-0.5"
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
+                                                        >
+                                                            <Trash2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
+                                                        </IconButton>
+                                                    </div>
+                                                    <span className={`text-xs ${selectedListId === list.id ? 'text-blue-100' : 'text-slate-400'}`}>{list.property_count}</span>
+                                                </>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
-
-                        {/* standard folders */}
-                        {lists.some(l => l.tags === 'STANDARD') && (
-                            <div>
-                                <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Standard Folders</Typography>
-                                <div className="mt-1 space-y-1">
-                                    {lists.filter(l => l.tags === 'STANDARD').sort((a, b) => a.name.localeCompare(b.name)).map(list => {
-                                        // Compute dynamic county groupings if this state is selected
-                                        const isSelectedState = selectedStateName === list.name;
-                                        const stateProperties = isSelectedState ? selectedListProperties : [];
-                                        const countyMap = new Map<string, number>();
-                                        stateProperties.forEach(p => {
-                                            const c = p.county || 'Unknown County';
-                                            countyMap.set(c, (countyMap.get(c) || 0) + 1);
-                                        });
-                                        const sortedCounties = Array.from(countyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-
-                                        return (
-                                            <div key={list.id} className="flex flex-col">
-                                                {/* State Header (Click to select) */}
-                                                <div
-                                                    onClick={() => {
-                                                        setSelectedListId(null);
-                                                        setSelectedStateName(list.name);
-                                                        setSelectedCountyName(null);
-                                                        setCountyContacts([]);
-                                                        handleExpandStateList(list.id, list.name);
-                                                    }}
-                                                    onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
-                                                    onDragLeave={() => setDragOverListId(null)}
-                                                    onDrop={(e) => handleDrop(e, list.id)}
-                                                    className={`group flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer text-slate-700 dark:text-slate-300 transition-colors 
-                                                        ${selectedStateName === list.name && !selectedCountyName ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 shadow-sm' : 'hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
-                                                        ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${expandedStates[list.name] ? 'rotate-90 text-blue-500' : 'text-slate-400'}`}>
-                                                            chevron_right
-                                                        </span>
-                                                        <span className="text-sm font-bold truncate tracking-tight">{list.name}</span>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <IconButton
-                                                                size="small"
-                                                                className="p-0.5"
-                                                                onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
-                                                            >
-                                                                <Trash2Icon size={12} className={selectedStateName === list.name && !selectedCountyName ? 'text-blue-600' : 'text-slate-400'} />
-                                                            </IconButton>
-                                                        </div>
-                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${selectedStateName === list.name && !selectedCountyName ? 'text-blue-600 bg-blue-200/50 dark:bg-blue-800/50 dark:text-blue-300' : 'text-slate-400 bg-slate-200 dark:bg-slate-800'}`}>
-                                                            {list.property_count} Props
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Expanded Dynamic County Lists */}
-                                                {expandedStates[list.name] && isSelectedState && sortedCounties.length > 0 && (
-                                                    <div className="mt-1 ml-4 border-l-2 border-slate-200 dark:border-slate-800 pl-2 space-y-0.5">
-                                                        {sortedCounties.map(([county, count]) => (
-                                                            <div
-                                                                key={`${list.id}-${county}`}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setSelectedListId(null);
-                                                                    setSelectedStateName(list.name);
-                                                                    setSelectedCountyName(county);
-                                                                    // Fetch county contacts using the existing service logic
-                                                                    countyService.getContacts(list.name, county)
-                                                                        .then(setCountyContacts)
-                                                                        .catch(() => setCountyContacts([]));
-                                                                }}
-                                                                className={`group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 
-                                                                    ${selectedCountyName === county ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
-                                                            >
-                                                                <span className={`material-symbols-outlined text-[16px] ${selectedCountyName === county ? 'text-white' : 'text-emerald-500'}`}>map</span>
-                                                                <span className="flex-1 text-sm font-medium truncate">{county}</span>
-                                                                <span className={`text-xs ${selectedCountyName === county ? 'text-emerald-100' : 'text-slate-400'}`}>{count}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* custom folders */}
-                        <div>
-                            <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">Custom Folders</Typography>
-                            <div className="mt-1 space-y-0.5">
-                                {lists.filter(l => !l.is_favorite_list && l.tags !== 'STANDARD').sort((a, b) => a.name.localeCompare(b.name)).map(list => (
-                                    <div
-                                        key={list.id}
-                                        onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
-                                        onDragOver={(e) => { e.preventDefault(); setDragOverListId(list.id); }}
-                                        onDragLeave={() => setDragOverListId(null)}
-                                        onDrop={(e) => handleDrop(e, list.id)}
-                                        className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
-                                            ${selectedListId === list.id ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}
-                                            ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
-                                    >
-                                        <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-blue-500'}`}>folder</span>
-                                        {editingListId === list.id ? (
-                                            <input
-                                                autoFocus
-                                                className="flex-1 bg-transparent border-none outline-none text-sm text-inherit p-0"
-                                                value={editName}
-                                                onChange={(e) => setEditName(e.target.value)}
-                                                onBlur={handleRename}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
-                                        ) : (
-                                            <>
-                                                <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <IconButton
-                                                        size="small"
-                                                        className="p-0.5"
-                                                        onClick={(e) => { e.stopPropagation(); handleStartRename(list); }}
-                                                    >
-                                                        <Edit2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
-                                                    </IconButton>
-                                                    <IconButton
-                                                        size="small"
-                                                        className="p-0.5"
-                                                        onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
-                                                    >
-                                                        <Trash2Icon size={12} className={selectedListId === list.id ? 'text-white' : 'text-slate-400'} />
-                                                    </IconButton>
-                                                </div>
-                                                <span className={`text-xs ${selectedListId === list.id ? 'text-blue-100' : 'text-slate-400'}`}>{list.property_count}</span>
-                                            </>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+                            )}
                         </div>
 
                         {/* broadcasted folders */}
                         {broadcastedLists.length > 0 && (
                             <div>
-                                <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px]">From Admin</Typography>
-                                <div className="mt-1 space-y-0.5">
-                                    {[...broadcastedLists].sort((a, b) => a.name.localeCompare(b.name)).map(list => (
-                                        <div
-                                            key={list.id}
-                                            onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
-                                            className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
-                                                ${selectedListId === list.id ? 'bg-green-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
-                                        >
-                                            <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-green-500'}`}>campaign</span>
-                                            <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
-
-                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button size="small" variant="contained" color="success" className="text-[10px] py-0 min-w-0 px-2" onClick={(e) => { e.stopPropagation(); handleImportBroadcasted(list.id); }} disabled={importing === list.id}>
-                                                    {importing === list.id ? '...' : 'Save'}
-                                                </Button>
-                                            </div>
-                                            {importing !== list.id && (
-                                                <span className={`text-xs ${selectedListId === list.id ? 'text-green-100' : 'text-slate-400'}`}>{list.property_count}</span>
-                                            )}
-                                        </div>
-                                    ))}
+                                <div 
+                                    className="flex items-center justify-between px-3 cursor-pointer group"
+                                    onClick={() => setCollapsedSections(prev => ({ ...prev, broadcasted: !prev.broadcasted }))}
+                                >
+                                    <Typography variant="overline" className="text-slate-400 font-bold text-[10px]">From Admin</Typography>
+                                    <span className={`material-symbols-outlined text-[14px] text-slate-400 transition-transform ${collapsedSections.broadcasted ? '-rotate-90' : ''}`}>expand_more</span>
                                 </div>
+                                {!collapsedSections.broadcasted && (
+                                    <div className="mt-1 space-y-0.5">
+                                        {[...broadcastedLists].sort((a, b) => a.name.localeCompare(b.name)).map(list => (
+                                            <div
+                                                key={list.id}
+                                                onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
+                                                className={`group flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
+                                                    ${selectedListId === list.id ? 'bg-green-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
+                                            >
+                                                <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-green-500'}`}>campaign</span>
+                                                <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
+
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button size="small" variant="contained" color="success" className="text-[10px] py-0 min-w-0 px-2" onClick={(e) => { e.stopPropagation(); handleImportBroadcasted(list.id); }} disabled={importing === list.id}>
+                                                        {importing === list.id ? '...' : 'Save'}
+                                                    </Button>
+                                                </div>
+                                                {importing !== list.id && (
+                                                    <span className={`text-xs ${selectedListId === list.id ? 'text-green-100' : 'text-slate-400'}`}>{list.property_count}</span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -593,11 +666,25 @@ const ClientLists: React.FC = () => {
                                         ? selectedListProperties.filter(p => p.county === selectedCountyName).length
                                         : selectedListProperties.length} Properties
                                 </span>
-                                <div className="h-1 w-1 bg-slate-300 rounded-full"></div>
-                                <span className="text-xs text-slate-400">Synced to iCloud</span>
+
                             </div>
                         </div>
                     </div>
+
+                    {/* Upcoming Auction Alert Banner */}
+                    {(selectedList?.has_upcoming_auction || selectedListProperties.some(p => p.auction_status === "started" || (p.auction_date && new Date(p.auction_date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000))) && (
+                        <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/50 rounded-xl p-4 flex gap-4 items-start">
+                            <div className="size-10 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0">
+                                <span className="material-symbols-outlined text-xl">warning</span>
+                            </div>
+                            <div>
+                                <h4 className="text-orange-800 dark:text-orange-400 font-bold text-sm">Action Required: Approaching Auctions</h4>
+                                <p className="text-orange-700 dark:text-orange-500 text-xs mt-1">
+                                    One or more properties in this watchlist have an upcoming auction date within the next 7 days or have already started. Please verify funds and register to bid on the respective county portal.
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* State Folder Header */}
                     {/* State/County Folder Header */}
@@ -752,6 +839,22 @@ const ClientLists: React.FC = () => {
 
                         return (
                             <div className="space-y-3">
+                                {selectedList?.has_upcoming_auction && (
+                                    <div className="mb-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border border-orange-200 dark:border-orange-800/30 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-orange-100 dark:bg-orange-800/40 rounded-lg text-orange-600 dark:text-orange-400 shadow-inner">
+                                                <span className="material-symbols-outlined pt-0.5">notification_important</span>
+                                            </div>
+                                            <div>
+                                                <h5 className="font-extrabold text-orange-800 dark:text-orange-300 text-sm tracking-tight">Upcoming Auctions Detected!</h5>
+                                                <p className="text-xs text-orange-700 dark:text-orange-400 mt-0.5 font-medium">There are {selectedList.upcoming_auctions_count} properties in this folder scheduled for auction soon. Review them immediately.</p>
+                                            </div>
+                                        </div>
+                                        <Button variant="contained" color="warning" size="small" className="whitespace-nowrap shadow-none font-bold text-xs" onClick={() => {}}>
+                                            Review Agenda
+                                        </Button>
+                                    </div>
+                                )}
                                 {displayProperties.map((prop: any) => (
                                     <SwipeToDeleteItem key={prop.id} onDelete={() => handleRemoveProperty(prop.id)}>
                                         <div

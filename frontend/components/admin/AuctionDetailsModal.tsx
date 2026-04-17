@@ -17,9 +17,12 @@ import {
     LocationOn as LocationIcon,
     Info as InfoIcon,
     OpenInNew as OpenInNewIcon,
-    ListAlt as ListIcon
+    ListAlt as ListIcon,
+    Sync as SyncIcon
 } from '@mui/icons-material';
 import AuctionPropertiesList from './AuctionPropertiesList';
+import { AdminService } from '../../services/admin.service';
+import { RedemptionDisclaimerCard } from '../property/RedemptionDisclaimerCard';
 
 interface AuctionDetailsModalProps {
     open: boolean;
@@ -29,17 +32,39 @@ interface AuctionDetailsModalProps {
 
 export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, onClose, eventData }) => {
     const [showProperties, setShowProperties] = useState(false);
+    const [reconciling, setReconciling] = useState(false);
+    const [reconcileCount, setReconcileCount] = useState<number | null>(null);
 
     if (!eventData) return null;
 
-    const props = eventData.extendedProps;
-    const dateStr = eventData.start ? new Date(eventData.start).toLocaleDateString() : '';
+    const props = eventData.extendedProps || {};
+    const auctionId = eventData.id || props.id || props.auction_id;
+    const dateStr = eventData.start ? new Date(eventData.start).toLocaleDateString(undefined, { timeZone: 'UTC' }) : '';
+    const rawDate = eventData.startStr ? eventData.startStr.split('T')[0] : (eventData.start ? new Date(eventData.start).toISOString().split('T')[0] : undefined);
     const timeStr = eventData.start ? new Date(eventData.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-    const cleanAuctionName = eventData.title.replace(/\(\d+\)$/, '').trim();
+    const cleanAuctionName = (eventData.title || '').replace(/\(\d+\)$/, '').trim();
 
     const handleClose = () => {
         setShowProperties(false);
+        setReconcileCount(null);
         onClose();
+    };
+
+    const handleReconcile = async () => {
+        if (!auctionId) {
+            console.error("No auction ID found in eventData", eventData);
+            alert("This auction record is missing an ID. Try refreshing the calendar.");
+            return;
+        }
+        setReconciling(true);
+        try {
+            const res = await AdminService.reconcileAuctionProperties(auctionId);
+            setReconcileCount(res.linked_count);
+        } catch (err: any) {
+            alert(`Reconciliation failed: ${err.message}`);
+        } finally {
+            setReconciling(false);
+        }
     };
 
     return (
@@ -57,6 +82,8 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
                 {showProperties ? (
                     <AuctionPropertiesList
                         auctionName={cleanAuctionName}
+                        auctionDate={rawDate}
+                        auctionId={auctionId}
                         onClose={() => setShowProperties(false)}
                     />
                 ) : (
@@ -64,7 +91,10 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
                         <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                             <Chip icon={<EventIcon />} label={`${dateStr} at ${timeStr}`} color="primary" variant="outlined" />
                             {props.property_count > 0 && (
-                                <Chip icon={<ListIcon />} label={`${props.property_count} Properties`} color="secondary" variant="outlined" />
+                                <Chip icon={<ListIcon />} label={`${props.property_count} Total`} color="secondary" variant="outlined" />
+                            )}
+                            {props.available_count > 0 && (
+                                <Chip icon={<SyncIcon />} label={`${props.available_count} Available`} color="success" variant="outlined" sx={{ fontWeight: 'bold' }} />
                             )}
                             {props.tax_status && (
                                 <Chip label={props.tax_status} color={props.tax_status.toLowerCase() === 'deed' ? 'success' : 'error'} variant="filled" sx={{ fontWeight: 'bold' }} />
@@ -92,6 +122,8 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
                         )}
 
                         <Divider sx={{ my: 2 }} />
+
+                        <RedemptionDisclaimerCard state={props.state} auctionType={props.tax_status} />
 
                         <Typography variant="subtitle2" color="textSecondary" className="mb-2">Official Links</Typography>
                         <Box className="flex flex-col gap-2">
@@ -128,15 +160,33 @@ export const AuctionDetailsModal: React.FC<AuctionDetailsModalProps> = ({ open, 
             </DialogContent>
 
             {!showProperties && (
-                <DialogActions sx={{ p: 2, backgroundColor: '#f8fafc' }}>
-                    <Button onClick={handleClose} color="inherit">Close</Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setShowProperties(true)}
-                    >
-                        View Matched Properties
-                    </Button>
+                <DialogActions sx={{ p: 2, backgroundColor: '#f8fafc', justifyContent: 'space-between' }}>
+                    <Box>
+                        <Button 
+                            startIcon={<SyncIcon />} 
+                            onClick={handleReconcile} 
+                            disabled={reconciling}
+                            color="secondary"
+                            size="small"
+                        >
+                            {reconciling ? 'Syncing...' : 'Sync Properties'}
+                        </Button>
+                        {reconcileCount !== null && (
+                            <Typography variant="caption" color="success.main" sx={{ display: 'block', mt: 0.5, fontWeight: 'bold' }}>
+                                Linked {reconcileCount} properties!
+                            </Typography>
+                        )}
+                    </Box>
+                    <Box>
+                        <Button onClick={handleClose} color="inherit" sx={{ mr: 1 }}>Close</Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => setShowProperties(true)}
+                        >
+                            View Matched Properties
+                        </Button>
+                    </Box>
                 </DialogActions>
             )}
         </Dialog>

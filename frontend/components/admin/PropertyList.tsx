@@ -5,6 +5,7 @@ import { Box, Typography, Button, Dialog, DialogContent, IconButton } from '@mui
 import { useNavigate } from 'react-router-dom';
 import PropertyForm from './PropertyForm';
 import AvailabilityHistoryDashboard from './AvailabilityHistoryDashboard';
+import { calculateDealScore } from '../../intelligence/scoringEngine';
 
 interface PropertyListProps {
     filters?: any;
@@ -23,6 +24,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
         pageSize: 50,
     });
     const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
+    const [sortModel, setSortModel] = useState<any[]>([{ field: 'auction_date', sort: 'asc' }]);
 
     const fetchProperties = async () => {
         setLoading(true);
@@ -31,6 +33,11 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
             const limit = paginationModel.pageSize;
 
             const params: any = { ...filters, limit, skip };
+            
+            if (sortModel.length > 0) {
+                params.sort_field = sortModel[0].field;
+                params.sort_order = sortModel[0].sort;
+            }
 
             // Apply DataGrid server-side column filters
             filterModel.items.forEach(item => {
@@ -82,7 +89,7 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
 
     useEffect(() => {
         fetchProperties();
-    }, [filters, paginationModel, filterModel]);
+    }, [filters, paginationModel, filterModel, sortModel]);
 
     const handleEditClick = (row: any) => {
         setEditRow(row);
@@ -100,60 +107,115 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
     };
 
     const columns: GridColDef[] = [
+        {
+            field: 'deal_grade',
+            headerName: 'Grade',
+            width: 90,
+            renderCell: (params) => {
+                // Prefer persisted backend score, fall back to local engine
+                const backendRating = params.row.deal_rating;
+                const backendScore = params.row.deal_score;
+                const local = calculateDealScore(params.row);
+                const rating = backendRating || local.rating;
+                const score = backendScore !== null && backendScore !== undefined ? Math.round(backendScore) : local.score;
+                const colors: Record<string, string> = {
+                    'A+': 'bg-emerald-600 text-white',
+                    'A': 'bg-emerald-500 text-white',
+                    'B': 'bg-blue-500 text-white',
+                    'C': 'bg-amber-500 text-white',
+                    'D': 'bg-orange-500 text-white',
+                    'F': 'bg-red-500 text-white',
+                };
+                return (
+                    <div className="flex items-center gap-1">
+                        <div className={`px-2 py-0.5 rounded font-black text-[10px] ${colors[rating] || 'bg-slate-400 text-white'}`}>
+                            {rating}
+                        </div>
+                        <span className="text-[10px] text-slate-400">{score}%</span>
+                    </div>
+                );
+            }
+        },
         { field: 'parcel_id', headerName: 'Parcel Number', width: 140 },
-        { field: 'cs_number', headerName: 'C/S#', width: 90 },
-        { field: 'account_number', headerName: 'PIN', width: 100 },
+        { field: 'cs_number', headerName: 'C/S#', width: 90, valueGetter: (value, row) => row.cs_number || row.account_number || '-' },
+        { field: 'account_number', headerName: 'PIN', width: 140, valueGetter: (value, row) => row.parcel_id || row.account_number || row.pin_ppin || '-' },
         { field: 'owner_address', headerName: 'Name', width: 160 },
         { field: 'county', headerName: 'County', width: 130 },
         { field: 'state_code', headerName: 'State', width: 70 },
         {
             field: 'availability_status', headerName: 'Status', width: 110,
             type: 'singleSelect',
-            valueOptions: ['available', 'sold', 'pending', 'withdrawn'],
+            valueOptions: ['available', 'unavailable'],
             renderCell: (params) => {
                 const status = (params.value || 'unknown').toLowerCase();
                 const isAvail = status === 'available';
                 return (
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${isAvail ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {status.toUpperCase()}
+                        {isAvail ? 'AVAILABLE' : 'UNAVAILABLE'}
                     </span>
                 );
             }
         },
-        { field: 'tax_year', headerName: 'Sale Year', width: 100, type: 'number', valueFormatter: (params: any) => params?.value ?? '-' },
+        { field: 'tax_year', headerName: 'Sale Year', width: 100, type: 'number', valueFormatter: (value: any) => value ?? '-' },
         {
             field: 'amount_due', headerName: 'Amount Due', width: 110, type: 'number',
-            valueFormatter: (params: any) => {
-                const val = typeof params === 'object' ? params?.value : params;
-                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
+            valueFormatter: (value: any) => {
+                return (value !== null && value !== undefined) ? `$${Number(value).toLocaleString()}` : '-';
             }
         },
-        { field: 'lot_acres', headerName: 'Acres', width: 80, type: 'number', valueFormatter: (params: any) => params?.value ?? '-' },
+        { field: 'lot_acres', headerName: 'Acres', width: 80, type: 'number', valueFormatter: (value: any) => value != null ? `${Number(value).toFixed(2)} ac` : '-' },
         {
             field: 'assessed_value', headerName: 'Total Value', width: 110, type: 'number',
-            valueFormatter: (params: any) => {
-                const val = typeof params === 'object' ? params?.value : params;
-                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
-            }
+            valueFormatter: (value: any) => (value !== null && value !== undefined) ? `$${Number(value).toLocaleString()}` : '-'
         },
         {
             field: 'land_value', headerName: 'Land', width: 100, type: 'number',
-            valueFormatter: (params: any) => {
-                const val = typeof params === 'object' ? params?.value : params;
-                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
-            }
+            valueGetter: (value, row) => value || row.market_land_value || 0,
+            valueFormatter: (value: any) => (value !== null && value !== undefined) ? `$${Number(value).toLocaleString()}` : '-'
         },
         {
             field: 'improvement_value', headerName: 'Building', width: 100, type: 'number',
-            valueFormatter: (params: any) => {
-                const val = typeof params === 'object' ? params?.value : params;
-                return (val !== null && val !== undefined) ? `$${Number(val).toLocaleString()}` : '-';
+            valueGetter: (value, row) => value || row.market_improvement_value || 0,
+            valueFormatter: (value: any) => (value !== null && value !== undefined) ? `$${Number(value).toLocaleString()}` : '-'
+        },
+        { field: 'property_type', headerName: 'Parcel Type', width: 160, type: 'singleSelect', valueOptions: ['Land & Structures', 'Land Only', 'Improvements Only'] },
+        {
+            field: 'property_category',
+            headerName: 'Category',
+            width: 120,
+            type: 'singleSelect',
+            valueOptions: ['Lien', 'Deed', 'Foreclosure', 'Cert', 'Quit Claim'],
+            renderCell: (params) => {
+                const cat = params.value || '';
+                const catColors: Record<string, string> = {
+                    'Lien': 'bg-blue-100 text-blue-700',
+                    'Deed': 'bg-purple-100 text-purple-700',
+                    'Foreclosure': 'bg-red-100 text-red-700',
+                    'Cert': 'bg-amber-100 text-amber-700',
+                    'Quit Claim': 'bg-slate-100 text-slate-600',
+                };
+                return cat ? (
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${catColors[cat] || 'bg-slate-100 text-slate-500'}`}>
+                        {cat}
+                    </span>
+                ) : <span className="text-slate-300">—</span>;
             }
         },
-        { field: 'property_type', headerName: 'Parcel Type', width: 140, type: 'singleSelect', valueOptions: ['Vacant Land', 'Single Family', 'Multi-Family', 'Commercial', 'Agricultural', 'Industrial', 'Tax Sale', 'Over the Counter', 'Sealed Bid', 'Public Outcry', 'Tax Deed', 'Tax Lien', 'Foreclosure', 'Other'] },
         { field: 'address', headerName: 'Address', width: 180 },
-        { field: 'auction_name', headerName: 'Next Auction', width: 220 },
-        { field: 'occupancy', headerName: 'Occupancy', width: 150, type: 'singleSelect', valueOptions: ['Occupied', 'Vacant', 'Unknown'] },
+        { field: 'auction_name', headerName: 'Next Auction', width: 220, valueGetter: (value) => value || 'None Scheduled' },
+        { 
+            field: 'occupancy', 
+            headerName: 'Occupancy', 
+            width: 150, 
+            type: 'singleSelect', 
+            valueOptions: ['Occupied', 'Vacant', 'Unknown'], 
+            valueGetter: (value, row) => {
+                if (value) return value;
+                if (row.owner_occupied === true) return 'Occupied';
+                if (row.owner_occupied === false) return 'Vacant';
+                return 'Unknown';
+            } 
+        },
         {
             field: 'actions',
             type: 'actions',
@@ -228,12 +290,13 @@ const PropertyList: React.FC<PropertyListProps> = ({ filters, readOnly = false }
                     onPaginationModelChange={setPaginationModel}
                     filterModel={filterModel}
                     onFilterModelChange={setFilterModel}
-                    initialState={{
-                        sorting: { sortModel: [{ field: 'auction_date', sort: 'asc' }] }
-                    }}
+                    sortingMode="server"
+                    sortModel={sortModel}
+                    onSortModelChange={setSortModel}
                     pageSizeOptions={[20, 50, 100]}
                     disableRowSelectionOnClick
                     density="compact"
+                    onRowClick={(params) => navigate(readOnly ? `/client/properties/${params.id}` : `/admin/properties/${params.id}`)}
                     sx={{
                         border: 'none',
                         '& .MuiDataGrid-columnHeaders': {

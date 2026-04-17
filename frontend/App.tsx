@@ -11,6 +11,13 @@ import { AuctionList } from './pages/AuctionList';
 import { AuthService } from './services/auth.service';
 import PropertyManualEntry from './pages/PropertyManualEntry';
 import PropertyDetails from './pages/PropertyDetails';
+import SupportPage from './pages/SupportPage';
+import AboutPage from './pages/AboutPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import DisclaimerPage from './pages/DisclaimerPage';
+import { TaxSystemsLandingPage } from './pages/connect/TaxSystemsLandingPage';
+import { TrainingLandingPage } from './pages/connect/TrainingLandingPage';
 
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
@@ -18,6 +25,10 @@ import AdminAuctions from './pages/admin/AdminAuctions';
 import PropertyDetailPage from './pages/admin/PropertyDetailPage';
 import AdminLists from './pages/admin/AdminLists';
 import AdminResearch from './pages/admin/AdminResearch';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminImportProperties from './pages/admin/AdminImportProperties';
+import AdminImportAuctions from './pages/admin/AdminImportAuctions';
+import AdminBroadcasts from './pages/admin/AdminBroadcasts';
 
 // Client Portal Pages
 import ClientLayout from './layouts/ClientLayout';
@@ -25,6 +36,13 @@ import ClientDashboard from './pages/client/ClientDashboard';
 import ClientAuctions from './pages/client/ClientAuctions';
 import ClientProperties from './pages/client/ClientProperties';
 import ClientLists from './pages/client/ClientLists';
+import ClientSupportPage from './pages/client/SupportPage';
+import { TrainingPage, CommunityPage, GroupsPage, TaxSystemsPage } from './pages/client/EcosystemPages';
+import ChangePasswordPage from './pages/client/ChangePasswordPage';
+import CancelSubscriptionPage from './pages/client/CancelSubscriptionPage';
+import { CompanyProvider } from './context/CompanyContext';
+import ConsultantLayout from './layouts/ConsultantLayout';
+import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: string[] }> = ({ children, allowedRoles }) => {
   const user = AuthService.getCurrentUser();
@@ -33,15 +51,21 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: strin
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // Redirect to appropriate dashboard if they try to access a route they shouldn't
-    if (user.role === 'client') {
-      return <Navigate to="/client" replace />;
-    } else {
-      return <Navigate to="/dashboard" replace />;
-    }
+    // Redirect each role to its own home
+    if (user.role === 'client') return <Navigate to="/client" replace />;
+    if (user.role === 'consultant') return <Navigate to="/consultant" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
+};
+
+const RootRoute: React.FC = () => {
+  const user = AuthService.getCurrentUser();
+  if (!user) return <Landing />;
+  if (user.role === 'client') return <Navigate to="/client" replace />;
+  if (user.role === 'consultant') return <Navigate to="/consultant" replace />;
+  return <Navigate to="/dashboard" replace />;
 };
 
 const App: React.FC = () => {
@@ -50,19 +74,35 @@ const App: React.FC = () => {
       <HashRouter>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<RootRoute />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/support" element={<SupportPage />} />
+          <Route path="/contact" element={<SupportPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/disclaimer" element={<DisclaimerPage />} />
+          
+          {/* Public Ecosystem Connect Pages */}
+          <Route path="/connect/tax-systems" element={<TaxSystemsLandingPage />} />
+          <Route path="/connect/training" element={<TrainingLandingPage />} />
 
           {/* Protected Routes (Admin/Agent) */}
           <Route element={<ProtectedRoute allowedRoles={['admin', 'superuser', 'agent']}><Layout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/auctions" element={<AuctionList filters={{}} />} />
             <Route path="/admin/auctions" element={<AdminAuctions />} />
+            <Route path="/admin/properties" element={<AdminAuctions defaultTab="properties" />} />
             <Route path="/admin/properties/:id" element={<PropertyDetailPage />} />
+            <Route path="/admin/properties/:id/edit" element={<PropertyManualEntry />} />
             <Route path="/admin/lists" element={<AdminLists />} />
             <Route path="/admin/research" element={<AdminResearch />} />
+            <Route path="/admin/import/properties" element={<AdminImportProperties />} />
+            <Route path="/admin/import/auctions" element={<AdminImportAuctions />} />
+            <Route path="/admin/broadcasts" element={<AdminBroadcasts />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/properties/new" element={<PropertyManualEntry />} />
             <Route path="/properties/:id" element={<PropertyDetails />} />
@@ -70,13 +110,43 @@ const App: React.FC = () => {
           </Route>
 
           {/* Client Portal Routes */}
-          <Route path="/client" element={<ProtectedRoute allowedRoles={['client']}><ClientLayout /></ProtectedRoute>}>
+          <Route path="/client" element={
+            <ProtectedRoute allowedRoles={['client']}>
+              <CompanyProvider>
+                <ClientLayout />
+              </CompanyProvider>
+            </ProtectedRoute>
+          }>
             <Route index element={<ClientDashboard />} />
             <Route path="auctions" element={<ClientAuctions />} />
             <Route path="properties" element={<ClientProperties />} />
             <Route path="lists" element={<ClientLists />} />
             {/* Target same detail page internally handling client view restrictions */}
             <Route path="properties/:id" element={<PropertyDetailPage readOnly={true} />} />
+            {/* Ecosystem Pages */}
+            <Route path="tax-systems" element={<TaxSystemsPage />} />
+            <Route path="training" element={<TrainingPage />} />
+            <Route path="community" element={<CommunityPage />} />
+            <Route path="groups" element={<GroupsPage />} />
+            {/* Account Support Pages */}
+            <Route path="change-password" element={<ChangePasswordPage />} />
+            <Route path="contact-support" element={<ClientSupportPage />} />
+            <Route path="about" element={<AboutPage standalone={false} />} />
+            <Route path="support" element={<SupportPage standalone={false} />} />
+            <Route path="cancel-subscription" element={<CancelSubscriptionPage />} />
+          </Route>
+
+          {/* Consultant Portal Routes */}
+          <Route path="/consultant" element={
+            <ProtectedRoute allowedRoles={['consultant']}>
+              <ConsultantLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<ConsultantDashboard />} />
+            <Route path="listings" element={<ConsultantDashboard />} />
+            <Route path="tasks" element={<ConsultantDashboard />} />
+            <Route path="commissions" element={<ConsultantDashboard />} />
+            <Route path="profile" element={<ConsultantDashboard />} />
           </Route>
         </Routes>
       </HashRouter>

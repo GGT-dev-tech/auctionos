@@ -1,22 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import PropertyList from '../../components/admin/PropertyList';
 import PropertyFilters, { PropertyFilterParams } from '../../components/admin/PropertyFilters';
 import { Typography } from '@mui/material';
 
 const ClientProperties: React.FC = () => {
-    const [filters, setFilters] = useState<PropertyFilterParams>({});
+    const [searchParams] = useSearchParams();
+    const [filters, setFilters] = useState<PropertyFilterParams>(() => {
+        try {
+            const saved = sessionStorage.getItem('property_search_filters');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                return Object.keys(parsed).length > 0 ? parsed : { availability: 'available' };
+            }
+        } catch {}
+        return { availability: 'available' };
+    });
 
-    const hasActiveFilters = Object.values(filters).some(val => val !== undefined && val !== '');
+    // Save to sessionStorage whenever filters change
+    useEffect(() => {
+        sessionStorage.setItem('property_search_filters', JSON.stringify(filters));
+    }, [filters]);
+
+    // Sync URL params to filter state on mount
+    useEffect(() => {
+        const stateParam = searchParams.get('state');
+        const topParam = searchParams.get('top');
+        const initialFilters: PropertyFilterParams = { availability: 'available' };
+        
+        if (stateParam) initialFilters.state = stateParam;
+        if (topParam === 'true') {
+            initialFilters.min_score = 70;
+        }
+        
+        const hasSavedSession = sessionStorage.getItem('property_search_filters');
+        
+        // Apply defaults/URL params only if there's an explicit URL override OR no saved session
+        if (stateParam || topParam || !hasSavedSession) {
+            if (Object.keys(initialFilters).length > 0) {
+                setFilters(prev => {
+                    const isDifferent = JSON.stringify(prev) !== JSON.stringify({ ...prev, ...initialFilters });
+                    return isDifferent ? { ...prev, ...initialFilters } : prev;
+                });
+            }
+        }
+    }, [searchParams]);
+
+    // availability='available' is the default — always show results when it's set
+    const hasActiveFilters = filters.availability !== undefined || 
+        Object.entries(filters).some(([k, v]) => k !== 'availability' && v !== undefined && v !== '');
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="p-6 w-full space-y-6 px-4 sm:px-8 lg:px-12">
             <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
                 Property Search
             </Typography>
-            <PropertyFilters onFilterChange={setFilters} readOnly={true} />
+            <div className="sticky top-0 z-40 pt-2 pb-1 bg-[#F8FAFC] dark:bg-slate-950/80 backdrop-blur-md -mx-4 px-4 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
+                <PropertyFilters 
+                    onFilterChange={setFilters} 
+                    readOnly={true} 
+                    initialFilters={filters}
+                />
+            </div>
             
             {hasActiveFilters ? (
-                <div className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="w-full bg-white dark:bg-slate-800 shadow-sm rounded-xl h-[calc(100vh-250px)] flex flex-col">
                     <PropertyList filters={filters} readOnly={true} />
                 </div>
             ) : (

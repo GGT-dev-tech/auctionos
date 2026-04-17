@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/auth.service';
+import { Footer } from './Footer';
 
 export const Layout: React.FC = () => {
   const navigate = useNavigate();
@@ -12,9 +13,21 @@ export const Layout: React.FC = () => {
     navigate('/login');
   };
 
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
   const navItems = [
-    { icon: 'dashboard', label: 'Dashboard', path: '/dashboard' },
-    { icon: 'gavel', label: 'Auctions', path: '/admin/auctions' },
+    { icon: 'home', label: 'Home', path: '/dashboard' },
+    {
+      icon: 'gavel',
+      label: 'Auctions',
+      dropdown: [
+        { label: 'Auctions Dashboard', path: '/admin/auctions' },
+        { label: 'Property Manager', path: '/admin/properties' },
+        { label: 'Import Properties (CSV)', path: '/admin/import/properties' },
+        { label: 'Import Auctions (CSV)', path: '/admin/import/auctions' },
+        { label: 'System Broadcasts', path: '/admin/broadcasts' },
+      ],
+    },
     { icon: 'list_alt', label: 'My Lists', path: '/admin/lists' },
     { icon: 'map', label: 'Research', path: '/admin/research' },
     { icon: 'settings', label: 'Settings', path: '/settings' },
@@ -29,25 +42,56 @@ export const Layout: React.FC = () => {
             <div className="flex">
               <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
                 <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">A</div>
-                <span className="text-[#0d131b] dark:text-white text-lg font-bold hidden md:block">AuctionOS</span>
+                <span className="text-[#0d131b] dark:text-white text-lg font-bold hidden md:block">GoAuct</span>
               </div>
 
               {/* Desktop Nav */}
               <div className="hidden md:ml-8 md:flex md:space-x-4 items-center">
                 {navItems.map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={({ isActive }) =>
-                      `inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
-                      }`
-                    }
-                  >
-                    <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                    <span>{item.label}</span>
-                  </NavLink>
+                  <div key={item.label} className="relative group">
+                    {item.dropdown ? (
+                      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 cursor-pointer">
+                        <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                        <span>{item.label}</span>
+                        <span className="material-symbols-outlined text-[16px]">expand_more</span>
+                      </div>
+                    ) : (
+                      <NavLink
+                        to={item.path!}
+                        className={({ isActive }) =>
+                          `inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
+                          }`
+                        }
+                      >
+                        <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                        <span>{item.label}</span>
+                      </NavLink>
+                    )}
+
+                    {/* Dropdown Menu */}
+                    {item.dropdown && (
+                      <div className="absolute left-0 mt-0 w-56 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <div className="py-1">
+                          {item.dropdown.map((dropItem) => (
+                            <NavLink
+                              key={dropItem.path}
+                              to={dropItem.path}
+                              className={({ isActive }) => 
+                                `block px-4 py-2 text-sm ${isActive 
+                                  ? 'bg-slate-100 text-primary dark:bg-slate-700 dark:text-blue-400 font-bold' 
+                                  : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
+                                }`
+                              }
+                            >
+                              {dropItem.label}
+                            </NavLink>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -90,22 +134,59 @@ export const Layout: React.FC = () => {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-slate-200 dark:border-slate-700">
-            <div className="pt-2 pb-3 space-y-1 px-4">
+            <div className="pt-2 pb-3 px-4 flex flex-col gap-1">
               {navItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-md text-base font-medium ${isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                    }`
-                  }
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <span className="material-symbols-outlined">{item.icon}</span>
-                  {item.label}
-                </NavLink>
+                <div key={item.label}>
+                  {item.dropdown ? (
+                    <>
+                      <button
+                        onClick={() => setOpenDropdown(openDropdown === item.label ? null : item.label)}
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-md text-base font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="material-symbols-outlined">{item.icon}</span>
+                          {item.label}
+                        </div>
+                        <span className="material-symbols-outlined">
+                          {openDropdown === item.label ? 'expand_less' : 'expand_more'}
+                        </span>
+                      </button>
+                      {openDropdown === item.label && (
+                        <div className="pl-10 pr-3 py-2 space-y-1">
+                          {item.dropdown.map((dropItem) => (
+                            <NavLink
+                              key={dropItem.path}
+                              to={dropItem.path}
+                              className={({ isActive }) =>
+                                `block px-3 py-2 rounded-md text-sm font-medium ${isActive
+                                  ? 'bg-primary/10 text-primary'
+                                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
+                                }`
+                              }
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              {dropItem.label}
+                            </NavLink>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <NavLink
+                      to={item.path!}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 px-3 py-2.5 rounded-md text-base font-medium transition-colors ${isActive
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800'
+                        }`
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="material-symbols-outlined">{item.icon}</span>
+                      {item.label}
+                    </NavLink>
+                  )}
+                </div>
               ))}
             </div>
           </div>
@@ -116,6 +197,8 @@ export const Layout: React.FC = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Outlet />
       </main>
+
+      <Footer />
     </div>
   );
 };

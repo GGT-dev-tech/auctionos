@@ -8,3 +8,10 @@ from app.models.auction_event import AuctionEvent  # noqa
 from app.models.client_data import ClientList, ClientNote, ClientAttachment
 from app.models.system_announcement import SystemAnnouncement
 from app.models.state_contact import StateContact
+from app.models.scoring import PropertyScore  # noqa — ML scoring engine
+from app.models.notification import Notification
+from app.models.activity_log import ActivityLog
+from app.models.lead import Lead
+
+from app.models.company import Company
+from app.models.consultant import Consultant

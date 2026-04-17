@@ -49,7 +49,7 @@ class ImportService:
     async def process_properties_csv_file(file_path: str, job_id: str):
         try:
             # Using chunksize to keep memory footprint low
-            chunk_size = 20
+            chunk_size = 100
             total_rows = 0
             success_count = 0
             errors = []
@@ -78,14 +78,50 @@ class ImportService:
                         def parse_availability(raw_val):
                             if not raw_val or pd.isna(raw_val): return "available"
                             s = str(raw_val).lower().strip()
-                            return "not available" if s == "not available" else "available"
+                            # Standardize all negative terms to 'unavailable'
+                            if s in ["unavailable", "not available", "sold", "redeemed"]:
+                                return "unavailable"
+                            return "available"
+
+                        # Parse dense text blocks from zoning and legal_description
+                        def extract_dense_data(z_str, l_str):
+                            import re
+                            res = {
+                                "zoning": z_str, "subdivision": l_str,
+                                "lot_sqft": None, "lot_acres": None,
+                                "legal_desc": l_str, "parcel_shape_data": []
+                            }
+                            if z_str and isinstance(z_str, str):
+                                res["parcel_shape_data"].append(f"Zoning Data: {z_str}")
+                                m_zone = re.search(r'Zoning Code:\s*([^\s]+)', z_str)
+                                if m_zone: res["zoning"] = m_zone.group(1).strip()
+                                
+                                m_sq = re.search(r'Land Sq\. Ft:\s*([\d,]+)', z_str)
+                                if m_sq: res["lot_sqft"] = m_sq.group(1).replace(',', '')
+                                
+                                m_ac = re.search(r'Acres:\s*([\d.]+)', z_str)
+                                if m_ac: res["lot_acres"] = m_ac.group(1).strip()
+                                
+                            if l_str and isinstance(l_str, str):
+                                res["parcel_shape_data"].append(f"Legal Rules: {l_str}")
+                                m_sub = re.search(r'Subdivision Name:\s*(.*?)(?=\s+(?:Living|Adjusted|Ground|Building|#\s*of|Stories|Legal\sDescription))', l_str)
+                                if m_sub: res["subdivision"] = m_sub.group(1).strip()
+                                
+                                m_leg = re.search(r'Legal Description:\s*(.*)', l_str)
+                                if m_leg: res["legal_desc"] = m_leg.group(1).strip()
+                                
+                            # Convert array of shapes to a single text block
+                            res["parcel_shape_data"] = "\n\n".join(res["parcel_shape_data"]) if res["parcel_shape_data"] else None
+                            return res
+
+                        dense_parsed = extract_dense_data(validated_data.zoning, validated_data.legal_description)
 
                         # Prepare PropertyDetails map
                         new_avail_status = parse_availability(validated_data.availability)
                         
                         d = {
-                            "property_id": str(uuid.uuid4()),
-                            "parcel_id": validated_data.parcel_id,
+                            "property_id": validated_data.property_id if validated_data.property_id else str(uuid.uuid4()),
+                            "parcel_id": str(validated_data.parcel_id).strip() if validated_data.parcel_id else None,
                             "address": validated_data.address,
                             "owner_address": validated_data.owner_address,
                             "county": validated_data.county,
@@ -97,7 +133,7 @@ class ImportService:
                             "property_type": validated_data.type,
                             "availability_status": new_avail_status,
                             "account_number": validated_data.account,
-                            "lot_acres": validated_data.acres,
+                            "lot_acres": validated_data.acres or dense_parsed["lot_acres"],
                             "estimated_value": validated_data.estimated_arv,
                             "rental_value": validated_data.estimated_rent,
                             "improvement_value": validated_data.improvements,
@@ -109,10 +145,11 @@ class ImportService:
                             "longitude": validated_data.longitude,
                             "redfin_url": validated_data.redfin_url,
                             "redfin_estimate": validated_data.redfin_estimate,
-                            "lot_sqft": validated_data.lot_sqft,
-                            "zoning": validated_data.zoning,
-                            "subdivision": validated_data.subdivision,
-                            "legal_description": validated_data.legal_description,
+                            "lot_sqft": validated_data.lot_sqft or dense_parsed["lot_sqft"],
+                            "zoning": dense_parsed["zoning"],
+                            "subdivision": dense_parsed["subdivision"],
+                            "legal_description": dense_parsed["legal_desc"],
+                            "parcel_shape_data": dense_parsed["parcel_shape_data"],
                             "sewer_type": validated_data.sewer_type,
                             "water_type": validated_data.water_type,
                             "property_type_detail": validated_data.property_type_detail,
@@ -280,7 +317,7 @@ class ImportService:
             success_count = 0
             errors = []
 
-            chunk_size = 20
+            chunk_size = 100
             
             # Iterate in chunks manually
             for i in range(0, len(df), chunk_size):
@@ -335,10 +372,27 @@ class ImportService:
                                     }
                                     
                                     # Check exist by name and date
-                                    existing = conn.execute(
-                                        text("SELECT id FROM auction_events WHERE name = :name AND auction_date = :auction_date"), 
-                                        {"name": auction_data["name"], "auction_date": auction_data["auction_date"]}
-                                    ).fetchone()
+                                    check_query = """
+                                        SELECT id FROM auction_events 
+                                        WHERE (name = :name OR short_name = :name OR name = :short_name OR short_name = :short_name) 
+                                        AND auction_date = :auction_date
+                                    """
+                                    check_params = {
+                                        "name": auction_data["name"], 
+                                        "short_name": auction_data["short_name"],
+                                        "auction_date": auction_data["auction_date"]
+                                    }
+                                    
+                                    if validated_data.id:
+                                        check_query = """
+                                            SELECT id FROM auction_events 
+                                            WHERE id = :id 
+                                            OR ((name = :name OR short_name = :name OR name = :short_name OR short_name = :short_name) 
+                                                AND auction_date = :auction_date)
+                                        """
+                                        check_params["id"] = int(validated_data.id)
+                                    
+                                    existing = conn.execute(text(check_query), check_params).fetchone()
                                     
                                     if existing:
                                         updates = ", ".join([f"{k} = :{k}" for k in auction_data.keys() if k not in ["name", "auction_date"]])
@@ -346,6 +400,10 @@ class ImportService:
                                         update_params = {**auction_data, "id": existing[0]}
                                         conn.execute(query, update_params)
                                     else:
+                                        # Use original ID if provided
+                                        if validated_data.id:
+                                            auction_data["id"] = int(validated_data.id)
+                                        
                                         auction_data["created_at"] = datetime.utcnow()
                                         fields = ", ".join(auction_data.keys())
                                         placeholders = ", ".join([f":{k}" for k in auction_data.keys()])
@@ -386,5 +444,72 @@ class ImportService:
         except Exception as e:
             logger.error(f"Auctions Import Job Failed: {e}")
             redis.set(f"import_auctions_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
+
+    @staticmethod
+    async def process_history_mapping_csv(file_content: bytes, job_id: str):
+        try:
+            df = pd.read_csv(io.BytesIO(file_content), dtype=str)
+            total_rows = len(df)
+            success_count = 0
+            errors = []
+
+            chunk_size = 50
+            for i in range(0, len(df), chunk_size):
+                chunk = df.iloc[i:i+chunk_size]
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        with engine.begin() as conn:
+                            for index, row in chunk.iterrows():
+                                try:
+                                    row_dict = row.where(pd.notnull(row), None).to_dict()
+                                    prop_id = row_dict.get('property_id')
+                                    legacy_auction_id = row_dict.get('auction_eventId') or row_dict.get('auction_id')
+                                    
+                                    if not prop_id or not legacy_auction_id:
+                                        continue
+
+                                    # Link history to auction by the legacy ID (which we now preserve)
+                                    # Also copy auction details for historical consistency
+                                    query = text("""
+                                        INSERT INTO property_auction_history (property_id, auction_id, auction_name, auction_date, created_at)
+                                        SELECT :prop_id, a.id, a.name, a.auction_date, :created_at
+                                        FROM auction_events a
+                                        WHERE a.id = :auction_id
+                                        ON CONFLICT (property_id, auction_name) DO UPDATE SET
+                                            auction_id = EXCLUDED.auction_id,
+                                            auction_date = EXCLUDED.auction_date,
+                                            created_at = EXCLUDED.created_at
+                                    """)
+                                    conn.execute(query, {
+                                        "prop_id": prop_id,
+                                        "auction_id": int(legacy_auction_id),
+                                        "created_at": datetime.utcnow()
+                                    })
+                                    
+                                except Exception as e:
+                                    errors.append(f"Row {i + index + 2}: {str(e)}")
+                        
+                        success_count += len(chunk)
+                        if success_count % 500 == 0 or success_count == total_rows:
+                            logger.info(f"Job {job_id}: Processed {success_count} / {total_rows} history mappings...")
+                        break
+                    except OperationalError:
+                        if attempt == max_retries - 1: raise
+                        time.sleep(3)
+                    except Exception as ge:
+                        errors.append(f"Chunk error: {str(ge)}")
+                        break
+            
+            status_msg = f"History Linkage Success: {success_count} mappings processed"
+            if errors:
+                status_msg = f"Completed with {len(errors)} errors. Success: {success_count}/{total_rows}"
+                redis.set(f"import_errors:{job_id}", str(errors[:200]), ex=3600)
+            
+            redis.set(f"import_history_status:{job_id}", status_msg, ex=3600)
+            
+        except Exception as e:
+            logger.error(f"History Mapping Failed: {e}")
+            redis.set(f"import_history_status:{job_id}", f"Critical Error: {str(e)}", ex=3600)
 
 import_service = ImportService()

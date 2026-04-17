@@ -5,3 +5,4 @@ from .property import (
 )
 from .auction_event import AuctionEvent, AuctionEventCreate, AuctionEventUpdate
 from .token import Token, TokenPayload
+from .marketing import LeadCreate, LeadRead, LeadBase

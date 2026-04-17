@@ -1,7 +1,8 @@
 
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import PropertyForm from '../components/admin/PropertyForm';
+import { AdminService } from '../services/admin.service';
 import {
     FormControl,
     InputLabel,
@@ -34,9 +35,21 @@ const PropertyManualEntry: React.FC = () => {
     // For the purpose of this instruction, we're just adding the hook definition.
     // A real implementation would involve useState and passing a setter to PropertyForm.
     const [isFormDirty, setIsFormDirty] = React.useState(false);
+    const { id } = useParams();
+    const [initialData, setInitialData] = React.useState<any>(null);
+    const [loading, setLoading] = React.useState(!!id);
+
+    React.useEffect(() => {
+        if (id) {
+            AdminService.getProperty(id)
+                .then(data => { setInitialData(data); setLoading(false); })
+                .catch(err => { alert('Failed to load edit data'); setLoading(false); });
+        }
+    }, [id]);
 
     useDirtyFormWarning(isFormDirty);
 
+    if (loading) return <div>Loading editor...</div>;
     return (
         <div className="container mx-auto px-4 py-8 max-w-5xl">
             <button
@@ -53,11 +66,11 @@ const PropertyManualEntry: React.FC = () => {
             </button>
 
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Add Property</h1>
-                <p className="text-slate-500 dark:text-slate-400">Manually enter property details or use the value analysis tools.</p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{id ? 'Edit Property' : 'Add Property'}</h1>
+                <p className="text-slate-500 dark:text-slate-400">{id ? 'Update the details for this property below.' : 'Manually enter property details or use the value analysis tools.'}</p>
             </div>
 
-            <PropertyForm onSuccess={() => navigate('/inventory')} />
+            <PropertyForm initialData={initialData} onSuccess={() => navigate(-1)} />
         </div>
     );
 };

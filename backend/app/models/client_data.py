@@ -15,17 +15,20 @@ class ClientList(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="SET NULL"), nullable=True, index=True)
     name = Column(String(255), nullable=False)
     is_favorite_list = Column(Boolean, default=False)
     is_broadcasted = Column(Boolean, default=False)
     tags = Column(String(500), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    user = relationship("User", backref="client_lists")
+    # Use backref (one-sided) to avoid conflicts with User model
+    user = relationship("User", backref="client_lists_rel", foreign_keys=[user_id])
+    company = relationship("Company", back_populates="lists")
     properties = relationship(
         "PropertyDetails",
         secondary=client_list_property,
-        backref="client_lists"
+        backref="client_lists_rel"
     )
 
 class ClientNote(Base):
@@ -37,8 +40,8 @@ class ClientNote(Base):
     note_text = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    user = relationship("User", backref="client_notes")
-    property = relationship("PropertyDetails", backref="client_notes")
+    user = relationship("User", backref="client_notes_rel")
+    property = relationship("PropertyDetails", backref="client_notes_rel")
 
 class ClientAttachment(Base):
     __tablename__ = "client_attachments"
@@ -50,5 +53,5 @@ class ClientAttachment(Base):
     filename = Column(String(255), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    user = relationship("User", backref="client_attachments")
-    property = relationship("PropertyDetails", backref="client_attachments")
+    user = relationship("User", backref="client_attachments_rel")
+    property = relationship("PropertyDetails", backref="client_attachments_rel")

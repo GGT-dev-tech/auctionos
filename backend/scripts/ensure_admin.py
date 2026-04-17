@@ -11,7 +11,7 @@ from app.models.user import User
 def ensure_admin():
     db = SessionLocal()
     try:
-        user = db.query(User).filter(User.email == "admin@auctionpro.com").first()
+        user = db.query(User).filter(User.email == "admin@goauct.com").first()
         if user:
             print(f"Found user {user.email}. Superuser: {user.is_superuser}")
             if not user.is_superuser or user.role != "admin":
@@ -23,10 +23,10 @@ def ensure_admin():
             else:
                 print("User already has correct permissions.")
         else:
-            print("User admin@auctionpro.com not found. Creating...")
+            print("User admin@goauct.com not found. Creating...")
             from app.core.security import get_password_hash
             new_user = User(
-                email="admin@auctionpro.com",
+                email="admin@goauct.com",
                 hashed_password=get_password_hash("password"),
                 is_superuser=True,
                 is_active=True,

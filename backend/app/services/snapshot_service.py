@@ -9,9 +9,9 @@ from app.core.config import settings # Assuming settings exist, or we use os.get
 # We can reuse the connection logic or call the API.
 # Since this runs inside the backend, we can access DB directly using the GIS connection.
 
-POSTGRES_DATABASE_URL = os.getenv("POSTGRES_URL", "postgresql://postgres:postgres@postgis:5432/auctionos_gis")
+POSTGRES_DATABASE_URL = os.getenv("POSTGRES_URL", "postgresql://postgres:postgres@postgis:5432/goauct_gis")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-S3_BUCKET = os.getenv("S3_BUCKET", "auctionos-bucket")
+S3_BUCKET = os.getenv("S3_BUCKET", "goauct-bucket")
 
 class SnapshotService:
     @staticmethod

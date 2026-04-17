@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Any
 class GeocodingService:
     def __init__(self):
         self.base_url = "https://nominatim.openstreetmap.org/search"
-        self.user_agent = "AuctionOS/1.0"
+        self.user_agent = "GoAuct/1.0"
 
     async def get_coordinates(self, address: str, multiple: bool = False) -> Any:
         """

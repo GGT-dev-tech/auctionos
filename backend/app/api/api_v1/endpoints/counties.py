@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.county_contact import CountyContact
+from app.services.county_contact_service import county_contact_service
 
 router = APIRouter()
 STATE_ABBREVIATIONS = {
@@ -27,17 +28,30 @@ def get_county_contacts(
     Retrieve contact information dynamically from the database for a specific county.
     """
     state_query = state.lower().strip()
-    state_query = STATE_ABBREVIATIONS.get(state_query, state_query)
+    state_abbr = STATE_ABBREVIATIONS.get(state_query, state_query)
     county_query = county.lower().strip()
     
+    # Priority: CSV contact data
+    csv_contacts = county_contact_service.get_contacts(state_abbr, county_query)
+    
+    # DB contacts (if any exist)
     db_contacts = db.query(CountyContact).filter(
-        CountyContact.state == state_query,
+        CountyContact.state == state_abbr,
         CountyContact.county == county_query
     ).all()
     
-    results = [
-        {"name": c.name, "phone": c.phone or "", "url": c.url or ""}
-        for c in db_contacts
-    ]
+    # Merge matches (avoiding duplication by name or just concatenating)
+    # Since CSV is the primary directed source, we use it first.
+    final_results = csv_contacts
     
-    return results
+    # Add unique DB contacts if they aren't in CSV
+    csv_names = {c['name'].lower() for c in csv_contacts}
+    for c in db_contacts:
+        if c.name.lower() not in csv_names:
+            final_results.append({
+                "name": c.name, 
+                "phone": c.phone or "", 
+                "url": c.url or ""
+            })
+    
+    return final_results

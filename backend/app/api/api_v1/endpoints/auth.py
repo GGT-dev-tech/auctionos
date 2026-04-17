@@ -1,22 +1,56 @@
+import secrets
 from datetime import timedelta
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.core import security
 from app.core.config import settings
+from app.core.oauth import oauth
 from app.models.user import User
 from app.schemas.token import Token
 from app.schemas.user import UserCreate, User as UserSchema
 
 router = APIRouter()
 
+
+@router.post("/login/consultant", response_model=Token)
+def login_consultant(
+    db: Session = Depends(deps.get_db),
+    form_data: OAuth2PasswordRequestForm = Depends(),
+) -> Any:
+    """
+    Dedicated login for consultant partners.
+    Only allows users with role='consultant' to authenticate.
+    Prevents investors/admins from accidentally using the consultant portal.
+    """
+    email = form_data.username.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user or not security.verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive account")
+    if user.role != "consultant":
+        raise HTTPException(
+            status_code=403,
+            detail="This endpoint is for consultant accounts only. Please use the standard login."
+        )
+
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    return {
+        "access_token": security.create_access_token(user.id, expires_delta=access_token_expires),
+        "token_type": "bearer",
+    }
+
 @router.post("/login/access-token", response_model=Token)
 def login_access_token(
     db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
-    user = db.query(User).filter(User.email == form_data.username).first()
+    email = form_data.username.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
     if not user or not security.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
@@ -36,15 +70,23 @@ def register_user(
     db: Session = Depends(deps.get_db),
     user_in: UserCreate,
 ) -> Any:
-    user = db.query(User).filter(User.email == user_in.email).first()
-    if user:
-        raise HTTPException(status_code=400, detail="The user already exists.")
-    
+    # Only allow public signup for client and consultant roles
+    allowed_roles = {"client", "consultant"}
+    requested_role = (user_in.role or "client").strip().lower()
+    if requested_role not in allowed_roles:
+        requested_role = "client"   # Silently default — no escalation via public API
+
+    email = user_in.email.strip().lower()
+    existing = db.query(User).filter(User.email == email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="An account with this email already exists.")
+
     user = User(
-        email=user_in.email,
+        email=email,
         hashed_password=security.get_password_hash(user_in.password),
-        is_superuser=user_in.is_superuser,
-        role=user_in.role,
+        full_name=user_in.full_name,
+        is_superuser=False,         # Never allow self-registration as superuser
+        role=requested_role,
     )
     db.add(user)
     db.commit()
@@ -56,7 +98,7 @@ def reset_admin_production(secret: str, db: Session = Depends(deps.get_db)):
     if secret != "ResetAdmin2026Secure!":
         raise HTTPException(status_code=403, detail="Invalid secret")
     
-    email = "admin@auctionpro.com"
+    email = "admin@goauct.com"
     temp_password = "AdminSecurePass123!"
     
     existing_user = db.query(User).filter(User.email == email).first()
@@ -76,3 +118,95 @@ def reset_admin_production(secret: str, db: Session = Depends(deps.get_db)):
     
     db.commit()
     return {"message": "Success", "details": msg}
+
+@router.get("/login/{provider}")
+async def login_oauth(request: Request, provider: str):
+    """
+    Redirect the user to the given provider (google or facebook).
+    """
+    client = getattr(oauth, provider, None)
+    if not client:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Provider {provider} not configured. Please ensure {provider.upper()}_CLIENT_ID and {provider.upper()}_CLIENT_SECRET are set in environment variables."
+        )
+    
+    try:
+        redirect_uri = request.url_for('oauth_callback', provider=provider, _external=True)
+    except Exception:
+        # Robust fallback for proxy/load-balancer environments where url_for might fail
+        base_url = str(request.base_url).rstrip("/")
+        redirect_uri = f"{base_url}{settings.API_V1_STR}/auth/callback/{provider}"
+        
+    # Ensure scheme is https in production (ProxyHeadersMiddleware also helps)
+    if "https://" not in str(redirect_uri) and "localhost" not in str(redirect_uri) and "127.0.0.1" not in str(redirect_uri):
+        redirect_uri = str(redirect_uri).replace("http://", "https://")
+    
+    # 🚨 DIAGNOSTIC LOG: This will appear in Railway Logs
+    print(f">>> OAUTH REDIRECT URI: {redirect_uri}")
+        
+    return await client.authorize_redirect(request, str(redirect_uri))
+
+@router.get("/callback/{provider}", name="oauth_callback", response_model=Token)
+async def auth_callback(request: Request, provider: str, db: Session = Depends(deps.get_db)):
+    """
+    OAuth Callback handler. Verifies token, fetches user info and grants access.
+    """
+    client = getattr(oauth, provider, None)
+    if not client:
+        raise HTTPException(status_code=400, detail="Invalid provider")
+    
+    try:
+        token = await client.authorize_access_token(request)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error authenticating with {provider}")
+    
+    # Extract user info
+    user_info = None
+    if provider == 'google':
+        user_info = token.get('userinfo')
+    elif provider == 'facebook':
+        # Facebook returns a normal dict, we fetch profile info via API
+        resp = await client.get('me?fields=id,name,email', token=token)
+        user_info = resp.json()
+    
+    if not user_info or not user_info.get('email'):
+        raise HTTPException(status_code=400, detail="Failed to fetch email from provider")
+    
+    email = user_info['email'].strip().lower()
+    
+    # Check if user exists
+    user = db.query(User).filter(User.email == email).first()
+    
+    if not user:
+        # Create user with a secure random password since they logged in via OAuth
+        random_password = secrets.token_urlsafe(32)
+        user = User(
+            email=email,
+            hashed_password=security.get_password_hash(random_password),
+            full_name=user_info.get('name') or user_info.get('given_name') or None,
+            is_active=True,
+            is_superuser=False,
+            role="client"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    elif not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+        
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
+        user.id, expires_delta=access_token_expires
+    )
+
+    frontend_url = settings.FRONTEND_URL
+    if "localhost" in str(request.base_url) or "127.0.0.1" in str(request.base_url):
+        frontend_url = "http://localhost:5173"
+
+    # Route based on role: consultants go to their own portal
+    if user.role == "consultant":
+        redirect_url = f"{frontend_url}/#/login?token={access_token}&mode=consultant"
+    else:
+        redirect_url = f"{frontend_url}/#/login?token={access_token}"
+    return RedirectResponse(url=redirect_url)

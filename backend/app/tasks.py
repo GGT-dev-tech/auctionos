@@ -43,7 +43,7 @@ def resolve_property_auction_links_task(job_id: str):
                 SET auction_id = ae.id
                 FROM auction_events ae
                 WHERE pah.auction_id IS NULL 
-                  AND pah.auction_name = ae.name 
+                  AND (pah.auction_name = ae.name OR pah.auction_name = ae.short_name)
                   AND pah.auction_date = ae.auction_date;
             """)
             result = conn.execute(query)
@@ -53,11 +53,140 @@ def resolve_property_auction_links_task(job_id: str):
         logger.error(f"Failed to resolve linkages: {e}")
         return {"status": "error", "message": str(e)}
 
-@celery_app.task(acks_late=True, name="app.tasks.import_properties_celery_task")
-def import_properties_celery_task(file_path: str, job_id: str):
+@celery_app.task(acks_late=True, name="app.tasks.reconcile_property_statuses_task")
+def reconcile_property_statuses_task():
     """
-    Worker task to process large CSV property imports.
+    Automatic task to reconcile property statuses based on passed auction dates.
+    Runs daily via Celery Beat.
     """
-    logger.info(f"Worker starting import task {job_id} for file {file_path}")
-    from app.services.import_service import import_service
-    return run_async(import_service.process_properties_csv_file(file_path, job_id))
+    logger.info("Starting automatic status reconciliation task.")
+    from app.db.session import engine
+    from sqlalchemy import text
+    from datetime import datetime
+    
+    current_date = datetime.utcnow().date()
+    now = datetime.utcnow()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    try:
+        with engine.begin() as conn:
+            # 1. Update status
+            update_query = text("""
+                UPDATE property_details p
+                SET availability_status = 'unavailable'
+                FROM property_auction_history pah
+                WHERE p.property_id = pah.property_id
+                  AND pah.auction_date < :current_date
+                  AND p.availability_status = 'available';
+            """)
+            result = conn.execute(update_query, {"current_date": current_date})
+            
+            # 2. Log History
+            if result.rowcount > 0:
+                history_query = text("""
+                    INSERT INTO property_availability_history (property_id, previous_status, new_status, change_source, changed_at)
+                    SELECT p.property_id, 'available', 'unavailable', 'auto_reconciliation_past_auction', :now
+                    FROM property_details p
+                    JOIN property_auction_history pah ON p.property_id = pah.property_id
+                    WHERE pah.auction_date < :current_date
+                      AND p.availability_status = 'unavailable'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM property_availability_history pah2 
+                          WHERE pah2.property_id = p.property_id 
+                          AND pah2.change_source = 'auto_reconciliation_past_auction'
+                          AND pah2.changed_at > :today_start
+                      );
+                """)
+                conn.execute(history_query, {"current_date": current_date, "now": now, "today_start": today_start})
+                
+            logger.info(f"Auto-reconciliation complete. Updated {result.rowcount} properties.")
+            return {"status": "success", "updated_count": result.rowcount}
+    except Exception as e:
+        logger.error(f"Auto-reconciliation failed: {e}")
+        return {"status": "error", "message": str(e)}
+
+@celery_app.task(acks_late=True, name="app.tasks.check_watchlists_task")
+def check_watchlists_task():
+    """
+    Scans client lists for properties with upcoming auctions
+    and generates notifications for users.
+    """
+    logger.info("Starting watchlist check task.")
+    from app.db.session import engine
+    from sqlalchemy import text
+    from datetime import datetime, timedelta
+    
+    current_date = datetime.utcnow().date()
+    target_date = current_date + timedelta(days=7)
+    now = datetime.utcnow()
+    
+    try:
+        with engine.begin() as conn:
+            query = text("""
+                SELECT 
+                    cl.user_id, 
+                    clp.property_id, 
+                    pd.parcel_id, 
+                    pah.auction_date, 
+                    pah.auction_id,
+                    pd.address
+                FROM client_lists cl
+                JOIN client_list_property clp ON cl.id = clp.list_id
+                JOIN property_details pd ON clp.property_id = pd.id
+                JOIN property_auction_history pah ON pd.property_id = pah.property_id
+                WHERE pah.auction_date BETWEEN :current_date AND :target_date
+                  AND LOWER(TRIM(pd.availability_status)) = 'available'
+            """)
+            results = conn.execute(query, {
+                "current_date": current_date, 
+                "target_date": target_date
+            }).fetchall()
+            
+            notifications = []
+            for row in results:
+                user_id, property_pk, parcel_id, auction_date, auction_id, address = row
+                
+                days_left = (auction_date.date() - current_date).days if hasattr(auction_date, 'date') else (datetime.strptime(str(auction_date), "%Y-%m-%d").date() - current_date).days
+                
+                if days_left <= 2:
+                    msg_type = "auction_starting_soon"
+                    message = f"Auction starting soon! {address or parcel_id} is up for auction in {days_left} day(s)."
+                else:
+                    msg_type = "auction_approaching"
+                    message = f"Auction approaching: {address or parcel_id} will be auctioned on {auction_date}."
+                
+                # Deduplicate: Check if a notification for this user, property, and auction_date already exists
+                check_query = text("""
+                    SELECT id FROM notifications 
+                    WHERE user_id = :user_id 
+                      AND property_id = :property_id 
+                      AND type = :type 
+                      AND DATE(created_at) = :today
+                """)
+                exists = conn.execute(check_query, {
+                    "user_id": user_id, 
+                    "property_id": parcel_id, 
+                    "type": msg_type,
+                    "today": current_date
+                }).fetchone()
+                
+                if not exists:
+                    insert_query = text("""
+                        INSERT INTO notifications (user_id, type, message, property_id, auction_id, created_at)
+                        VALUES (:user_id, :type, :message, :property_id, :auction_id, :now)
+                    """)
+                    conn.execute(insert_query, {
+                        "user_id": user_id,
+                        "type": msg_type,
+                        "message": message,
+                        "property_id": parcel_id,
+                        "auction_id": auction_id,
+                        "now": now
+                    })
+                    notifications.append(row)
+                    
+            logger.info(f"Watchlist check complete. Generated {len(notifications)} notifications.")
+            return {"status": "success", "notifications_generated": len(notifications)}
+    except Exception as e:
+        logger.error(f"Watchlist check failed: {e}")
+        return {"status": "error", "message": str(e)}

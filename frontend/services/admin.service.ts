@@ -100,5 +100,29 @@ export const AdminService = {
         });
         if (!response.ok) throw new Error('Delete failed');
         return response.json();
+    },
+
+    reconcileAuctionProperties: async (auctionId: number): Promise<any> => {
+        const response = await fetch(`${API_URL}/properties/reconcile/${auctionId}`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Reconciliation failed');
+        }
+        return response.json();
+    },
+
+    enrichProperty: async (propertyId: string): Promise<any> => {
+        const response = await fetch(`${API_URL}/properties/${propertyId}/enrich`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || 'Enrichment failed');
+        }
+        return response.json();
     }
 };

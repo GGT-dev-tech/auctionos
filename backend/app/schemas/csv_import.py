@@ -1,25 +1,18 @@
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, validator, root_validator, ConfigDict
 from typing import Optional, Union, List, Any
 from datetime import datetime
 import pandas as pd
+import re
 
 def parse_date(v):
     if v is None or pd.isna(v) or v == '':
         return None
-    try:
-        # Pydantic's default date parser is quite good, but we can add custom logic here
-        # For now let Pydantic handle ISO strings
-        return v
-    except:
-        return None
-
-import re
+    return v
 
 def parse_float(v):
     if v is None or pd.isna(v) or v == '':
         return None
     if isinstance(v, str):
-        # Extract the first numeric match (handles "$1,500.00" -> 1500.00 or "0.19 acres" -> 0.19)
         clean_str = v.replace(',', '')
         match = re.search(r'[-+]?\d*\.?\d+', clean_str)
         if match:
@@ -28,14 +21,17 @@ def parse_float(v):
     return float(v)
 
 class PropertyCSVRow(BaseModel):
-    parcel_id: str = Field(alias="Parcel ID")
-    address: Optional[str] = Field(None, alias="parcel_address")
-    type: Optional[str] = Field("residential")
+    model_config = ConfigDict(populate_by_name=True)
+
+    property_id: Optional[str] = Field(None, alias="property_id")
+    parcel_id: str = Field(..., alias="parcel_id")
+    address: Optional[str] = Field(None, alias="address")
+    type: Optional[str] = Field("residential", alias="property_type")
     description: Optional[str] = None
     
     # Financials
     amount_due: Optional[float] = None
-    total_value: Optional[float] = Field(None, alias="total_value")
+    total_value: Optional[float] = Field(None, alias="assessed_value")
     land_value: Optional[float] = None
     improvements: Optional[float] = None
     estimated_arv: Optional[float] = None
@@ -44,7 +40,7 @@ class PropertyCSVRow(BaseModel):
 
     # Location
     county: Optional[str] = None
-    state_code: Optional[str] = None
+    state_code: Optional[str] = Field(None, alias="state")
     coordinates: Optional[str] = None # coordinates: "lat, lon" or "lat lon"
 
     # Auction Info
@@ -55,8 +51,8 @@ class PropertyCSVRow(BaseModel):
     
     # Details
     account: Optional[str] = None
-    acres: Optional[float] = None
-    tax_sale_year: Optional[Union[float, int]] = None
+    acres: Optional[float] = Field(None, alias="lot_acres")
+    tax_sale_year: Optional[Union[float, int]] = Field(None, alias="tax_year")
     date: Optional[str] = None
     cs_number: Optional[str] = None
     parcel_code: Optional[str] = None
@@ -65,7 +61,7 @@ class PropertyCSVRow(BaseModel):
     purchase_option_type: Optional[str] = None
     vacancy: Optional[str] = None
     owner_address: Optional[str] = None
-    availability: Optional[str] = Field(None, alias="Availability")
+    availability: Optional[str] = Field(None, alias="availability_status")
     
     # New Extended Fields (V3)
     redfin_url: Optional[str] = None
@@ -93,6 +89,9 @@ class PropertyCSVRow(BaseModel):
         return str(v).strip()
 
 class AuctionCSVRow(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: Optional[Union[int, str]] = Field(None, alias="id")
     name: str = Field(alias="Name")
     short_name: Optional[str] = Field(None, alias="Short Name")
     tax_status: Optional[str] = Field(None, alias="Tax Status")
@@ -112,6 +111,36 @@ class AuctionCSVRow(BaseModel):
     register_link: Optional[str] = Field(None, alias="Register Link")
     list_link: Optional[str] = Field(None, alias="List Link")
     purchase_info_link: Optional[str] = Field(None, alias="Purchase Info Link")
+
+    # Extra fields for fallback mapping from database export CSVs (lowercase)
+    @root_validator(pre=True)
+    def map_lowercase_headers(cls, values):
+        # If 'Name' is missing but 'name' exists, map it
+        if 'Name' not in values and 'name' in values:
+            values['Name'] = values['name']
+        if 'Short Name' not in values and 'short_name' in values:
+            values['Short Name'] = values['short_name']
+        if 'Tax Status' not in values and 'tax_status' in values:
+            values['Tax Status'] = values['tax_status']
+        if 'Parcels' not in values and 'parcels_count' in values:
+            values['Parcels'] = values['parcels_count']
+        if 'County Name' not in values and 'county' in values:
+            values['County Name'] = values['county']
+        if 'County Code' not in values and 'county_code' in values:
+            values['County Code'] = values['county_code']
+        if 'Auction Date' not in values and 'auction_date' in values:
+            values['Auction Date'] = values['auction_date']
+        if 'Search Link' not in values and 'search_link' in values:
+            values['Search Link'] = values['search_link']
+        if 'Register Date' not in values and 'register_date' in values:
+            values['Register Date'] = values['register_date']
+        if 'Register Link' not in values and 'register_link' in values:
+            values['Register Link'] = values['register_link']
+        if 'List Link' not in values and 'list_link' in values:
+            values['List Link'] = values['list_link']
+        if 'Purchase Info Link' not in values and 'purchase_info_link' in values:
+            values['Purchase Info Link'] = values['purchase_info_link']
+        return values
 
     @validator('name')
     def validate_name(cls, v):

@@ -1,9 +1,10 @@
 from typing import List, Optional, Any
 from datetime import date
 from sqlalchemy.orm import Session
-from sqlalchemy import asc, or_, text
+from sqlalchemy import asc, or_, text, func
 from fastapi.encoders import jsonable_encoder
 from app.models.auction_event import AuctionEvent
+from app.models.property import PropertyDetails, PropertyAuctionHistory
 from app.schemas.auction_event import AuctionEventCreate, AuctionEventUpdate
 
 class AuctionRepository:
@@ -21,8 +22,9 @@ class AuctionRepository:
         min_parcels: Optional[int] = None,
         max_parcels: Optional[int] = None,
         q: Optional[str] = None,
+        tax_status: Optional[str] = None,
         sort_by_date: bool = True
-    ) -> tuple[List[AuctionEvent], int]:
+    ) -> tuple[List[Any], int]:
         query = db.query(AuctionEvent)
 
         if name:
@@ -30,16 +32,22 @@ class AuctionRepository:
                 AuctionEvent.name.ilike(f"%{name}%"),
                 AuctionEvent.short_name.ilike(f"%{name}%")
             ))
+        # ... (rest of filtering logic remains same)
         if state:
             query = query.filter(AuctionEvent.state.ilike(f"%{state}%"))
         if county:
             query = query.filter(AuctionEvent.county.ilike(f"%{county}%"))
+        # ...
         if is_presential is not None:
+            from sqlalchemy import and_, not_
             if is_presential:
-                query = query.filter(or_(
-                    ~AuctionEvent.location.ilike("%online%"),
-                    AuctionEvent.location.is_(None)
-                ))
+                query = query.filter(
+                    and_(
+                        AuctionEvent.location.isnot(None),
+                        AuctionEvent.location != '',
+                        ~AuctionEvent.location.ilike("%online%")
+                    )
+                )
             else:
                 query = query.filter(AuctionEvent.location.ilike("%online%"))
         if start_date:
@@ -59,17 +67,26 @@ class AuctionRepository:
                 AuctionEvent.county.ilike(search_param),
                 AuctionEvent.state.ilike(search_param),
                 AuctionEvent.notes.ilike(search_param),
-                AuctionEvent.location.ilike(search_param)
+                AuctionEvent.location.ilike(search_param),
+                AuctionEvent.tax_status.ilike(search_param)
             ))
+            
+        if tax_status:
+            query = query.filter(AuctionEvent.tax_status == tax_status)
 
         if sort_by_date:
             query = query.order_by(asc(AuctionEvent.auction_date))
         else:
-            query = query.order_by(AuctionEvent.auction_date.desc()) # desc by default
+            query = query.order_by(AuctionEvent.auction_date.desc())
 
         total = query.count()
-        items = query.offset(skip).limit(limit).all()
-        return items, total
+        results = query.offset(skip).limit(limit).all()
+        
+        # Alias available_count to live_available_count for the schema
+        for auction in results:
+            auction.live_available_count = auction.available_count
+            
+        return results, total
 
     def get_calendar_events(
         self, db: Session,
@@ -96,7 +113,7 @@ class AuctionRepository:
             params['county'] = f"%{county}%"
         if is_presential is not None:
             if is_presential:
-                where_clauses.append("(location NOT ILIKE '%online%' OR location IS NULL)")
+                where_clauses.append("(location IS NOT NULL AND location != '' AND location NOT ILIKE '%online%')")
             else:
                 where_clauses.append("location ILIKE '%online%'")
         if start_date:

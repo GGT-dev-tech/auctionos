@@ -4,7 +4,7 @@ from app.models.property import Property
 class PDFReport(FPDF):
     def header(self):
         self.set_font('Arial', 'B', 15)
-        self.cell(0, 10, 'AuctionOS Property Report', 0, 1, 'C')
+        self.cell(0, 10, 'GoAuct Property Report', 0, 1, 'C')
         self.ln(10)
 
     def footer(self):

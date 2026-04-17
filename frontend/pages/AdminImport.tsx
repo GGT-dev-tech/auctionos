@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UploadWizard } from '../components/UploadWizard';
 import { Box, Tab, Tabs, Typography } from '@mui/material';
-import { Home as HomeIcon, Gavel as GavelIcon } from '@mui/icons-material';
+import { Home as HomeIcon, Gavel as GavelIcon, Link as LinkIcon } from '@mui/icons-material';
 
 export default function AdminImport() {
     const [tabIndex, setTabIndex] = useState(0);
@@ -18,6 +18,7 @@ export default function AdminImport() {
                 <Tabs value={tabIndex} onChange={handleTabChange} aria-label="import tabs">
                     <Tab icon={<HomeIcon />} iconPosition="start" label="Import Properties" id="import-tab-0" />
                     <Tab icon={<GavelIcon />} iconPosition="start" label="Import Auctions" id="import-tab-1" />
+                    <Tab icon={<LinkIcon />} iconPosition="start" label="Property History" id="import-tab-2" />
                 </Tabs>
             </Box>
 
@@ -40,13 +41,23 @@ export default function AdminImport() {
                         />
                     </div>
                 )}
+                {tabIndex === 2 && (
+                    <div role="tabpanel" id="import-tabpanel-2" className="animate-fadeIn">
+                        <UploadWizard
+                            endpoint="/admin/import/history"
+                            title="Upload Property History CSV (Mapping)"
+                            onComplete={() => console.log("History Mapping Imported")}
+                        />
+                    </div>
+                )}
             </div>
 
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 shadow-sm">
                 <h4 className="font-bold text-blue-800 dark:text-blue-300 mb-2">Instructions</h4>
                 <ul className="list-disc list-inside text-sm text-blue-700 dark:text-blue-400 space-y-1">
                     <li><strong>Properties CSV:</strong> Must contain 'Parcel ID', 'Address', 'Amount Due', etc.</li>
-                    <li><strong>Auctions CSV:</strong> Must contain 'Auction Name', 'Date', 'Parcels' column for linking.</li>
+                    <li><strong>Auctions CSV:</strong> Must contain 'Auction Name', 'Date', etc. (Import this <strong>before</strong> history).</li>
+                    <li><strong>History CSV:</strong> Maps 'property_id' to 'auction_eventId'. (Import this <strong>last</strong>).</li>
                     <li>Large files will be processed in the background. You can navigate away safely.</li>
                 </ul>
             </div>

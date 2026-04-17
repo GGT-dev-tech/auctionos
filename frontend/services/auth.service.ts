@@ -8,22 +8,37 @@ export const AuthService = {
 
         const response = await fetch(`${API_URL}/auth/login/access-token`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: formData,
         });
 
         if (!response.ok) {
-            throw new Error('Login failed');
+            const body = await response.json().catch(() => ({}));
+            throw new Error(body.detail || 'Login failed');
+        }
+        return response.json();
+    },
+
+    loginConsultant: async (email: string, password: string) => {
+        const formData = new URLSearchParams();
+        formData.append('username', email);
+        formData.append('password', password);
+
+        const response = await fetch(`${API_URL}/auth/login/consultant`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+            throw new Error(body.detail || 'Consultant login failed');
         }
         return response.json();
     },
 
     getMe: async () => {
-        const response = await fetch(`${API_URL}/users/me`, {
-            headers: getHeaders()
-        });
+        const response = await fetch(`${API_URL}/users/me`, { headers: getHeaders() });
         if (!response.ok) throw new Error('Failed to fetch user profile');
         return response.json();
     },
@@ -36,6 +51,7 @@ export const AuthService = {
     logout: () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/#/login';
+        window.location.href = '/#/';
     }
 };
+

@@ -30,6 +30,8 @@ class ClientListResponse(BaseModel):
     is_favorite_list: bool
     is_broadcasted: bool
     tags: str | None = None
+    has_upcoming_auction: bool = False
+    upcoming_auctions_count: int = 0
 
 class ClientListUpdate(BaseModel):
     name: str | None = None
@@ -102,7 +104,27 @@ def get_client_lists(
     results = []
     for lst in lists:
         count = db.query(client_list_property).filter(client_list_property.c.list_id == lst.id).count()
-        results.append({"id": lst.id, "name": lst.name, "property_count": count, "is_favorite_list": lst.is_favorite_list, "is_broadcasted": lst.is_broadcasted, "tags": lst.tags})
+        
+        # Calculate upcoming auctions flag
+        auction_q = text("""
+            SELECT COUNT(DISTINCT pah.property_id)
+            FROM client_list_property clp
+            JOIN property_details p ON p.id = clp.property_id
+            JOIN property_auction_history pah ON pah.property_id = p.property_id
+            WHERE clp.list_id = :list_id AND pah.auction_date >= CURRENT_DATE
+        """)
+        upcoming_count = db.execute(auction_q, {"list_id": lst.id}).scalar() or 0
+        
+        results.append({
+            "id": lst.id, 
+            "name": lst.name, 
+            "property_count": count, 
+            "is_favorite_list": lst.is_favorite_list, 
+            "is_broadcasted": lst.is_broadcasted, 
+            "tags": lst.tags,
+            "has_upcoming_auction": upcoming_count > 0,
+            "upcoming_auctions_count": upcoming_count
+        })
     return results
 
 @router.get("/broadcasted")
@@ -117,7 +139,25 @@ def get_broadcasted_lists(
     results = []
     for lst in broadcasted:
         count = db.query(client_list_property).filter(client_list_property.c.list_id == lst.id).count()
-        results.append({"id": lst.id, "name": lst.name, "property_count": count, "is_broadcasted": True})
+        
+        # Calculate upcoming auctions flag
+        auction_q = text("""
+            SELECT COUNT(DISTINCT pah.property_id)
+            FROM client_list_property clp
+            JOIN property_details p ON p.id = clp.property_id
+            JOIN property_auction_history pah ON pah.property_id = p.property_id
+            WHERE clp.list_id = :list_id AND pah.auction_date >= CURRENT_DATE
+        """)
+        upcoming_count = db.execute(auction_q, {"list_id": lst.id}).scalar() or 0
+
+        results.append({
+            "id": lst.id, 
+            "name": lst.name, 
+            "property_count": count, 
+            "is_broadcasted": True,
+            "has_upcoming_auction": upcoming_count > 0,
+            "upcoming_auctions_count": upcoming_count
+        })
     return results
 
 @router.post("/broadcasted/{list_id}/import")
@@ -171,7 +211,27 @@ def update_client_list(
 
     db.commit()
     count = db.query(client_list_property).filter(client_list_property.c.list_id == lst.id).count()
-    return {"id": lst.id, "name": lst.name, "property_count": count, "is_favorite_list": lst.is_favorite_list, "is_broadcasted": lst.is_broadcasted, "tags": lst.tags}
+    
+    # Calculate upcoming auctions flag
+    auction_q = text("""
+        SELECT COUNT(DISTINCT pah.property_id)
+        FROM client_list_property clp
+        JOIN property_details p ON p.id = clp.property_id
+        JOIN property_auction_history pah ON pah.property_id = p.property_id
+        WHERE clp.list_id = :list_id AND pah.auction_date >= CURRENT_DATE
+    """)
+    upcoming_count = db.execute(auction_q, {"list_id": lst.id}).scalar() or 0
+
+    return {
+        "id": lst.id, 
+        "name": lst.name, 
+        "property_count": count, 
+        "is_favorite_list": lst.is_favorite_list, 
+        "is_broadcasted": lst.is_broadcasted, 
+        "tags": lst.tags,
+        "has_upcoming_auction": upcoming_count > 0,
+        "upcoming_auctions_count": upcoming_count
+    }
 
 @router.delete("/lists/{list_id}")
 def delete_client_list(

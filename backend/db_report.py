@@ -3,7 +3,7 @@ import json
 from sqlalchemy import create_engine, inspect
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/auctionos")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@db:5432/goauct")
 engine = create_engine(DATABASE_URL)
 inspector = inspect(engine)
 

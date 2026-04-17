@@ -16,6 +16,7 @@ class AuctionEvent(Base):
     state = Column(String(100), nullable=True)
     tax_status = Column(String(100), nullable=True)
     parcels_count = Column(Integer, nullable=True, default=0)
+    available_count = Column(Integer, nullable=True, default=0)
     notes = Column(Text, nullable=True)
     
     # Links

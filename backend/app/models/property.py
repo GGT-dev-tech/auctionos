@@ -89,6 +89,12 @@ class PropertyDetails(Base):
     is_processed = Column(Boolean, nullable=True, default=False)
     map_link = Column(String(2048), nullable=True)
 
+    # ATTOM Enrichment Extracted Fields
+    owner_name = Column(String(255), nullable=True)
+    owner_occupied = Column(String(20), nullable=True)
+    apn_unformatted = Column(String(100), nullable=True)
+
+
 
 class PropertyAuctionHistory(Base):
     __tablename__ = "property_auction_history"

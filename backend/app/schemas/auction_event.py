@@ -13,6 +13,7 @@ class AuctionEventBase(BaseModel):
     state: Optional[str] = None
     tax_status: Optional[str] = None
     parcels_count: Optional[int] = 0
+    available_count: Optional[int] = 0
     notes: Optional[str] = None
     search_link: Optional[str] = None
     register_date: Optional[date] = None
@@ -28,6 +29,7 @@ class AuctionEventUpdate(AuctionEventBase):
 
 class AuctionEvent(AuctionEventBase):
     id: int
+    live_available_count: Optional[int] = 0
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

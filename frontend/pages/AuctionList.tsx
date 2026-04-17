@@ -14,6 +14,9 @@ export const AuctionList: React.FC = () => {
     const [editingAuction, setEditingAuction] = useState<AuctionEvent | undefined>(undefined);
     const [filters, setFilters] = useState<AuctionFilterParams>({});
 
+    const [sortField, setSortField] = useState<keyof AuctionEvent | ''>('');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
     const fetchAuctions = async () => {
         try {
             setIsLoading(true);
@@ -82,6 +85,28 @@ export const AuctionList: React.FC = () => {
         return acc;
     }, {} as Record<string, AuctionEvent[]>);
 
+    const handleSort = (field: keyof AuctionEvent) => {
+        if (sortField === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortOrder('asc');
+        }
+    };
+
+    const sortedAuctions = [...auctions].sort((a, b) => {
+        if (!sortField) return 0;
+        let valA = a[sortField] || '';
+        let valB = b[sortField] || '';
+        
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        
+        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+    });
+
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
@@ -144,26 +169,36 @@ export const AuctionList: React.FC = () => {
                 </div>
             </div>
 
-            <AuctionFilters onFilterChange={setFilters} />
+            <div className="sticky top-0 z-40 bg-[#F8FAFC] dark:bg-slate-950/90 backdrop-blur-md pt-2 pb-2 -mx-4 px-4 h-full">
+                <AuctionFilters onFilterChange={setFilters} />
+            </div>
 
             {viewMode === 'list' ? (
                 <div className="bg-white dark:bg-[#1a2634] rounded-xl border border-[#e7ecf3] dark:border-slate-700 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                            <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th className="px-6 py-3 font-medium">Date</th>
-                                    <th className="px-6 py-3 font-medium">Name</th>
-                                    <th className="px-6 py-3 font-medium">Location</th>
-                                    <th className="px-6 py-3 font-medium">Properties</th>
+                                    <th className="px-6 py-3 font-medium cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition" onClick={() => handleSort('auction_date')}>
+                                        Date {sortField === 'auction_date' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="px-6 py-3 font-medium cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition" onClick={() => handleSort('name')}>
+                                        Name {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="px-6 py-3 font-medium cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition" onClick={() => handleSort('location')}>
+                                        Location {sortField === 'location' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="px-6 py-3 font-medium cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition" onClick={() => handleSort('properties_count')}>
+                                        Properties {sortField === 'properties_count' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                    </th>
                                     <th className="px-6 py-3 font-medium text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {auctions.map((auction) => (
+                                {sortedAuctions.map((auction) => (
                                     <tr key={auction.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                         <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                                            {new Date(auction.auction_date).toLocaleDateString()}
+                                            {new Date(auction.auction_date + 'T00:00:00').toLocaleDateString()}
                                             {auction.time && <span className="text-xs text-slate-500 block">{auction.time}</span>}
                                         </td>
                                         <td className="px-6 py-4">
@@ -175,9 +210,15 @@ export const AuctionList: React.FC = () => {
                                             {auction.county && <span className="block text-xs">{auction.county}, {auction.state}</span>}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                                                {auction.properties_count || 0} Linked
-                                            </span>
+                                            <div className="flex flex-col gap-1">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${auction.live_available_count && auction.live_available_count > 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                                    <span className="material-symbols-outlined text-[14px] mr-1">check_circle</span>
+                                                    {auction.live_available_count || 0} Available
+                                                </span>
+                                                <span className="text-[11px] text-slate-500 dark:text-slate-400 ml-2">
+                                                    of {auction.parcels_count || 0} total parcelas
+                                                </span>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
@@ -200,7 +241,7 @@ export const AuctionList: React.FC = () => {
                                         </td>
                                     </tr>
                                 ))}
-                                {auctions.length === 0 && !isLoading && (
+                                {sortedAuctions.length === 0 && !isLoading && (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                                             No auctions found. Import a CSV or create one manually.

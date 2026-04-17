@@ -7,6 +7,8 @@ import re
 from app.api import deps
 from app.schemas.property import PropertyDashboardSchema, PaginatedPropertyResponse
 from app.models.user import User
+from app.services.reconciliation_service import reconciliation_service
+import uuid
 
 router = APIRouter()
 
@@ -18,6 +20,10 @@ def read_properties(
     county: Optional[str] = None,
     state: Optional[str] = None,
     auction_name: Optional[str] = None,
+    auction_date: Optional[str] = None,
+    auction_id: Optional[int] = None,
+    sort_field: Optional[str] = None,
+    sort_order: Optional[str] = "asc",
     min_amount_due: Optional[float] = None,
     max_amount_due: Optional[float] = None,
     property_category: Optional[str] = None,
@@ -37,7 +43,8 @@ def read_properties(
     keyword: Optional[str] = None,
     # Advanced Filters
     added_since: Optional[str] = None,
-    is_unavailable: Optional[bool] = None
+    is_unavailable: Optional[bool] = None,
+    min_score: Optional[float] = None,
 ) -> Any:
     
     # 1. Build Base Filter Query
@@ -50,9 +57,15 @@ def read_properties(
     if state:
         where_clauses.append("p.state ILIKE :state")
         params["state"] = f"%{state}%"
+    if auction_id:
+        where_clauses.append("pah.auction_id = :auction_id")
+        params["auction_id"] = auction_id
     if auction_name:
         where_clauses.append("pah.auction_name ILIKE :auction_name")
         params["auction_name"] = f"%{auction_name}%"
+    if auction_date:
+        where_clauses.append("pah.auction_date::text LIKE :auction_date")
+        params["auction_date"] = f"{auction_date}%"
     if min_amount_due is not None:
         where_clauses.append("p.amount_due >= :min_amount_due")
         params["min_amount_due"] = min_amount_due
@@ -83,8 +96,9 @@ def read_properties(
         where_clauses.append("p.improvement_value <= :max_improvements")
         params["max_improvements"] = max_improvements
     if availability:
-        where_clauses.append("p.availability_status ILIKE :availability")
-        params["availability"] = f"%{availability}%"
+        # Exact match — ILIKE with % would match 'unavailable' when searching 'available'
+        where_clauses.append("LOWER(p.availability_status) = LOWER(:availability)")
+        params["availability"] = availability
     if min_county_appraisal is not None:
         where_clauses.append("p.assessed_value >= :min_county_appraisal")
         params["min_county_appraisal"] = min_county_appraisal
@@ -136,22 +150,49 @@ def read_properties(
                 (
                     p.address ILIKE :fuzzy_k OR 
                     p.county ILIKE :fuzzy_k OR
+                    p.state ILIKE :fuzzy_k OR
                     p.owner_address ILIKE :fuzzy_k OR
                     p.description ILIKE :fuzzy_k OR
                     p.legal_description ILIKE :fuzzy_k OR
-                    p.parcel_id ILIKE :keyword
+                    p.parcel_id ILIKE :keyword OR
+                    p.cs_number ILIKE :fuzzy_k OR
+                    pah.auction_name ILIKE :fuzzy_k
                 )
             ''')
             params["fuzzy_k"] = f"%{fuzzy_k}%"
             params["keyword"] = f"%{k}%"
 
     if is_unavailable is True:
-        where_clauses.append("p.availability_status = 'not available'")
+        where_clauses.append("p.availability_status = 'unavailable'")
+
+    if min_score is not None:
+        where_clauses.append("ps.deal_score >= :min_score")
+        params["min_score"] = min_score
 
     where_str = " AND ".join(where_clauses)
 
-    # 2. Get Total Count (with same filters)
-    count_query = f"SELECT count(*) FROM property_details p LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id WHERE {where_str}"
+    # Always LEFT JOIN property_scores so deal_score/rating are always available in SELECT
+    score_join = "LEFT JOIN property_scores ps ON ps.parcel_id = p.parcel_id"
+
+    # 2. Join structure for Auction Lookup
+    # If filtering by a specific auction (name or id), we join against the full history. 
+    # Otherwise, we use DISTINCT ON to ensure 1 property = 1 row for general dashboard.
+    if auction_name or auction_id:
+        history_table = "property_auction_history"
+    else:
+        history_table = "(SELECT DISTINCT ON (property_id) * FROM property_auction_history ORDER BY property_id, auction_date DESC)"
+    
+    # Smart Auction Lookup Join (ae_lookup)
+    # This matches properties that have a next_auction_date imported from CSV 
+    # with the actual Auction Events in the system.
+    ae_join = """
+        LEFT JOIN auction_events ae_lookup ON 
+            ae_lookup.auction_date = p.next_auction_date AND 
+            ae_lookup.state ILIKE p.state AND 
+            ae_lookup.county ILIKE p.county
+    """
+
+    count_query = f"SELECT count(*) FROM property_details p LEFT JOIN {history_table} pah ON pah.property_id = p.property_id {ae_join} {score_join} WHERE {where_str}"
     total = db.execute(text(count_query), params).scalar()
 
     # 3. Get Items
@@ -162,8 +203,8 @@ def read_properties(
             p.state as state_code, 
             p.amount_due, 
             p.assessed_value,
-            pah.auction_date, 
-            pah.auction_name,
+            COALESCE(pah.auction_date, p.next_auction_date) as auction_date, 
+            TO_CHAR(p.next_auction_date, 'MM/DD/YYYY') as auction_name,
             p.cs_number,
             p.account_number,
             p.owner_address,
@@ -194,14 +235,54 @@ def read_properties(
             p.property_type_detail,
             p.import_error_msg,
             p.is_processed,
-            p.map_link
+            p.map_link,
+            COALESCE(ps.deal_score, NULL) as deal_score,
+            COALESCE(ps.rating, NULL) as deal_rating,
+            p.property_category,
+            p.market_land_value,
+            p.market_improvement_value,
+            p.owner_occupied
         FROM property_details p
-        LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
+        LEFT JOIN {history_table} pah ON pah.property_id = p.property_id
+        {ae_join}
+        {score_join}
         WHERE {where_str}
-        ORDER BY pah.auction_date ASC NULLS LAST 
+        ORDER BY {"{order_by_clause}"}
         OFFSET :skip LIMIT :limit
     """
     
+    # Ensure safe ordering
+    sort_map = {
+        "deal_grade": "p.assessed_value", 
+        "parcel_id": "p.parcel_id",
+        "cs_number": "p.cs_number",
+        "account_number": "p.account_number",
+        "owner_address": "p.owner_address",
+        "county": "p.county",
+        "state_code": "p.state",
+        "availability_status": "p.availability_status",
+        "tax_year": "p.tax_year",
+        "amount_due": "p.amount_due",
+        "lot_acres": "p.lot_acres",
+        "assessed_value": "p.assessed_value",
+        "land_value": "p.land_value",
+        "improvement_value": "p.improvement_value",
+        "property_type": "p.property_type",
+        "address": "p.address",
+        "auction_name": "pah.auction_name",
+        "auction_date": "pah.auction_date",
+        "occupancy": "p.occupancy"
+    }
+
+    order_by_clause = "pah.auction_date ASC NULLS LAST, p.parcel_id ASC"
+    if sort_field and sort_field in sort_map:
+        safe_col = sort_map[sort_field]
+        safe_dir = "DESC" if sort_order and sort_order.lower() == "desc" else "ASC"
+        order_by_clause = f"{safe_col} {safe_dir} NULLS LAST, p.parcel_id ASC"
+
+    # Format the query with the safe order_by_clause
+    items_query = items_query.format(order_by_clause=order_by_clause)
+
     result = db.execute(text(items_query), params).fetchall()
     
     items = [
@@ -243,7 +324,13 @@ def read_properties(
             "property_type_detail": r[34],
             "import_error_msg": r[35],
             "is_processed": bool(r[36]) if r[36] is not None else False,
-            "map_link": r[37]
+            "map_link": r[37],
+            "deal_score": float(r[38]) if r[38] is not None else None,
+            "deal_rating": r[39],
+            "property_category": r[40],
+            "market_land_value": r[41],
+            "market_improvement_value": r[42],
+            "owner_occupied": r[43],
         }
         for r in result
     ]
@@ -423,6 +510,16 @@ def purchase_property_action(
             # State Transition Validation
             if current_status != "available":
                 raise HTTPException(status_code=400, detail=f"Cannot purchase property. Current state is '{current_status}'. Must be 'available'.")
+            
+            # Auction Linkage Validation for non-privileged users
+            if not current_user.is_superuser:
+                auction_q = text("SELECT 1 FROM property_auction_history WHERE property_id = :prop_id LIMIT 1")
+                has_auction = db.execute(auction_q, {"prop_id": prop_id}).fetchone()
+                if has_auction:
+                    raise HTTPException(
+                        status_code=403, 
+                        detail="This property is linked to a live auction. Clients must bid via the official portal instead of direct purchase."
+                    )
                 
             # Perform atomic update
             new_status = "purchased"
@@ -478,6 +575,71 @@ def get_availability_history(
     results = db.execute(history_query, {"limit": limit}).fetchall()
     return [dict(r._mapping) for r in results]
 
+@router.get("/valuation/metrics", response_model=dict)
+def get_valuation_metrics(
+    county: str,
+    state: str,
+    city: str = None,
+    db: Session = Depends(deps.get_db),
+) -> Any:
+    """
+    Returns aggregated real-data valuation metrics (ARV and Rent estimate)
+    based on comparable properties in the same county/state (and optionally city).
+    Business rule: Values below $1000 are returned as null to prevent distortions.
+    Only 'available' properties are used as comps.
+    """
+    # Build city filter if provided
+    city_clause = "AND LOWER(address) LIKE LOWER(:city_pattern)" if city else ""
+    params: dict = {"county": county, "state": state}
+    if city:
+        params["city_pattern"] = f"%{city}%"
+
+    query = text(f"""
+        SELECT
+            AVG(NULLIF(assessed_value, 0))    AS avg_arv,
+            AVG(NULLIF(improvement_value, 0)) AS avg_improvement,
+            AVG(NULLIF(amount_due, 0))        AS avg_tax_due,
+            COUNT(id)                         AS sample_size
+        FROM property_details
+        WHERE LOWER(county) = LOWER(:county)
+          AND LOWER(state)  = LOWER(:state)
+          AND LOWER(availability_status) = 'available'
+          AND assessed_value > 0
+          {city_clause}
+    """)
+
+    res = db.execute(query, params).fetchone()
+
+    if not res or res[0] is None:
+        return {"arv": None, "rent": None, "confidence": 0, "sample_size": 0}
+
+    avg_arv         = float(res[0] or 0)
+    avg_improvement = float(res[1] or 0)
+    sample_size     = int(res[3] or 0)
+
+    # Rent estimate: 1% of ARV/month (conservative market heuristic).
+    # When improvement data is available use 60% weight on it for better accuracy.
+    if avg_improvement > 0:
+        weighted_base = (avg_arv * 0.4) + (avg_improvement * 0.6)
+    else:
+        weighted_base = avg_arv
+
+    est_rent = weighted_base * 0.01
+
+    # Business rule: Do not expose values below $1,000
+    if avg_arv < 1000 or est_rent < 1000:
+        return {"arv": None, "rent": None, "confidence": 0, "sample_size": sample_size}
+
+    confidence = min(100, sample_size * 2)  # Confidence grows with more comps
+    return {
+        "arv":         round(avg_arv, 2),
+        "rent":        round(est_rent, 2),
+        "sample_size": sample_size,
+        "confidence":  confidence,
+        "city_filtered": bool(city),
+    }
+
+
 @router.get("/{parcel_id}")
 def get_property(
     parcel_id: str,
@@ -489,9 +651,12 @@ def get_property(
         SELECT 
             p.*,
             pah.auction_name as current_auction_name, 
-            pah.auction_date as current_auction_date
+            pah.auction_date as current_auction_date,
+            COALESCE(pah.info_link, ae.register_link) as auction_info_link,
+            COALESCE(pah.list_link, ae.list_link) as auction_list_link
         FROM property_details p
         LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
+        LEFT JOIN auction_events ae ON pah.auction_id = ae.id
         WHERE p.parcel_id = :parcel_id
         ORDER BY pah.auction_date DESC
         LIMIT 1
@@ -553,7 +718,26 @@ def get_property(
         next_steps.append({"action": "Verify Occupancy", "priority": "medium", "type": "verify"})
     
     data["recommended_next_steps"] = next_steps
-    
+
+    # Fetch persisted ML score if available
+    import json as _json
+    score_row = db.execute(
+        text("SELECT deal_score, rating, score_factors, model_version, updated_at FROM property_scores WHERE parcel_id = :parcel_id"),
+        {"parcel_id": parcel_id}
+    ).fetchone()
+    if score_row:
+        data["deal_score"] = score_row[0]
+        data["deal_rating"] = score_row[1]
+        data["score_factors"] = _json.loads(score_row[2]) if score_row[2] else []
+        data["score_model_version"] = score_row[3]
+        data["score_updated_at"] = score_row[4].isoformat() if score_row[4] else None
+    else:
+        data["deal_score"] = None
+        data["deal_rating"] = None
+        data["score_factors"] = []
+        data["score_model_version"] = None
+        data["score_updated_at"] = None
+
     return data
 
 @router.get("/{parcel_id}/redirect/auction")
@@ -607,3 +791,34 @@ def log_property_action(
     )
     db.commit()
     return {"ok": True}
+
+@router.post("/reconcile/{auction_id}", response_model=dict)
+def reconcile_auction_properties(
+    auction_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Triggers a reconciliation job to link available properties to a specific auction
+    based on matching County and State locations.
+    """
+    result = reconciliation_service.reconcile_auction_properties(db, auction_id)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+from app.services.attom_enrichment import enrich_property
+
+@router.post("/{property_id}/enrich", response_model=dict)
+def enrich_property_endpoint(
+    property_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    On-demand API endpoint to enrich property details using ATTOM Property Data.
+    Verifica se existem campos faltando e, se sim, busca na API da ATTOM, usa cache no Redis e salva tudo na base de dados.
+    """
+    result = enrich_property(db, property_id)
+    return result

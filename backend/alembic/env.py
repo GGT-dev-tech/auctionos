@@ -29,6 +29,12 @@ target_metadata = Base.metadata
 
 from app.core.config import settings
 
+def include_object(object, name, type_, reflected, compare_to):
+    if type_ == "table" and name == "property_scores":
+        return False
+    return True
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -47,7 +53,8 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        render_as_batch=True
+        render_as_batch=True,
+        include_object=include_object
     )
 
     with context.begin_transaction():
@@ -75,7 +82,8 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection, 
             target_metadata=target_metadata,
-            render_as_batch=True
+            render_as_batch=True,
+            include_object=include_object
         )
 
         with context.begin_transaction():
