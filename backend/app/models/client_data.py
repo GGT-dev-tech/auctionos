@@ -20,6 +20,7 @@ class ClientList(Base):
     is_favorite_list = Column(Boolean, default=False)
     is_broadcasted = Column(Boolean, default=False)
     tags = Column(String(500), nullable=True)
+    notes = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Use backref (one-sided) to avoid conflicts with User model

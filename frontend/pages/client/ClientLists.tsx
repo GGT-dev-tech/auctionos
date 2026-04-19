@@ -9,17 +9,20 @@ import { useNavigate } from 'react-router-dom';
 import { SwipeToDeleteItem } from '../../components/SwipeToDeleteItem';
 import { PropertyPreviewDrawer } from '../../components/PropertyPreviewDrawer';
 import { useCompany } from '../../context/CompanyContext';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 
-// Fix for default marker icons in Leaflet with webpack/vite
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+// Helper to map state names to codes for the SVG silhouette
+const STATE_CODE_MAP: Record<string, string> = {
+    'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 'California': 'CA',
+    'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE', 'Florida': 'FL', 'Georgia': 'GA',
+    'Hawaii': 'HI', 'Idaho': 'ID', 'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA',
+    'Kansas': 'KS', 'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD',
+    'Massachusetts': 'MA', 'Michigan': 'MI', 'Minnesota': 'MN', 'Mississippi': 'MS', 'Missouri': 'MO',
+    'Montana': 'MT', 'Nebraska': 'NE', 'Nevada': 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+    'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', 'Ohio': 'OH',
+    'Oklahoma': 'OK', 'Oregon': 'OR', 'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+    'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT', 'Vermont': 'VT',
+    'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV', 'Wisconsin': 'WI', 'Wyoming': 'WY'
+};
 
 interface CustomList {
     id: number;
@@ -30,26 +33,10 @@ interface CustomList {
     tags?: string;
     has_upcoming_auction?: boolean;
     upcoming_auctions_count?: number;
+    notes?: string;
 }
 
-// Automatically fits the map to show all rendered markers
-const BoundsFitter = ({ markers }: { markers: { lat: number, lng: number }[] }) => {
-    const map = useMap();
-    const markersStr = JSON.stringify(markers);
-    useEffect(() => {
-        if (markers.length > 0) {
-            try {
-                const bounds = L.latLngBounds(markers.map(m => [m.lat, m.lng]));
-                if (bounds.isValid()) {
-                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 8 });
-                }
-            } catch (e) {
-                console.error("BoundsFitter error:", e);
-            }
-        }
-    }, [markersStr, map]);
-    return null;
-};
+
 
 const ClientLists: React.FC = () => {
     const navigate = useNavigate();
@@ -83,6 +70,8 @@ const ClientLists: React.FC = () => {
     const [selectedCountyName, setSelectedCountyName] = useState<string | null>(null);
     const [previewPropertyId, setPreviewPropertyId] = useState<number | string | null>(null);
     const [geocodedProperties, setGeocodedProperties] = useState<Record<number, { lat: number, lng: number }>>({});
+    const [folderNotes, setFolderNotes] = useState<string>('');
+    const [savingNotes, setSavingNotes] = useState(false);
 
     // Global listener for dynamic property additions
     useEffect(() => {
@@ -160,6 +149,26 @@ const ClientLists: React.FC = () => {
             setCountyContacts([]);
         }
     }, [selectedListId, selectedStateName, selectedCountyName, lists, broadcastedLists]);
+
+    // Update folderNotes state when list changes
+    useEffect(() => {
+        const selList = lists.find(l => l.id === selectedListId) || broadcastedLists.find(l => l.id === selectedListId);
+        setFolderNotes(selList?.notes || '');
+    }, [selectedListId, lists, broadcastedLists]);
+
+    const handleSaveNotes = async (newNotes: string) => {
+        if (!selectedListId) return;
+        setSavingNotes(true);
+        try {
+            await ClientDataService.updateList(selectedListId, { notes: newNotes });
+            // Reflect in local state
+            setLists(prev => prev.map(l => l.id === selectedListId ? { ...l, notes: newNotes } : l));
+        } catch (err) {
+            console.error('Error saving notes:', err);
+        } finally {
+            setSavingNotes(false);
+        }
+    };
 
     const loadLists = async () => {
         try {
@@ -688,126 +697,152 @@ const ClientLists: React.FC = () => {
                         </div>
                     )}
 
-                    {/* State Folder Header */}
-                    {/* State/County Folder Header */}
                     {selectedStateName && (() => {
                         const contactInfo = stateContacts.find(c => c.state === selectedStateName);
-                        // Center map logic: try to find first property with coords, or default to US center
-                        const propWithCoords = selectedListProperties.find(p => p.latitude && p.longitude);
-                        const center: [number, number] = propWithCoords
-                            ? [parseFloat(propWithCoords.latitude), parseFloat(propWithCoords.longitude)]
-                            : [39.8283, -98.5795]; // Center of US
+                        const stateCode = STATE_CODE_MAP[selectedStateName] || 'FL'; // Default to FL fallback if missing
+                        const silhouetteUrl = `https://simplemaps.com/static/svg/us/${stateCode.toLowerCase()}.svg`;
+
+                        // Aggregate auction links from all properties in the selected folder
+                        const auctionLinks = selectedListProperties.reduce((acc: any[], p: any) => {
+                            if (p.register_link || p.list_link) {
+                                // Unique key by links
+                                const key = `${p.register_link}-${p.list_link}`;
+                                if (!acc.find(item => item.key === key)) {
+                                    acc.push({
+                                        key,
+                                        name: p.auction_name || 'Auction Portal',
+                                        register: p.register_link,
+                                        list: p.list_link
+                                    });
+                                }
+                            }
+                            return acc;
+                        }, []);
 
                         return (
                             <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden mt-2">
-                                {/* Header toggle between State and County */}
-                                {!selectedCountyName ? (
-                                    <div className="p-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 mt-0 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">public</span>
-                                            <Typography className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                                                {selectedStateName} State Government
-                                            </Typography>
-                                        </div>
-                                        {contactInfo?.url && (
-                                            <Button
-                                                variant="outlined"
-                                                size="small"
-                                                href={contactInfo.url}
-                                                target="_blank"
-                                                className="text-[11px] h-7 rounded-sm border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 normal-case"
-                                                startIcon={<ExternalLinkIcon size={12} />}
-                                            >
-                                                Official Portal
-                                            </Button>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="p-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 mt-0">
-                                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">{selectedCountyName} County Links</h3>
-                                        <div className="space-y-3">
-                                            {countyContacts.length > 0 ? (
-                                                countyContacts.map((contact, idx) => (
-                                                    <a
-                                                        key={idx}
-                                                        href={contact.url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-slate-300"
-                                                    >
-                                                        <div className="flex items-center gap-2">
-                                                            <ExternalLinkIcon size={16} className="text-blue-500" />
-                                                            <span className="font-medium text-sm">{contact.name}</span>
-                                                            {contact.phone && (
-                                                                <span className="text-xs text-slate-500 ml-2">({contact.phone})</span>
-                                                            )}
-                                                        </div>
-                                                        <ExternalLinkIcon size={14} className="opacity-50" />
-                                                    </a>
-                                                ))
-                                            ) : (
-                                                <div className="text-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700">
-                                                    <span className="text-sm text-slate-500">No research links available for this county yet.</span>
-                                                </div>
+                                {/* Header and Silhouette Wrapper */}
+                                <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x border-slate-200 dark:border-slate-800">
+                                    {/* Left Side: Contact and Links */}
+                                    <div className="flex-1 p-4 flex flex-col gap-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">public</span>
+                                                <Typography className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                                                    {selectedStateName} Official Info
+                                                </Typography>
+                                            </div>
+                                            {contactInfo?.url && (
+                                                <Button
+                                                    variant="outlined"
+                                                    size="small"
+                                                    href={contactInfo.url}
+                                                    target="_blank"
+                                                    className="text-[10px] h-6 px-2 rounded-sm border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 normal-case"
+                                                    startIcon={<ExternalLinkIcon size={10} />}
+                                                >
+                                                    State Portal
+                                                </Button>
                                             )}
                                         </div>
-                                    </div>
-                                )}
 
-                                {/* Leaflet Map - Only visible when State is selected but NOT County */}
-                                {!selectedCountyName && (
-                                    <div className="h-48 w-full bg-slate-200 dark:bg-slate-800 relative z-[1]">
-                                        <MapContainer center={center} zoom={propWithCoords ? 6 : 4} scrollWheelZoom={false} style={{ height: '100%', width: '100%', zIndex: 1 }}>
-                                            <TileLayer
-                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                        {/* Dynamic Auction Links Section */}
+                                        <div className="space-y-2">
+                                            <Typography variant="overline" className="text-[10px] font-bold text-slate-400">Active Auction Portals</Typography>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                {auctionLinks.length > 0 ? (
+                                                    auctionLinks.map((link, idx) => (
+                                                        <div key={idx} className="bg-white dark:bg-slate-800/80 p-2 rounded-lg border border-slate-100 dark:border-slate-700 flex flex-col gap-1 shadow-xs">
+                                                            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 truncate">{link.name}</span>
+                                                            <div className="flex gap-2">
+                                                                {link.register && (
+                                                                    <a href={link.register} target="_blank" rel="noreferrer" className="text-[9px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 font-bold">
+                                                                        <span className="material-symbols-outlined text-[10px]">app_registration</span> Registro
+                                                                    </a>
+                                                                )}
+                                                                {link.list && (
+                                                                    <a href={link.list} target="_blank" rel="noreferrer" className="text-[9px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5 font-bold">
+                                                                        <span className="material-symbols-outlined text-[10px]">list_alt</span> Lista
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="col-span-full py-3 bg-slate-100/50 dark:bg-slate-800/40 rounded-lg text-center">
+                                                        <span className="text-[10px] text-slate-400 italic">No auction links found for properties in this list.</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Folder Notes Section */}
+                                        <div className="mt-2">
+                                            <Typography variant="overline" className="text-[10px] font-bold text-slate-400">Folder Annotations (Private)</Typography>
+                                            <TextField
+                                                multiline
+                                                fullWidth
+                                                rows={3}
+                                                placeholder="Add private notes about this state search, strategy or contacts..."
+                                                variant="outlined"
+                                                value={folderNotes}
+                                                onChange={(e) => setFolderNotes(e.target.value)}
+                                                onBlur={(e) => handleSaveNotes(e.target.value)}
+                                                sx={{ 
+                                                    '& .MuiOutlinedInput-root': { 
+                                                        fontSize: '12px', 
+                                                        backgroundColor: 'white',
+                                                        borderRadius: '8px',
+                                                        className: 'dark:bg-slate-800'
+                                                    } 
+                                                }}
                                             />
-                                            {(() => {
-                                                const validMarkers = selectedListProperties
-                                                    .map(p => {
-                                                        const lat = p.latitude ? parseFloat(p.latitude) : geocodedProperties[p.id]?.lat;
-                                                        const lng = p.longitude ? parseFloat(p.longitude) : geocodedProperties[p.id]?.lng;
-                                                        return { prop: p, lat, lng };
-                                                    })
-                                                    .filter(m => m.lat !== undefined && m.lng !== undefined && !isNaN(m.lat as number) && !isNaN(m.lng as number));
-
-                                                if (selectedListProperties.length > 0 && validMarkers.length > 0) {
-                                                    console.log(`Map debug: Rendering ${validMarkers.length} valid markers.`);
-                                                }
-
-                                                const markersForBounds = validMarkers.map(m => ({ lat: m.lat as number, lng: m.lng as number }));
-
-                                                return (
-                                                    <>
-                                                        <BoundsFitter markers={markersForBounds} />
-                                                        {validMarkers.map(({ prop, lat, lng }, idx) => (
-                                                            <Marker key={prop.id || idx} position={[lat as number, lng as number]}>
-                                                                <Popup>
-                                                                    <div className="text-xs flex flex-col gap-1">
-                                                                        <strong className="block mb-1 text-blue-600">{prop.parcel_id}</strong>
-                                                                        <span className="truncate max-w-[150px]">{prop.address || 'Address Unavailable'}</span>
-                                                                        <strong>Due:</strong> ${prop.amount_due?.toLocaleString()}
-                                                                        <Button
-                                                                            size="small"
-                                                                            variant="contained"
-                                                                            className="mt-2 text-[10px] py-0.5"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setPreviewPropertyId(prop.parcel_id || prop.id);
-                                                                            }}
-                                                                        >
-                                                                            View Details
-                                                                        </Button>
-                                                                    </div>
-                                                                </Popup>
-                                                            </Marker>
-                                                        ))}
-                                                    </>
-                                                );
-                                            })()}
-                                        </MapContainer>
+                                            {savingNotes && <span className="text-[9px] text-blue-500 animate-pulse ml-1">Saving changes...</span>}
+                                        </div>
                                     </div>
-                                )}
+
+                                    {/* Right Side: State Silhouette */}
+                                    {!selectedCountyName && (
+                                        <div className="w-full md:w-48 h-full bg-white dark:bg-slate-900 flex items-center justify-center p-6 shrink-0 group/silhouette overflow-hidden relative">
+                                            <img
+                                                src={silhouetteUrl}
+                                                alt={`${selectedStateName} silhouette`}
+                                                className="w-full h-full object-contain opacity-20 dark:opacity-30 group-hover/silhouette:opacity-40 dark:group-hover/silhouette:opacity-50 transition-all duration-700 grayscale invert dark:invert-0"
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <span className="text-4xl font-black text-slate-200 dark:text-slate-800 tracking-tighter opacity-50">{stateCode}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* County Contacts (Overlay/Replacement) */}
+                                    {selectedCountyName && (
+                                        <div className="w-full md:w-64 p-4 bg-white dark:bg-slate-800 overflow-y-auto max-h-[300px]">
+                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">{selectedCountyName} Sub-Links</h3>
+                                            <div className="space-y-2">
+                                                {countyContacts.length > 0 ? (
+                                                    countyContacts.map((contact, idx) => (
+                                                        <a
+                                                            key={idx}
+                                                            href={contact.url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-800"
+                                                        >
+                                                            <div className="flex flex-col min-w-0">
+                                                                <span className="font-bold text-[10px] truncate">{contact.name}</span>
+                                                                {contact.phone && <span className="text-[9px] text-slate-500 opacity-70 italic">{contact.phone}</span>}
+                                                            </div>
+                                                            <span className="material-symbols-outlined text-[14px] text-blue-500">open_in_new</span>
+                                                        </a>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-[10px] text-slate-400 italic">No specific county links.</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         );
                     })()}

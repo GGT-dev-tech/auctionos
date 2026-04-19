@@ -224,7 +224,7 @@ export const ClientDataService = {
         return response.json();
     },
 
-    updateList: async (id: number, data: { name?: string; tags?: string }): Promise<any> => {
+    updateList: async (id: number, data: { name?: string; tags?: string; notes?: string }): Promise<any> => {
         const response = await fetch(`${API_URL}/client-data/lists/${id}`, {
             method: 'PUT',
             headers: getHeaders(),

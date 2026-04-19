@@ -34,12 +34,14 @@ class ClientListResponse(BaseModel):
     company_id: int | None = None
     has_upcoming_auction: bool = False
     upcoming_auctions_count: int = 0
+    notes: str | None = None
 
 class ClientListUpdate(BaseModel):
     name: str | None = None
     tags: str | None = None
     is_broadcasted: bool | None = None
     company_id: int | None = None
+    notes: str | None = None
 
 class ClientNoteCreate(BaseModel):
     property_id: int
@@ -144,7 +146,8 @@ def get_client_lists(
             "tags": lst.tags,
             "company_id": lst.company_id,
             "has_upcoming_auction": upcoming_count > 0,
-            "upcoming_auctions_count": upcoming_count
+            "upcoming_auctions_count": upcoming_count,
+            "notes": lst.notes
         })
     return results
 
@@ -267,9 +270,9 @@ def update_client_list(
     if list_in.tags is not None:
         lst.tags = list_in.tags
     if list_in.is_broadcasted is not None:
-        if current_user.role not in ['admin', 'superuser']:
-             raise HTTPException(status_code=403, detail="Only admins can broadcast lists")
         lst.is_broadcasted = list_in.is_broadcasted
+    if list_in.notes is not None:
+        lst.notes = list_in.notes
 
     db.commit()
     count = db.query(client_list_property).filter(client_list_property.c.list_id == lst.id).count()
@@ -292,7 +295,8 @@ def update_client_list(
         "is_broadcasted": lst.is_broadcasted, 
         "tags": lst.tags,
         "has_upcoming_auction": upcoming_count > 0,
-        "upcoming_auctions_count": upcoming_count
+        "upcoming_auctions_count": upcoming_count,
+        "notes": lst.notes
     }
 
 @router.delete("/lists/{list_id}")
@@ -408,9 +412,9 @@ def get_list_properties(
 
     results = []
     for p in lst.properties:
-        # Get NEAREST future auction
+        # Get NEAREST future auction and include links
         auction_query = text("""
-            SELECT auction_name, auction_date
+            SELECT auction_name, auction_date, info_link, list_link
             FROM property_auction_history
             WHERE property_id = :prop_id
               AND auction_date >= CURRENT_DATE
@@ -452,6 +456,8 @@ def get_list_properties(
             "occupancy": p.occupancy,
             "latitude": p.latitude,
             "longitude": p.longitude,
+            "register_link": auction[2] if auction else None,
+            "list_link": auction[3] if auction else None,
         }
         results.append(prop_dict)
 
