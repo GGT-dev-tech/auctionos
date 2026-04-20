@@ -48,6 +48,7 @@ def run_safe_migrations():
         ("client_lists", "company_id",
          "INTEGER REFERENCES companies(id) ON DELETE SET NULL",
          "INTEGER"),
+        ("client_lists", "notes", "TEXT", "TEXT"),
     ]
 
     with engine.connect() as conn:

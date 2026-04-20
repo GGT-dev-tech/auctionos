@@ -23,6 +23,7 @@ class ClientListCreate(BaseModel):
     name: str
     tags: str | None = None
     company_id: int | None = None
+    notes: str | None = None
 
 class ClientListResponse(BaseModel):
     id: int
@@ -76,7 +77,8 @@ def create_client_list(
         company_id=list_in.company_id,
         is_favorite_list=False,
         is_broadcasted=False,
-        tags=list_in.tags
+        tags=list_in.tags,
+        notes=list_in.notes
     )
     db.add(new_list)
     db.commit()
