@@ -150,19 +150,47 @@ const ClientLists: React.FC = () => {
         }
     }, [selectedListId, selectedStateName, selectedCountyName, lists, broadcastedLists]);
 
+    const parseNotes = (rawNotes: string) => {
+        try {
+            const parsed = JSON.parse(rawNotes);
+            if (typeof parsed === 'object' && parsed !== null) return parsed;
+        } catch (e) { }
+        return { __root__: rawNotes || '' };
+    };
+
     // Update folderNotes state when list changes
     useEffect(() => {
         const selList = lists.find(l => l.id === selectedListId) || broadcastedLists.find(l => l.id === selectedListId);
-        setFolderNotes(selList?.notes || '');
-    }, [selectedListId, lists, broadcastedLists]);
+        if (selList) {
+            const notesObj = parseNotes(selList.notes || '');
+            const activeKey = selectedCountyName || '__root__';
+            setFolderNotes(notesObj[activeKey] || '');
+        } else {
+            setFolderNotes('');
+        }
+    }, [selectedListId, selectedCountyName, lists, broadcastedLists]);
 
-    const handleSaveNotes = async (newNotes: string) => {
+    const handleSaveNotes = async (newText: string) => {
         if (!selectedListId) return;
         setSavingNotes(true);
         try {
-            await ClientDataService.updateList(selectedListId, { notes: newNotes });
+            const selList = lists.find(l => l.id === selectedListId) || broadcastedLists.find(l => l.id === selectedListId);
+            const notesObj = parseNotes(selList?.notes || '');
+            const activeKey = selectedCountyName || '__root__';
+            
+            // Check if there is actually a change to avoid unnecessary writes
+            if (notesObj[activeKey] === newText) {
+                setSavingNotes(false);
+                return;
+            }
+
+            const updatedNotesObj = { ...notesObj, [activeKey]: newText };
+            const jsonString = JSON.stringify(updatedNotesObj);
+
+            await ClientDataService.updateList(selectedListId, { notes: jsonString });
+            
             // Reflect in local state
-            setLists(prev => prev.map(l => l.id === selectedListId ? { ...l, notes: newNotes } : l));
+            setLists(prev => prev.map(l => l.id === selectedListId ? { ...l, notes: jsonString } : l));
         } catch (err) {
             console.error('Error saving notes:', err);
         } finally {
@@ -512,7 +540,7 @@ const ClientLists: React.FC = () => {
                                                                         key={`${list.id}-${county}`}
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
-                                                                            setSelectedListId(null);
+                                                                            setSelectedListId(list.id);
                                                                             setSelectedStateName(list.name);
                                                                             setSelectedCountyName(county);
                                                                             // Fetch county contacts using the existing service logic
@@ -777,13 +805,18 @@ const ClientLists: React.FC = () => {
                                         </div>
 
                                         {/* Folder Notes Section */}
-                                        <div className="mt-2">
-                                            <Typography variant="overline" className="text-[10px] font-bold text-slate-400">Folder Annotations (Private)</Typography>
+                                        <div className="mt-2 text-left">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Typography variant="overline" className="text-[10px] font-bold text-slate-400">
+                                                    {selectedCountyName ? `${selectedCountyName} Specific Notes` : 'General Folder Notes'}
+                                                </Typography>
+                                                {selectedCountyName && <span className="text-[9px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 px-1.5 py-0.5 rounded uppercase font-bold">Subfolder</span>}
+                                            </div>
                                             <TextField
                                                 multiline
                                                 fullWidth
                                                 rows={3}
-                                                placeholder="Add private notes about this state search, strategy or contacts..."
+                                                placeholder={selectedCountyName ? `Specific annotations for properties in ${selectedCountyName}...` : "Add private notes about this state search, strategy or contacts..."}
                                                 variant="outlined"
                                                 value={folderNotes}
                                                 onChange={(e) => setFolderNotes(e.target.value)}
