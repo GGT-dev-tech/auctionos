@@ -414,58 +414,70 @@ def get_list_properties(
 
     results = []
     for p in lst.properties:
-        # Get NEAREST auction and include links from the auction_events table
-        auction_query = text("""
-            SELECT 
-                ae.name as auction_name, 
-                ae.auction_date, 
-                ae.register_link as auction_info_link, 
-                ae.list_link as auction_list_link
-            FROM property_auction_history pah
-            JOIN auction_events ae ON ae.id = pah."auction_eventId"
-            WHERE pah.property_id = :prop_id
-            ORDER BY ae.auction_date DESC LIMIT 1
-        """)
-        auction = db.execute(auction_query, {"prop_id": p.property_id}).fetchone()
+        try:
+            # Get NEAREST auction and include links from the auction_events table
+            # Using LEFT JOIN and correct column name 'auction_id' to prevent crashes
+            auction_query = text("""
+                SELECT 
+                    ae.name as auction_name, 
+                    ae.auction_date, 
+                    ae.register_link as auction_info_link, 
+                    ae.list_link as auction_list_link
+                FROM property_auction_history pah
+                LEFT JOIN auction_events ae ON ae.id = pah.auction_id
+                WHERE pah.property_id = :prop_id
+                ORDER BY ae.auction_date DESC LIMIT 1
+            """)
+            auction = db.execute(auction_query, {"prop_id": p.property_id}).fetchone()
 
-        # Calculate days until auction
-        days_until_auction = None
-        is_auction_upcoming = False
-        if auction and auction[1]:
-            try:
-                from datetime import date
-                auction_dt = auction[1] if isinstance(auction[1], date) else datetime.strptime(str(auction[1]), "%Y-%m-%d").date()
-                days_until_auction = (auction_dt - date.today()).days
-                is_auction_upcoming = 0 <= days_until_auction <= 30  # Alert within 30 days
-            except Exception:
-                pass
+            # Calculate days until auction
+            days_until_auction = None
+            is_auction_upcoming = False
+            if auction and auction[1]:
+                try:
+                    from datetime import date
+                    auction_dt = auction[1] if isinstance(auction[1], date) else datetime.strptime(str(auction[1]), "%Y-%m-%d").date()
+                    days_until_auction = (auction_dt - date.today()).days
+                    is_auction_upcoming = 0 <= days_until_auction <= 30  # Alert within 30 days
+                except Exception:
+                    pass
 
-        prop_dict = {
-            "id": p.id,
-            "parcel_id": p.parcel_id,
-            "address": p.address,
-            "owner_address": p.owner_address,
-            "county": p.county,
-            "state": p.state,
-            "state_code": p.state,
-            "description": p.description or p.legal_description,
-            "amount_due": p.amount_due,
-            "lot_acres": p.lot_acres,
-            "improvement_value": p.improvement_value,
-            "assessed_value": p.assessed_value,
-            "availability_status": p.availability_status,
-            "auction_name": auction[0] if auction else None,
-            "auction_date": str(auction[1]) if auction and auction[1] else None,
-            "days_until_auction": days_until_auction,
-            "is_auction_upcoming": is_auction_upcoming,
-            "property_type": p.property_type,
-            "occupancy": p.occupancy,
-            "latitude": p.latitude,
-            "longitude": p.longitude,
-            "auction_info_link": auction[2] if auction else None,
-            "auction_list_link": auction[3] if auction else None,
-        }
-        results.append(prop_dict)
+            prop_dict = {
+                "id": p.id,
+                "parcel_id": p.parcel_id,
+                "address": p.address,
+                "owner_address": p.owner_address,
+                "county": p.county,
+                "state": p.state,
+                "state_code": p.state,
+                "description": p.description or p.legal_description,
+                "amount_due": p.amount_due,
+                "lot_acres": p.lot_acres,
+                "improvement_value": p.improvement_value,
+                "assessed_value": p.assessed_value,
+                "availability_status": p.availability_status,
+                "auction_name": auction[0] if auction else None,
+                "auction_date": str(auction[1]) if auction and auction[1] else None,
+                "days_until_auction": days_until_auction,
+                "is_auction_upcoming": is_auction_upcoming,
+                "property_type": p.property_type,
+                "occupancy": p.occupancy,
+                "latitude": p.latitude,
+                "longitude": p.longitude,
+                "auction_info_link": (auction[2] if auction else None) or getattr(p, 'auction_info_link', None),
+                "auction_list_link": (auction[3] if auction else None) or getattr(p, 'auction_list_link', None),
+            }
+            results.append(prop_dict)
+        except Exception as e:
+            print(f"Error processing property {p.id}: {str(e)}")
+            # Fallback basics to ensure it shows up even if auction logic fails
+            results.append({
+                "id": p.id,
+                "parcel_id": p.parcel_id,
+                "address": p.address,
+                "state": p.state,
+                "availability_status": p.availability_status
+            })
 
     # Sort: upcoming auctions first, then by days_until
     results.sort(key=lambda x: (
