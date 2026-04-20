@@ -156,7 +156,7 @@ def get_client_lists(
 
 @router.get("/lists/preferences")
 def get_list_preferences(
-    company_id: int | None = None,
+    company_id: Optional[int] = None,
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
@@ -457,8 +457,8 @@ def get_list_properties(
             "occupancy": p.occupancy,
             "latitude": p.latitude,
             "longitude": p.longitude,
-            "register_link": auction[2] if auction else None,
-            "list_link": auction[3] if auction else None,
+            "auction_info_link": auction[2] if auction else None,
+            "auction_list_link": auction[3] if auction else None,
         }
         results.append(prop_dict)
 
