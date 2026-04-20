@@ -21,9 +21,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # --- Schemas ---
 class ClientListCreate(BaseModel):
     name: str
-    tags: str | None = None
-    company_id: int | None = None
-    notes: str | None = None
+    tags: Optional[str] = None
+    company_id: Optional[int] = None
+    notes: Optional[str] = None
 
 class ClientListResponse(BaseModel):
     id: int
@@ -31,18 +31,18 @@ class ClientListResponse(BaseModel):
     property_count: int
     is_favorite_list: bool
     is_broadcasted: bool
-    tags: str | None = None
-    company_id: int | None = None
+    tags: Optional[str] = None
+    company_id: Optional[int] = None
     has_upcoming_auction: bool = False
     upcoming_auctions_count: int = 0
-    notes: str | None = None
+    notes: Optional[str] = None
 
 class ClientListUpdate(BaseModel):
-    name: str | None = None
-    tags: str | None = None
-    is_broadcasted: bool | None = None
-    company_id: int | None = None
-    notes: str | None = None
+    name: Optional[str] = None
+    tags: Optional[str] = None
+    is_broadcasted: Optional[bool] = None
+    company_id: Optional[int] = None
+    notes: Optional[str] = None
 
 class ClientNoteCreate(BaseModel):
     property_id: int
@@ -95,7 +95,7 @@ def create_client_list(
 
 @router.get("/lists")
 def get_client_lists(
-    company_id: int | None = None,
+    company_id: Optional[int] = None,
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:

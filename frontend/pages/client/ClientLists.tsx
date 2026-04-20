@@ -700,7 +700,7 @@ const ClientLists: React.FC = () => {
                     {selectedStateName && (() => {
                         const contactInfo = stateContacts.find(c => c.state === selectedStateName);
                         const stateCode = STATE_CODE_MAP[selectedStateName] || 'FL'; // Default to FL fallback if missing
-                        const silhouetteUrl = `https://cdn.simplemaps.com/static/svg/us/${stateCode.toLowerCase()}.svg`;
+                        const silhouetteUrl = `https://cdn.jsdelivr.net/gh/Public-Data-Project/US-SVG-Maps/states/${stateCode.toLowerCase()}.svg`;
 
                         // Aggregate auction links from all properties in the selected folder
                         const auctionLinks = selectedListProperties.reduce((acc: any[], p: any) => {
