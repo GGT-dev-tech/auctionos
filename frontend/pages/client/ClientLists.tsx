@@ -946,6 +946,23 @@ const ClientLists: React.FC = () => {
                                                             </div>
                                                         </div>
                                                     )}
+                                                    {(prop.register_link || prop.list_link) && (
+                                                        <div className="flex items-center gap-3 bg-blue-50/50 dark:bg-blue-900/20 px-2 py-1 rounded-lg border border-blue-100/50 dark:border-blue-800/30">
+                                                            <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">Portals:</span>
+                                                            <div className="flex gap-2">
+                                                                {prop.register_link && (
+                                                                    <a href={prop.register_link} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 font-bold">
+                                                                        Registro
+                                                                    </a>
+                                                                )}
+                                                                {prop.list_link && (
+                                                                    <a href={prop.list_link} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5 font-bold">
+                                                                        Lista
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 

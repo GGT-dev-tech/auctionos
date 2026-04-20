@@ -419,8 +419,7 @@ def get_list_properties(
             SELECT auction_name, auction_date, info_link, list_link
             FROM property_auction_history
             WHERE property_id = :prop_id
-              AND auction_date >= CURRENT_DATE
-            ORDER BY auction_date ASC LIMIT 1
+            ORDER BY auction_date DESC LIMIT 1
         """)
         auction = db.execute(auction_query, {"prop_id": p.property_id}).fetchone()
 
