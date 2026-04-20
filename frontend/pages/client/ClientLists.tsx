@@ -392,7 +392,7 @@ const ClientLists: React.FC = () => {
                         {/* smart lists / favorites */}
                         {lists.some(l => l.is_favorite_list) && (
                             <div>
-                                <div 
+                                <div
                                     className="flex items-center justify-between px-3 cursor-pointer group"
                                     onClick={() => setCollapsedSections(prev => ({ ...prev, smart: !prev.smart }))}
                                 >
@@ -430,7 +430,7 @@ const ClientLists: React.FC = () => {
 
                         {lists.some(l => l.tags === 'STANDARD') && (
                             <div>
-                                <div 
+                                <div
                                     className="flex items-center justify-between px-3 cursor-pointer group"
                                     onClick={() => setCollapsedSections(prev => ({ ...prev, standard: !prev.standard }))}
                                 >
@@ -502,36 +502,36 @@ const ClientLists: React.FC = () => {
                                                         <div className="mt-1 ml-4 border-l-2 border-slate-200 dark:border-slate-800 pl-2 space-y-0.5">
                                                             {sortedCounties.map(([county, count]) => {
                                                                 // Check if any property in this county has an upcoming auction
-                                                                const hasAuction = stateProperties.some(p => 
-                                                                    p.county === county && 
+                                                                const hasAuction = stateProperties.some(p =>
+                                                                    p.county === county &&
                                                                     (p.auction_status === "started" || (p.auction_date && new Date(p.auction_date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000))
                                                                 );
 
                                                                 return (
-                                                                <div
-                                                                    key={`${list.id}-${county}`}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setSelectedListId(null);
-                                                                        setSelectedStateName(list.name);
-                                                                        setSelectedCountyName(county);
-                                                                        // Fetch county contacts using the existing service logic
-                                                                        countyService.getContacts(list.name, county)
-                                                                            .then(setCountyContacts)
-                                                                            .catch(() => setCountyContacts([]));
-                                                                    }}
-                                                                    className={`group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 
+                                                                    <div
+                                                                        key={`${list.id}-${county}`}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedListId(null);
+                                                                            setSelectedStateName(list.name);
+                                                                            setSelectedCountyName(county);
+                                                                            // Fetch county contacts using the existing service logic
+                                                                            countyService.getContacts(list.name, county)
+                                                                                .then(setCountyContacts)
+                                                                                .catch(() => setCountyContacts([]));
+                                                                        }}
+                                                                        className={`group flex items-center gap-3 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-200 
                                                                         ${selectedCountyName === county ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
-                                                                >
-                                                                    <span className={`material-symbols-outlined text-[16px] ${selectedCountyName === county ? 'text-white' : 'text-emerald-500'}`}>map</span>
-                                                                    <span className="flex-1 text-sm font-medium truncate">{county}</span>
-                                                                    {hasAuction && (
-                                                                        <div className="flex items-center gap-0.5 bg-orange-500 text-white px-1.5 py-0.5 rounded-full animate-pulse shadow-sm">
-                                                                            <span className="material-symbols-outlined text-[10px]">gavel</span>
-                                                                        </div>
-                                                                    )}
-                                                                    <span className={`text-xs ${selectedCountyName === county ? 'text-emerald-100' : 'text-slate-400'}`}>{count}</span>
-                                                                </div>
+                                                                    >
+                                                                        <span className={`material-symbols-outlined text-[16px] ${selectedCountyName === county ? 'text-white' : 'text-emerald-500'}`}>map</span>
+                                                                        <span className="flex-1 text-sm font-medium truncate">{county}</span>
+                                                                        {hasAuction && (
+                                                                            <div className="flex items-center gap-0.5 bg-orange-500 text-white px-1.5 py-0.5 rounded-full animate-pulse shadow-sm">
+                                                                                <span className="material-symbols-outlined text-[10px]">gavel</span>
+                                                                            </div>
+                                                                        )}
+                                                                        <span className={`text-xs ${selectedCountyName === county ? 'text-emerald-100' : 'text-slate-400'}`}>{count}</span>
+                                                                    </div>
                                                                 );
                                                             })}
                                                         </div>
@@ -545,7 +545,7 @@ const ClientLists: React.FC = () => {
                         )}
 
                         <div>
-                            <div 
+                            <div
                                 className="flex items-center justify-between px-3 cursor-pointer group"
                                 onClick={() => setCollapsedSections(prev => ({ ...prev, custom: !prev.custom }))}
                             >
@@ -617,7 +617,7 @@ const ClientLists: React.FC = () => {
                         {/* broadcasted folders */}
                         {broadcastedLists.length > 0 && (
                             <div>
-                                <div 
+                                <div
                                     className="flex items-center justify-between px-3 cursor-pointer group"
                                     onClick={() => setCollapsedSections(prev => ({ ...prev, broadcasted: !prev.broadcasted }))}
                                 >
@@ -757,12 +757,12 @@ const ClientLists: React.FC = () => {
                                                             <div className="flex gap-2">
                                                                 {link.register && (
                                                                     <a href={link.register} target="_blank" rel="noreferrer" className="text-[9px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 font-bold">
-                                                                        <span className="material-symbols-outlined text-[10px]">app_registration</span> Registro
+                                                                        <span className="material-symbols-outlined text-[10px]">app_registration</span> Registration / Instructions
                                                                     </a>
                                                                 )}
                                                                 {link.list && (
                                                                     <a href={link.list} target="_blank" rel="noreferrer" className="text-[9px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5 font-bold">
-                                                                        <span className="material-symbols-outlined text-[10px]">list_alt</span> Lista
+                                                                        <span className="material-symbols-outlined text-[10px]">list_alt</span> Auction List
                                                                     </a>
                                                                 )}
                                                             </div>
@@ -789,14 +789,14 @@ const ClientLists: React.FC = () => {
                                                 onChange={(e) => setFolderNotes(e.target.value)}
                                                 onBlur={(e) => handleSaveNotes(e.target.value)}
                                                 className="bg-white dark:bg-slate-900/80 rounded-xl"
-                                                sx={{ 
-                                                    '& .MuiOutlinedInput-root': { 
-                                                        fontSize: '13px', 
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        fontSize: '13px',
                                                         borderRadius: '12px',
                                                         '& fieldset': { borderColor: 'rgba(226, 232, 240, 0.5)' },
                                                         '&:hover fieldset': { borderColor: '#3b82f6' },
                                                         className: 'dark:border-slate-700'
-                                                    } 
+                                                    }
                                                 }}
                                             />
                                             {savingNotes && <span className="text-[9px] text-blue-500 animate-pulse ml-1">Saving changes...</span>}
@@ -892,7 +892,7 @@ const ClientLists: React.FC = () => {
                                                 <p className="text-xs text-orange-700 dark:text-orange-400 mt-0.5 font-medium">There are {selectedList.upcoming_auctions_count} properties in this folder scheduled for auction soon. Review them immediately.</p>
                                             </div>
                                         </div>
-                                        <Button variant="contained" color="warning" size="small" className="whitespace-nowrap shadow-none font-bold text-xs" onClick={() => {}}>
+                                        <Button variant="contained" color="warning" size="small" className="whitespace-nowrap shadow-none font-bold text-xs" onClick={() => { }}>
                                             Review Agenda
                                         </Button>
                                     </div>
