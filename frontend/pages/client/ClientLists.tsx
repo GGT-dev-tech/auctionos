@@ -175,10 +175,10 @@ const ClientLists: React.FC = () => {
             setLoading(true);
             const data = await ClientDataService.getLists(activeCompany?.id);
             setLists(data);
-            if (data.length > 0 && !selectedListId) {
-                // Select favorites by default if available
+            if (data.length > 0 && !selectedListId && !selectedStateName) {
+                // Select favorites by default if available, otherwise stay at 'Select a Folder'
                 const fav = data.find(l => l.is_favorite_list);
-                setSelectedListId(fav ? fav.id : data[0].id);
+                if (fav) setSelectedListId(fav.id);
             }
         } catch (err: any) {
             console.error('Error loading lists:', err);
@@ -700,7 +700,7 @@ const ClientLists: React.FC = () => {
                     {selectedStateName && (() => {
                         const contactInfo = stateContacts.find(c => c.state === selectedStateName);
                         const stateCode = STATE_CODE_MAP[selectedStateName] || 'FL'; // Default to FL fallback if missing
-                        const silhouetteUrl = `https://cdn.jsdelivr.net/gh/Public-Data-Project/US-SVG-Maps/states/${stateCode.toLowerCase()}.svg`;
+                        const silhouetteUrl = `https://static.simplemaps.com/resources/svg-library/us/${stateCode.toLowerCase()}.svg`;
 
                         // Aggregate auction links from all properties in the selected folder
                         const auctionLinks = selectedListProperties.reduce((acc: any[], p: any) => {
@@ -809,7 +809,7 @@ const ClientLists: React.FC = () => {
                                             <img
                                                 src={silhouetteUrl}
                                                 alt={`${selectedStateName} silhouette`}
-                                                className="w-full h-full object-contain opacity-40 dark:opacity-50 group-hover/silhouette:opacity-60 dark:group-hover/silhouette:opacity-70 transition-all duration-700 pointer-events-none"
+                                                className="w-full h-full object-contain opacity-50 dark:opacity-60 group-hover/silhouette:opacity-80 dark:group-hover/silhouette:opacity-90 transition-all duration-700 pointer-events-none drop-shadow-sm"
                                                 onError={(e) => {
                                                     (e.target as HTMLImageElement).style.display = 'none';
                                                 }}
