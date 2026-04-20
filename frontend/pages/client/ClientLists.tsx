@@ -957,12 +957,12 @@ const ClientLists: React.FC = () => {
                                                             <div className="flex gap-2">
                                                                 {prop.auction_info_link && (
                                                                     <a href={prop.auction_info_link} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 font-bold">
-                                                                        Registro
+                                                                        Registration / Instructions
                                                                     </a>
                                                                 )}
                                                                 {prop.auction_list_link && (
                                                                     <a href={prop.auction_list_link} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5 font-bold">
-                                                                        Lista
+                                                                        Auction List
                                                                     </a>
                                                                 )}
                                                             </div>
