@@ -414,12 +414,17 @@ def get_list_properties(
 
     results = []
     for p in lst.properties:
-        # Get NEAREST future auction and include links
+        # Get NEAREST auction and include links from the auction_events table
         auction_query = text("""
-            SELECT auction_name, auction_date, info_link, list_link
-            FROM property_auction_history
-            WHERE property_id = :prop_id
-            ORDER BY auction_date DESC LIMIT 1
+            SELECT 
+                ae.name as auction_name, 
+                ae.auction_date, 
+                ae.register_link as auction_info_link, 
+                ae.list_link as auction_list_link
+            FROM property_auction_history pah
+            JOIN auction_events ae ON ae.id = pah."auction_eventId"
+            WHERE pah.property_id = :prop_id
+            ORDER BY ae.auction_date DESC LIMIT 1
         """)
         auction = db.execute(auction_query, {"prop_id": p.property_id}).fetchone()
 
