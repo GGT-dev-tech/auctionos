@@ -455,7 +455,7 @@ const ClientLists: React.FC = () => {
                                                     {/* State Header (Click to select) */}
                                                     <div
                                                         onClick={() => {
-                                                            setSelectedListId(null);
+                                                            setSelectedListId(list.id);
                                                             setSelectedStateName(list.name);
                                                             setSelectedCountyName(null);
                                                             setCountyContacts([]);
@@ -700,7 +700,7 @@ const ClientLists: React.FC = () => {
                     {selectedStateName && (() => {
                         const contactInfo = stateContacts.find(c => c.state === selectedStateName);
                         const stateCode = STATE_CODE_MAP[selectedStateName] || 'FL'; // Default to FL fallback if missing
-                        const silhouetteUrl = `https://simplemaps.com/static/svg/us/${stateCode.toLowerCase()}.svg`;
+                        const silhouetteUrl = `https://cdn.simplemaps.com/static/svg/us/${stateCode.toLowerCase()}.svg`;
 
                         // Aggregate auction links from all properties in the selected folder
                         const auctionLinks = selectedListProperties.reduce((acc: any[], p: any) => {
@@ -788,12 +788,14 @@ const ClientLists: React.FC = () => {
                                                 value={folderNotes}
                                                 onChange={(e) => setFolderNotes(e.target.value)}
                                                 onBlur={(e) => handleSaveNotes(e.target.value)}
+                                                className="bg-white dark:bg-slate-900/80 rounded-xl"
                                                 sx={{ 
                                                     '& .MuiOutlinedInput-root': { 
-                                                        fontSize: '12px', 
-                                                        backgroundColor: 'white',
-                                                        borderRadius: '8px',
-                                                        className: 'dark:bg-slate-800'
+                                                        fontSize: '13px', 
+                                                        borderRadius: '12px',
+                                                        '& fieldset': { borderColor: 'rgba(226, 232, 240, 0.5)' },
+                                                        '&:hover fieldset': { borderColor: '#3b82f6' },
+                                                        className: 'dark:border-slate-700'
                                                     } 
                                                 }}
                                             />
@@ -807,7 +809,10 @@ const ClientLists: React.FC = () => {
                                             <img
                                                 src={silhouetteUrl}
                                                 alt={`${selectedStateName} silhouette`}
-                                                className="w-full h-full object-contain opacity-20 dark:opacity-30 group-hover/silhouette:opacity-40 dark:group-hover/silhouette:opacity-50 transition-all duration-700 grayscale invert dark:invert-0"
+                                                className="w-full h-full object-contain opacity-40 dark:opacity-50 group-hover/silhouette:opacity-60 dark:group-hover/silhouette:opacity-70 transition-all duration-700 pointer-events-none"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                }}
                                             />
                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                 <span className="text-4xl font-black text-slate-200 dark:text-slate-800 tracking-tighter opacity-50">{stateCode}</span>
