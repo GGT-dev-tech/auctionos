@@ -42,17 +42,17 @@ def transition_past_auctions():
             FROM property_details p
             INNER JOIN property_auction_history pah
                 ON pah.property_id = p.property_id
-            INNER JOIN auction_events ae
+            LEFT JOIN auction_events ae
                 ON ae.id = pah.auction_id
-                AND ae.auction_date < :today
             WHERE LOWER(p.availability_status) = 'available'
+              AND COALESCE(ae.auction_date, pah.auction_date) < :today
               AND NOT EXISTS (
                   SELECT 1
                   FROM property_auction_history pah_future
-                  INNER JOIN auction_events ae_future
+                  LEFT JOIN auction_events ae_future
                       ON ae_future.id = pah_future.auction_id
                   WHERE pah_future.property_id = p.property_id
-                    AND ae_future.auction_date >= :today
+                    AND COALESCE(ae_future.auction_date, pah_future.auction_date) >= :today
               )
         """)
 

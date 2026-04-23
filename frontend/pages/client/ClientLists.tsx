@@ -710,32 +710,49 @@ const ClientLists: React.FC = () => {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
                 {viewMode === 'custom_properties' ? (
-                    <ClientUserProperties onBack={() => setViewMode('folders')} />
+                    <div className="flex-1 flex flex-col h-full">
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-900 flex items-center gap-3">
+                            <IconButton 
+                                onClick={() => setSidebarOpen(!sidebarOpen)} 
+                                size="medium" 
+                                className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 shadow-sm border border-blue-200 dark:border-blue-800 transition-all"
+                                title={sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
+                            >
+                                <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[22px]">{sidebarOpen ? 'left_panel_close' : 'left_panel_open'}</span>
+                            </IconButton>
+                            <ClientUserProperties onBack={() => setViewMode('folders')} />
+                        </div>
+                    </div>
                 ) : (
                     <div className="flex-1 flex flex-col h-full">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex flex-col gap-4">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <IconButton onClick={() => setSidebarOpen(!sidebarOpen)} size="small" className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700">
-                                <span className="material-symbols-outlined text-slate-600 dark:text-slate-300 text-[20px]">{sidebarOpen ? 'left_panel_close' : 'left_panel_open'}</span>
-                            </IconButton>
-                            <div>
-                                <Typography variant="h5" className="font-bold text-slate-900 dark:text-white capitalize leading-tight">
-                                {selectedStateName
-                                    ? (selectedCountyName ? `${selectedStateName} - ${selectedCountyName}` : selectedStateName)
-                                    : (selectedList?.name || 'Select a Folder')}
-                            </Typography>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                    {selectedStateName && selectedCountyName
-                                        ? selectedListProperties.filter(p => p.county === selectedCountyName).length
-                                        : selectedListProperties.length} Properties
-                                </span>
-
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                    <IconButton 
+                                        onClick={() => setSidebarOpen(!sidebarOpen)} 
+                                        size="medium" 
+                                        className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 shadow-sm border border-blue-200 dark:border-blue-800 transition-all"
+                                        title={sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
+                                    >
+                                        <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[22px]">{sidebarOpen ? 'left_panel_close' : 'left_panel_open'}</span>
+                                    </IconButton>
+                                    <div>
+                                        <Typography variant="h5" className="font-bold text-slate-900 dark:text-white capitalize leading-tight">
+                                            {selectedStateName
+                                                ? (selectedCountyName ? `${selectedStateName} - ${selectedCountyName}` : selectedStateName)
+                                                : (selectedList?.name || 'Select a Folder')}
+                                        </Typography>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                                {selectedStateName && selectedCountyName
+                                                    ? selectedListProperties.filter(p => p.county === selectedCountyName).length
+                                                    : selectedListProperties.length} Properties
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    </div>
 
                     {/* Upcoming Auction Alert Banner */}
                     {(selectedList?.has_upcoming_auction || selectedListProperties.some(p => p.auction_status === "started" || (p.auction_date && new Date(p.auction_date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000))) && (
