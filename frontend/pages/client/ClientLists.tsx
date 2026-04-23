@@ -74,6 +74,7 @@ const ClientLists: React.FC = () => {
     const [folderNotes, setFolderNotes] = useState<string>('');
     const [savingNotes, setSavingNotes] = useState(false);
     const [viewMode, setViewMode] = useState<'folders' | 'custom_properties'>('folders');
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     // Global listener for dynamic property additions
     useEffect(() => {
@@ -409,8 +410,8 @@ const ClientLists: React.FC = () => {
     return (
         <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-slate-50 dark:bg-slate-950 border-x border-slate-200 dark:border-slate-800">
             {/* Left Sidebar */}
-            <div className="w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-xl">
-                <div className="p-4 flex justify-between items-center">
+            <div className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-xl overflow-hidden shrink-0`}>
+                <div className="p-4 flex justify-between items-center w-64">
                     <Typography variant="h6" className="font-bold text-slate-800 dark:text-white tracking-tight">Folders</Typography>
                     <IconButton size="small" onClick={() => setOpenModal(true)} className="hover:bg-slate-200 dark:hover:bg-slate-800">
                         <FolderPlusIcon size={18} className="text-blue-600" />
@@ -709,13 +710,17 @@ const ClientLists: React.FC = () => {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
                 {viewMode === 'custom_properties' ? (
-                    <ClientUserProperties />
+                    <ClientUserProperties onBack={() => setViewMode('folders')} />
                 ) : (
                     <div className="flex-1 flex flex-col h-full">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex flex-col gap-4">
                     <div className="flex justify-between items-center">
-                        <div>
-                            <Typography variant="h5" className="font-bold text-slate-900 dark:text-white capitalize leading-tight">
+                        <div className="flex items-center gap-3">
+                            <IconButton onClick={() => setSidebarOpen(!sidebarOpen)} size="small" className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700">
+                                <span className="material-symbols-outlined text-slate-600 dark:text-slate-300 text-[20px]">{sidebarOpen ? 'left_panel_close' : 'left_panel_open'}</span>
+                            </IconButton>
+                            <div>
+                                <Typography variant="h5" className="font-bold text-slate-900 dark:text-white capitalize leading-tight">
                                 {selectedStateName
                                     ? (selectedCountyName ? `${selectedStateName} - ${selectedCountyName}` : selectedStateName)
                                     : (selectedList?.name || 'Select a Folder')}
@@ -729,6 +734,7 @@ const ClientLists: React.FC = () => {
 
                             </div>
                         </div>
+                    </div>
                     </div>
 
                     {/* Upcoming Auction Alert Banner */}

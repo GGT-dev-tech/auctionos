@@ -828,3 +828,20 @@ def enrich_property_endpoint(
     except Exception as e:
         logger.error(f"Erro no endpoint de enriquecimento para {property_id}: {e}")
         return {"status": "error", "message": str(e), "property_id": property_id}
+
+from app.services.status_updater import transition_past_auctions
+
+@router.post("/force-status-update", response_model=dict)
+def force_status_update(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_superuser)
+) -> Any:
+    """
+    Manually triggers the background task to transition properties 
+    linked to past auctions to 'unavailable'.
+    """
+    try:
+        result = transition_past_auctions()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

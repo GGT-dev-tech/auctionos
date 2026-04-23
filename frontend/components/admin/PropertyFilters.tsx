@@ -189,8 +189,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ onFilterChange, readO
                     size="small"
                     value={filters.state || ''}
                     onChange={(e) => handleChange('state', e.target.value)}
-                    className="bg-white dark:bg-slate-900 w-[100px]"
-                    inputProps={{ maxLength: 2 }}
+                    className="bg-white dark:bg-slate-900 w-[150px]"
                 />
 
                 <Button

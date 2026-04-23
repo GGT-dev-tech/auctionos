@@ -11,6 +11,7 @@ import SystemAnnouncementForm from '../../components/admin/SystemAnnouncementFor
 import UserList from '../../components/admin/UserList';
 import { Box } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
+import { PropertyService } from '../../services/property.service';
 
 interface AdminAuctionsProps {
     defaultTab?: 'auctions' | 'properties' | 'import_props' | 'import_auctions' | 'broadcasts' | 'users';
@@ -35,6 +36,20 @@ const AdminAuctions: React.FC<AdminAuctionsProps> = ({ defaultTab = 'auctions' }
     }, [propertyFilters]);
 
     const [, setSearchParams] = useSearchParams();
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+    const handleForceStatusUpdate = async () => {
+        setIsUpdatingStatus(true);
+        try {
+            const res = await PropertyService.forceStatusUpdate();
+            alert(`Status update complete. Processed ${res.processed} properties.`);
+        } catch (error) {
+            alert('Failed to force status update.');
+            console.error(error);
+        } finally {
+            setIsUpdatingStatus(false);
+        }
+    };
 
     const handleDateTypeSelect = (date: string, type: string) => {
         setSearchParams(prev => {
@@ -52,7 +67,17 @@ const AdminAuctions: React.FC<AdminAuctionsProps> = ({ defaultTab = 'auctions' }
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold mb-6 text-slate-800 dark:text-white">Admin Module</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Admin Module</h1>
+                <button
+                    onClick={handleForceStatusUpdate}
+                    disabled={isUpdatingStatus}
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-sm flex items-center gap-2 transition-colors text-sm disabled:opacity-50"
+                >
+                    <span className={`material-symbols-outlined ${isUpdatingStatus ? 'animate-spin' : ''}`}>sync</span>
+                    {isUpdatingStatus ? 'Updating...' : 'Force Status Auto-Update'}
+                </button>
+            </div>
 
             <div className="flex flex-wrap gap-2 mb-6 border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
                 <TabButton active={activeTab === 'auctions'} onClick={() => setActiveTab('auctions')} label="Auctions Dashboard" />

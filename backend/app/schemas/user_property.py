@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, UUID4
-from datetime import datetime
+from datetime import datetime, date
 
 class UserPropertyBase(BaseModel):
     title: Optional[str] = None
@@ -12,6 +12,18 @@ class UserPropertyBase(BaseModel):
     estimated_value: Optional[float] = None
     rent_estimate: Optional[float] = None
     notes: Optional[str] = None
+    
+    # Detailed Fields
+    bedrooms: Optional[int] = None
+    bathrooms: Optional[float] = None
+    sqft: Optional[int] = None
+    year_built: Optional[int] = None
+    owner_name: Optional[str] = None
+    auction_date: Optional[date] = None
+    amount_due: Optional[float] = None
+    
+    # List association
+    list_id: Optional[int] = None
 
 class UserPropertyCreate(UserPropertyBase):
     pass

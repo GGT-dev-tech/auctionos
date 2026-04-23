@@ -1,6 +1,6 @@
 import uuid
-from datetime import datetime
-from sqlalchemy import Column, String, Float, DateTime, ForeignKey, Integer, Text
+from datetime import datetime, date
+from sqlalchemy import Column, String, Float, DateTime, ForeignKey, Integer, Text, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
@@ -22,6 +22,18 @@ class UserProperty(Base):
     estimated_value = Column(Float, nullable=True)
     rent_estimate = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)
+
+    # Detailed Fields
+    bedrooms = Column(Integer, nullable=True)
+    bathrooms = Column(Float, nullable=True)
+    sqft = Column(Integer, nullable=True)
+    year_built = Column(Integer, nullable=True)
+    owner_name = Column(String(255), nullable=True)
+    auction_date = Column(Date, nullable=True)
+    amount_due = Column(Float, nullable=True)
+    
+    # Export to List
+    list_id = Column(Integer, ForeignKey("client_lists.id", ondelete="SET NULL"), nullable=True, index=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

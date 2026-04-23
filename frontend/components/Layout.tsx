@@ -133,7 +133,7 @@ export const Layout: React.FC = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-200 dark:border-slate-700">
+          <div className="md:hidden border-t border-slate-200 dark:border-slate-700 overflow-y-auto max-h-[calc(100vh-4rem)] bg-white dark:bg-slate-900 absolute w-full z-50">
             <div className="pt-2 pb-3 px-4 flex flex-col gap-1">
               {navItems.map((item) => (
                 <div key={item.label}>

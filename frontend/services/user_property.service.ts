@@ -13,6 +13,19 @@ export interface UserProperty {
   estimated_value?: number;
   rent_estimate?: number;
   notes?: string;
+  
+  // Detailed Fields
+  bedrooms?: number;
+  bathrooms?: number;
+  sqft?: number;
+  year_built?: number;
+  owner_name?: string;
+  auction_date?: string;
+  amount_due?: number;
+  
+  // Export to List
+  list_id?: number;
+
   created_at?: string;
   updated_at?: string;
 }
