@@ -14,10 +14,16 @@ export interface UserProperty {
   rent_estimate?: number;
   notes?: string;
   
+  // Core identification
+  parcel_id?: string;
+  county?: string;
+  description?: string;
+
   // Detailed Fields
   bedrooms?: number;
   bathrooms?: number;
   sqft?: number;
+  lot_size?: number;
   year_built?: number;
   owner_name?: string;
   auction_date?: string;

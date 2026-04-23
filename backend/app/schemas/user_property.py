@@ -13,10 +13,16 @@ class UserPropertyBase(BaseModel):
     rent_estimate: Optional[float] = None
     notes: Optional[str] = None
     
+    # Core identification
+    parcel_id: Optional[str] = None
+    county: Optional[str] = None
+    description: Optional[str] = None
+
     # Detailed Fields
     bedrooms: Optional[int] = None
     bathrooms: Optional[float] = None
     sqft: Optional[int] = None
+    lot_size: Optional[float] = None
     year_built: Optional[int] = None
     owner_name: Optional[str] = None
     auction_date: Optional[date] = None

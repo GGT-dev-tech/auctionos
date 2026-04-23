@@ -23,10 +23,16 @@ class UserProperty(Base):
     rent_estimate = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)
 
+    # Core identification
+    parcel_id = Column(String(100), nullable=True, index=True)
+    county = Column(String(100), nullable=True)
+    description = Column(Text, nullable=True)
+
     # Detailed Fields
     bedrooms = Column(Integer, nullable=True)
     bathrooms = Column(Float, nullable=True)
     sqft = Column(Integer, nullable=True)
+    lot_size = Column(Float, nullable=True)
     year_built = Column(Integer, nullable=True)
     owner_name = Column(String(255), nullable=True)
     auction_date = Column(Date, nullable=True)

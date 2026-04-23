@@ -50,6 +50,20 @@ def run_safe_migrations():
          "INTEGER"),
         ("client_lists", "notes", "TEXT", "TEXT"),
         ("auction_events", "status", "VARCHAR(50) DEFAULT 'active'", "VARCHAR(50) DEFAULT 'active'"),
+        
+        # User Properties Expansion (Fix for 'bedrooms' missing error)
+        ("user_properties", "parcel_id", "VARCHAR(100)", "VARCHAR(100)"),
+        ("user_properties", "county", "VARCHAR(100)", "VARCHAR(100)"),
+        ("user_properties", "description", "TEXT", "TEXT"),
+        ("user_properties", "bedrooms", "INTEGER", "INTEGER"),
+        ("user_properties", "bathrooms", "FLOAT", "FLOAT"),
+        ("user_properties", "sqft", "INTEGER", "INTEGER"),
+        ("user_properties", "lot_size", "FLOAT", "FLOAT"),
+        ("user_properties", "year_built", "INTEGER", "INTEGER"),
+        ("user_properties", "owner_name", "VARCHAR(255)", "VARCHAR(255)"),
+        ("user_properties", "auction_date", "DATE", "DATE"),
+        ("user_properties", "amount_due", "FLOAT", "FLOAT"),
+        ("user_properties", "list_id", "INTEGER REFERENCES client_lists(id) ON DELETE SET NULL", "INTEGER"),
     ]
 
     with engine.connect() as conn:

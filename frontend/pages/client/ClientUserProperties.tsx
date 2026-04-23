@@ -74,7 +74,12 @@ export const ClientUserProperties: React.FC<Props> = ({ onBack }) => {
 
     const openCreate = () => {
         setEditingProp(null);
-        setFormData({ title: '', address: '', city: '', state: '', zip_code: '', property_type: '', estimated_value: 0 });
+        setFormData({ 
+            title: '', address: '', city: '', state: '', zip_code: '', 
+            property_type: '', estimated_value: 0, parcel_id: '', county: '',
+            bedrooms: 0, bathrooms: 0, sqft: 0, year_built: 0, amount_due: 0,
+            owner_name: '', auction_date: ''
+        });
         setModalOpen(true);
     };
 
@@ -112,7 +117,10 @@ export const ClientUserProperties: React.FC<Props> = ({ onBack }) => {
                     {properties.map(p => (
                         <div key={p.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm flex flex-col">
                             <div className="flex justify-between items-start mb-2">
-                                <Typography variant="subtitle1" className="font-bold text-slate-800 dark:text-white truncate">{p.title || 'Untitled Property'}</Typography>
+                                <div className="flex flex-col">
+                                    <Typography variant="subtitle1" className="font-bold text-slate-800 dark:text-white truncate">{p.title || 'Untitled Property'}</Typography>
+                                    {p.parcel_id && <Typography variant="caption" className="text-blue-500 font-bold uppercase text-[10px]">PID: {p.parcel_id}</Typography>}
+                                </div>
                                 <div className="flex gap-1">
                                     <IconButton size="small" onClick={() => openEdit(p)}><Edit2Icon size={14} className="text-blue-500" /></IconButton>
                                     <IconButton size="small" onClick={() => p.id && handleDelete(p.id)}><Trash2Icon size={14} className="text-red-500" /></IconButton>
@@ -146,6 +154,10 @@ export const ClientUserProperties: React.FC<Props> = ({ onBack }) => {
                 <Typography variant="h6" className="font-bold mb-4">{editingProp ? 'Edit Property' : 'New Custom Property'}</Typography>
                 <div className="flex flex-col gap-3">
                     <TextField label="Title (e.g. My Next Flip)" size="small" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} fullWidth />
+                    <div className="flex gap-3">
+                        <TextField label="Parcel ID" size="small" value={formData.parcel_id || ''} onChange={e => setFormData({...formData, parcel_id: e.target.value})} fullWidth />
+                        <TextField label="County" size="small" value={formData.county || ''} onChange={e => setFormData({...formData, county: e.target.value})} fullWidth />
+                    </div>
                     <TextField label="Address" size="small" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} fullWidth />
                     <div className="flex gap-3">
                         <TextField label="City" size="small" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} fullWidth />
