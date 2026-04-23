@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import { AuctionService } from '../../services/auction.service';
 import type { AuctionEvent } from '../../types';
 import { AuctionDetailsModal } from './AuctionDetailsModal';
@@ -103,14 +104,18 @@ const AuctionCalendar: React.FC<AuctionCalendarProps> = ({ filters = { startDate
     return (
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm h-[600px] relative">
             <FullCalendar
-                plugins={[dayGridPlugin, interactionPlugin]}
+                plugins={[dayGridPlugin, interactionPlugin, listPlugin]}
                 initialView="dayGridMonth"
                 initialDate={filters.startDate}
                 timeZone="UTC"
                 headerToolbar={{
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth'
+                    right: 'dayGridMonth,listWeek'
+                }}
+                buttonText={{
+                    month: 'Month',
+                    listWeek: 'Week'
                 }}
                 events={processedEvents}
                 eventClick={handleEventClick}

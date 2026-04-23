@@ -98,8 +98,8 @@ export const Layout: React.FC = () => {
 
             <div className="flex items-center gap-4">
               {/* User Menu */}
-              <div className="flex items-center gap-3">
-                <div className="hidden md:flex flex-col items-end mr-2">
+              <div className="hidden md:flex items-center gap-3">
+                <div className="flex flex-col items-end mr-2">
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{user?.email || 'User'}</span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user?.role || 'Agent'}</span>
                 </div>
@@ -189,6 +189,30 @@ export const Layout: React.FC = () => {
                 </div>
               ))}
             </div>
+
+            {/* Mobile User Menu */}
+            <div className="mt-4 pt-4 pb-4 border-t border-slate-200 dark:border-slate-700">
+              <div className="flex items-center px-4">
+                <div
+                  className="size-10 rounded-full bg-cover bg-center border border-slate-200"
+                  style={{ backgroundImage: `url('${user?.avatar || '/placeholder.png'}')` }}
+                ></div>
+                <div className="ml-3">
+                  <div className="text-base font-medium text-slate-800 dark:text-white">{user?.email || 'User'}</div>
+                  <div className="text-sm font-medium text-slate-500 dark:text-slate-400 capitalize">{user?.role || 'Agent'}</div>
+                </div>
+              </div>
+              <div className="mt-3 space-y-1 px-2">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-base font-medium text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <span className="material-symbols-outlined">logout</span>
+                  Sign Out
+                </button>
+              </div>
+            </div>
+
           </div>
         )}
       </header>

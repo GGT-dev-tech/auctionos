@@ -8,6 +8,7 @@ from app.api import deps
 from app.schemas.property import PropertyDashboardSchema, PaginatedPropertyResponse
 from app.models.user import User
 from app.services.reconciliation_service import reconciliation_service
+from app.utils.state_mapper import normalize_state
 import uuid
 
 router = APIRouter()
@@ -55,6 +56,7 @@ def read_properties(
         where_clauses.append("p.county ILIKE :county")
         params["county"] = f"%{county}%"
     if state:
+        state = normalize_state(state)
         where_clauses.append("p.state ILIKE :state")
         params["state"] = f"%{state}%"
     if auction_id:

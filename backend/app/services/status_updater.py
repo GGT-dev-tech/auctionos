@@ -20,6 +20,19 @@ def transition_past_auctions():
     try:
         today = datetime.now().date()
 
+        # Update past auction events to inactive
+        try:
+            auction_update_result = db.execute(text("""
+                UPDATE auction_events
+                SET status = 'inactive'
+                WHERE auction_date < :today
+                  AND (status IS NULL OR status != 'inactive')
+            """), {"today": today})
+            auctions_updated = auction_update_result.rowcount
+            logger.info(f"Auto-Transition: {auctions_updated} past auction events marked as 'inactive'.")
+        except Exception as e:
+            logger.error(f"Auto-Transition: Error updating auction_events status: {e}")
+
         # Find properties that:
         # - are currently 'available' (case-insensitive to be safe)
         # - have at least one past auction (auction_date < today)

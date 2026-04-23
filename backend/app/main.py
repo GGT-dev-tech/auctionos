@@ -27,7 +27,7 @@ async def run_daily_task():
             await asyncio.to_thread(transition_past_auctions)
         except Exception as e:
             print(f"Error in daily background task: {e}")
-        await asyncio.sleep(12 * 3600)
+        await asyncio.sleep(3600)  # Run every 1 hour
 
 
 def run_safe_migrations():
@@ -49,6 +49,7 @@ def run_safe_migrations():
          "INTEGER REFERENCES companies(id) ON DELETE SET NULL",
          "INTEGER"),
         ("client_lists", "notes", "TEXT", "TEXT"),
+        ("auction_events", "status", "VARCHAR(50) DEFAULT 'active'", "VARCHAR(50) DEFAULT 'active'"),
     ]
 
     with engine.connect() as conn:

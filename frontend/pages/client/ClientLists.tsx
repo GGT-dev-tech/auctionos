@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { SwipeToDeleteItem } from '../../components/SwipeToDeleteItem';
 import { PropertyPreviewDrawer } from '../../components/PropertyPreviewDrawer';
 import { useCompany } from '../../context/CompanyContext';
+import { ClientUserProperties } from './ClientUserProperties';
 
 // Helper to map state names to codes for the SVG silhouette
 const STATE_CODE_MAP: Record<string, string> = {
@@ -72,6 +73,7 @@ const ClientLists: React.FC = () => {
     const [geocodedProperties, setGeocodedProperties] = useState<Record<number, { lat: number, lng: number }>>({});
     const [folderNotes, setFolderNotes] = useState<string>('');
     const [savingNotes, setSavingNotes] = useState(false);
+    const [viewMode, setViewMode] = useState<'folders' | 'custom_properties'>('folders');
 
     // Global listener for dynamic property additions
     useEffect(() => {
@@ -678,6 +680,21 @@ const ClientLists: React.FC = () => {
                                 )}
                             </div>
                         )}
+
+                        {/* User Content / Custom Properties */}
+                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                            <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px] tracking-widest uppercase">User Content</Typography>
+                            <div className="mt-2 space-y-0.5">
+                                <div
+                                    onClick={() => { setViewMode('custom_properties'); setSelectedListId(null); setSelectedStateName(null); setSelectedCountyName(null); }}
+                                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 
+                                        ${viewMode === 'custom_properties' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
+                                >
+                                    <span className={`material-symbols-outlined text-[18px] ${viewMode === 'custom_properties' ? 'text-white' : 'text-blue-500'}`}>real_estate_agent</span>
+                                    <span className="flex-1 text-sm font-medium truncate">Custom Properties</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -691,7 +708,11 @@ const ClientLists: React.FC = () => {
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex flex-col gap-4">
+                {viewMode === 'custom_properties' ? (
+                    <ClientUserProperties />
+                ) : (
+                    <div className="flex-1 flex flex-col h-full">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex flex-col gap-4">
                     <div className="flex justify-between items-center">
                         <div>
                             <Typography variant="h5" className="font-bold text-slate-900 dark:text-white capitalize leading-tight">
@@ -1024,6 +1045,8 @@ const ClientLists: React.FC = () => {
                         );
                     })()}
                 </div>
+            </div>
+            )}
             </div>
 
             {/* Create Folder Modal */}

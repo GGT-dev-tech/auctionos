@@ -15,3 +15,4 @@ from app.models.lead import Lead
 
 from app.models.company import Company
 from app.models.consultant import Consultant
+from app.models.user_property import UserProperty

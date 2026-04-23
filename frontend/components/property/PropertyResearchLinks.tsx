@@ -46,8 +46,8 @@ export const PropertyResearchLinks: React.FC<Props> = ({ property }) => {
             title: 'Property Research',
             icon: 'home_work',
             links: [
-                { label: 'Zillow Report', url: `https://www.zillow.com/homes/${encodeURIComponent(property.address || '')}_rb` },
-                { label: 'Regrid Property Map', url: `https://app.regrid.com/us?q=${encodeURIComponent(property.address || '')}` },
+                { label: 'Zillow Report', url: `https://www.zillow.com/homes/${fullQuery}_rb` },
+                { label: 'Regrid Property Map', url: `https://app.regrid.com/us?q=${fullQuery}` },
                 { label: 'EPA EnviroFacts', url: `https://www.epa.gov/enviro/myenvironment` },
                 { label: 'FEMA Flood Maps', url: `https://msc.fema.gov/portal/search?AddressQuery=${encodeURIComponent(property.address || '')}` },
                 { label: 'Google Earth', url: `https://earth.google.com/web/search/${addressQuery}` }
