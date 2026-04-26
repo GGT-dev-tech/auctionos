@@ -47,9 +47,16 @@ export const PropertyPreviewDrawer: React.FC<PropertyPreviewDrawerProps> = ({ op
         >
             <div className="h-full flex flex-col">
                 <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-                    <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">
-                        Property Preview
-                    </Typography>
+                    <div className="flex items-center gap-3">
+                        <Typography variant="h6" className="font-bold text-slate-800 dark:text-white">
+                            Property Preview
+                        </Typography>
+                        {property?.company_id && (
+                            <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 text-[10px] uppercase font-black px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/50">
+                                Private Property
+                            </span>
+                        )}
+                    </div>
                     <div className="flex gap-2">
                         <IconButton
                             onClick={() => {

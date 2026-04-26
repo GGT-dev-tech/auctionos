@@ -8,6 +8,11 @@ class PropertyDetails(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     property_id = Column(String(36), nullable=False)
+    
+    # Privacy / Custom Property tracking
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
     parcel_id = Column(String(100), unique=True, index=True, nullable=True)
     address = Column(String(255), nullable=True)
     owner_address = Column(String(255), nullable=True)

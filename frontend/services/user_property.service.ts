@@ -1,75 +1,51 @@
 import { API_URL, getHeaders } from './httpClient';
 
-export interface UserProperty {
-  id?: string;
-  user_id?: number;
-  company_id?: number;
-  title?: string;
-  address?: string;
-  state?: string;
-  city?: string;
-  zip_code?: string;
-  property_type?: string;
-  estimated_value?: number;
-  rent_estimate?: number;
-  notes?: string;
-  
-  // Core identification
+export interface CustomPropertyPayload {
   parcel_id?: string;
+  address?: string;
+  city?: string;
+  state?: string;
   county?: string;
+  zip_code?: string;
   description?: string;
-
-  // Detailed Fields
   bedrooms?: number;
   bathrooms?: number;
   sqft?: number;
   lot_size?: number;
   year_built?: number;
   owner_name?: string;
-  auction_date?: string;
   amount_due?: number;
-  
-  // Export to List
-  list_id?: number;
-
-  created_at?: string;
-  updated_at?: string;
+  assessed_value?: number;
+  property_type?: string;
+  occupancy?: string;
+  target_list_id?: number;
 }
 
 export const UserPropertyService = {
-  getAll: async (skip = 0, limit = 100): Promise<UserProperty[]> => {
-    const response = await fetch(`${API_URL}/user-properties/?skip=${skip}&limit=${limit}`, {
+  getAll: async (skip = 0, limit = 100): Promise<any[]> => {
+    const response = await fetch(`${API_URL}/client-data/custom-properties`, {
       headers: getHeaders()
     });
     if (!response.ok) throw new Error('Failed to fetch properties');
     return response.json();
   },
 
-  create: async (data: UserProperty): Promise<UserProperty> => {
-    const response = await fetch(`${API_URL}/user-properties/`, {
+  create: async (data: CustomPropertyPayload): Promise<any> => {
+    const response = await fetch(`${API_URL}/client-data/custom-properties`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data)
     });
-    if (!response.ok) throw new Error('Failed to create property');
+    if (!response.ok) throw new Error('Failed to create custom property');
     return response.json();
   },
 
-  update: async (id: string, data: UserProperty): Promise<UserProperty> => {
-    const response = await fetch(`${API_URL}/user-properties/${id}`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) throw new Error('Failed to update property');
-    return response.json();
+  // Legacy placeholders
+  update: async (id: string, data: any): Promise<any> => {
+    throw new Error('Not implemented for unified properties yet');
   },
 
   delete: async (id: string): Promise<void> => {
-    const response = await fetch(`${API_URL}/user-properties/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders()
-    });
-    if (!response.ok) throw new Error('Failed to delete property');
+    throw new Error('Not implemented for unified properties yet');
   }
 };

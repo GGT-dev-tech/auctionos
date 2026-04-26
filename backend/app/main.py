@@ -51,6 +51,10 @@ def run_safe_migrations():
         ("client_lists", "notes", "TEXT", "TEXT"),
         ("auction_events", "status", "VARCHAR(50) DEFAULT 'active'", "VARCHAR(50) DEFAULT 'active'"),
         
+        # Privacy / Custom Property tracking for PropertyDetails
+        ("property_details", "company_id", "INTEGER REFERENCES companies(id) ON DELETE SET NULL", "INTEGER"),
+        ("property_details", "created_by_user_id", "INTEGER REFERENCES users(id) ON DELETE SET NULL", "INTEGER"),
+        
         # User Properties Expansion (Fix for 'bedrooms' missing error)
         ("user_properties", "parcel_id", "VARCHAR(100)", "VARCHAR(100)"),
         ("user_properties", "county", "VARCHAR(100)", "VARCHAR(100)"),

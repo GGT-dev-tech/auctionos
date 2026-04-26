@@ -49,7 +49,8 @@ def read_properties(
 ) -> Any:
     
     # 1. Build Base Filter Query
-    where_clauses = ["1=1"]
+    # Ensure private custom properties are hidden from global search
+    where_clauses = ["1=1", "p.company_id IS NULL"]
     params = {"skip": skip, "limit": limit}
 
     if county:

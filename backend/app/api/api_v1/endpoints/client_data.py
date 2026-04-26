@@ -61,6 +61,26 @@ class ClientAttachmentResponse(BaseModel):
     file_path: str
     created_at: datetime
 
+class CustomPropertyCreate(BaseModel):
+    parcel_id: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    county: Optional[str] = None
+    zip_code: Optional[str] = None
+    description: Optional[str] = None
+    bedrooms: Optional[int] = None
+    bathrooms: Optional[float] = None
+    sqft: Optional[int] = None
+    lot_size: Optional[float] = None
+    year_built: Optional[int] = None
+    owner_name: Optional[str] = None
+    amount_due: Optional[float] = None
+    assessed_value: Optional[float] = None
+    property_type: Optional[str] = None
+    occupancy: Optional[str] = None
+    target_list_id: Optional[int] = None
+
 # --- Endpoints ---
 
 @router.post("/lists", response_model=ClientListResponse)
@@ -152,6 +172,128 @@ def get_client_lists(
             "notes": lst.notes
         })
     return results
+
+
+@router.get("/custom-properties")
+def get_custom_properties(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_active_user)
+) -> Any:
+    """Get all private custom properties created by the current user's company."""
+    if not current_user.active_company_id:
+        return []
+    
+    from app.models.property import PropertyDetails
+    props = db.query(PropertyDetails).filter(
+        PropertyDetails.company_id == current_user.active_company_id,
+        PropertyDetails.created_by_user_id != None
+    ).all()
+    
+    results = []
+    for p in props:
+        results.append({
+            "id": p.id,
+            "property_id": p.property_id,
+            "parcel_id": p.parcel_id,
+            "address": p.address,
+            "city": p.city,
+            "state": p.state,
+            "county": p.county,
+            "description": p.description,
+            "bedrooms": p.bedrooms,
+            "bathrooms": p.bathrooms,
+            "sqft": p.sqft,
+            "lot_size": p.lot_size,
+            "year_built": p.year_built,
+            "amount_due": p.amount_due,
+            "assessed_value": p.assessed_value,
+            "property_type": p.property_type,
+            "availability_status": p.availability_status
+        })
+    return results
+
+@router.post("/custom-properties")
+def create_custom_property(
+    *,
+    db: Session = Depends(deps.get_db),
+    property_in: CustomPropertyCreate,
+    current_user = Depends(deps.get_current_active_user)
+) -> Any:
+    """Create a private custom property linked to a client's company and assign it to a list."""
+    import uuid
+    from app.models.property import PropertyDetails
+
+    # Require company isolation for private properties
+    if not current_user.active_company_id:
+        raise HTTPException(status_code=400, detail="User must belong to a company to create custom properties.")
+
+    # Format the fallback address based on fields if address not fully provided
+    full_address = property_in.address or ""
+    if property_in.city and property_in.state:
+        if full_address:
+            full_address += f", {property_in.city}, {property_in.state} {property_in.zip_code or ''}"
+        else:
+            full_address = f"{property_in.city}, {property_in.state} {property_in.zip_code or ''}"
+
+    prop_id = str(uuid.uuid4())
+    new_prop = PropertyDetails(
+        property_id=prop_id,
+        parcel_id=property_in.parcel_id or f"CUSTOM-{prop_id[:8]}",
+        address=full_address.strip(),
+        state=property_in.state,
+        county=property_in.county,
+        description=property_in.description,
+        bedrooms=property_in.bedrooms,
+        bathrooms=property_in.bathrooms,
+        sqft=property_in.sqft,
+        lot_size=property_in.lot_size,
+        year_built=property_in.year_built,
+        owner_name=property_in.owner_name,
+        amount_due=property_in.amount_due,
+        assessed_value=property_in.assessed_value,
+        property_type=property_in.property_type,
+        occupancy=property_in.occupancy,
+        availability_status="available",
+        company_id=current_user.active_company_id,
+        created_by_user_id=current_user.id
+    )
+
+    db.add(new_prop)
+    db.commit()
+    db.refresh(new_prop)
+
+    # Resolve Target List
+    target_list_id = property_in.target_list_id
+    lst = None
+    if target_list_id:
+        lst = db.query(ClientList).filter(ClientList.id == target_list_id, ClientList.user_id == current_user.id).first()
+    
+    if not lst:
+        # Create or find default "Custom Properties" folder
+        lst = db.query(ClientList).filter(
+            ClientList.user_id == current_user.id,
+            ClientList.name == "Custom Folder",
+            ClientList.company_id == current_user.active_company_id
+        ).first()
+
+        if not lst:
+            lst = ClientList(
+                name="Custom Folder",
+                user_id=current_user.id,
+                company_id=current_user.active_company_id,
+                notes="Default folder for manually created properties"
+            )
+            db.add(lst)
+            db.commit()
+            db.refresh(lst)
+
+    # Link Property to List
+    if new_prop not in lst.properties:
+        lst.properties.append(new_prop)
+        db.commit()
+
+    return {"id": new_prop.id, "property_id": new_prop.property_id, "list_id": lst.id, "list_name": lst.name}
 
 
 @router.get("/lists/preferences")
