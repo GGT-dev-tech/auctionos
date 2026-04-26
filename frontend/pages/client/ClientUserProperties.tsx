@@ -113,7 +113,9 @@ export const ClientUserProperties: React.FC<Props> = ({ onBack }) => {
                                     <IconButton size="small" onClick={() => p.id && handleDelete(p.id)}><Trash2Icon size={14} className="text-red-500" /></IconButton>
                                 </div>
                             </div>
-                            <Typography variant="body2" className="text-slate-500 mb-1">{p.city}, {p.state}</Typography>
+                            <Typography variant="body2" className="text-slate-500 mb-1">
+                                {p.city ? `${p.city}, ` : ''}{p.state}
+                            </Typography>
                             <div className="flex flex-wrap gap-2 mb-3">
                                 <Typography variant="caption" className="text-slate-400 font-medium bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded w-fit">{p.property_type || 'Unknown Type'}</Typography>
                                 {p.bedrooms > 0 && <Typography variant="caption" className="text-slate-400 font-medium bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded w-fit">{p.bedrooms} Beds</Typography>}

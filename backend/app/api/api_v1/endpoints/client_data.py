@@ -197,7 +197,7 @@ def get_custom_properties(
             "property_id": p.property_id,
             "parcel_id": p.parcel_id,
             "address": p.address,
-            "city": p.city,
+            "city": "",  # Extracted from address if needed
             "state": p.state,
             "county": p.county,
             "description": p.description,
