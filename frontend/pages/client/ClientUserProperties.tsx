@@ -68,7 +68,8 @@ export const ClientUserProperties: React.FC<Props> = ({ onBack }) => {
             address: '', city: '', state: '', zip_code: '', 
             property_type: '', assessed_value: 0, parcel_id: '', county: '',
             bedrooms: 0, bathrooms: 0, sqft: 0, year_built: 0, amount_due: 0,
-            owner_name: '', lot_size: 0, occupancy: '', description: ''
+            owner_name: '', lot_size: 0, occupancy: '', description: '',
+            tax_amount: 0, tax_year: 0, legal_description: '', zoning: '', num_units: 0
         });
         setModalOpen(true);
     };
@@ -176,7 +177,16 @@ export const ClientUserProperties: React.FC<Props> = ({ onBack }) => {
                     
                     <div className="flex gap-3">
                         <TextField label="Owner Name" size="small" value={formData.owner_name || ''} onChange={e => setFormData({...formData, owner_name: e.target.value})} fullWidth />
+                        <TextField label="Zoning" size="small" value={formData.zoning || ''} onChange={e => setFormData({...formData, zoning: e.target.value})} fullWidth />
                     </div>
+                    
+                    <div className="flex gap-3">
+                        <TextField label="# Units" type="number" size="small" value={formData.num_units || ''} onChange={e => setFormData({...formData, num_units: parseInt(e.target.value) || 0})} fullWidth />
+                        <TextField label="Tax Amount ($)" type="number" size="small" value={formData.tax_amount || ''} onChange={e => setFormData({...formData, tax_amount: parseFloat(e.target.value) || 0})} fullWidth />
+                        <TextField label="Tax Year" type="number" size="small" value={formData.tax_year || ''} onChange={e => setFormData({...formData, tax_year: parseInt(e.target.value) || 0})} fullWidth />
+                    </div>
+                    
+                    <TextField label="Legal Description" size="small" multiline rows={2} value={formData.legal_description || ''} onChange={e => setFormData({...formData, legal_description: e.target.value})} fullWidth />
                     
                     <div className="mt-2">
                         <TextField

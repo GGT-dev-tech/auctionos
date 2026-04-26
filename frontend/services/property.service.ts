@@ -268,6 +268,14 @@ export const ClientDataService = {
         if (!response.ok) throw new Error('Failed to remove property from list');
     },
 
+    movePropertyBetweenLists: async (listId: number, propertyId: number, targetListId: number): Promise<void> => {
+        const response = await fetch(`${API_URL}/client-data/lists/${listId}/move/${propertyId}?target_list_id=${targetListId}`, {
+            method: 'POST',
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to move property');
+    },
+
     getBroadcastedLists: async (): Promise<any[]> => {
         const response = await fetch(`${API_URL}/client-data/broadcasted`, {
             headers: getHeaders()

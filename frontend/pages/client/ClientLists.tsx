@@ -6,7 +6,7 @@ import { countyService, CountyContact } from '../../services/county.service';
 import { StatesService, StateContact } from '../../services/states.service';
 import { geocodeAddress } from '../../services/geocoding.service';
 import { useNavigate } from 'react-router-dom';
-import { SwipeToDeleteItem } from '../../components/SwipeToDeleteItem';
+import { SwipeActionItem } from '../../components/SwipeActionItem';
 import { PropertyPreviewDrawer } from '../../components/PropertyPreviewDrawer';
 import { useCompany } from '../../context/CompanyContext';
 import { ClientUserProperties } from './ClientUserProperties';
@@ -75,6 +75,8 @@ const ClientLists: React.FC = () => {
     const [savingNotes, setSavingNotes] = useState(false);
     const [viewMode, setViewMode] = useState<'folders' | 'custom_properties'>('folders');
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [movingPropertyId, setMovingPropertyId] = useState<number | null>(null);
+    const [moveTargetListId, setMoveTargetListId] = useState<number | string>('');
 
     // Global listener for dynamic property additions
     useEffect(() => {
@@ -311,6 +313,20 @@ const ClientLists: React.FC = () => {
             loadLists();
         } catch (err: any) {
             alert(err.message || 'Failed to remove property');
+        }
+    };
+
+    const handleMoveProperty = async () => {
+        if (!selectedListId || !movingPropertyId || !moveTargetListId) return;
+        try {
+            await ClientDataService.movePropertyBetweenLists(selectedListId, movingPropertyId, Number(moveTargetListId));
+            setMovingPropertyId(null);
+            setMoveTargetListId('');
+            loadLists();
+            loadListProperties(selectedListId);
+        } catch (e) {
+            console.error(e);
+            alert("Error moving property.");
         }
     };
 
@@ -974,7 +990,11 @@ const ClientLists: React.FC = () => {
                                     </div>
                                 )}
                                 {displayProperties.map((prop: any) => (
-                                    <SwipeToDeleteItem key={prop.id} onDelete={() => handleRemoveProperty(prop.id)}>
+                                    <SwipeActionItem 
+                                        key={prop.id} 
+                                        onDelete={() => handleRemoveProperty(prop.id)}
+                                        onMove={() => setMovingPropertyId(prop.id)}
+                                    >
                                         <div
                                             onClick={() => setPreviewPropertyId(prop.parcel_id || prop.id)}
                                             className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-pointer flex items-center gap-4"
@@ -1061,7 +1081,7 @@ const ClientLists: React.FC = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                    </SwipeToDeleteItem>
+                                    </SwipeActionItem>
                                 ))}
                             </div>
                         );
@@ -1133,7 +1153,31 @@ const ClientLists: React.FC = () => {
                 open={!!previewPropertyId}
                 propertyId={previewPropertyId}
                 onClose={() => setPreviewPropertyId(null)}
+                basePath="/client"
             />
+
+            {/* Move Property Dialog */}
+            <Dialog open={!!movingPropertyId} onClose={() => setMovingPropertyId(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+                <Typography variant="h6" className="font-bold mb-4 text-slate-800 dark:text-white">Move Property to Folder</Typography>
+                <Typography variant="body2" className="text-slate-500 mb-4">Select the destination folder for this property.</Typography>
+                <TextField
+                    select
+                    SelectProps={{ native: true }}
+                    fullWidth
+                    size="small"
+                    value={moveTargetListId}
+                    onChange={(e) => setMoveTargetListId(e.target.value)}
+                >
+                    <option value="" disabled>-- Select a Folder --</option>
+                    {lists.filter(l => l.id !== selectedListId).map(l => (
+                        <option key={l.id} value={l.id}>{l.name}</option>
+                    ))}
+                </TextField>
+                <div className="flex justify-end gap-2 mt-6">
+                    <Button onClick={() => setMovingPropertyId(null)} color="inherit">Cancel</Button>
+                    <Button onClick={handleMoveProperty} variant="contained" color="primary" disabled={!moveTargetListId}>Move Property</Button>
+                </div>
+            </Dialog>
         </div>
     );
 };

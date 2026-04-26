@@ -18,6 +18,11 @@ export interface CustomPropertyPayload {
   assessed_value?: number;
   property_type?: string;
   occupancy?: string;
+  tax_amount?: number;
+  tax_year?: number;
+  legal_description?: string;
+  zoning?: string;
+  num_units?: number;
   target_list_id?: number;
 }
 

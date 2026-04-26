@@ -79,6 +79,11 @@ class CustomPropertyCreate(BaseModel):
     assessed_value: Optional[float] = None
     property_type: Optional[str] = None
     occupancy: Optional[str] = None
+    tax_amount: Optional[float] = None
+    tax_year: Optional[int] = None
+    legal_description: Optional[str] = None
+    zoning: Optional[str] = None
+    num_units: Optional[int] = None
     target_list_id: Optional[int] = None
 
 # --- Endpoints ---
@@ -254,6 +259,11 @@ def create_custom_property(
         assessed_value=property_in.assessed_value,
         property_type=property_in.property_type,
         occupancy=property_in.occupancy,
+        tax_amount=property_in.tax_amount,
+        tax_year=property_in.tax_year,
+        legal_description=property_in.legal_description,
+        zoning=property_in.zoning,
+        num_units=property_in.num_units,
         availability_status="available",
         company_id=current_user.active_company_id,
         created_by_user_id=current_user.id
