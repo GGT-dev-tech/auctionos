@@ -16,3 +16,12 @@ from app.models.lead import Lead
 from app.models.company import Company
 from app.models.consultant import Consultant
 from app.models.user_property import UserProperty
+
+# Consultant Task Ecosystem
+from app.models.consultant_task import (
+    PropertyExport,
+    ConsultantTask,
+    TaskSubmission,
+    ConsultantCommission,
+    SupportTicket,
+)

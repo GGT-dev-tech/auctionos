@@ -120,32 +120,31 @@ def reset_admin_production(secret: str, db: Session = Depends(deps.get_db)):
     return {"message": "Success", "details": msg}
 
 @router.get("/login/{provider}")
-async def login_oauth(request: Request, provider: str):
+async def login_oauth(request: Request, provider: str, role: str = "investor"):
     """
     Redirect the user to the given provider (google or facebook).
+    `role` param: 'investor' or 'consultant' — passed as state so callback can enforce role separation.
     """
     client = getattr(oauth, provider, None)
     if not client:
         raise HTTPException(
             status_code=400, 
-            detail=f"Provider {provider} not configured. Please ensure {provider.upper()}_CLIENT_ID and {provider.upper()}_CLIENT_SECRET are set in environment variables."
+            detail=f"Provider {provider} not configured."
         )
     
     try:
         redirect_uri = request.url_for('oauth_callback', provider=provider, _external=True)
     except Exception:
-        # Robust fallback for proxy/load-balancer environments where url_for might fail
         base_url = str(request.base_url).rstrip("/")
         redirect_uri = f"{base_url}{settings.API_V1_STR}/auth/callback/{provider}"
         
-    # Ensure scheme is https in production (ProxyHeadersMiddleware also helps)
     if "https://" not in str(redirect_uri) and "localhost" not in str(redirect_uri) and "127.0.0.1" not in str(redirect_uri):
         redirect_uri = str(redirect_uri).replace("http://", "https://")
     
-    # 🚨 DIAGNOSTIC LOG: This will appear in Railway Logs
-    print(f">>> OAUTH REDIRECT URI: {redirect_uri}")
-        
-    return await client.authorize_redirect(request, str(redirect_uri))
+    print(f">>> OAUTH REDIRECT URI: {redirect_uri} | role={role}")
+
+    # Encode intended role in the OAuth state parameter
+    return await client.authorize_redirect(request, str(redirect_uri), state=role)
 
 @router.get("/callback/{provider}", name="oauth_callback", response_model=Token)
 async def auth_callback(request: Request, provider: str, db: Session = Depends(deps.get_db)):
@@ -175,11 +174,31 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
     
     email = user_info['email'].strip().lower()
     
+    # Determine intended role from the OAuth state parameter (set during login redirect)
+    intended_role_raw = request.query_params.get('state', 'investor')
+    intended_role = 'consultant' if intended_role_raw == 'consultant' else 'client'
+    
     # Check if user exists
     user = db.query(User).filter(User.email == email).first()
     
-    if not user:
-        # Create user with a secure random password since they logged in via OAuth
+    if user:
+        if not user.is_active:
+            raise HTTPException(status_code=400, detail="Inactive user")
+        # ── Anti-crossover: block login if role does not match ───────────────
+        if intended_role == 'consultant' and user.role not in ('consultant',):
+            frontend_url = settings.FRONTEND_URL
+            if 'localhost' in str(request.base_url) or '127.0.0.1' in str(request.base_url):
+                frontend_url = 'http://localhost:5173'
+            error_msg = 'This+email+is+registered+as+an+investor.+Please+use+the+standard+login+or+sign+up+as+consultant+with+a+different+email.'
+            return RedirectResponse(url=f"{frontend_url}/#/login?mode=consultant&error={error_msg}")
+        if intended_role == 'client' and user.role == 'consultant':
+            frontend_url = settings.FRONTEND_URL
+            if 'localhost' in str(request.base_url) or '127.0.0.1' in str(request.base_url):
+                frontend_url = 'http://localhost:5173'
+            error_msg = 'This+email+is+registered+as+a+consultant.+Please+use+the+Consultant+Login+tab.'
+            return RedirectResponse(url=f"{frontend_url}/#/login?error={error_msg}")
+    else:
+        # Create new user with the intended role
         random_password = secrets.token_urlsafe(32)
         user = User(
             email=email,
@@ -187,13 +206,11 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
             full_name=user_info.get('name') or user_info.get('given_name') or None,
             is_active=True,
             is_superuser=False,
-            role="client"
+            role=intended_role
         )
         db.add(user)
         db.commit()
         db.refresh(user)
-    elif not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
         
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
@@ -204,7 +221,7 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
     if "localhost" in str(request.base_url) or "127.0.0.1" in str(request.base_url):
         frontend_url = "http://localhost:5173"
 
-    # Route based on role: consultants go to their own portal
+    # Route based on actual role
     if user.role == "consultant":
         redirect_url = f"{frontend_url}/#/login?token={access_token}&mode=consultant"
     else:

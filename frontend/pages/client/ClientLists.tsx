@@ -10,6 +10,7 @@ import { SwipeActionItem } from '../../components/SwipeActionItem';
 import { PropertyPreviewDrawer } from '../../components/PropertyPreviewDrawer';
 import { useCompany } from '../../context/CompanyContext';
 import { ClientUserProperties } from './ClientUserProperties';
+import { InvestorTaskService } from '../../services/consultant_task.service';
 
 // Helper to map state names to codes for the SVG silhouette
 const STATE_CODE_MAP: Record<string, string> = {
@@ -77,6 +78,14 @@ const ClientLists: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [movingPropertyId, setMovingPropertyId] = useState<number | null>(null);
     const [moveTargetListId, setMoveTargetListId] = useState<number | string>('');
+
+    // Task & Export state
+    const [taskProperty, setTaskProperty] = useState<any | null>(null);
+    const [exportProperty, setExportProperty] = useState<any | null>(null);
+    const [taskForm, setTaskForm] = useState({ title: '', description: '', min_photos: 3, max_photos: 10, reward_points: 500 });
+    const [exportForm, setExportForm] = useState({ contact_name: '', contact_phone: '', contact_email: '', notes: '' });
+    const [taskSubmitting, setTaskSubmitting] = useState(false);
+    const [exportSubmitting, setExportSubmitting] = useState(false);
 
     // Global listener for dynamic property additions
     useEffect(() => {
@@ -1080,6 +1089,23 @@ const ClientLists: React.FC = () => {
                                                     <span className="material-symbols-outlined text-[18px]">drag_indicator</span>
                                                 </div>
                                             </div>
+                                            {/* Task & Export action buttons */}
+                                            <div className="mt-3 flex gap-2 border-t border-slate-100 dark:border-slate-800 pt-3" onClick={e => e.stopPropagation()}>
+                                                <button
+                                                    onClick={() => { setTaskProperty(prop); setTaskForm({ title: `Photo Verification — ${(prop.address || prop.parcel_id || '').slice(0, 40)}`, description: '', min_photos: 3, max_photos: 10, reward_points: 500 }); }}
+                                                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-bold rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800 transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-[14px]">task_alt</span>
+                                                    Create Task
+                                                </button>
+                                                <button
+                                                    onClick={() => { setExportProperty(prop); setExportForm({ contact_name: '', contact_phone: '', contact_email: '', notes: '' }); }}
+                                                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-bold rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-[14px]">upload</span>
+                                                    Export to Consultants
+                                                </button>
+                                            </div>
                                         </div>
                                     </SwipeActionItem>
                                 ))}
@@ -1176,6 +1202,75 @@ const ClientLists: React.FC = () => {
                 <div className="flex justify-end gap-2 mt-6">
                     <Button onClick={() => setMovingPropertyId(null)} color="inherit">Cancel</Button>
                     <Button onClick={handleMoveProperty} variant="contained" color="primary" disabled={!moveTargetListId}>Move Property</Button>
+                </div>
+            </Dialog>
+
+            {/* Create Task Dialog */}
+            <Dialog open={!!taskProperty} onClose={() => setTaskProperty(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+                <Typography variant="h6" className="font-bold mb-1 text-slate-800 dark:text-white">Create Field Task</Typography>
+                <Typography variant="body2" className="text-slate-500 mb-4 text-xs">{taskProperty?.address || taskProperty?.parcel_id}</Typography>
+                <div className="space-y-3">
+                    <TextField label="Task Title" size="small" fullWidth value={taskForm.title} onChange={e => setTaskForm(p => ({...p, title: e.target.value}))} />
+                    <TextField label="Description (what the consultant needs to do)" size="small" fullWidth multiline rows={2} value={taskForm.description} onChange={e => setTaskForm(p => ({...p, description: e.target.value}))} />
+                    <div className="flex gap-3">
+                        <TextField label="Min Photos" type="number" size="small" fullWidth value={taskForm.min_photos} onChange={e => setTaskForm(p => ({...p, min_photos: Math.max(3, Math.min(10, parseInt(e.target.value)||3))}))} inputProps={{min:3,max:10}} />
+                        <TextField label="Max Photos" type="number" size="small" fullWidth value={taskForm.max_photos} onChange={e => setTaskForm(p => ({...p, max_photos: Math.max(taskForm.min_photos, Math.min(10, parseInt(e.target.value)||10))}))} inputProps={{min:3,max:10}} />
+                    </div>
+                    <TextField label="Reward Points (100pts = $1, min 500 pts)" type="number" size="small" fullWidth value={taskForm.reward_points} onChange={e => setTaskForm(p => ({...p, reward_points: Math.max(500, parseInt(e.target.value)||500)}))} inputProps={{min:500,step:100}} />
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-xs text-blue-700 dark:text-blue-300">
+                        💡 Minimum: 3 photos = 500pts ($5.00). Each extra photo adds 100pts. You set {taskForm.reward_points} pts = ${(taskForm.reward_points/100).toFixed(2)}
+                    </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                    <Button onClick={() => setTaskProperty(null)} color="inherit">Cancel</Button>
+                    <Button
+                        variant="contained" color="primary"
+                        disabled={taskSubmitting || !taskForm.title}
+                        onClick={async () => {
+                            setTaskSubmitting(true);
+                            try {
+                                await InvestorTaskService.createTask({ property_id: taskProperty.id, ...taskForm });
+                                setTaskProperty(null);
+                                alert('✅ Task created! Consultants can now claim it.');
+                            } catch(e:any) { alert(e.message); }
+                            finally { setTaskSubmitting(false); }
+                        }}
+                    >
+                        {taskSubmitting ? 'Creating…' : 'Create Task'}
+                    </Button>
+                </div>
+            </Dialog>
+
+            {/* Export Property Dialog */}
+            <Dialog open={!!exportProperty} onClose={() => setExportProperty(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+                <Typography variant="h6" className="font-bold mb-1 text-slate-800 dark:text-white">Export to Consultants</Typography>
+                <Typography variant="body2" className="text-slate-500 mb-4 text-xs">{exportProperty?.address || exportProperty?.parcel_id}</Typography>
+                <div className="space-y-3">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 text-xs text-emerald-700 dark:text-emerald-300">
+                        📤 Consultants will see this property in their listings and can contact you for commission negotiations.
+                    </div>
+                    <TextField label="Your Name (visible to consultants)" size="small" fullWidth value={exportForm.contact_name} onChange={e => setExportForm(p => ({...p, contact_name: e.target.value}))} />
+                    <TextField label="Contact Phone" size="small" fullWidth value={exportForm.contact_phone} onChange={e => setExportForm(p => ({...p, contact_phone: e.target.value}))} />
+                    <TextField label="Contact Email" size="small" fullWidth value={exportForm.contact_email} onChange={e => setExportForm(p => ({...p, contact_email: e.target.value}))} />
+                    <TextField label="Additional Notes (optional)" size="small" fullWidth multiline rows={2} value={exportForm.notes} onChange={e => setExportForm(p => ({...p, notes: e.target.value}))} />
+                </div>
+                <div className="flex gap-2 mt-4">
+                    <Button onClick={() => setExportProperty(null)} color="inherit">Cancel</Button>
+                    <Button
+                        variant="contained" color="success"
+                        disabled={exportSubmitting}
+                        onClick={async () => {
+                            setExportSubmitting(true);
+                            try {
+                                await InvestorTaskService.exportProperty({ property_id: exportProperty.id, ...exportForm });
+                                setExportProperty(null);
+                                alert('✅ Property exported! Consultants can now see it in their listings.');
+                            } catch(e:any) { alert(e.message); }
+                            finally { setExportSubmitting(false); }
+                        }}
+                    >
+                        {exportSubmitting ? 'Exporting…' : 'Export Property'}
+                    </Button>
                 </div>
             </Dialog>
         </div>

@@ -13,7 +13,9 @@ export const Login: React.FC = () => {
   const [mode, setMode] = useState<LoginMode>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(
+    searchParams.get('error') ? decodeURIComponent(searchParams.get('error')!.replace(/\+/g, ' ')) : ''
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   // ── Handle OAuth Token returned from backend callback ──────────────────────
@@ -72,8 +74,8 @@ export const Login: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Passes the intended mode so backend callback can set role hint if needed
-    const callbackUrl = `${API_BASE_URL}/api/v1/auth/login/google`;
+    // Passes the intended role so backend can enforce role-based separation
+    const callbackUrl = `${API_BASE_URL}/api/v1/auth/login/google?role=${mode}`;
     window.location.href = callbackUrl;
   };
 

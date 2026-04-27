@@ -41,8 +41,12 @@ import { TrainingPage, CommunityPage, GroupsPage, TaxSystemsPage } from './pages
 import ChangePasswordPage from './pages/client/ChangePasswordPage';
 import CancelSubscriptionPage from './pages/client/CancelSubscriptionPage';
 import { CompanyProvider } from './context/CompanyContext';
-import ConsultantLayout from './layouts/ConsultantLayout';
+import ConsultantLayout from './pages/consultant/ConsultantLayout';
 import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
+import PropertyListings from './pages/consultant/PropertyListings';
+import AvailableTasks from './pages/consultant/AvailableTasks';
+import Commissions from './pages/consultant/Commissions';
+import ConsultantProfile from './pages/consultant/ConsultantProfile';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: string[] }> = ({ children, allowedRoles }) => {
   const user = AuthService.getCurrentUser();
@@ -143,10 +147,10 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }>
             <Route index element={<ConsultantDashboard />} />
-            <Route path="listings" element={<ConsultantDashboard />} />
-            <Route path="tasks" element={<ConsultantDashboard />} />
-            <Route path="commissions" element={<ConsultantDashboard />} />
-            <Route path="profile" element={<ConsultantDashboard />} />
+            <Route path="listings" element={<PropertyListings />} />
+            <Route path="tasks" element={<AvailableTasks />} />
+            <Route path="commissions" element={<Commissions />} />
+            <Route path="profile" element={<ConsultantProfile />} />
           </Route>
         </Routes>
       </HashRouter>
