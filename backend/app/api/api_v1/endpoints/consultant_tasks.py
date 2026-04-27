@@ -257,6 +257,69 @@ def _approve_task(task_id: int, reward_points: int, consultant_user_id: int, db:
     })
 
 
+@router.get("/exports")
+def get_exported_properties(
+    state: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Returns all active property exports visible to consultants.
+    Includes full property details and investor contact info.
+    """
+    state_clause = "AND LOWER(p.state) = LOWER(:state)" if state else ""
+    params: dict = {"skip": skip, "limit": limit}
+    if state:
+        params["state"] = state
+
+    rows = db.execute(text(f"""
+        SELECT
+            e.id AS export_id,
+            e.contact_name,
+            e.contact_phone,
+            e.contact_email,
+            e.notes AS export_notes,
+            e.exported_at,
+            p.id AS property_id,
+            p.parcel_id,
+            p.address,
+            p.state,
+            p.county,
+            p.property_type,
+            p.assessed_value,
+            p.amount_due,
+            p.lot_acres,
+            p.owner_name,
+            p.bedrooms,
+            p.bathrooms,
+            p.sqft,
+            p.year_built,
+            p.latitude,
+            p.longitude,
+            p.zoning,
+            p.legal_description,
+            p.tax_amount,
+            p.tax_year,
+            p.num_units,
+            p.availability_status,
+            u.full_name AS investor_name
+        FROM property_exports e
+        JOIN property_details p ON p.id = e.property_id
+        LEFT JOIN users u ON u.id = e.investor_user_id
+        WHERE e.is_active = TRUE
+          {state_clause}
+        ORDER BY e.exported_at DESC
+        LIMIT :limit OFFSET :skip
+    """), params).fetchall()
+
+    return {
+        "items": [dict(r._mapping) for r in rows],
+        "total": len(rows),
+    }
+
+
 @router.get("/commissions")
 def get_my_commissions(
     db: Session = Depends(deps.get_db),

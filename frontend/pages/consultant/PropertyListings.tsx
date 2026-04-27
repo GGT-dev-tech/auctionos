@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { CircularProgress, Chip } from '@mui/material';
-import { ConsultantService } from '../../services/company.service';
-import { InvestorTaskService } from '../../services/consultant_task.service';
+import { CircularProgress, Dialog, IconButton } from '@mui/material';
+import { API_URL, getHeaders } from '../../services/httpClient';
 
-interface Listing {
-  id: number;
+interface ExportedProperty {
+  export_id: number;
+  property_id: number;
   parcel_id?: string;
   address?: string;
   county?: string;
@@ -14,181 +14,290 @@ interface Listing {
   amount_due?: number;
   lot_acres?: number;
   owner_name?: string;
-  availability_status: string;
-}
-
-interface ExportedListing extends Listing {
+  bedrooms?: number;
+  bathrooms?: number;
+  sqft?: number;
+  year_built?: number;
+  zoning?: string;
+  legal_description?: string;
+  tax_amount?: number;
+  tax_year?: number;
+  num_units?: number;
   contact_name?: string;
   contact_phone?: string;
   contact_email?: string;
-  notes?: string;
+  export_notes?: string;
   exported_at?: string;
-  is_exported?: boolean;
+  investor_name?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
-const PropertyCard: React.FC<{ p: ExportedListing }> = ({ p }) => (
-  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 hover:border-emerald-400/50 hover:shadow-md transition-all flex flex-col gap-3">
-    <div>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-bold text-slate-800 dark:text-white truncate flex-1">{p.address || p.parcel_id}</p>
-        {p.is_exported && (
-          <span className="shrink-0 text-[9px] font-black uppercase bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+// ── Detail Drawer ──────────────────────────────────────────────────────────────
+const PropertyDetailDrawer: React.FC<{ p: ExportedProperty | null; onClose: () => void }> = ({ p, onClose }) => {
+  if (!p) return null;
+
+  const DetailRow: React.FC<{ label: string; value?: string | number | null }> = ({ label, value }) => {
+    if (!value && value !== 0) return null;
+    return (
+      <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+        <span className="text-xs text-slate-500 dark:text-slate-400">{label}</span>
+        <span className="text-xs font-semibold text-slate-800 dark:text-white text-right max-w-[60%]">{value}</span>
+      </div>
+    );
+  };
+
+  const currency = (v?: number | null) => v != null ? `$${Number(v).toLocaleString()}` : null;
+  const num = (v?: number | null) => v != null ? String(v) : null;
+
+  return (
+    <Dialog open={!!p} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{
+      sx: { borderRadius: 3, m: 2, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }
+    }}>
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 p-5 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex-1 min-w-0">
+          <p className="text-base font-extrabold text-slate-900 dark:text-white truncate">{p.address || p.parcel_id}</p>
+          <p className="text-xs text-slate-500 uppercase tracking-widest mt-0.5">{p.county}, {p.state}</p>
+          {p.parcel_id && (
+            <p className="text-[10px] text-slate-400 mt-0.5 font-mono">Parcel: {p.parcel_id}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] font-black uppercase bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
             Owner Export
+          </span>
+          <IconButton size="small" onClick={onClose}>
+            <span className="material-symbols-outlined text-[20px]">close</span>
+          </IconButton>
+        </div>
+      </div>
+
+      <div className="overflow-y-auto flex-1">
+        {/* Financial Summary */}
+        <div className="grid grid-cols-2 gap-3 p-5 border-b border-slate-100 dark:border-slate-800">
+          {[
+            { label: 'Assessed Value', value: currency(p.assessed_value), color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+            { label: 'Amount Due', value: currency(p.amount_due), color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+            { label: 'Tax Amount', value: currency(p.tax_amount), color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+            { label: 'Lot Acres', value: p.lot_acres ? `${Number(p.lot_acres).toFixed(2)} ac` : null, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+          ].filter(c => c.value).map(card => (
+            <div key={card.label} className={`rounded-xl p-3 ${card.bg}`}>
+              <p className={`text-sm font-extrabold ${card.color}`}>{card.value}</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400 mt-0.5">{card.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Property Details */}
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+          <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-3">Property Details</p>
+          <DetailRow label="Property Type" value={p.property_type} />
+          <DetailRow label="Bedrooms" value={num(p.bedrooms)} />
+          <DetailRow label="Bathrooms" value={num(p.bathrooms)} />
+          <DetailRow label="SqFt" value={p.sqft ? `${p.sqft.toLocaleString()} sqft` : null} />
+          <DetailRow label="Year Built" value={num(p.year_built)} />
+          <DetailRow label="Zoning" value={p.zoning} />
+          <DetailRow label="Tax Year" value={num(p.tax_year)} />
+          <DetailRow label="Num Units" value={num(p.num_units)} />
+          <DetailRow label="Owner" value={p.owner_name} />
+          {p.legal_description && (
+            <div className="py-2 border-b border-slate-100 dark:border-slate-800">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Legal Description</p>
+              <p className="text-xs font-medium text-slate-700 dark:text-slate-300">{p.legal_description}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Investor Contact */}
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+          <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-3">Investor Contact</p>
+          <DetailRow label="Name" value={p.contact_name || p.investor_name} />
+          {p.contact_phone && (
+            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-xs text-slate-500">Phone</span>
+              <a href={`tel:${p.contact_phone}`} className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">{p.contact_phone}</a>
+            </div>
+          )}
+          {p.contact_email && (
+            <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-xs text-slate-500">Email</span>
+              <a href={`mailto:${p.contact_email}`} className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline truncate ml-4">{p.contact_email}</a>
+            </div>
+          )}
+          {p.export_notes && (
+            <div className="mt-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3">
+              <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">Investor Notes</p>
+              <p className="text-xs text-slate-600 dark:text-slate-300">{p.export_notes}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Export Metadata */}
+        <div className="px-5 py-4">
+          {p.exported_at && (
+            <p className="text-[10px] text-slate-400">
+              Exported on {new Date(p.exported_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+          )}
+        </div>
+      </div>
+    </Dialog>
+  );
+};
+
+// ── Property Card ──────────────────────────────────────────────────────────────
+const PropertyCard: React.FC<{ p: ExportedProperty; onClick: () => void }> = ({ p, onClick }) => {
+  const currency = (v?: number | null) => v != null ? `$${Number(v).toLocaleString()}` : null;
+
+  return (
+    <div
+      onClick={onClick}
+      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 hover:border-emerald-400/50 hover:shadow-md transition-all flex flex-col gap-3 cursor-pointer"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{p.address || p.parcel_id}</p>
+          <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-0.5">
+            {[p.county, p.state].filter(Boolean).join(', ')}
+          </p>
+        </div>
+        <span className="shrink-0 text-[9px] font-black uppercase bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+          Owner Export
+        </span>
+      </div>
+
+      {/* Badges */}
+      <div className="flex flex-wrap gap-1.5">
+        {currency(p.assessed_value) && (
+          <span className="text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-lg">
+            ARV: {currency(p.assessed_value)}
+          </span>
+        )}
+        {currency(p.amount_due) && (
+          <span className="text-[10px] font-bold bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-lg">
+            Due: {currency(p.amount_due)}
+          </span>
+        )}
+        {p.property_type && (
+          <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-lg">
+            {p.property_type}
+          </span>
+        )}
+        {p.bedrooms && (
+          <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-lg">
+            🛏 {p.bedrooms}bd / {p.bathrooms}ba
           </span>
         )}
       </div>
-      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-0.5">
-        {p.county}, {p.state}
-      </p>
-    </div>
 
-    <div className="flex flex-wrap gap-1.5">
-      {p.assessed_value && (
-        <span className="text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-lg">
-          ARV: ${Number(p.assessed_value).toLocaleString()}
-        </span>
-      )}
-      {p.amount_due && (
-        <span className="text-[10px] font-bold bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-lg">
-          Due: ${Number(p.amount_due).toLocaleString()}
-        </span>
-      )}
-      {p.property_type && (
-        <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-lg">
-          {p.property_type}
-        </span>
-      )}
-    </div>
-
-    {/* Owner/Investor Contact (only for exports) */}
-    {p.is_exported && (p.contact_name || p.contact_phone || p.contact_email) && (
+      {/* Investor Contact Preview */}
       <div className="border-t border-slate-100 dark:border-slate-700 pt-3 space-y-1">
         <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Investor Contact</p>
-        {p.contact_name && (
+        {(p.contact_name || p.investor_name) && (
           <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-            <span className="material-symbols-outlined text-[14px]">person</span>
-            {p.contact_name}
+            <span className="material-symbols-outlined text-[13px]">person</span>
+            {p.contact_name || p.investor_name}
           </div>
         )}
         {p.contact_phone && (
-          <a href={`tel:${p.contact_phone}`} className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:underline">
-            <span className="material-symbols-outlined text-[14px]">phone</span>
+          <a href={`tel:${p.contact_phone}`} onClick={e => e.stopPropagation()}
+            className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:underline">
+            <span className="material-symbols-outlined text-[13px]">phone</span>
             {p.contact_phone}
           </a>
         )}
-        {p.contact_email && (
-          <a href={`mailto:${p.contact_email}`} className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline">
-            <span className="material-symbols-outlined text-[14px]">mail</span>
-            {p.contact_email}
-          </a>
-        )}
       </div>
-    )}
 
-    {p.owner_name && !p.is_exported && (
-      <div className="flex items-center gap-1.5 text-xs text-slate-500">
-        <span className="material-symbols-outlined text-[14px]">person</span>
-        {p.owner_name}
+      {/* View Details CTA */}
+      <div className="flex items-center justify-end gap-1 mt-auto pt-1">
+        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline">View Full Details →</span>
       </div>
-    )}
-  </div>
-);
+    </div>
+  );
+};
 
+// ── Main Page ─────────────────────────────────────────────────────────────────
 const PropertyListings: React.FC = () => {
-  const [systemListings, setSystemListings] = useState<Listing[]>([]);
-  const [exportedListings, setExportedListings] = useState<any[]>([]);
+  const [exports, setExports] = useState<ExportedProperty[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'exported' | 'system'>('exported');
+  const [selectedProperty, setSelectedProperty] = useState<ExportedProperty | null>(null);
+  const [stateFilter, setStateFilter] = useState('');
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const [sys, exp] = await Promise.all([
-          ConsultantService.getListings({ limit: 50 }).then(r => r.items || []),
-          fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/investor/exports`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          }).then(r => r.ok ? r.json() : []).catch(() => []),
-        ]);
-        setSystemListings(sys);
-        setExportedListings(exp);
-      } finally {
-        setLoading(false);
+  const load = async () => {
+    setLoading(true);
+    try {
+      const qs = stateFilter ? `?state=${encodeURIComponent(stateFilter)}` : '';
+      const res = await fetch(`${API_URL}/consultant-tasks/exports${qs}`, { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setExports(data.items || []);
       }
-    };
-    load();
-  }, []);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const exportedMapped: ExportedListing[] = exportedListings.map((e: any) => ({
-    id: e.property_id,
-    parcel_id: e.parcel_id,
-    address: e.address,
-    county: e.county,
-    state: e.state,
-    assessed_value: e.assessed_value,
-    amount_due: e.amount_due,
-    availability_status: 'available',
-    contact_name: e.contact_name,
-    contact_phone: e.contact_phone,
-    contact_email: e.contact_email,
-    notes: e.notes,
-    exported_at: e.exported_at,
-    is_exported: true,
-  }));
-
-  const displayList = tab === 'exported' ? exportedMapped : systemListings.map(p => ({ ...p, is_exported: false }));
+  useEffect(() => { load(); }, [stateFilter]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Property Listings</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Properties available for partnership and owner outreach.
-        </p>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Property Listings</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Properties shared by investors — click any card to view full details.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={stateFilter}
+            onChange={e => setStateFilter(e.target.value)}
+            placeholder="Filter by state…"
+            className="h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 w-40"
+          />
+          <button
+            onClick={load}
+            className="h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors"
+          >
+            Search
+          </button>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200 dark:border-slate-700 gap-1">
-        {[
-          { key: 'exported', label: 'Owner Exports', icon: 'upload', count: exportedMapped.length },
-          { key: 'system', label: 'System Listings', icon: 'home_work', count: systemListings.length },
-        ].map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key as any)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${
-              tab === t.key
-                ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">{t.icon}</span>
-            {t.label}
-            <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-black px-1.5 py-0.5 rounded-full">
-              {t.count}
-            </span>
-          </button>
-        ))}
+      {/* Stats bar */}
+      <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-2.5 flex items-center gap-2">
+        <span className="material-symbols-outlined text-emerald-600 text-[16px]">upload</span>
+        <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
+          {exports.length} {exports.length === 1 ? 'property' : 'properties'} exported by investors
+        </span>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20"><CircularProgress color="success" /></div>
-      ) : displayList.length === 0 ? (
+      ) : exports.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
           <span className="material-symbols-outlined text-[48px] mb-3 opacity-40">home_search</span>
-          <p className="text-sm font-medium">
-            {tab === 'exported'
-              ? 'No properties exported by investors yet.'
-              : 'No system listings available.'}
-          </p>
+          <p className="text-sm font-medium">No properties exported by investors yet.</p>
+          <p className="text-xs mt-1 text-slate-400">Investors export properties from their My List panel.</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {displayList.map(p => (
-            <PropertyCard key={`${p.is_exported ? 'exp' : 'sys'}-${p.id}`} p={p as ExportedListing} />
+          {exports.map(p => (
+            <PropertyCard
+              key={p.export_id}
+              p={p}
+              onClick={() => setSelectedProperty(p)}
+            />
           ))}
         </div>
       )}
+
+      {/* Property Detail Drawer */}
+      <PropertyDetailDrawer p={selectedProperty} onClose={() => setSelectedProperty(null)} />
     </div>
   );
 };

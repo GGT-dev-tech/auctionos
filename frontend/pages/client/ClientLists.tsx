@@ -11,6 +11,7 @@ import { PropertyPreviewDrawer } from '../../components/PropertyPreviewDrawer';
 import { useCompany } from '../../context/CompanyContext';
 import { ClientUserProperties } from './ClientUserProperties';
 import { InvestorTaskService } from '../../services/consultant_task.service';
+import { API_URL, getHeaders } from '../../services/httpClient';
 
 // Helper to map state names to codes for the SVG silhouette
 const STATE_CODE_MAP: Record<string, string> = {
@@ -39,6 +40,196 @@ interface CustomList {
 }
 
 
+
+// ── Investor My Tasks View ───────────────────────────────────────────────────
+const STATUS_BADGES: Record<string, string> = {
+    open: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    claimed: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    submitted: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    approved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    rejected: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+};
+
+const InvestorMyTasksView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+    const [tasks, setTasks] = React.useState<any[]>([]);
+    const [loading, setLoading] = React.useState(true);
+    const [reviewing, setReviewing] = React.useState<{ taskId: number; open: boolean } | null>(null);
+    const [reviewNotes, setReviewNotes] = React.useState('');
+    const [submissions, setSubmissions] = React.useState<any[]>([]);
+    const [subLoading, setSubLoading] = React.useState(false);
+
+    const load = async () => {
+        setLoading(true);
+        const data = await InvestorTaskService.getMyTasks().catch(() => []);
+        setTasks(data);
+        setLoading(false);
+    };
+
+    React.useEffect(() => { load(); }, []);
+
+    const openReview = async (taskId: number) => {
+        setReviewing({ taskId, open: true });
+        setReviewNotes('');
+        setSubLoading(true);
+        try {
+            const res = await fetch(
+                `${API_URL}/investor/tasks/${taskId}/submissions`,
+                { headers: getHeaders() }
+            );
+            if (res.ok) setSubmissions(await res.json());
+            else setSubmissions([]);
+        } finally {
+            setSubLoading(false);
+        }
+    };
+
+    const handleReview = async (taskId: number, approved: boolean) => {
+        try {
+            await InvestorTaskService.reviewSubmission(taskId, approved, reviewNotes || undefined);
+            setReviewing(null);
+            await load();
+            alert(approved ? '✅ Task approved! Consultant earned their commission.' : '❌ Task rejected. Consultant will be notified to resubmit.');
+        } catch (e: any) {
+            alert(e.message);
+        }
+    };
+
+    return (
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-100 dark:border-slate-900 flex items-center gap-3">
+                <button
+                    onClick={onBack}
+                    className="flex items-center gap-1.5 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                    <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Back to My List
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">|</span>
+                <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-500 text-[18px]">task_alt</span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-white">My Field Tasks</span>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+                {loading ? (
+                    <div className="flex justify-center py-20"><CircularProgress size={28} /></div>
+                ) : tasks.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                        <span className="material-symbols-outlined text-[48px] mb-3 opacity-40">task_alt</span>
+                        <p className="text-sm font-medium">No tasks created yet.</p>
+                        <p className="text-xs mt-1 text-slate-400">Create tasks from any property in your lists using the Create Task button.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {tasks.map((task: any) => (
+                            <div key={task.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{task.title}</p>
+                                        <p className="text-xs text-slate-500 truncate mt-0.5">{task.address}</p>
+                                    </div>
+                                    <span className={`shrink-0 text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${STATUS_BADGES[task.status] || 'bg-slate-100 text-slate-600'}`}>
+                                        {task.status}
+                                    </span>
+                                </div>
+
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                    <span className="text-[10px] font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded-lg">
+                                        💰 ${(task.reward_points / 100).toFixed(2)} ({task.reward_points} pts)
+                                    </span>
+                                    <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-lg">
+                                        📷 {task.min_photos}–{task.max_photos} photos
+                                    </span>
+                                    {task.consultant_name && (
+                                        <span className="text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-lg">
+                                            👤 {task.consultant_name}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {task.submitted_at && (
+                                    <p className="text-[10px] text-purple-600 dark:text-purple-400 font-bold mt-2">
+                                        📤 Submitted: {new Date(task.submitted_at).toLocaleDateString()}
+                                    </p>
+                                )}
+
+                                {task.status === 'submitted' && (
+                                    <button
+                                        onClick={() => openReview(task.id)}
+                                        className="mt-3 w-full py-2 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                                    >
+                                        Review Submission
+                                    </button>
+                                )}
+                                {task.status === 'approved' && (
+                                    <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
+                                        <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                                        Approved on {task.approved_at ? new Date(task.approved_at).toLocaleDateString() : '—'}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Review Dialog */}
+            <Dialog open={!!reviewing?.open} onClose={() => setReviewing(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+                <Typography variant="h6" className="font-bold mb-2 text-slate-800 dark:text-white">Review Submission</Typography>
+                {subLoading ? (
+                    <div className="flex justify-center py-8"><CircularProgress size={24} /></div>
+                ) : submissions.length === 0 ? (
+                    <p className="text-sm text-slate-500">No submissions found.</p>
+                ) : (
+                    <div className="space-y-3">
+                        {submissions.map((s: any, i: number) => (
+                            <div key={s.id} className="border border-slate-200 dark:border-slate-700 rounded-xl p-3">
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Submission #{i + 1}</p>
+                                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${STATUS_BADGES[s.review_status] || 'bg-slate-100 text-slate-600'}`}>
+                                        {s.review_status}
+                                    </span>
+                                </div>
+                                <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                                    <p>📷 {s.photo_count} photos</p>
+                                    {s.geo_validated !== undefined && (
+                                        <p>{s.geo_validated ? '✅ GPS Validated (within 50m)' : '⚠️ GPS not validated'}</p>
+                                    )}
+                                    {s.distance_meters && <p>📍 Distance: {s.distance_meters.toFixed(1)}m from target</p>}
+                                    {s.notes && <p className="italic">Note: {s.notes}</p>}
+                                    {s.file_path && (
+                                        <div className="mt-2">
+                                            <p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Photos submitted:</p>
+                                            <p className="font-mono text-[10px] text-slate-500 break-all">{s.file_path}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        <TextField
+                            label="Review Notes (optional — reason if rejecting)"
+                            size="small" fullWidth multiline rows={2}
+                            value={reviewNotes}
+                            onChange={e => setReviewNotes(e.target.value)}
+                        />
+                    </div>
+                )}
+                <div className="flex gap-2 mt-4">
+                    <Button onClick={() => setReviewing(null)} color="inherit" size="small">Cancel</Button>
+                    <Button onClick={() => reviewing && handleReview(reviewing.taskId, false)} color="error" variant="outlined" size="small">
+                        Reject
+                    </Button>
+                    <Button onClick={() => reviewing && handleReview(reviewing.taskId, true)} color="success" variant="contained" size="small">
+                        Approve & Pay
+                    </Button>
+                </div>
+            </Dialog>
+        </div>
+    );
+};
 
 const ClientLists: React.FC = () => {
     const navigate = useNavigate();
@@ -74,7 +265,7 @@ const ClientLists: React.FC = () => {
     const [geocodedProperties, setGeocodedProperties] = useState<Record<number, { lat: number, lng: number }>>({});
     const [folderNotes, setFolderNotes] = useState<string>('');
     const [savingNotes, setSavingNotes] = useState(false);
-    const [viewMode, setViewMode] = useState<'folders' | 'custom_properties'>('folders');
+    const [viewMode, setViewMode] = useState<'folders' | 'custom_properties' | 'my_tasks'>('folders');
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [movingPropertyId, setMovingPropertyId] = useState<number | null>(null);
     const [moveTargetListId, setMoveTargetListId] = useState<number | string>('');
@@ -719,6 +910,14 @@ const ClientLists: React.FC = () => {
                                     <span className={`material-symbols-outlined text-[18px] ${viewMode === 'custom_properties' ? 'text-white' : 'text-blue-500'}`}>real_estate_agent</span>
                                     <span className="flex-1 text-sm font-medium truncate">Custom Properties</span>
                                 </div>
+                                <div
+                                    onClick={() => { setViewMode('my_tasks'); setSelectedListId(null); setSelectedStateName(null); setSelectedCountyName(null); }}
+                                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 
+                                        ${viewMode === 'my_tasks' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
+                                >
+                                    <span className={`material-symbols-outlined text-[18px] ${viewMode === 'my_tasks' ? 'text-white' : 'text-blue-500'}`}>task_alt</span>
+                                    <span className="flex-1 text-sm font-medium truncate">My Tasks</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -748,6 +947,8 @@ const ClientLists: React.FC = () => {
                             <ClientUserProperties onBack={() => setViewMode('folders')} />
                         </div>
                     </div>
+                ) : viewMode === 'my_tasks' ? (
+                    <InvestorMyTasksView onBack={() => setViewMode('folders')} />
                 ) : (
                     <div className="flex-1 flex flex-col h-full">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex flex-col gap-4">
