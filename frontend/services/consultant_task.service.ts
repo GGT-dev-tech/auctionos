@@ -153,6 +153,52 @@ export const InvestorTaskService = {
     return res.json();
   },
 
+  updateTask: async (taskId: number, payload: {
+    title?: string;
+    description?: string;
+    min_photos?: number;
+    max_photos?: number;
+    reward_points?: number;
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/investor/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Failed to update task');
+    return res.json();
+  },
+
+  deleteTask: async (taskId: number): Promise<any> => {
+    const res = await fetch(`${API_URL}/investor/tasks/${taskId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Failed to delete task');
+    return res.json();
+  },
+
+  getMyExports: async (): Promise<any[]> => {
+    const res = await fetch(`${API_URL}/investor/exports`, { headers: getHeaders() });
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  updateExport: async (exportId: number, payload: {
+    contact_name?: string;
+    contact_phone?: string;
+    contact_email?: string;
+    notes?: string;
+  }): Promise<any> => {
+    const res = await fetch(`${API_URL}/investor/exports/${exportId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Failed to update export');
+    return res.json();
+  },
+
   cancelExport: async (exportId: number): Promise<void> => {
     await fetch(`${API_URL}/investor/exports/${exportId}`, {
       method: 'DELETE',

@@ -212,6 +212,160 @@ def review_task_submission(
     return {"ok": True, "review_status": review_status}
 
 
+# ── Task Edit & Delete ─────────────────────────────────────────────────────
+
+class UpdateTaskPayload(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    min_photos: Optional[int] = None
+    max_photos: Optional[int] = None
+    reward_points: Optional[int] = None
+
+
+@router.put("/tasks/{task_id}")
+def update_task(
+    task_id: int,
+    payload: UpdateTaskPayload,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Investor edits a task they created.
+    - open  → free to edit/delete
+    - claimed → allowed; consultant loses claim + receives notification + must re-accept
+    - submitted / approved → blocked
+    """
+    task = db.execute(text("SELECT * FROM consultant_tasks WHERE id = :id"), {"id": task_id}).fetchone()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.investor_user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your task.")
+    if task.status in ("submitted", "approved"):
+        raise HTTPException(
+            status_code=409,
+            detail="This task already has submissions. Use the review flow to reject it, then you can edit."
+        )
+
+    new_min = payload.min_photos if payload.min_photos is not None else task.min_photos
+    new_max = payload.max_photos if payload.max_photos is not None else task.max_photos
+    new_pts = payload.reward_points if payload.reward_points is not None else task.reward_points
+    if new_min < MIN_PHOTOS:
+        raise HTTPException(status_code=400, detail=f"Minimum photos must be at least {MIN_PHOTOS}.")
+    if new_max > 10:
+        raise HTTPException(status_code=400, detail="Maximum photos cannot exceed 10.")
+    if new_min > new_max:
+        raise HTTPException(status_code=400, detail="min_photos cannot exceed max_photos.")
+    min_req = calculate_min_points(new_min)
+    if new_pts < min_req:
+        raise HTTPException(status_code=400, detail=f"Minimum reward for {new_min} photos is {min_req} pts.")
+
+    updates: dict = {}
+    if payload.title is not None:        updates["title"] = payload.title
+    if payload.description is not None:  updates["description"] = payload.description
+    if payload.min_photos is not None:   updates["min_photos"] = payload.min_photos
+    if payload.max_photos is not None:   updates["max_photos"] = payload.max_photos
+    if payload.reward_points is not None: updates["reward_points"] = payload.reward_points
+
+    notify_consultant = False
+    consultant_user_id = task.consultant_user_id
+
+    if task.status == "claimed" and consultant_user_id:
+        updates["status"] = "open"
+        updates["consultant_user_id"] = None
+        updates["claimed_at"] = None
+        updates["deadline"] = None
+        notify_consultant = True
+
+    if updates:
+        set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+        updates["task_id"] = task_id
+        db.execute(text(f"UPDATE consultant_tasks SET {set_clause} WHERE id = :task_id"), updates)
+
+    if notify_consultant and consultant_user_id:
+        task_title = payload.title or task.title
+        db.execute(text("""
+            INSERT INTO notifications (user_id, type, message, is_read)
+            VALUES (:uid, 'task_updated', :msg, FALSE)
+        """), {
+            "uid": consultant_user_id,
+            "msg": f'The task "{task_title}" was updated by the investor and is now available again. Please review the new details and re-accept if you are still interested.',
+        })
+
+    db.commit()
+    return {"ok": True, "reverted_to_open": notify_consultant, "consultant_notified": notify_consultant}
+
+
+@router.delete("/tasks/{task_id}")
+def delete_task(
+    task_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Investor deletes a task. Blocked if submissions exist.
+    If claimed, notifies the consultant before deleting.
+    """
+    task = db.execute(text("SELECT * FROM consultant_tasks WHERE id = :id"), {"id": task_id}).fetchone()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.investor_user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your task.")
+    if task.status in ("submitted", "approved"):
+        raise HTTPException(
+            status_code=409,
+            detail="Cannot delete a task with submissions. Review and reject it first."
+        )
+
+    if task.status == "claimed" and task.consultant_user_id:
+        db.execute(text("""
+            INSERT INTO notifications (user_id, type, message, is_read)
+            VALUES (:uid, 'task_deleted', :msg, FALSE)
+        """), {
+            "uid": task.consultant_user_id,
+            "msg": f'The task "{task.title}" was removed by the investor. This task is no longer available.',
+        })
+
+    db.execute(text("DELETE FROM consultant_tasks WHERE id = :id"), {"id": task_id})
+    db.commit()
+    return {"ok": True}
+
+
+# ── Export Edit ──────────────────────────────────────────────────────────────
+
+class UpdateExportPayload(BaseModel):
+    contact_name: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+    notes: Optional[str] = None
+
+
+@router.put("/exports/{export_id}")
+def update_export(
+    export_id: int,
+    payload: UpdateExportPayload,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """Investor updates contact info for an exported property."""
+    export = db.execute(
+        text("SELECT id, investor_user_id FROM property_exports WHERE id = :id"),
+        {"id": export_id}
+    ).fetchone()
+    if not export:
+        raise HTTPException(status_code=404, detail="Export not found")
+    if export.investor_user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your export.")
+
+    updates = {k: v for k, v in payload.dict().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields provided.")
+    set_clause = ", ".join(f"{k} = :{k}" for k in updates)
+    updates["export_id"] = export_id
+    db.execute(text(f"UPDATE property_exports SET {set_clause} WHERE id = :export_id"), updates)
+    db.commit()
+    return {"ok": True}
+
+
 # ── Property Exports ─────────────────────────────────────────────────────────
 
 @router.post("/exports")

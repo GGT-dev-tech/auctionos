@@ -51,6 +51,8 @@ const STATUS_BADGES: Record<string, string> = {
 };
 
 const InvestorMyTasksView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+    const [editingTask, setEditingTask] = React.useState<any | null>(null);
+    const [editForm, setEditForm] = React.useState({ title: '', description: '', min_photos: 3, max_photos: 10, reward_points: 500 });
     const [tasks, setTasks] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [reviewing, setReviewing] = React.useState<{ taskId: number; open: boolean } | null>(null);
@@ -89,9 +91,45 @@ const InvestorMyTasksView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             setReviewing(null);
             await load();
             alert(approved ? '✅ Task approved! Consultant earned their commission.' : '❌ Task rejected. Consultant will be notified to resubmit.');
-        } catch (e: any) {
-            alert(e.message);
-        }
+        } catch (e: any) { alert(e.message); }
+    };
+
+    const openEdit = (task: any) => {
+        setEditingTask(task);
+        setEditForm({ 
+            title: task.title, 
+            description: task.description || '', 
+            min_photos: task.min_photos, 
+            max_photos: task.max_photos, 
+            reward_points: task.reward_points 
+        });
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingTask) return;
+        try {
+            const res = await InvestorTaskService.updateTask(editingTask.id, editForm);
+            setEditingTask(null);
+            await load();
+            if (res.consultant_notified) {
+                alert('✅ Task updated! The consultant who had claimed it was notified and must re-accept.');
+            } else {
+                alert('✅ Task updated successfully.');
+            }
+        } catch (e: any) { alert(e.message); }
+    };
+
+    const handleDelete = async (task: any) => {
+        const locked = ['submitted', 'approved'].includes(task.status);
+        if (locked) { alert('⚠️ Cannot delete: task has submissions. Review and reject first.'); return; }
+        const confirmMsg = task.status === 'claimed'
+            ? `This task is claimed by ${task.consultant_name || 'a consultant'}. They will be notified. Delete anyway?`
+            : 'Delete this task? This action cannot be undone.';
+        if (!window.confirm(confirmMsg)) return;
+        try {
+            await InvestorTaskService.deleteTask(task.id);
+            await load();
+        } catch (e: any) { alert(e.message); }
     };
 
     return (
@@ -125,15 +163,27 @@ const InvestorMyTasksView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 ) : (
                     <div className="space-y-3">
                         {tasks.map((task: any) => (
-                            <div key={task.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4">
+                            <div key={task.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 hover:shadow-sm transition-all group">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{task.title}</p>
                                         <p className="text-xs text-slate-500 truncate mt-0.5">{task.address}</p>
                                     </div>
-                                    <span className={`shrink-0 text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${STATUS_BADGES[task.status] || 'bg-slate-100 text-slate-600'}`}>
-                                        {task.status}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {['open', 'claimed', 'rejected'].includes(task.status) && (
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <IconButton size="small" onClick={() => openEdit(task)} className="text-slate-400 hover:text-blue-500">
+                                                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                                                </IconButton>
+                                                <IconButton size="small" onClick={() => handleDelete(task)} className="text-slate-400 hover:text-red-500">
+                                                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                </IconButton>
+                                            </div>
+                                        )}
+                                        <span className={`shrink-0 text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${STATUS_BADGES[task.status] || 'bg-slate-100 text-slate-600'}`}>
+                                            {task.status}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -159,7 +209,7 @@ const InvestorMyTasksView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 {task.status === 'submitted' && (
                                     <button
                                         onClick={() => openReview(task.id)}
-                                        className="mt-3 w-full py-2 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                                        className="mt-3 w-full py-2 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-colors shadow-sm active:scale-95"
                                     >
                                         Review Submission
                                     </button>
@@ -177,59 +227,310 @@ const InvestorMyTasksView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </div>
 
             {/* Review Dialog */}
-            <Dialog open={!!reviewing?.open} onClose={() => setReviewing(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
-                <Typography variant="h6" className="font-bold mb-2 text-slate-800 dark:text-white">Review Submission</Typography>
-                {subLoading ? (
-                    <div className="flex justify-center py-8"><CircularProgress size={24} /></div>
-                ) : submissions.length === 0 ? (
-                    <p className="text-sm text-slate-500">No submissions found.</p>
-                ) : (
-                    <div className="space-y-3">
-                        {submissions.map((s: any, i: number) => (
-                            <div key={s.id} className="border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Submission #{i + 1}</p>
-                                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${STATUS_BADGES[s.review_status] || 'bg-slate-100 text-slate-600'}`}>
-                                        {s.review_status}
-                                    </span>
-                                </div>
-                                <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                                    <p>📷 {s.photo_count} photos</p>
-                                    {s.geo_validated !== undefined && (
-                                        <p>{s.geo_validated ? '✅ GPS Validated (within 50m)' : '⚠️ GPS not validated'}</p>
+            <Dialog open={!!reviewing?.open} onClose={() => setReviewing(null)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 4, overflow: 'hidden' } }}>
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
+                    <div>
+                        <Typography variant="h6" className="font-black text-slate-900 dark:text-white leading-none">Review Submission</Typography>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Due Diligence Verification</p>
+                    </div>
+                    <IconButton onClick={() => setReviewing(null)} size="small"><span className="material-symbols-outlined">close</span></IconButton>
+                </div>
+
+                <div className="p-6 max-h-[70vh] overflow-y-auto">
+                    {subLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20 gap-4">
+                            <CircularProgress size={32} thickness={5} className="text-purple-600" />
+                            <p className="text-sm font-bold text-slate-400 animate-pulse">Fetching submission data...</p>
+                        </div>
+                    ) : submissions.length === 0 ? (
+                        <div className="py-20 text-center">
+                            <span className="material-symbols-outlined text-slate-200 text-[64px]">cloud_off</span>
+                            <p className="text-sm text-slate-500 font-bold mt-2">No submissions found for this task.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {submissions.map((s: any, i: number) => (
+                                <div key={s.id} className="bg-slate-50 dark:bg-slate-900/30 rounded-2xl p-5 border border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <p className="text-sm font-black text-slate-800 dark:text-white">Submission #{submissions.length - i}</p>
+                                            <p className="text-[10px] text-slate-500 font-bold uppercase">{new Date(s.submitted_at).toLocaleString()}</p>
+                                        </div>
+                                        <span className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-full ${STATUS_BADGES[s.review_status] || 'bg-slate-100 text-slate-600'}`}>
+                                            {s.review_status}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 mb-5">
+                                        <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                                            <p className="text-[9px] uppercase font-bold text-slate-400 mb-0.5">Photos</p>
+                                            <p className="text-sm font-black text-slate-800 dark:text-white">{s.photo_count} Captured</p>
+                                        </div>
+                                        <div className={`p-3 rounded-xl border ${s.geo_validated ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/50' : 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-800/50'}`}>
+                                            <p className="text-[9px] uppercase font-bold text-slate-400 mb-0.5">GPS Verification</p>
+                                            <p className={`text-sm font-black ${s.geo_validated ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                                {s.geo_validated ? 'Verified Active' : 'Outside Radius'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {s.notes && (
+                                        <div className="mb-5">
+                                            <p className="text-[10px] uppercase font-bold text-slate-400 mb-2">Consultant Notes</p>
+                                            <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 italic text-sm text-slate-600 dark:text-slate-300">
+                                                "{s.notes}"
+                                            </div>
+                                        </div>
                                     )}
-                                    {s.distance_meters && <p>📍 Distance: {s.distance_meters.toFixed(1)}m from target</p>}
-                                    {s.notes && <p className="italic">Note: {s.notes}</p>}
+
+                                    {/* Photos Gallery */}
                                     {s.file_path && (
-                                        <div className="mt-2">
-                                            <p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Photos submitted:</p>
-                                            <p className="font-mono text-[10px] text-slate-500 break-all">{s.file_path}</p>
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-slate-400 mb-3">Attached Evidence</p>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                {s.file_path.split(',').map((path: string, idx: number) => {
+                                                    const fullUrl = `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}/uploads/${path.trim()}`;
+                                                    return (
+                                                        <div key={idx} className="group relative aspect-square rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                                                            <img src={fullUrl} alt={`Evidence ${idx}`} className="w-full h-full object-cover" />
+                                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                                <IconButton size="small" component="a" href={fullUrl} target="_blank" className="bg-white/20 hover:bg-white/40 text-white">
+                                                                    <span className="material-symbols-outlined text-[20px]">visibility</span>
+                                                                </IconButton>
+                                                                <IconButton size="small" component="a" href={fullUrl} download className="bg-white/20 hover:bg-white/40 text-white">
+                                                                    <span className="material-symbols-outlined text-[20px]">download</span>
+                                                                </IconButton>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                    )}
+                    
+                    <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+                        <p className="text-[10px] uppercase font-black text-slate-400 mb-3 tracking-widest text-center">Investor Decision</p>
                         <TextField
-                            label="Review Notes (optional — reason if rejecting)"
-                            size="small" fullWidth multiline rows={2}
+                            placeholder="Add internal notes or feedback for the consultant..."
+                            fullWidth multiline rows={3}
+                            variant="outlined"
                             value={reviewNotes}
                             onChange={e => setReviewNotes(e.target.value)}
+                            sx={{ 
+                                '& .MuiOutlinedInput-root': { 
+                                    borderRadius: 3,
+                                    backgroundColor: 'rgba(0,0,0,0.02)',
+                                    fontSize: '0.875rem'
+                                } 
+                            }}
                         />
                     </div>
-                )}
-                <div className="flex gap-2 mt-4">
-                    <Button onClick={() => setReviewing(null)} color="inherit" size="small">Cancel</Button>
-                    <Button onClick={() => reviewing && handleReview(reviewing.taskId, false)} color="error" variant="outlined" size="small">
-                        Reject
+                </div>
+
+                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 flex gap-3 border-t border-slate-100 dark:border-slate-800">
+                    <Button 
+                        onClick={() => setReviewing(null)} 
+                        fullWidth 
+                        variant="outlined"
+                        className="rounded-xl font-bold py-2.5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+                    >
+                        Close
                     </Button>
-                    <Button onClick={() => reviewing && handleReview(reviewing.taskId, true)} color="success" variant="contained" size="small">
+                    <Button 
+                        onClick={() => reviewing && handleReview(reviewing.taskId, false)} 
+                        fullWidth 
+                        variant="contained" 
+                        color="error"
+                        className="rounded-xl font-bold py-2.5 shadow-md shadow-red-500/10"
+                    >
+                        Reject Submission
+                    </Button>
+                    <Button 
+                        onClick={() => reviewing && handleReview(reviewing.taskId, true)} 
+                        fullWidth 
+                        variant="contained" 
+                        color="success"
+                        className="rounded-xl font-bold py-2.5 bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-500/10"
+                    >
                         Approve & Pay
                     </Button>
+                </div>
+            </Dialog>
+
+            {/* Edit Task Dialog */}
+            <Dialog open={!!editingTask} onClose={() => setEditingTask(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+                <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+                    <Typography variant="h6" className="font-bold text-slate-900 dark:text-white">Edit Task</Typography>
+                </div>
+                <div className="p-5 space-y-4">
+                    <TextField label="Task Title" fullWidth value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
+                    <TextField label="Description" fullWidth multiline rows={3} value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} />
+                    <div className="grid grid-cols-2 gap-3">
+                        <TextField type="number" label="Min Photos" fullWidth value={editForm.min_photos} onChange={e => setEditForm({ ...editForm, min_photos: parseInt(e.target.value) })} />
+                        <TextField type="number" label="Max Photos" fullWidth value={editForm.max_photos} onChange={e => setEditForm({ ...editForm, max_photos: parseInt(e.target.value) })} />
+                    </div>
+                    <TextField type="number" label="Reward Points" fullWidth value={editForm.reward_points} onChange={e => setEditForm({ ...editForm, reward_points: parseInt(e.target.value) })} helperText={`$${(editForm.reward_points / 100).toFixed(2)} USD`} />
+                    
+                    {editingTask?.status === 'claimed' && (
+                        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+                            <p className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase leading-tight">
+                                ⚠️ Task is currently claimed. Saving changes will notify the consultant and they must re-accept the task.
+                            </p>
+                        </div>
+                    )}
+                </div>
+                <div className="p-5 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
+                    <Button onClick={() => setEditingTask(null)} fullWidth>Cancel</Button>
+                    <Button onClick={handleSaveEdit} fullWidth variant="contained" color="primary" className="rounded-xl bg-blue-600">Save Changes</Button>
                 </div>
             </Dialog>
         </div>
     );
 };
+
+
+// ── Investor My Exports View ────────────────────────────────────────────────
+const InvestorMyExportsView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+    const [exports, setExports] = React.useState<any[]>([]);
+    const [loading, setLoading] = React.useState(true);
+    const [editingExport, setEditingExport] = React.useState<any | null>(null);
+    const [editForm, setEditForm] = React.useState({ contact_name: '', contact_phone: '', contact_email: '', notes: '' });
+
+    const load = async () => {
+        setLoading(true);
+        const data = await InvestorTaskService.getMyExports().catch(() => []);
+        setExports(data);
+        setLoading(false);
+    };
+
+    React.useEffect(() => { load(); }, []);
+
+    const openEdit = (exp: any) => {
+        setEditingExport(exp);
+        setEditForm({
+            contact_name: exp.contact_name || '',
+            contact_phone: exp.contact_phone || '',
+            contact_email: exp.contact_email || '',
+            notes: exp.notes || '',
+        });
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingExport) return;
+        try {
+            await InvestorTaskService.updateExport(editingExport.id, editForm);
+            setEditingExport(null);
+            await load();
+            alert('✅ Export info updated successfully.');
+        } catch (e: any) { alert(e.message); }
+    };
+
+    const handleCancelExport = async (exp: any) => {
+        if (!window.confirm('Are you sure you want to cancel this export? It will no longer be visible to consultants.')) return;
+        try {
+            await InvestorTaskService.cancelExport(exp.id);
+            await load();
+        } catch (e: any) { alert(e.message); }
+    };
+
+    return (
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-100 dark:border-slate-900 flex items-center gap-3">
+                <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Back to My List
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">|</span>
+                <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-500 text-[18px]">upload</span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-white">My Exported Properties</span>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+                {loading ? (
+                    <div className="flex justify-center py-20"><CircularProgress size={28} /></div>
+                ) : exports.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                        <span className="material-symbols-outlined text-[48px] mb-3 opacity-40">upload</span>
+                        <p className="text-sm font-medium">No properties exported yet.</p>
+                        <p className="text-xs mt-1 text-slate-400">Export properties to consultants from your folders using the Export action.</p>
+                    </div>
+                ) : (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {exports.map((exp: any) => (
+                            <div key={exp.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 hover:shadow-sm transition-all group relative">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{exp.address || exp.parcel_id}</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-0.5">{exp.county}, {exp.state}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <IconButton size="small" onClick={() => openEdit(exp)} className="text-slate-400 hover:text-blue-500">
+                                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                                        </IconButton>
+                                        <IconButton size="small" onClick={() => handleCancelExport(exp)} className="text-slate-400 hover:text-red-500">
+                                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                                        </IconButton>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3 space-y-1">
+                                    <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Shared Contact Info</p>
+                                    <p className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-[14px]">person</span> {exp.contact_name || '—'}
+                                    </p>
+                                    {exp.contact_phone && (
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                                            <span className="material-symbols-outlined text-[14px]">phone</span> {exp.contact_phone}
+                                        </p>
+                                    )}
+                                    {exp.contact_email && (
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                                            <span className="material-symbols-outlined text-[14px]">mail</span> {exp.contact_email}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {exp.notes && (
+                                    <div className="mt-3 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-[11px] text-slate-500 italic truncate">
+                                        "{exp.notes}"
+                                    </div>
+                                )}
+
+                                <p className="text-[9px] text-slate-400 mt-4">Exported on {new Date(exp.exported_at).toLocaleDateString()}</p>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Edit Export Dialog */}
+            <Dialog open={!!editingExport} onClose={() => setEditingExport(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+                <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+                    <Typography variant="h6" className="font-bold text-slate-900 dark:text-white">Edit Export Info</Typography>
+                </div>
+                <div className="p-5 space-y-4">
+                    <TextField label="Contact Name" fullWidth value={editForm.contact_name} onChange={e => setEditForm({ ...editForm, contact_name: e.target.value })} />
+                    <TextField label="Contact Phone" fullWidth value={editForm.contact_phone} onChange={e => setEditForm({ ...editForm, contact_phone: e.target.value })} />
+                    <TextField label="Contact Email" fullWidth value={editForm.contact_email} onChange={e => setEditForm({ ...editForm, contact_email: e.target.value })} />
+                    <TextField label="Notes for Consultants" fullWidth multiline rows={3} value={editForm.notes} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} />
+                </div>
+                <div className="p-5 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
+                    <Button onClick={() => setEditingExport(null)} fullWidth>Cancel</Button>
+                    <Button onClick={handleSaveEdit} fullWidth variant="contained" color="primary" className="rounded-xl bg-blue-600">Save Changes</Button>
+                </div>
+            </Dialog>
+        </div>
+    );
+};
+
 
 const ClientLists: React.FC = () => {
     const navigate = useNavigate();
@@ -265,7 +566,7 @@ const ClientLists: React.FC = () => {
     const [geocodedProperties, setGeocodedProperties] = useState<Record<number, { lat: number, lng: number }>>({});
     const [folderNotes, setFolderNotes] = useState<string>('');
     const [savingNotes, setSavingNotes] = useState(false);
-    const [viewMode, setViewMode] = useState<'folders' | 'custom_properties' | 'my_tasks'>('folders');
+    const [viewMode, setViewMode] = useState<'folders' | 'custom_properties' | 'my_tasks' | 'my_exports'>('folders');
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [movingPropertyId, setMovingPropertyId] = useState<number | null>(null);
     const [moveTargetListId, setMoveTargetListId] = useState<number | string>('');
@@ -918,6 +1219,14 @@ const ClientLists: React.FC = () => {
                                     <span className={`material-symbols-outlined text-[18px] ${viewMode === 'my_tasks' ? 'text-white' : 'text-blue-500'}`}>task_alt</span>
                                     <span className="flex-1 text-sm font-medium truncate">My Tasks</span>
                                 </div>
+                                <div
+                                    onClick={() => { setViewMode('my_exports'); setSelectedListId(null); setSelectedStateName(null); setSelectedCountyName(null); }}
+                                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 
+                                        ${viewMode === 'my_exports' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
+                                >
+                                    <span className={`material-symbols-outlined text-[18px] ${viewMode === 'my_exports' ? 'text-white' : 'text-blue-500'}`}>upload</span>
+                                    <span className="flex-1 text-sm font-medium truncate">My Exports</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -949,6 +1258,8 @@ const ClientLists: React.FC = () => {
                     </div>
                 ) : viewMode === 'my_tasks' ? (
                     <InvestorMyTasksView onBack={() => setViewMode('folders')} />
+                ) : viewMode === 'my_exports' ? (
+                    <InvestorMyExportsView onBack={() => setViewMode('folders')} />
                 ) : (
                     <div className="flex-1 flex flex-col h-full">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex flex-col gap-4">
