@@ -21,26 +21,41 @@ export const Login: React.FC = () => {
   // ── Handle OAuth Token returned from backend callback ──────────────────────
   useEffect(() => {
     const handleOAuth = async () => {
-      const hash = window.location.hash;
-      if (!hash.includes('?token=')) return;
+      // HashRouter: window.location.hash = '#/login?token=XYZ&mode=consultant'
+      const hash = window.location.hash; // e.g. '#/login?token=abc123&mode=consultant'
+      if (!hash.includes('?')) return;
 
-      const token = hash.split('?token=')[1];
+      // Parse query params from the hash fragment
+      const queryString = hash.split('?')[1] || '';
+      const params = new URLSearchParams(queryString);
+      const token = params.get('token');
       if (!token) return;
+
+      // Clean up the URL so the token doesn't persist on refresh
+      window.history.replaceState(null, '', window.location.pathname);
 
       setIsLoading(true);
       try {
         localStorage.setItem('token', token);
         const user = await AuthService.getMe();
         localStorage.setItem('user', JSON.stringify(user));
-        routeAfterLogin(user);
+        // routeAfterLogin is defined below — call inline to avoid hoisting issues
+        if (user.role === 'consultant') {
+          navigate('/consultant');
+        } else if (user.role === 'client') {
+          navigate('/client');
+        } else {
+          navigate('/dashboard');
+        }
       } catch {
-        setError('Failed to sync with Google. Please try again.');
+        setError('Falha ao autenticar com Google. Tente novamente.');
+        localStorage.removeItem('token');
       } finally {
         setIsLoading(false);
       }
     };
     handleOAuth();
-  }, [navigate]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const routeAfterLogin = (user: any) => {
     if (user.role === 'consultant') {
@@ -74,9 +89,11 @@ export const Login: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Passes the intended role so backend can enforce role-based separation
-    const callbackUrl = `${API_BASE_URL}/api/v1/auth/login/google?role=${mode}`;
-    window.location.href = callbackUrl;
+    // Redirect to backend OAuth endpoint — backend handles Google redirect and returns token
+    // API_BASE_URL = 'http://localhost:8000', so full URL = 'http://localhost:8000/api/v1/auth/login/google'
+    const googleAuthUrl = `${API_BASE_URL}/api/v1/auth/login/google?role=${mode}`;
+    console.log('>>> Google OAuth redirect to:', googleAuthUrl);
+    window.location.href = googleAuthUrl;
   };
 
   const isConsultant = mode === 'consultant';

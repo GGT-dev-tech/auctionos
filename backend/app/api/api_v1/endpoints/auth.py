@@ -174,9 +174,18 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
     
     email = user_info['email'].strip().lower()
     
-    # Determine intended role from the OAuth state parameter (set during login redirect)
-    intended_role_raw = request.query_params.get('state', 'investor')
+    # Determine intended role from the OAuth state parameter
+    # authlib returns the state both in query params AND in the session-validated state
+    intended_role_raw = request.query_params.get('state', '') or ''
+    # Clean up in case state has extra encoding
+    intended_role_raw = intended_role_raw.strip().lower()
     intended_role = 'consultant' if intended_role_raw == 'consultant' else 'client'
+    
+    def get_frontend_url(req: Request) -> str:
+        base = str(req.base_url)
+        if 'localhost' in base or '127.0.0.1' in base:
+            return 'http://localhost:5173'
+        return settings.FRONTEND_URL
     
     # Check if user exists
     user = db.query(User).filter(User.email == email).first()
@@ -184,18 +193,14 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
     if user:
         if not user.is_active:
             raise HTTPException(status_code=400, detail="Inactive user")
-        # ── Anti-crossover: block login if role does not match ───────────────
+        # ── Anti-crossover: block login if role does not match ────────────────────
         if intended_role == 'consultant' and user.role not in ('consultant',):
-            frontend_url = settings.FRONTEND_URL
-            if 'localhost' in str(request.base_url) or '127.0.0.1' in str(request.base_url):
-                frontend_url = 'http://localhost:5173'
-            error_msg = 'This+email+is+registered+as+an+investor.+Please+use+the+standard+login+or+sign+up+as+consultant+with+a+different+email.'
+            frontend_url = get_frontend_url(request)
+            error_msg = 'Este+email+est%C3%A1+registrado+como+investidor.+Use+o+login+padr%C3%A3o.'
             return RedirectResponse(url=f"{frontend_url}/#/login?mode=consultant&error={error_msg}")
         if intended_role == 'client' and user.role == 'consultant':
-            frontend_url = settings.FRONTEND_URL
-            if 'localhost' in str(request.base_url) or '127.0.0.1' in str(request.base_url):
-                frontend_url = 'http://localhost:5173'
-            error_msg = 'This+email+is+registered+as+a+consultant.+Please+use+the+Consultant+Login+tab.'
+            frontend_url = get_frontend_url(request)
+            error_msg = 'Este+email+%C3%A9+de+um+consultor.+Use+a+aba+Consultant+Login.'
             return RedirectResponse(url=f"{frontend_url}/#/login?error={error_msg}")
     else:
         # Create new user with the intended role
@@ -217,13 +222,15 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
         user.id, expires_delta=access_token_expires
     )
 
-    frontend_url = settings.FRONTEND_URL
-    if "localhost" in str(request.base_url) or "127.0.0.1" in str(request.base_url):
-        frontend_url = "http://localhost:5173"
+    frontend_url = get_frontend_url(request)
 
-    # Route based on actual role
+    # Route based on actual role — token is passed via hash fragment so Login.tsx can pick it up
     if user.role == "consultant":
         redirect_url = f"{frontend_url}/#/login?token={access_token}&mode=consultant"
+    elif user.role in ("admin", "superuser", "agent"):
+        redirect_url = f"{frontend_url}/#/login?token={access_token}&mode=admin"
     else:
         redirect_url = f"{frontend_url}/#/login?token={access_token}"
+    
+    print(f">>> OAuth success: user={email} role={user.role} redirect={redirect_url[:80]}...")
     return RedirectResponse(url=redirect_url)
