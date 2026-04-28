@@ -143,8 +143,14 @@ async def login_oauth(request: Request, provider: str, role: str = "investor"):
     
     print(f">>> OAUTH REDIRECT URI: {redirect_uri} | role={role}")
 
-    # Encode intended role in the OAuth state parameter
-    return await client.authorize_redirect(request, str(redirect_uri), state=role)
+    # Encode intended role in the OAuth state parameter.
+    # `prompt=select_account` forces Google to always show the account picker,
+    # even when the user already has an active Google session in the browser.
+    extra_params: dict = {"state": role}
+    if provider == "google":
+        extra_params["prompt"] = "select_account"
+
+    return await client.authorize_redirect(request, str(redirect_uri), **extra_params)
 
 @router.get("/callback/{provider}", name="oauth_callback", response_model=Token)
 async def auth_callback(request: Request, provider: str, db: Session = Depends(deps.get_db)):
