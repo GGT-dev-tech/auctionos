@@ -551,7 +551,6 @@ const ClientLists: React.FC = () => {
     const [newListName, setNewListName] = useState('');
     const [editingListId, setEditingListId] = useState<number | null>(null);
     const [editName, setEditName] = useState('');
-    const [newCountyName, setNewCountyName] = useState('');
     const [dragOverListId, setDragOverListId] = useState<number | null>(null);
     const [broadcastedLists, setBroadcastedLists] = useState<CustomList[]>([]);
     const [importing, setImporting] = useState<number | null>(null);
@@ -1233,6 +1232,13 @@ const ClientLists: React.FC = () => {
                             </div>
                         )}
 
+                        {/* User Content / Tasks */}
+                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                            <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px] tracking-widest uppercase">Team Collaboration</Typography>
+                            <div className="mt-2 space-y-0.5">
+                                <div
+                                    onClick={() => { setViewMode('my_tasks'); setSelectedListId(null); setSelectedStateName(null); setSelectedCountyName(null); }}
+                                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 
                                         ${viewMode === 'my_tasks' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
                                 >
                                     <span className={`material-symbols-outlined text-[18px] ${viewMode === 'my_tasks' ? 'text-white' : 'text-blue-500'}`}>task_alt</span>
