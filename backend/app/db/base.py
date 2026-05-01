@@ -25,3 +25,6 @@ from app.models.consultant_task import (
     ConsultantCommission,
     SupportTicket,
 )
+
+from app.models.consultant_economy import ConsultantWallet, WithdrawalRequest, PropertyMediaPurchase
+from app.models.monetization import UserSubscription, StorageUsage

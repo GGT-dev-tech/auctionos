@@ -3,14 +3,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthService } from '../services/auth.service';
 import { API_BASE_URL } from '../services/httpClient';
 
-type LoginMode = 'investor' | 'consultant';
-
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const defaultMode = (searchParams.get('mode') as LoginMode) || 'investor';
-
-  const [mode, setMode] = useState<LoginMode>(defaultMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(
@@ -73,9 +68,7 @@ export const Login: React.FC = () => {
     setError('');
 
     try {
-      // Use the dedicated endpoint based on mode
-      const loginFn = mode === 'consultant' ? AuthService.loginConsultant : AuthService.login;
-      const { access_token } = await loginFn(email, password);
+      const { access_token } = await AuthService.login(email, password);
       localStorage.setItem('token', access_token);
 
       const user = await AuthService.getMe();
@@ -90,19 +83,13 @@ export const Login: React.FC = () => {
 
   const handleGoogleLogin = () => {
     // Redirect to backend OAuth endpoint — backend handles Google redirect and returns token
-    // API_BASE_URL = 'http://localhost:8000', so full URL = 'http://localhost:8000/api/v1/auth/login/google'
-    const googleAuthUrl = `${API_BASE_URL}/api/v1/auth/login/google?role=${mode}`;
+    const googleAuthUrl = `${API_BASE_URL}/api/v1/auth/login/google?role=client`;
     console.log('>>> Google OAuth redirect to:', googleAuthUrl);
     window.location.href = googleAuthUrl;
   };
 
-  const isConsultant = mode === 'consultant';
-  const accentClass = isConsultant
-    ? 'from-emerald-500 to-teal-600'
-    : 'from-blue-600 to-indigo-600';
-  const accentLight = isConsultant
-    ? 'bg-emerald-600 hover:bg-emerald-700'
-    : 'bg-primary hover:bg-blue-700';
+  const accentClass = 'from-blue-600 to-indigo-600';
+  const accentLight = 'bg-primary hover:bg-blue-700';
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-[#070d1a] relative overflow-hidden">
@@ -120,42 +107,16 @@ export const Login: React.FC = () => {
           <div className={`px-8 pt-10 pb-6 bg-gradient-to-br ${accentClass} text-center`}>
             <div className="flex items-center justify-center gap-2 mb-3">
               <span className="material-symbols-outlined text-white text-[32px]">
-                {isConsultant ? 'handshake' : 'gavel'}
+                login
               </span>
               <span className="text-white font-extrabold text-2xl tracking-tight">GoAuct</span>
             </div>
             <h1 className="text-white font-bold text-lg">
-              {isConsultant ? 'Consultant Partner Portal' : 'Investor Platform'}
+              Sign In to Your Account
             </h1>
             <p className="text-white/70 text-sm mt-1">
-              {isConsultant ? 'Sign in to your partner account' : 'Welcome back — sign in to continue'}
+              Welcome back — access your dashboard
             </p>
-          </div>
-
-          {/* Mode Switcher */}
-          <div className="flex border-b border-slate-100 dark:border-slate-700">
-            <button
-              onClick={() => { setMode('investor'); setError(''); }}
-              className={`flex-1 py-3.5 text-sm font-bold transition-colors flex items-center justify-center gap-1.5 ${
-                mode === 'investor'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">trending_up</span>
-              Investor Login
-            </button>
-            <button
-              onClick={() => { setMode('consultant'); setError(''); }}
-              className={`flex-1 py-3.5 text-sm font-bold transition-colors flex items-center justify-center gap-1.5 ${
-                mode === 'consultant'
-                  ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/10'
-                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[16px]">handshake</span>
-              Consultant Login
-            </button>
           </div>
 
           <div className="px-8 py-8">
@@ -173,7 +134,7 @@ export const Login: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder={isConsultant ? 'partner@email.com' : 'investor@email.com'}
+                  placeholder="your@email.com"
                   required
                 />
               </label>
@@ -212,7 +173,7 @@ export const Login: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    {isConsultant ? 'Access Partner Portal' : 'Sign In'}
+                    Sign In
                     <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                   </>
                 )}
@@ -244,17 +205,10 @@ export const Login: React.FC = () => {
 
             {/* Footer links */}
             <div className="mt-6 text-center">
-              {mode === 'investor' ? (
-                <p className="text-slate-600 dark:text-slate-400 text-sm">
-                  Don't have an account?{' '}
-                  <Link to="/signup" className="text-primary font-bold hover:underline">Sign up free</Link>
-                </p>
-              ) : (
-                <p className="text-slate-600 dark:text-slate-400 text-sm">
-                  Not a partner yet?{' '}
-                  <Link to="/signup?role=consultant" className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">Register as Consultant</Link>
-                </p>
-              )}
+              <p className="text-slate-600 dark:text-slate-400 text-sm">
+                Don't have an account?{' '}
+                <Link to="/signup" className="text-primary font-bold hover:underline">Sign up free</Link>
+              </p>
             </div>
           </div>
         </div>

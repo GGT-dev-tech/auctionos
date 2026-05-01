@@ -343,6 +343,19 @@ export const ClientDataService = {
         });
         if (!response.ok) throw new Error('Failed to force status update');
         return response.json();
+    },
+
+    createCustomProperty: async (data: any): Promise<any> => {
+        const response = await fetch(`${API_URL}/client-data/custom-properties`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Failed to create custom property');
+        }
+        return response.json();
     }
 };
 

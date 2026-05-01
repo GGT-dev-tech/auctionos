@@ -21,6 +21,20 @@ class User(Base):
         nullable=True,
     )
 
+    # ── RBAC e Hierarquia ────────────────────────────────────────────────────
+    # Persistent company association for RBAC (as opposed to just active session)
+    company_id = Column(
+        Integer,
+        ForeignKey("companies.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_by_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    permissions = Column(Text, nullable=True) # JSON structured permissions
+
     # ── Relacionamentos ──────────────────────────────────────────────────────
     # Usa backref nos modelos secundários → NÃO define back_populates aqui
     # para evitar conflito com os backref definidos naquelas classes.

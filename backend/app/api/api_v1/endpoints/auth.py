@@ -16,34 +16,7 @@ from app.schemas.user import UserCreate, User as UserSchema
 router = APIRouter()
 
 
-@router.post("/login/consultant", response_model=Token)
-def login_consultant(
-    db: Session = Depends(deps.get_db),
-    form_data: OAuth2PasswordRequestForm = Depends(),
-) -> Any:
-    """
-    Dedicated login for consultant partners.
-    Only allows users with role='consultant' to authenticate.
-    Prevents investors/admins from accidentally using the consultant portal.
-    """
-    email = form_data.username.strip().lower()
-    user = db.query(User).filter(User.email == email).first()
 
-    if not user or not security.verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
-    if not user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive account")
-    if user.role != "consultant":
-        raise HTTPException(
-            status_code=403,
-            detail="This endpoint is for consultant accounts only. Please use the standard login."
-        )
-
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    return {
-        "access_token": security.create_access_token(user.id, expires_delta=access_token_expires),
-        "token_type": "bearer",
-    }
 
 @router.post("/login/access-token", response_model=Token)
 def login_access_token(
@@ -144,8 +117,7 @@ async def login_oauth(request: Request, provider: str, role: str = "investor"):
     print(f">>> OAUTH REDIRECT URI: {redirect_uri} | role={role}")
 
     # Encode intended role in the OAuth state parameter.
-    # `prompt=select_account` forces Google to always show the account picker,
-    # even when the user already has an active Google session in the browser.
+    # `prompt=select_account` forces Google to always show the account picker
     extra_params: dict = {"state": role}
     if provider == "google":
         extra_params["prompt"] = "select_account"
@@ -199,15 +171,7 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
     if user:
         if not user.is_active:
             raise HTTPException(status_code=400, detail="Inactive user")
-        # ── Anti-crossover: block login if role does not match ────────────────────
-        if intended_role == 'consultant' and user.role not in ('consultant',):
-            frontend_url = get_frontend_url(request)
-            error_msg = 'Este+email+est%C3%A1+registrado+como+investidor.+Use+o+login+padr%C3%A3o.'
-            return RedirectResponse(url=f"{frontend_url}/#/login?mode=consultant&error={error_msg}")
-        if intended_role == 'client' and user.role == 'consultant':
-            frontend_url = get_frontend_url(request)
-            error_msg = 'Este+email+%C3%A9+de+um+consultor.+Use+a+aba+Consultant+Login.'
-            return RedirectResponse(url=f"{frontend_url}/#/login?error={error_msg}")
+        # Anti-crossover removed: unified login handles routing.
     else:
         # Create new user with the intended role
         random_password = secrets.token_urlsafe(32)
@@ -230,13 +194,8 @@ async def auth_callback(request: Request, provider: str, db: Session = Depends(d
 
     frontend_url = get_frontend_url(request)
 
-    # Route based on actual role — token is passed via hash fragment so Login.tsx can pick it up
-    if user.role == "consultant":
-        redirect_url = f"{frontend_url}/#/login?token={access_token}&mode=consultant"
-    elif user.role in ("admin", "superuser", "agent"):
-        redirect_url = f"{frontend_url}/#/login?token={access_token}&mode=admin"
-    else:
-        redirect_url = f"{frontend_url}/#/login?token={access_token}"
+    # Unified login routing - we pass token, frontend routing will check role and redirect
+    redirect_url = f"{frontend_url}/#/login?token={access_token}"
     
     print(f">>> OAuth success: user={email} role={user.role} redirect={redirect_url[:80]}...")
     return RedirectResponse(url=redirect_url)

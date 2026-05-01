@@ -24,6 +24,7 @@ class PropertyDetails(Base):
     cs_number = Column(String(100), nullable=True)
     property_type = Column(String(100), nullable=True)
     status = Column(String(100), nullable=True, default="active")
+    visibility = Column(String(50), nullable=True, default="public", index=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     

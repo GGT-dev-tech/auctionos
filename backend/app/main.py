@@ -68,6 +68,15 @@ def run_safe_migrations():
         ("user_properties", "auction_date", "DATE", "DATE"),
         ("user_properties", "amount_due", "FLOAT", "FLOAT"),
         ("user_properties", "list_id", "INTEGER REFERENCES client_lists(id) ON DELETE SET NULL", "INTEGER"),
+        
+        # Advanced Feature Expansion
+        ("users", "company_id", "INTEGER REFERENCES companies(id) ON DELETE SET NULL", "INTEGER"),
+        ("users", "created_by_id", "INTEGER REFERENCES users(id) ON DELETE SET NULL", "INTEGER"),
+        ("users", "permissions", "TEXT", "TEXT"),
+        ("activity_logs", "entity_type", "VARCHAR(100)", "VARCHAR(100)"),
+        ("activity_logs", "entity_id", "VARCHAR(100)", "VARCHAR(100)"),
+        ("activity_logs", "metadata_json", "TEXT", "TEXT"),
+        ("property_details", "visibility", "VARCHAR(50) DEFAULT 'public'", "VARCHAR(50) DEFAULT 'public'"),
     ]
 
     with engine.connect() as conn:

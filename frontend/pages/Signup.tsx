@@ -3,14 +3,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthService } from '../services/auth.service';
 import { API_URL } from '../services/httpClient';
 
-type SignupMode = 'investor' | 'consultant';
+
 
 export const Signup: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const defaultMode = (searchParams.get('role') === 'consultant' ? 'consultant' : 'investor') as SignupMode;
+    const defaultRole = (searchParams.get('role') === 'consultant' ? 'consultant' : 'client');
 
-    const [mode, setMode] = useState<SignupMode>(defaultMode);
+    const [selectedRole, setSelectedRole] = useState(defaultRole);
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -35,7 +35,6 @@ export const Signup: React.FC = () => {
 
         setIsLoading(true);
         try {
-            const role = mode === 'consultant' ? 'consultant' : 'client';
             const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -43,7 +42,7 @@ export const Signup: React.FC = () => {
                     email: formData.email,
                     password: formData.password,
                     full_name: formData.fullName,
-                    role,
+                    role: selectedRole,
                 }),
             });
 
@@ -53,14 +52,13 @@ export const Signup: React.FC = () => {
             }
 
             // Auto-login after registration
-            const loginFn = mode === 'consultant' ? AuthService.loginConsultant : AuthService.login;
-            const { access_token } = await loginFn(formData.email, formData.password);
+            const { access_token } = await AuthService.login(formData.email, formData.password);
             localStorage.setItem('token', access_token);
 
             const user = await AuthService.getMe();
             localStorage.setItem('user', JSON.stringify(user));
 
-            if (mode === 'consultant') {
+            if (selectedRole === 'consultant') {
                 navigate('/consultant');
             } else {
                 navigate('/client');
@@ -72,7 +70,7 @@ export const Signup: React.FC = () => {
         }
     };
 
-    const isConsultant = mode === 'consultant';
+    const isConsultant = selectedRole === 'consultant';
     const gradientClass = isConsultant
         ? 'from-emerald-500 to-teal-600'
         : 'from-blue-600 to-indigo-600';
@@ -95,46 +93,16 @@ export const Signup: React.FC = () => {
                     <div className={`px-8 pt-8 pb-5 bg-gradient-to-br ${gradientClass} text-center cursor-pointer`} onClick={() => navigate('/')}>
                         <div className="flex items-center justify-center gap-2 mb-2">
                             <span className="material-symbols-outlined text-white text-[28px]">
-                                {isConsultant ? 'handshake' : 'gavel'}
+                                person_add
                             </span>
                             <span className="text-white font-extrabold text-xl">GoAuct</span>
                         </div>
                         <h1 className="text-white font-bold text-lg">
-                            {isConsultant ? 'Consultant Partner Registration' : 'Create Your Investor Account'}
+                            Create Your Account
                         </h1>
                         <p className="text-white/70 text-xs mt-1">
-                            {isConsultant
-                                ? 'Join the partner network — access listings, tasks & commissions'
-                                : 'Access tax deed auctions and AI-powered deal intelligence'}
+                            Join the GoAuct ecosystem as an investor or consultant
                         </p>
-                    </div>
-
-                    {/* Mode Tabs */}
-                    <div className="flex border-b border-slate-100 dark:border-slate-700">
-                        <button
-                            type="button"
-                            onClick={() => { setMode('investor'); setError(''); }}
-                            className={`flex-1 py-3 text-sm font-bold transition-colors flex items-center justify-center gap-1.5 ${
-                                mode === 'investor'
-                                    ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10'
-                                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                            }`}
-                        >
-                            <span className="material-symbols-outlined text-[15px]">trending_up</span>
-                            Investor
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => { setMode('consultant'); setError(''); }}
-                            className={`flex-1 py-3 text-sm font-bold transition-colors flex items-center justify-center gap-1.5 ${
-                                mode === 'consultant'
-                                    ? 'text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 bg-emerald-50/50 dark:bg-emerald-900/10'
-                                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                            }`}
-                        >
-                            <span className="material-symbols-outlined text-[15px]">handshake</span>
-                            Consultant Partner
-                        </button>
                     </div>
 
                     <div className="px-8 py-7">
@@ -144,6 +112,35 @@ export const Signup: React.FC = () => {
                                     {error}
                                 </div>
                             )}
+
+                            {/* Role Selection */}
+                            <div className="flex flex-col gap-1.5 mb-2">
+                                <span className="text-slate-700 dark:text-slate-300 text-sm font-semibold">I want to join as a:</span>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            name="role" 
+                                            value="client" 
+                                            checked={selectedRole === 'client'} 
+                                            onChange={() => setSelectedRole('client')}
+                                            className="text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm text-slate-700 dark:text-slate-300">Investor</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            name="role" 
+                                            value="consultant" 
+                                            checked={selectedRole === 'consultant'} 
+                                            onChange={() => setSelectedRole('consultant')}
+                                            className="text-emerald-600 focus:ring-emerald-600"
+                                        />
+                                        <span className="text-sm text-slate-700 dark:text-slate-300">Consultant Partner</span>
+                                    </label>
+                                </div>
+                            </div>
 
                             {/* Full Name */}
                             <label className="flex flex-col gap-1.5">
@@ -234,7 +231,7 @@ export const Signup: React.FC = () => {
                             <div className="text-center mt-1">
                                 <span className="text-slate-500 dark:text-slate-400 text-sm">Already have an account? </span>
                                 <Link
-                                    to={isConsultant ? '/login?mode=consultant' : '/login'}
+                                    to="/login"
                                     className={`text-sm font-bold hover:underline ${isConsultant ? 'text-emerald-600 dark:text-emerald-400' : 'text-primary'}`}
                                 >
                                     Sign in

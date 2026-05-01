@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import PropertyList from '../../components/admin/PropertyList';
 import PropertyFilters, { PropertyFilterParams } from '../../components/admin/PropertyFilters';
-import { Typography } from '@mui/material';
+import { Typography, Button, Dialog, TextField } from '@mui/material';
+import { ClientDataService } from '../../services/property.service';
 
 const ClientProperties: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -16,6 +17,16 @@ const ClientProperties: React.FC = () => {
         } catch {}
         return { availability: 'available' };
     });
+
+    const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+    const [createForm, setCreateForm] = useState({
+        address: '',
+        city: '',
+        state: '',
+        county: '',
+        property_type: 'Residential',
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Save to sessionStorage whenever filters change
     useEffect(() => {
@@ -52,9 +63,20 @@ const ClientProperties: React.FC = () => {
 
     return (
         <div className="p-6 w-full space-y-6 px-4 sm:px-8 lg:px-12">
-            <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
-                Property Search
-            </Typography>
+            <div className="flex justify-between items-center">
+                <Typography variant="h4" className="font-bold text-slate-800 dark:text-white">
+                    Property Search
+                </Typography>
+                <Button 
+                    variant="contained" 
+                    color="primary" 
+                    className="bg-blue-600 rounded-lg shadow-none"
+                    onClick={() => setCreateModalOpen(true)}
+                    startIcon={<span className="material-symbols-outlined text-[18px]">add</span>}
+                >
+                    Create Custom Property
+                </Button>
+            </div>
             <div className="sticky top-0 z-40 pt-2 pb-1 bg-[#F8FAFC] dark:bg-slate-950/80 backdrop-blur-md -mx-4 px-4 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
                 <PropertyFilters 
                     onFilterChange={setFilters} 
@@ -74,6 +96,71 @@ const ClientProperties: React.FC = () => {
                     <Typography variant="body2" className="mt-1">Use the filters above to find what you are looking for.</Typography>
                 </div>
             )}
+
+            {/* Create Custom Property Modal */}
+            <Dialog open={isCreateModalOpen} onClose={() => setCreateModalOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+                <Typography variant="h6" className="font-bold mb-4 text-slate-800 dark:text-white">Create Custom Property</Typography>
+                <div className="space-y-4">
+                    <TextField 
+                        label="Address" 
+                        fullWidth size="small" 
+                        value={createForm.address} 
+                        onChange={e => setCreateForm(p => ({...p, address: e.target.value}))} 
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <TextField 
+                            label="City" 
+                            fullWidth size="small" 
+                            value={createForm.city} 
+                            onChange={e => setCreateForm(p => ({...p, city: e.target.value}))} 
+                        />
+                        <TextField 
+                            label="State" 
+                            fullWidth size="small" 
+                            value={createForm.state} 
+                            onChange={e => setCreateForm(p => ({...p, state: e.target.value}))} 
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <TextField 
+                            label="County" 
+                            fullWidth size="small" 
+                            value={createForm.county} 
+                            onChange={e => setCreateForm(p => ({...p, county: e.target.value}))} 
+                        />
+                        <TextField 
+                            label="Property Type" 
+                            fullWidth size="small" 
+                            value={createForm.property_type} 
+                            onChange={e => setCreateForm(p => ({...p, property_type: e.target.value}))} 
+                        />
+                    </div>
+                </div>
+                <div className="flex justify-end gap-2 mt-6">
+                    <Button onClick={() => setCreateModalOpen(false)} color="inherit">Cancel</Button>
+                    <Button 
+                        variant="contained" 
+                        color="primary" 
+                        disabled={isSubmitting || !createForm.address}
+                        className="bg-blue-600 rounded-lg shadow-none"
+                        onClick={async () => {
+                            setIsSubmitting(true);
+                            try {
+                                await ClientDataService.createCustomProperty(createForm);
+                                setCreateModalOpen(false);
+                                setCreateForm({ address: '', city: '', state: '', county: '', property_type: 'Residential' });
+                                alert('✅ Custom property created and saved to Custom Folder.');
+                            } catch (e: any) {
+                                alert(e.message);
+                            } finally {
+                                setIsSubmitting(false);
+                            }
+                        }}
+                    >
+                        {isSubmitting ? 'Creating...' : 'Create Property'}
+                    </Button>
+                </div>
+            </Dialog>
         </div>
     );
 };

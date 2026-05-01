@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.api import deps
 from app.models.user import User
 from sqlalchemy import text
+from app.services.activity import log_activity
 
 router = APIRouter()
 
@@ -91,6 +92,8 @@ def create_company(
     else:
         company["is_active"] = False
 
+    log_activity(db, current_user.id, "create_company", "Company", company["id"], {"name": company["name"]})
+
     return company
 
 
@@ -127,6 +130,9 @@ def update_company(
         """),
         {"cid": company_id, "active_id": current_user.active_company_id or -1}
     ).fetchone()
+
+    log_activity(db, current_user.id, "update_company", "Company", company_id, {"updates": list(updates.keys())})
+
     return dict(row._mapping)
 
 
@@ -160,6 +166,8 @@ def delete_company(
 
     db.execute(text("DELETE FROM companies WHERE id = :cid"), {"cid": company_id})
     db.commit()
+
+    log_activity(db, current_user.id, "delete_company", "Company", company_id)
 
 
 @router.post("/{company_id}/select", response_model=dict)

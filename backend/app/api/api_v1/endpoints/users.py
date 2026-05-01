@@ -6,9 +6,11 @@ from sqlalchemy.orm import Session
 
 from app.api import deps
 from app.core import security
+from app.models.activity_log import ActivityLog
 from app.models.user import User
 from app.schemas.user import User as UserSchema, UserCreate, UserUpdate
-from app.models.activity_log import ActivityLog
+from app.core.rbac import allow_managers, allow_admin_only
+from app.services.activity import log_activity
 
 router = APIRouter()
 
@@ -26,23 +28,38 @@ def create_user(
     *,
     db: Session = Depends(deps.get_db),
     user_in: UserCreate,
-    current_user: User = Depends(deps.get_current_active_superuser),
+    current_user: User = Depends(allow_managers),
 ) -> Any:
     email = user_in.email.strip().lower()
     user = db.query(User).filter(User.email == email).first()
     if user:
         raise HTTPException(status_code=400, detail="The user with this username already exists.")
     
+    # RBAC logic: Managers can only create Agents in their own company. Admins can do anything.
+    if current_user.role == "manager":
+        if user_in.role not in ["agent"]:
+            raise HTTPException(status_code=403, detail="Managers can only create agents.")
+        target_role = "agent"
+        target_company = current_user.company_id or current_user.active_company_id
+    else:
+        target_role = getattr(user_in, 'role', "client")
+        target_company = getattr(user_in, 'company_id', None)
+
     user = User(
         email=email,
         hashed_password=security.get_password_hash(user_in.password),
         full_name=user_in.full_name,
-        is_superuser=user_in.is_superuser,
-        role=user_in.role if hasattr(user_in, 'role') else "client",
+        is_superuser=user_in.is_superuser if current_user.is_superuser else False,
+        role=target_role,
+        company_id=target_company,
+        created_by_id=current_user.id
     )
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    log_activity(db, current_user.id, "create_user", "User", user.id, {"created_role": target_role})
+
     return user
 
 @router.put("/me", response_model=UserSchema)

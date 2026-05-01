@@ -242,7 +242,8 @@ def _approve_task(task_id: int, reward_points: int, consultant_user_id: int, db:
         WHERE id = :id
     """), {"id": task_id})
 
-    usd_value = reward_points / 100.0
+    consultant_points = int(reward_points * 0.7)
+    usd_value = consultant_points / 100.0
     db.execute(text("""
         INSERT INTO consultant_commissions
             (consultant_user_id, task_id, points, usd_value, type, status, description)
@@ -251,9 +252,9 @@ def _approve_task(task_id: int, reward_points: int, consultant_user_id: int, db:
     """), {
         "uid": consultant_user_id,
         "task_id": task_id,
-        "points": reward_points,
+        "points": consultant_points,
         "usd": usd_value,
-        "desc": f"Task #{task_id} approved — photo verification",
+        "desc": f"Task #{task_id} approved — photo verification (70% cut of {reward_points} pts)",
     })
 
 
@@ -289,7 +290,6 @@ def get_exported_properties(
             p.county,
             p.property_type,
             p.assessed_value,
-            p.amount_due,
             p.lot_acres,
             p.owner_name,
             p.bedrooms,

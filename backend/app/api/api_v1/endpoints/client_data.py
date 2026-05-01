@@ -96,6 +96,17 @@ def create_client_list(
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Create a new List folder for the client. Optionally scoped to a company."""
+    
+    # Check for unique folder name
+    existing_list = db.query(ClientList).filter(
+        ClientList.user_id == current_user.id,
+        ClientList.company_id == list_in.company_id,
+        ClientList.name.ilike(list_in.name)
+    ).first()
+    
+    if existing_list:
+        raise HTTPException(status_code=400, detail="A folder with this name already exists.")
+
     new_list = ClientList(
         name=list_in.name,
         user_id=current_user.id,

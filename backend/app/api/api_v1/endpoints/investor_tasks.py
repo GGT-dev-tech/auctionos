@@ -190,7 +190,8 @@ def review_task_submission(
             WHERE id = :id
         """), {"id": task_id})
         if task.consultant_user_id:
-            usd = task.reward_points / 100.0
+            consultant_points = int(task.reward_points * 0.7)
+            usd = consultant_points / 100.0
             db.execute(text("""
                 INSERT INTO consultant_commissions
                     (consultant_user_id, task_id, points, usd_value, type, status, description)
@@ -198,9 +199,9 @@ def review_task_submission(
             """), {
                 "uid": task.consultant_user_id,
                 "task_id": task_id,
-                "pts": task.reward_points,
+                "pts": consultant_points,
                 "usd": usd,
-                "desc": f"Task #{task_id} approved by investor",
+                "desc": f"Task #{task_id} approved by investor (70% cut of {task.reward_points} pts)",
             })
     else:
         # Reject: task goes back to 'claimed' so consultant can resubmit
