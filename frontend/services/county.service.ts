@@ -48,6 +48,26 @@ class CountyService {
             return [];
         }
     }
+
+    async getStateContact(state: string): Promise<{state: string, url: string} | null> {
+        if (!state) return null;
+
+        try {
+            const formattedState = encodeURIComponent(state.toLowerCase().trim());
+            const response = await fetch(`${API_URL}/counties/${formattedState}/contact`, {
+                headers: getHeaders()
+            });
+
+            if (!response.ok) {
+                return null;
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to fetch state contact:', error);
+            return null;
+        }
+    }
 }
 
 export const countyService = new CountyService();
