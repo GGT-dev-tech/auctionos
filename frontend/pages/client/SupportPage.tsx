@@ -189,7 +189,7 @@ const ClientSupportPage: React.FC = () => {
           )}
         </form>
       </div>
-      ) : (
+      ) : activeTab === 'security' ? (
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
         <p className="text-sm text-slate-500 mb-6">Update your account password to keep your data secure.</p>
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
