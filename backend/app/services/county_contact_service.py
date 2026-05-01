@@ -2,6 +2,9 @@ import csv
 from typing import List, Dict, Optional
 import os
 from functools import lru_cache
+from sqlalchemy.orm import Session
+from app.models.county_contact import CountyContact
+from app.models.state_contact import StateContact
 
 # Constants
 CSV_FILE_PATH = os.path.join("data", "contact_data.csv")
@@ -44,17 +47,25 @@ def _load_csv_data() -> List[Dict[str, str]]:
 
 class CountyContactService:
     @staticmethod
-    def get_contacts(state_code: str, county_name: str) -> List[Dict[str, str]]:
+    def get_contacts(state_code: str, county_name: str, db: Optional[Session] = None) -> List[Dict[str, str]]:
         """
         Retrieves filtered contacts for a specific state (ABBR) and county.
+        First tries the database, then falls back to CSV.
         """
-        all_contacts = _load_csv_data()
-        
-        # Normalize inputs
         state_code = state_code.strip().upper()
         county_name = county_name.strip().lower()
+
+        if db:
+            db_contacts = db.query(CountyContact).filter(
+                CountyContact.state == state_code,
+                CountyContact.county == county_name
+            ).all()
+            if db_contacts:
+                return [{"name": c.name, "phone": c.phone or "", "url": c.url or ""} for c in db_contacts]
+
+        # Fallback to CSV
+        all_contacts = _load_csv_data()
         
-        # Filter matching state and county
         matches = [
             {
                 "name": c["name"],
@@ -67,11 +78,27 @@ class CountyContactService:
         return matches
 
     @staticmethod
-    def get_counties_for_state(state_code: str) -> List[str]:
-        all_contacts = _load_csv_data()
+    def get_counties_for_state(state_code: str, db: Optional[Session] = None) -> List[str]:
         state_code = state_code.strip().upper()
+        
+        if db:
+            db_counties = db.query(CountyContact.county).filter(CountyContact.state == state_code).distinct().all()
+            if db_counties:
+                return sorted([c[0].title() for c in db_counties if c[0]])
+        
+        # Fallback
+        all_contacts = _load_csv_data()
         counties = {c["county"].title() for c in all_contacts if c["state"] == state_code and c["county"]}
         return sorted(list(counties))
+
+    @staticmethod
+    def get_state_contact(state_code: str, db: Optional[Session] = None) -> Optional[Dict[str, str]]:
+        state_code = state_code.strip().upper()
+        if db:
+            state_contact = db.query(StateContact).filter(StateContact.state == state_code).first()
+            if state_contact:
+                return {"state": state_contact.state, "url": state_contact.url or ""}
+        return None
 
 # Singleton instance
 county_contact_service = CountyContactService()

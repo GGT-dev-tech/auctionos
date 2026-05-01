@@ -19,11 +19,27 @@ STATE_ABBREVIATIONS = {
 }
 
 @router.get("/{state}/counties", response_model=List[str])
-def get_counties(state: str) -> Any:
+def get_counties(
+    state: str,
+    db: Session = Depends(deps.get_db)
+) -> Any:
     """Return all known counties for a state."""
     state_query = state.lower().strip()
     state_abbr = STATE_ABBREVIATIONS.get(state_query, state_query)
-    return county_contact_service.get_counties_for_state(state_abbr)
+    return county_contact_service.get_counties_for_state(state_abbr, db)
+
+@router.get("/{state}/contact", response_model=Dict[str, str])
+def get_state_contact(
+    state: str,
+    db: Session = Depends(deps.get_db)
+) -> Any:
+    """Return the main portal contact info for a state."""
+    state_query = state.lower().strip()
+    state_abbr = STATE_ABBREVIATIONS.get(state_query, state_query)
+    contact = county_contact_service.get_state_contact(state_abbr, db)
+    if not contact:
+        return {"state": state_abbr, "url": ""}
+    return contact
 
 @router.get("/{state}/{county}/contacts", response_model=List[Dict[str, str]])
 def get_county_contacts(
@@ -37,28 +53,8 @@ def get_county_contacts(
     state_query = state.lower().strip()
     state_abbr = STATE_ABBREVIATIONS.get(state_query, state_query)
     county_query = county.lower().strip()
-    
-    # Priority: CSV contact data
-    csv_contacts = county_contact_service.get_contacts(state_abbr, county_query)
-    
-    # DB contacts (if any exist)
-    db_contacts = db.query(CountyContact).filter(
-        CountyContact.state == state_abbr,
-        CountyContact.county == county_query
-    ).all()
-    
-    # Merge matches (avoiding duplication by name or just concatenating)
-    # Since CSV is the primary directed source, we use it first.
-    final_results = csv_contacts
-    
-    # Add unique DB contacts if they aren't in CSV
-    csv_names = {c['name'].lower() for c in csv_contacts}
-    for c in db_contacts:
-        if c.name.lower() not in csv_names:
-            final_results.append({
-                "name": c.name, 
-                "phone": c.phone or "", 
-                "url": c.url or ""
-            })
-    
-    return final_results
+    # We already query DB first inside the service, so we don't need to manually merge here
+    # Priority: DB contact data, then CSV
+    contacts = county_contact_service.get_contacts(state_abbr, county_query, db)
+    return contacts
+
