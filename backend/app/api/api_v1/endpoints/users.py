@@ -37,10 +37,20 @@ def create_user(
     
     # RBAC logic: Managers can only create Agents in their own company. Admins can do anything.
     if current_user.role == "manager":
-        if user_in.role not in ["agent"]:
+        if getattr(user_in, 'role', '') not in ["agent"]:
             raise HTTPException(status_code=403, detail="Managers can only create agents.")
         target_role = "agent"
         target_company = current_user.company_id or current_user.active_company_id
+    elif current_user.role == "client":
+        if getattr(user_in, 'role', '') not in ["manager", "agent"]:
+            raise HTTPException(status_code=403, detail="Clients can only create managers or agents under their company.")
+        target_role = getattr(user_in, 'role')
+        target_company = getattr(user_in, 'company_id', current_user.active_company_id)
+        # Ensure the client owns the target company
+        from sqlalchemy import text
+        company = db.execute(text("SELECT id FROM companies WHERE id = :cid AND user_id = :uid"), {"cid": target_company, "uid": current_user.id}).fetchone()
+        if not company:
+            raise HTTPException(status_code=403, detail="Company not found or access denied.")
     else:
         target_role = getattr(user_in, 'role', "client")
         target_company = getattr(user_in, 'company_id', None)
@@ -137,6 +147,57 @@ def read_user_logs(
     current_user: User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     return db.query(ActivityLog).filter(ActivityLog.user_id == user_id).order_by(ActivityLog.created_at.desc()).offset(skip).limit(limit).all()
+
+@router.get("/team/logs")
+def read_team_logs(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """Fetch activity logs for a Client's or Manager's team"""
+    from sqlalchemy import text
+    if current_user.role == "client":
+        # Clients can see logs of all their managers and agents (created_by_id)
+        query = text("""
+            SELECT al.*, u.email, u.full_name, u.role
+            FROM activity_logs al
+            JOIN users u ON u.id = al.user_id
+            WHERE u.created_by_id = :uid OR u.id = :uid
+            ORDER BY al.created_at DESC OFFSET :skip LIMIT :limit
+        """)
+    elif current_user.role == "manager":
+        # Managers can see logs of agents in their company
+        query = text("""
+            SELECT al.*, u.email, u.full_name, u.role
+            FROM activity_logs al
+            JOIN users u ON u.id = al.user_id
+            WHERE (u.company_id = :cid AND u.role = 'agent') OR u.id = :uid
+            ORDER BY al.created_at DESC OFFSET :skip LIMIT :limit
+        """)
+    elif current_user.role == "agent":
+        # Agents only see themselves
+        query = text("""
+            SELECT al.*, u.email, u.full_name, u.role
+            FROM activity_logs al
+            JOIN users u ON u.id = al.user_id
+            WHERE u.id = :uid
+            ORDER BY al.created_at DESC OFFSET :skip LIMIT :limit
+        """)
+    else:
+        raise HTTPException(status_code=403, detail="Not applicable to this role")
+
+    params = {"uid": current_user.id, "cid": current_user.company_id, "skip": skip, "limit": limit}
+    rows = db.execute(query, params).fetchall()
+    
+    result = []
+    for row in rows:
+        d = dict(row._mapping)
+        user_info = {"email": d.pop("email"), "full_name": d.pop("full_name"), "role": d.pop("role")}
+        d["user"] = user_info
+        result.append(d)
+        
+    return result
 
 @router.get("/logs/all")
 def read_all_logs(

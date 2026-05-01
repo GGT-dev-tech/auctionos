@@ -43,6 +43,7 @@ class ExportPropertyPayload(BaseModel):
     contact_name: Optional[str] = None
     contact_phone: Optional[str] = None
     contact_email: Optional[str] = None
+    requested_sale_price: Optional[float] = None
     notes: Optional[str] = None
 
 
@@ -203,6 +204,10 @@ def review_task_submission(
                 "usd": usd,
                 "desc": f"Task #{task_id} approved by investor (70% cut of {task.reward_points} pts)",
             })
+            
+        # Push photos to public attachments
+        from app.api.api_v1.endpoints.consultant_tasks import _copy_task_photos_to_attachments
+        _copy_task_photos_to_attachments(task_id, task.property_id, task.investor_user_id, db)
     else:
         # Reject: task goes back to 'claimed' so consultant can resubmit
         db.execute(text("""
@@ -385,8 +390,8 @@ def export_property(
 
     row = db.execute(text("""
         INSERT INTO property_exports
-            (property_id, investor_user_id, contact_name, contact_phone, contact_email, notes, is_active)
-        VALUES (:pid, :uid, :name, :phone, :email, :notes, TRUE)
+            (property_id, investor_user_id, contact_name, contact_phone, contact_email, requested_sale_price, notes, is_active)
+        VALUES (:pid, :uid, :name, :phone, :email, :sale_price, :notes, TRUE)
         RETURNING id
     """), {
         "pid": payload.property_id,
@@ -394,6 +399,7 @@ def export_property(
         "name": payload.contact_name or current_user.full_name,
         "phone": payload.contact_phone,
         "email": payload.contact_email or current_user.email,
+        "sale_price": payload.requested_sale_price,
         "notes": payload.notes,
     }).fetchone()
     db.commit()

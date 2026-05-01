@@ -73,8 +73,8 @@ def request_withdrawal(
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """Request a withdrawal from the wallet."""
-    if payload.amount_usd < 20:
-        raise HTTPException(status_code=400, detail="Minimum withdrawal amount is $20.00")
+    if payload.amount_usd < 200:
+        raise HTTPException(status_code=400, detail="Minimum withdrawal amount is $200.00")
 
     # Sync wallet balance
     wallet_resp = get_wallet_balance(db, current_user)
@@ -117,4 +117,18 @@ def list_withdrawals(
     rows = db.execute(text("""
         SELECT * FROM withdrawal_requests WHERE user_id = :uid ORDER BY created_at DESC
     """), {"uid": current_user.id}).fetchall()
+    return [dict(r._mapping) for r in rows]
+
+@router.get("/admin/withdrawals")
+def admin_list_withdrawals(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """CRM Admin endpoint to view all consultant withdrawal requests."""
+    rows = db.execute(text("""
+        SELECT w.*, u.full_name, u.email 
+        FROM withdrawal_requests w
+        JOIN users u ON u.id = w.user_id
+        ORDER BY w.created_at DESC
+    """)).fetchall()
     return [dict(r._mapping) for r in rows]

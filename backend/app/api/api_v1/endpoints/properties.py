@@ -16,6 +16,7 @@ router = APIRouter()
 @router.get("/", response_model=PaginatedPropertyResponse)
 def read_properties(
     db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
     skip: int = 0,
     limit: int = 100,
     county: Optional[str] = None,
@@ -49,9 +50,13 @@ def read_properties(
 ) -> Any:
     
     # 1. Build Base Filter Query
-    # Ensure private custom properties are hidden from global search
-    where_clauses = ["1=1", "p.company_id IS NULL"]
+    # Ensure private custom properties are hidden from global search, unless owned by current_user's company
+    where_clauses = ["1=1"]
     params = {"skip": skip, "limit": limit}
+    
+    if current_user and not current_user.is_superuser:
+        where_clauses.append("(p.company_id IS NULL OR p.visibility = 'public' OR p.company_id = :cid)")
+        params["cid"] = current_user.company_id or current_user.active_company_id
 
     if county:
         where_clauses.append("p.county ILIKE :county")
@@ -381,6 +386,7 @@ class PropertyUpdateRequest(BaseModel):
     property_type_detail: Optional[str] = None
     import_error_msg: Optional[str] = None
     is_processed: Optional[bool] = False
+    visibility: Optional[str] = "private"
 
 class PropertyCreateRequest(PropertyUpdateRequest):
     parcel_id: str  # Required for creation
@@ -404,6 +410,13 @@ def create_property(
     
     if "availability_status" not in create_data:
         create_data["availability_status"] = "available"
+        
+    create_data["created_by_user_id"] = current_user.id
+    if create_data.get("visibility") == "private":
+        create_data["company_id"] = current_user.company_id or current_user.active_company_id
+    else:
+        # public properties go to the global pool (company_id is NULL)
+        create_data["company_id"] = None
         
     keys = list(create_data.keys())
     columns = ", ".join(keys)
@@ -552,6 +565,51 @@ def purchase_property_action(
         "new_status": "purchased"
     }
 
+@router.post("/{parcel_id}/purchase-media", response_model=dict)
+def purchase_property_media(
+    parcel_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+) -> Any:
+    # 1. Get Property ID and UUID
+    prop = db.execute(text("SELECT property_id, id FROM property_details WHERE parcel_id = :parcel_id"), {"parcel_id": parcel_id}).fetchone()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found")
+        
+    prop_uuid = prop[0]
+    prop_int_id = prop[1]
+    
+    # 2. Check if already purchased
+    existing = db.execute(text("""
+        SELECT 1 FROM property_media_purchases 
+        WHERE property_id = :prop_uuid 
+        AND user_id = :uid
+    """), {"prop_uuid": prop_uuid, "uid": current_user.id}).fetchone()
+    
+    if existing:
+        return {"message": "Media already purchased or unlocked.", "unlocked": True}
+        
+    # 3. Check if there are monetizable tasks for this property
+    task = db.execute(text("""
+        SELECT reward_points FROM consultant_tasks 
+        WHERE property_id = :prop_id AND status = 'approved'
+        ORDER BY created_at DESC LIMIT 1
+    """), {"prop_id": prop_int_id}).fetchone()
+    
+    if not task:
+        raise HTTPException(status_code=400, detail="No monetizable media available for this property yet.")
+        
+    # 4. Process payment (cost is what the original investor paid / 100)
+    cost_usd = task.reward_points / 100.0  
+    
+    db.execute(text("""
+        INSERT INTO property_media_purchases (property_id, user_id, amount_paid)
+        VALUES (:prop_uuid, :uid, :amount)
+    """), {"prop_uuid": prop_uuid, "uid": current_user.id, "amount": cost_usd})
+    db.commit()
+    
+    return {"message": f"Media unlocked for ${cost_usd:.2f}", "unlocked": True, "cost_usd": cost_usd}
+
 
 @router.get("/availability-history")
 def get_availability_history(
@@ -652,9 +710,11 @@ def get_property(
     # 1. Rate Limiting Check
     if current_user and not current_user.is_superuser:
         sub = db.execute(text("SELECT plan_type, property_searches_used FROM user_subscriptions WHERE user_id = :uid"), {"uid": current_user.id}).fetchone()
-        if sub and sub.plan_type == 'trial':
-            if sub.property_searches_used >= 50:
-                raise HTTPException(status_code=402, detail="Trial limit reached. Please upgrade to Pro to view more properties.")
+        if sub:
+            if sub.plan_type == 'trial' and sub.property_searches_used >= 5:
+                raise HTTPException(status_code=402, detail="Trial limit reached (5 searches). Please upgrade to Pro to view more properties.")
+            elif sub.plan_type == 'pro' and sub.property_searches_used >= 5000:
+                raise HTTPException(status_code=402, detail="Pro limit reached (5000 searches). Please upgrade to Enterprise.")
             # Increment usage
             db.execute(text("UPDATE user_subscriptions SET property_searches_used = property_searches_used + 1 WHERE user_id = :uid"), {"uid": current_user.id})
             db.commit()

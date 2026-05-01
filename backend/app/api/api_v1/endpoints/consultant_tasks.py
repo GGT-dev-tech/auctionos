@@ -224,6 +224,7 @@ async def submit_task_evidence(
     # If geo_validated → auto-approve and credit points
     if geo_validated:
         _approve_task(task_id, task.reward_points, current_user.id, db)
+        _copy_task_photos_to_attachments(task_id, task.property_id, task.investor_user_id, db)
 
     db.commit()
     return {
@@ -233,6 +234,28 @@ async def submit_task_evidence(
         "photos_saved": len(saved_paths),
         "auto_approved": geo_validated,
     }
+
+def _copy_task_photos_to_attachments(task_id: int, property_id: int, investor_id: int, db: Session):
+    """Copies approved photos from task submissions to the property's public attachments pool."""
+    submission = db.execute(text("""
+        SELECT file_path FROM task_submissions 
+        WHERE task_id = :task_id AND review_status = 'approved'
+        ORDER BY submitted_at DESC LIMIT 1
+    """), {"task_id": task_id}).fetchone()
+    
+    if submission and submission.file_path:
+        paths = submission.file_path.split(',')
+        for p in paths:
+            filename = p.split('/')[-1]
+            db.execute(text("""
+                INSERT INTO client_attachments (user_id, property_id, file_path, filename)
+                VALUES (:uid, :pid, :path, :fname)
+            """), {
+                "uid": investor_id,
+                "pid": property_id,
+                "path": p,
+                "fname": filename
+            })
 
 
 def _approve_task(task_id: int, reward_points: int, consultant_user_id: int, db: Session):
@@ -289,7 +312,7 @@ def get_exported_properties(
             p.state,
             p.county,
             p.property_type,
-            p.assessed_value,
+            e.requested_sale_price,
             p.lot_acres,
             p.owner_name,
             p.bedrooms,

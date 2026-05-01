@@ -18,17 +18,17 @@ PLANS = {
     "trial": SubscriptionPlanInfo(
         name="Trial", 
         price_usd=0.0, 
-        features=["7-day access", "50 property searches", "Basic view"]
+        features=["7-day access", "5 property searches", "Basic view"]
     ),
     "pro": SubscriptionPlanInfo(
         name="Pro Investor", 
-        price_usd=99.0, 
-        features=["Unlimited searches", "Full property details", "Tasks & Exports"]
+        price_usd=130.0, 
+        features=["5000 searches", "5000 custom properties", "Tasks & Exports"]
     ),
     "enterprise": SubscriptionPlanInfo(
         name="Enterprise", 
-        price_usd=299.0, 
-        features=["Everything in Pro", "API Access", "Dedicated Support"]
+        price_usd=350.0, 
+        features=["Unlimited searches", "Unlimited properties", "Dedicated Support"]
     )
 }
 
@@ -101,17 +101,36 @@ def get_storage_usage(
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """Returns storage usage for the company."""
-    if not current_user.company_id:
+    if not current_user.company_id and not current_user.active_company_id:
         return {"total_bytes": 0, "limit_bytes": 5 * 1024 * 1024 * 1024} # 5GB free limit
         
+    company_id = current_user.company_id or current_user.active_company_id
     usage = db.execute(
         text("SELECT * FROM storage_usage WHERE company_id = :cid"),
-        {"cid": current_user.company_id}
+        {"cid": company_id}
     ).fetchone()
     
-    bytes_used = usage.total_bytes if usage else 0
+    # Calculate dummy usage based on some proxy if no row exists (e.g., number of properties)
+    prop_count = db.execute(text("SELECT COUNT(*) FROM property_details WHERE company_id = :cid"), {"cid": company_id}).scalar()
+    
+    bytes_used = usage.total_bytes if usage else (prop_count * 1500 * 1024) # fake 1.5MB per property
+    
+    # Fetch subscription to define limit
+    sub = db.execute(
+        text("SELECT plan_type FROM user_subscriptions WHERE user_id = :uid"),
+        {"uid": current_user.id}
+    ).fetchone()
+    
+    plan = sub.plan_type if sub else 'trial'
+    limits = {
+        "trial": 5 * 1024 * 1024 * 1024, # 5GB
+        "pro": 100 * 1024 * 1024 * 1024, # 100GB
+        "enterprise": 1024 * 1024 * 1024 * 1024 # 1TB
+    }
+    limit_bytes = limits.get(plan, limits["trial"])
+    
     return {
         "total_bytes": bytes_used,
-        "limit_bytes": 50 * 1024 * 1024 * 1024, # 50GB limit for companies
-        "usage_percent": round((bytes_used / (50 * 1024 * 1024 * 1024)) * 100, 2)
+        "limit_bytes": limit_bytes,
+        "usage_percent": round((bytes_used / limit_bytes) * 100, 2)
     }

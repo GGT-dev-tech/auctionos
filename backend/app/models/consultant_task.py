@@ -16,6 +16,7 @@ class PropertyExport(Base):
     contact_name = Column(String(255), nullable=True)
     contact_phone = Column(String(50), nullable=True)
     contact_email = Column(String(255), nullable=True)
+    requested_sale_price = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     exported_at = Column(DateTime(timezone=True), server_default=func.now())
