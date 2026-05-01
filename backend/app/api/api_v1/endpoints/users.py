@@ -23,6 +23,23 @@ def read_users(
 ) -> Any:
     return db.query(User).offset(skip).limit(limit).all()
 
+@router.get("/team", response_model=List[UserSchema])
+def read_team_users(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(allow_managers),
+) -> Any:
+    if current_user.role == "client":
+        return db.query(User).filter(
+            (User.created_by_id == current_user.id) | 
+            (User.id == current_user.id)
+        ).all()
+    elif current_user.role == "manager":
+        return db.query(User).filter(
+            (User.company_id == current_user.company_id) & (User.role == "agent")
+        ).all()
+    else:
+        return []
+
 @router.post("/", response_model=UserSchema)
 def create_user(
     *,

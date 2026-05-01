@@ -581,7 +581,7 @@ const ClientLists: React.FC = () => {
     // Task & Export state
     const [taskProperty, setTaskProperty] = useState<any | null>(null);
     const [exportProperty, setExportProperty] = useState<any | null>(null);
-    const [taskForm, setTaskForm] = useState({ title: '', description: '', min_photos: 3, max_photos: 10, reward_points: 500 });
+    const [taskForm, setTaskForm] = useState({ title: '', description: '', min_photos: 3, max_photos: 10, reward_usd: 10 });
     const [exportForm, setExportForm] = useState({ contact_name: '', contact_phone: '', contact_email: '', notes: '', requested_sale_price: '' });
     const [taskSubmitting, setTaskSubmitting] = useState(false);
     const [exportSubmitting, setExportSubmitting] = useState(false);
@@ -845,7 +845,31 @@ const ClientLists: React.FC = () => {
                 await ClientDataService.createList(newListName, undefined, activeCompany?.id);
             } else {
                 if (!selectedState) return;
-                await ClientDataService.createList(selectedState.state, 'STANDARD', activeCompany?.id);
+                
+                // Prevent duplicate state folder
+                const existingStateFolder = lists.find(l => l.tags === 'STANDARD' && l.name === selectedState.state);
+                
+                if (existingStateFolder) {
+                    if (!newCountyName) {
+                        alert(`A folder for ${selectedState.state} already exists.`);
+                        return;
+                    }
+                    // If state folder exists but they provided a county, append the county to the folder's "notes"
+                    const notesObj = parseNotes(existingStateFolder.notes || '');
+                    if (!(newCountyName in notesObj)) {
+                        notesObj[newCountyName] = '';
+                        await ClientDataService.updateList(existingStateFolder.id, { notes: JSON.stringify(notesObj) });
+                        alert(`Added ${newCountyName} County to your existing ${selectedState.state} folder.`);
+                    } else {
+                        alert(`${newCountyName} County already exists in your ${selectedState.state} folder.`);
+                    }
+                } else {
+                    // Create new State folder
+                    const res = await ClientDataService.createList(selectedState.state, 'STANDARD', activeCompany?.id);
+                    if (newCountyName) {
+                        await ClientDataService.updateList(res.id, { notes: JSON.stringify({ [newCountyName]: '' }) });
+                    }
+                }
             }
             setNewListName('');
             setNewCountyName('');
@@ -1611,7 +1635,7 @@ const ClientLists: React.FC = () => {
                                             {/* Task & Export action buttons */}
                                             <div className="mt-3 flex gap-2 border-t border-slate-100 dark:border-slate-800 pt-3" onClick={e => e.stopPropagation()}>
                                                 <button
-                                                    onClick={() => { setTaskProperty(prop); setTaskForm({ title: `Photo Verification — ${(prop.address || prop.parcel_id || '').slice(0, 40)}`, description: '', min_photos: 3, max_photos: 10, reward_points: 500 }); }}
+                                                    onClick={() => { setTaskProperty(prop); setTaskForm({ title: `Photo Verification — ${(prop.address || prop.parcel_id || '').slice(0, 40)}`, description: '', min_photos: 3, max_photos: 10, reward_usd: 10 }); }}
                                                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-bold rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800 transition-colors"
                                                 >
                                                     <span className="material-symbols-outlined text-[14px]">task_alt</span>
@@ -1677,6 +1701,16 @@ const ClientLists: React.FC = () => {
                                 fullWidth
                                 disablePortal
                             />
+                            <TextField
+                                fullWidth
+                                placeholder="County (Optional)"
+                                variant="outlined"
+                                value={newCountyName}
+                                onChange={(e) => setNewCountyName(e.target.value)}
+                                className="bg-white dark:bg-slate-800 rounded-lg"
+                                helperText="Leave blank to create a general state folder."
+                                onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
+                            />
                         </div>
                     )}
 
@@ -1735,9 +1769,9 @@ const ClientLists: React.FC = () => {
                         <TextField label="Min Photos" type="number" size="small" fullWidth value={taskForm.min_photos} onChange={e => setTaskForm(p => ({...p, min_photos: Math.max(3, Math.min(10, parseInt(e.target.value)||3))}))} inputProps={{min:3,max:10}} />
                         <TextField label="Max Photos" type="number" size="small" fullWidth value={taskForm.max_photos} onChange={e => setTaskForm(p => ({...p, max_photos: Math.max(taskForm.min_photos, Math.min(10, parseInt(e.target.value)||10))}))} inputProps={{min:3,max:10}} />
                     </div>
-                    <TextField label="Reward Points (100pts = $1, min 500 pts)" type="number" size="small" fullWidth value={taskForm.reward_points} onChange={e => setTaskForm(p => ({...p, reward_points: Math.max(500, parseInt(e.target.value)||500)}))} inputProps={{min:500,step:100}} />
+                    <TextField label="Task Reward ($ USD)" type="number" size="small" fullWidth value={taskForm.reward_usd} onChange={e => setTaskForm(p => ({...p, reward_usd: Math.max(7.5, parseFloat(e.target.value)||7.5)}))} inputProps={{min:7.5,step:1}} />
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-xs text-blue-700 dark:text-blue-300">
-                        💡 Minimum: 3 photos = 500pts ($5.00). Each extra photo adds 100pts. You set {taskForm.reward_points} pts = ${(taskForm.reward_points/100).toFixed(2)}
+                        Consultant will receive: <b>${((taskForm.reward_usd || 0) * 0.70).toFixed(2)}</b> to complete this task.
                     </div>
                 </div>
                 <div className="flex gap-2 mt-4">
@@ -1748,7 +1782,8 @@ const ClientLists: React.FC = () => {
                         onClick={async () => {
                             setTaskSubmitting(true);
                             try {
-                                await InvestorTaskService.createTask({ property_id: taskProperty.id, ...taskForm });
+                                const calculatedRewardPoints = Math.round((taskForm.reward_usd * 0.70) * 100);
+                                await InvestorTaskService.createTask({ property_id: taskProperty.id, ...taskForm, reward_points: calculatedRewardPoints });
                                 setTaskProperty(null);
                                 alert('✅ Task created! Consultants can now claim it.');
                             } catch(e:any) { alert(e.message); }

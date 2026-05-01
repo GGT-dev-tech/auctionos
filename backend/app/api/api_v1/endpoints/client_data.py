@@ -62,6 +62,7 @@ class ClientAttachmentResponse(BaseModel):
     created_at: datetime
 
 class CustomPropertyCreate(BaseModel):
+    visibility: Optional[str] = "private"
     parcel_id: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
@@ -241,8 +242,8 @@ def create_custom_property(
     from app.models.property import PropertyDetails
 
     # Require company isolation for private properties
-    if not current_user.active_company_id:
-        raise HTTPException(status_code=400, detail="User must belong to a company to create custom properties.")
+    if property_in.visibility == "private" and not current_user.active_company_id:
+        raise HTTPException(status_code=400, detail="User must belong to a company to create private custom properties.")
 
     # Format the fallback address based on fields if address not fully provided
     full_address = property_in.address or ""
@@ -276,7 +277,7 @@ def create_custom_property(
         zoning=property_in.zoning,
         num_units=property_in.num_units,
         availability_status="available",
-        company_id=current_user.active_company_id,
+        company_id=current_user.active_company_id if property_in.visibility == "private" else None,
         created_by_user_id=current_user.id
     )
 

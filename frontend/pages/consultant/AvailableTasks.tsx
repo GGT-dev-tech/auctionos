@@ -292,7 +292,6 @@ const AvailableTasks: React.FC = () => {
               type="file"
               accept="image/*"
               multiple
-              capture="environment"
               className="hidden"
               onChange={e => setPhotos(Array.from(e.target.files || []))}
             />

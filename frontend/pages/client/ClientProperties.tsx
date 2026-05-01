@@ -25,6 +25,7 @@ const ClientProperties: React.FC = () => {
         state: '',
         county: '',
         property_type: 'Residential',
+        visibility: 'private',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -135,6 +136,22 @@ const ClientProperties: React.FC = () => {
                             onChange={e => setCreateForm(p => ({...p, property_type: e.target.value}))} 
                         />
                     </div>
+                    <div>
+                        <Typography variant="caption" className="font-bold text-slate-500 mb-1 block">Visibility</Typography>
+                        <select
+                            value={createForm.visibility}
+                            onChange={e => setCreateForm(p => ({...p, visibility: e.target.value}))}
+                            className="w-full border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 text-sm"
+                        >
+                            <option value="private">Private (Only my team)</option>
+                            <option value="public">Public (Share with all users)</option>
+                        </select>
+                        {createForm.visibility === 'public' && (
+                            <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 font-medium">
+                                ⚠️ Public properties will be available in the global search for all platform users.
+                            </p>
+                        )}
+                    </div>
                 </div>
                 <div className="flex justify-end gap-2 mt-6">
                     <Button onClick={() => setCreateModalOpen(false)} color="inherit">Cancel</Button>
@@ -148,8 +165,8 @@ const ClientProperties: React.FC = () => {
                             try {
                                 await ClientDataService.createCustomProperty(createForm);
                                 setCreateModalOpen(false);
-                                setCreateForm({ address: '', city: '', state: '', county: '', property_type: 'Residential' });
-                                alert('✅ Custom property created and saved to Custom Folder.');
+                                setCreateForm({ address: '', city: '', state: '', county: '', property_type: 'Residential', visibility: 'private' });
+                                alert(`✅ Custom property created and saved as ${createForm.visibility}.`);
                             } catch (e: any) {
                                 alert(e.message);
                             } finally {
