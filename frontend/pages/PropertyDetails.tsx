@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AdminService } from '../services/admin.service';
+import { API_BASE_URL } from '../services/httpClient';
 import { ChevronLeft } from 'lucide-react';
 
 import { PropertyBasicInfo } from '../components/property/PropertyBasicInfo';
@@ -80,6 +81,61 @@ const PropertyDetails: React.FC = () => {
                         <PropertyPurchaseOptions property={property} />
                         <PropertyEstimatesComps property={property} />
                     </div>
+
+                    {/* Media Paywall Section */}
+                    {property.has_consultant_media && !property.media_unlocked && (
+                        <div className="bg-slate-900 rounded-xl p-8 shadow-sm flex flex-col items-center text-center text-white">
+                            <span className="material-symbols-outlined text-4xl mb-3 text-slate-400">lock</span>
+                            <h3 className="text-lg font-bold mb-1">Exclusive Consultant Media Available</h3>
+                            <p className="text-sm text-slate-400 mb-6">Unlock high-quality photos, drone footage, and on-site reports for $100.</p>
+                            <button 
+                                onClick={async () => {
+                                    try {
+                                        const res = await fetch(`${API_BASE_URL}/api/v1/properties/${property.id}/purchase-media`, {
+                                            method: 'POST',
+                                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                                        });
+                                        if (res.ok) {
+                                            alert('Media unlocked successfully!');
+                                            window.location.reload();
+                                        } else {
+                                            const error = await res.json();
+                                            alert(error.detail || 'Failed to unlock media');
+                                        }
+                                    } catch(e:any) {
+                                        alert(e.message);
+                                    }
+                                }}
+                                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-bold transition-colors"
+                            >
+                                Unlock Media for $100
+                            </button>
+                        </div>
+                    )}
+                    
+                    {property.media_unlocked && (
+                        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Unlocked Consultant Media</h3>
+                            {property.media_files && property.media_files.length > 0 ? (
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {property.media_files.map((file: any, idx: number) => (
+                                        <div key={idx} className="aspect-square bg-slate-100 dark:bg-slate-900 rounded-lg overflow-hidden relative group">
+                                            {file.url ? (
+                                                <img src={file.url} alt="Property Media" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center w-full h-full text-slate-400">
+                                                    <span className="material-symbols-outlined text-3xl">image</span>
+                                                    <span className="text-xs mt-2">{file.name || 'Media File'}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-slate-500">Processing media files... They will appear here shortly.</p>
+                            )}
+                        </div>
+                    )}
 
                     <PropertyExtendedTabs property={property} />
 

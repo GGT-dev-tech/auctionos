@@ -12,6 +12,7 @@ interface ExportedProperty {
   property_type?: string;
   assessed_value?: number;
   amount_due?: number;
+  requested_sale_price?: number;
   lot_acres?: number;
   owner_name?: string;
   bedrooms?: number;
@@ -77,8 +78,7 @@ const PropertyDetailDrawer: React.FC<{ p: ExportedProperty | null; onClose: () =
         {/* Financial Summary */}
         <div className="grid grid-cols-2 gap-3 p-5 border-b border-slate-100 dark:border-slate-800">
           {[
-            { label: 'Assessed Value', value: currency(p.assessed_value), color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-            { label: 'Amount Due', value: currency(p.amount_due), color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+            { label: 'Requested Sale Price', value: currency(p.requested_sale_price), color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
             { label: 'Tax Amount', value: currency(p.tax_amount), color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
             { label: 'Lot Acres', value: p.lot_acres ? `${Number(p.lot_acres).toFixed(2)} ac` : null, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
           ].filter(c => c.value).map(card => (
@@ -170,14 +170,9 @@ const PropertyCard: React.FC<{ p: ExportedProperty; onClick: () => void }> = ({ 
 
       {/* Badges */}
       <div className="flex flex-wrap gap-1.5">
-        {currency(p.assessed_value) && (
+        {currency(p.requested_sale_price) && (
           <span className="text-[10px] font-bold bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-lg">
-            ARV: {currency(p.assessed_value)}
-          </span>
-        )}
-        {currency(p.amount_due) && (
-          <span className="text-[10px] font-bold bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-lg">
-            Due: {currency(p.amount_due)}
+            Target Price: {currency(p.requested_sale_price)}
           </span>
         )}
         {p.property_type && (

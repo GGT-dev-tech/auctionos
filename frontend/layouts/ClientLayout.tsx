@@ -59,6 +59,8 @@ const ClientLayout: React.FC = () => {
       icon: 'manage_accounts',
       label: 'Account Support',
       dropdown: [
+        { label: 'Billing & Plans', path: '/client/billing' },
+        { label: 'Team & Logs', path: '/client/team' },
         { label: 'Change Password', path: '/client/change-password' },
         { label: 'Contact Support', path: '/client/contact-support' },
         { label: 'Cancel Subscription', path: '/client/cancel-subscription' },

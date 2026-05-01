@@ -398,7 +398,7 @@ const InvestorMyExportsView: React.FC<{ onBack: () => void }> = ({ onBack }) => 
     const [exports, setExports] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [editingExport, setEditingExport] = React.useState<any | null>(null);
-    const [editForm, setEditForm] = React.useState({ contact_name: '', contact_phone: '', contact_email: '', notes: '' });
+    const [editForm, setEditForm] = React.useState({ contact_name: '', contact_phone: '', contact_email: '', notes: '', requested_sale_price: '' });
 
     const load = async () => {
         setLoading(true);
@@ -416,6 +416,7 @@ const InvestorMyExportsView: React.FC<{ onBack: () => void }> = ({ onBack }) => 
             contact_phone: exp.contact_phone || '',
             contact_email: exp.contact_email || '',
             notes: exp.notes || '',
+            requested_sale_price: exp.requested_sale_price || '',
         });
     };
 
@@ -491,6 +492,11 @@ const InvestorMyExportsView: React.FC<{ onBack: () => void }> = ({ onBack }) => 
                                             <span className="material-symbols-outlined text-[14px]">phone</span> {exp.contact_phone}
                                         </p>
                                     )}
+                                    {exp.requested_sale_price && (
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5 font-bold">
+                                            <span className="material-symbols-outlined text-[14px]">sell</span> Target: ${Number(exp.requested_sale_price).toLocaleString()}
+                                        </p>
+                                    )}
                                     {exp.contact_email && (
                                         <p className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                                             <span className="material-symbols-outlined text-[14px]">mail</span> {exp.contact_email}
@@ -520,6 +526,7 @@ const InvestorMyExportsView: React.FC<{ onBack: () => void }> = ({ onBack }) => 
                     <TextField label="Contact Name" fullWidth value={editForm.contact_name} onChange={e => setEditForm({ ...editForm, contact_name: e.target.value })} />
                     <TextField label="Contact Phone" fullWidth value={editForm.contact_phone} onChange={e => setEditForm({ ...editForm, contact_phone: e.target.value })} />
                     <TextField label="Contact Email" fullWidth value={editForm.contact_email} onChange={e => setEditForm({ ...editForm, contact_email: e.target.value })} />
+                    <TextField label="Requested Sale Price" type="number" fullWidth value={editForm.requested_sale_price} onChange={e => setEditForm({ ...editForm, requested_sale_price: e.target.value })} />
                     <TextField label="Notes for Consultants" fullWidth multiline rows={3} value={editForm.notes} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} />
                 </div>
                 <div className="p-5 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
@@ -575,7 +582,7 @@ const ClientLists: React.FC = () => {
     const [taskProperty, setTaskProperty] = useState<any | null>(null);
     const [exportProperty, setExportProperty] = useState<any | null>(null);
     const [taskForm, setTaskForm] = useState({ title: '', description: '', min_photos: 3, max_photos: 10, reward_points: 500 });
-    const [exportForm, setExportForm] = useState({ contact_name: '', contact_phone: '', contact_email: '', notes: '' });
+    const [exportForm, setExportForm] = useState({ contact_name: '', contact_phone: '', contact_email: '', notes: '', requested_sale_price: '' });
     const [taskSubmitting, setTaskSubmitting] = useState(false);
     const [exportSubmitting, setExportSubmitting] = useState(false);
 
@@ -1764,6 +1771,7 @@ const ClientLists: React.FC = () => {
                     <TextField label="Your Name (visible to consultants)" size="small" fullWidth value={exportForm.contact_name} onChange={e => setExportForm(p => ({...p, contact_name: e.target.value}))} />
                     <TextField label="Contact Phone" size="small" fullWidth value={exportForm.contact_phone} onChange={e => setExportForm(p => ({...p, contact_phone: e.target.value}))} />
                     <TextField label="Contact Email" size="small" fullWidth value={exportForm.contact_email} onChange={e => setExportForm(p => ({...p, contact_email: e.target.value}))} />
+                    <TextField label="Requested Sale Price (Target)" type="number" size="small" fullWidth value={exportForm.requested_sale_price} onChange={e => setExportForm(p => ({...p, requested_sale_price: e.target.value}))} />
                     <TextField label="Additional Notes (optional)" size="small" fullWidth multiline rows={2} value={exportForm.notes} onChange={e => setExportForm(p => ({...p, notes: e.target.value}))} />
                 </div>
                 <div className="flex gap-2 mt-4">

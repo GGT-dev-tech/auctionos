@@ -29,6 +29,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminImportProperties from './pages/admin/AdminImportProperties';
 import AdminImportAuctions from './pages/admin/AdminImportAuctions';
 import AdminBroadcasts from './pages/admin/AdminBroadcasts';
+import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 
 // Client Portal Pages
 import ClientLayout from './layouts/ClientLayout';
@@ -40,6 +41,8 @@ import ClientSupportPage from './pages/client/SupportPage';
 import { TrainingPage, CommunityPage, GroupsPage, TaxSystemsPage } from './pages/client/EcosystemPages';
 import ChangePasswordPage from './pages/client/ChangePasswordPage';
 import CancelSubscriptionPage from './pages/client/CancelSubscriptionPage';
+import ActivityLogsPage from './pages/client/ActivityLogsPage';
+import BillingPage from './pages/client/BillingPage';
 import { CompanyProvider } from './context/CompanyContext';
 import ConsultantLayout from './pages/consultant/ConsultantLayout';
 import ConsultantDashboard from './pages/consultant/ConsultantDashboard';
@@ -107,6 +110,7 @@ const App: React.FC = () => {
             <Route path="/admin/import/auctions" element={<AdminImportAuctions />} />
             <Route path="/admin/broadcasts" element={<AdminBroadcasts />} />
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/properties/new" element={<PropertyManualEntry />} />
             <Route path="/properties/:id" element={<PropertyDetails />} />
@@ -138,6 +142,8 @@ const App: React.FC = () => {
             <Route path="about" element={<AboutPage standalone={false} />} />
             <Route path="support" element={<SupportPage standalone={false} />} />
             <Route path="cancel-subscription" element={<CancelSubscriptionPage />} />
+            <Route path="team" element={<ActivityLogsPage />} />
+            <Route path="billing" element={<BillingPage />} />
           </Route>
 
           {/* Consultant Portal Routes */}

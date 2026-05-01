@@ -95,7 +95,7 @@ export const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-[#070d1a] relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className={`absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full blur-3xl opacity-30 ${isConsultant ? 'bg-emerald-200 dark:bg-emerald-900' : 'bg-blue-100 dark:bg-blue-900/20'}`} />
+        <div className={`absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full blur-3xl opacity-30 bg-blue-100 dark:bg-blue-900/20`} />
         <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-slate-200 dark:bg-slate-800/30 blur-3xl opacity-40" />
       </div>
 

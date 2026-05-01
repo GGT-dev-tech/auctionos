@@ -30,6 +30,7 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
         estimated_arv: initialData?.estimated_value || '', // Mapping from DB estimated_value
         estimated_rent: initialData?.rental_value || '',   // Mapping from DB rental_value
         availability_status: initialData?.availability_status || 'available',
+        visibility: initialData?.visibility || 'private',
 
         // Extended Details
         alternate_owner_address: initialData?.alternate_owner_address || '',
@@ -76,6 +77,7 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                 improvement_value: formData.improvement_value ? parseFloat(formData.improvement_value) : null,
                 amount_due: formData.amount_due ? parseFloat(formData.amount_due) : null,
                 availability_status: formData.availability_status,
+                visibility: formData.visibility,
 
                 // Extended Details
                 alternate_owner_address: formData.alternate_owner_address,
@@ -110,7 +112,7 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                     county: '', description: '', owner_name: '', owner_address: '', parcel_address: '', state_code: '',
                     tax_sale_year: '', taxes_due_auction: '', total_value: '', property_category: '', purchase_option_type: '',
                     map_link: '', cs_number: '', parcel_code: '', occupancy: '', land_value: '', improvement_value: '',
-                    estimated_arv: '', estimated_rent: '', availability_status: 'available',
+                    estimated_arv: '', estimated_rent: '', availability_status: 'available', visibility: 'private',
                     alternate_owner_address: '', state_inventory_entered_date: '', qoz_description: '', parcel_shape_data: '',
                     pin_ppin: '', raw_parcel_number: '', county_fips: '', additional_parcel_numbers: '', occupancy_checked_date: '',
                     redfin_url: '', redfin_estimate: '', lot_sqft: '', sewer_type: '', water_type: '', property_type_detail: '', import_error_msg: '', is_processed: false
@@ -312,6 +314,15 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
 
                 <div className="col-span-1 md:col-span-3 border-t border-slate-200 dark:border-slate-700 pt-4 mt-2">
                     <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">System Flags</h4>
+                </div>
+
+                <div>
+                    <label className="label">Visibility</label>
+                    <select name="visibility" className="input font-bold text-slate-900 dark:text-white" value={formData.visibility} onChange={handleChange as any}>
+                        <option value="private">Private (Only my team)</option>
+                        <option value="public">Public (Global Pool)</option>
+                    </select>
+                    <p className="text-[10px] text-slate-500 mt-1 leading-tight">Public properties will be visible to all users in the GoAuct network.</p>
                 </div>
 
                 <div>

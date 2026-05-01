@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, Dialog, TextField, Button } from '@mui/material';
 import { ConsultantTaskService, CommissionsResponse } from '../../services/consultant_task.service';
+import { getHeaders, API_URL } from '../../services/httpClient';
 
 const STATUS_STYLES: Record<string, string> = {
   earned: 'text-emerald-600 dark:text-emerald-400',
@@ -12,13 +13,46 @@ const Commissions: React.FC = () => {
   const [data, setData] = useState<CommissionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'history' | 'in_progress'>('history');
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [withdrawForm, setWithdrawForm] = useState({ amount: '', payment_details: '' });
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoading(true);
     ConsultantTaskService.getCommissions()
       .then(setData)
       .catch(() => setData(null))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
+
+  const handleWithdraw = async () => {
+    try {
+      setSubmitting(true);
+      const res = await fetch(`${API_URL}/consultant-economy/withdraw`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          amount_usd: parseFloat(withdrawForm.amount),
+          payment_details: withdrawForm.payment_details
+        })
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || 'Withdrawal failed');
+      }
+      setWithdrawOpen(false);
+      loadData();
+      alert('Withdrawal request submitted successfully!');
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) return <div className="flex justify-center py-20"><CircularProgress color="success" /></div>;
 
@@ -50,17 +84,60 @@ const Commissions: React.FC = () => {
       </div>
 
       {/* Withdrawal Banner */}
-      {(data?.available_points || 0) >= 500 && (
-        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 flex items-center justify-between gap-4">
+      {(data?.available_usd || 0) >= 200 && (
+        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">You have ${data?.available_usd.toFixed(2)} available for withdrawal!</p>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">Contact support to request a payout.</p>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">Minimum withdrawal is $200. Request a payout now.</p>
           </div>
-          <button className="shrink-0 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors">
+          <button 
+            onClick={() => {
+                setWithdrawForm({ amount: String(data?.available_usd.toFixed(2)), payment_details: '' });
+                setWithdrawOpen(true);
+            }}
+            className="shrink-0 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors"
+          >
             Request Payout
           </button>
         </div>
       )}
+
+      {/* Withdrawal Modal */}
+      <Dialog open={withdrawOpen} onClose={() => setWithdrawOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Request Payout</h2>
+          <p className="text-xs text-slate-500 mt-1">Available balance: ${data?.available_usd.toFixed(2)}</p>
+        </div>
+        <div className="p-5 space-y-4">
+          <TextField 
+            label="Amount (USD)" 
+            type="number" 
+            fullWidth 
+            value={withdrawForm.amount} 
+            onChange={e => setWithdrawForm({ ...withdrawForm, amount: e.target.value })} 
+            InputProps={{ inputProps: { min: 200, max: data?.available_usd } }}
+            helperText="Minimum withdrawal is $200"
+          />
+          <TextField 
+            label="Payment Details (e.g. PayPal Email or Bank Info)" 
+            fullWidth 
+            multiline 
+            rows={3} 
+            value={withdrawForm.payment_details} 
+            onChange={e => setWithdrawForm({ ...withdrawForm, payment_details: e.target.value })} 
+          />
+        </div>
+        <div className="p-5 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
+          <Button onClick={() => setWithdrawOpen(false)} fullWidth>Cancel</Button>
+          <Button 
+            onClick={handleWithdraw} 
+            disabled={submitting || parseFloat(withdrawForm.amount) < 200 || !withdrawForm.payment_details} 
+            fullWidth variant="contained" color="success" className="rounded-xl bg-emerald-600 hover:bg-emerald-700"
+          >
+            {submitting ? 'Submitting...' : 'Submit Request'}
+          </Button>
+        </div>
+      </Dialog>
 
       {/* Tabs */}
       <div className="flex border-b border-slate-200 dark:border-slate-700">
