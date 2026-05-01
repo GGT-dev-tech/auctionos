@@ -19,23 +19,30 @@ const ClientProperties: React.FC = () => {
     });
 
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-    const [createForm, setCreateForm] = useState({
-        parcel_id: '',
-        owner_name: '',
-        address: '',
-        city: '',
-        state: '',
-        county: '',
-        property_type: 'Residential',
-        availability_status: 'Available',
-        amount_due: '',
-        assessed_value: '',
-        year_built: '',
-        sqft: '',
-        bedrooms: '',
-        bathrooms: '',
-        lot_size: '',
-        visibility: 'private',
+    const [createForm, setCreateForm] = useState({ 
+        parcel_id: '', 
+        owner_name: '', 
+        address: '', 
+        city: '', 
+        state: '', 
+        county: '', 
+        zip_code: '',
+        property_type: 'Residential', 
+        availability_status: 'Available', 
+        amount_due: '', 
+        assessed_value: '', 
+        tax_amount: '',
+        tax_year: new Date().getFullYear().toString(),
+        year_built: '', 
+        sqft: '', 
+        bedrooms: '', 
+        bathrooms: '', 
+        lot_size: '', 
+        num_units: '',
+        occupancy: 'Unknown',
+        zoning: '',
+        legal_description: '',
+        visibility: 'private' 
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -154,64 +161,59 @@ const ClientProperties: React.FC = () => {
                             onChange={e => setCreateForm(p => ({...p, county: e.target.value}))} 
                         />
                         <TextField 
+                            label="ZIP Code" 
+                            fullWidth size="small" 
+                            value={createForm.zip_code} 
+                            onChange={e => setCreateForm(p => ({...p, zip_code: e.target.value}))} 
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <TextField 
                             label="Property Type" 
                             fullWidth size="small" 
                             value={createForm.property_type} 
                             onChange={e => setCreateForm(p => ({...p, property_type: e.target.value}))} 
                         />
                         <TextField 
-                            label="Status" 
+                            label="Availability" 
                             fullWidth size="small" 
                             value={createForm.availability_status} 
                             onChange={e => setCreateForm(p => ({...p, availability_status: e.target.value}))} 
                         />
                     </div>
+
+                    <Typography variant="caption" className="font-bold text-slate-500 uppercase tracking-wider block mt-2">Physical Details</Typography>
+                    <div className="grid grid-cols-3 gap-4">
+                        <TextField label="Year Built" fullWidth size="small" type="number" value={createForm.year_built} onChange={e => setCreateForm(p => ({...p, year_built: e.target.value}))} />
+                        <TextField label="Sq Ft" fullWidth size="small" type="number" value={createForm.sqft} onChange={e => setCreateForm(p => ({...p, sqft: e.target.value}))} />
+                        <TextField label="Num Units" fullWidth size="small" type="number" value={createForm.num_units} onChange={e => setCreateForm(p => ({...p, num_units: e.target.value}))} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                        <TextField label="Bedrooms" fullWidth size="small" type="number" value={createForm.bedrooms} onChange={e => setCreateForm(p => ({...p, bedrooms: e.target.value}))} />
+                        <TextField label="Bathrooms" fullWidth size="small" type="number" value={createForm.bathrooms} onChange={e => setCreateForm(p => ({...p, bathrooms: e.target.value}))} />
+                        <TextField label="Lot Size (Acres)" fullWidth size="small" type="number" value={createForm.lot_size} onChange={e => setCreateForm(p => ({...p, lot_size: e.target.value}))} />
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <TextField 
-                            label="Amount Due ($)" 
-                            type="number"
-                            fullWidth size="small" 
-                            value={createForm.amount_due} 
-                            onChange={e => setCreateForm(p => ({...p, amount_due: e.target.value}))} 
-                        />
-                        <TextField 
-                            label="Total Value ($)" 
-                            type="number"
-                            fullWidth size="small" 
-                            value={createForm.assessed_value} 
-                            onChange={e => setCreateForm(p => ({...p, assessed_value: e.target.value}))} 
-                        />
+                        <TextField label="Occupancy" fullWidth size="small" value={createForm.occupancy} onChange={e => setCreateForm(p => ({...p, occupancy: e.target.value}))} />
+                        <TextField label="Zoning" fullWidth size="small" value={createForm.zoning} onChange={e => setCreateForm(p => ({...p, zoning: e.target.value}))} />
                     </div>
-                    <div className="grid grid-cols-4 gap-4">
-                        <TextField 
-                            label="Year" 
-                            type="number"
-                            fullWidth size="small" 
-                            value={createForm.year_built} 
-                            onChange={e => setCreateForm(p => ({...p, year_built: e.target.value}))} 
-                        />
-                        <TextField 
-                            label="Sqft" 
-                            type="number"
-                            fullWidth size="small" 
-                            value={createForm.sqft} 
-                            onChange={e => setCreateForm(p => ({...p, sqft: e.target.value}))} 
-                        />
-                        <TextField 
-                            label="Beds" 
-                            type="number"
-                            fullWidth size="small" 
-                            value={createForm.bedrooms} 
-                            onChange={e => setCreateForm(p => ({...p, bedrooms: e.target.value}))} 
-                        />
-                        <TextField 
-                            label="Baths" 
-                            type="number"
-                            fullWidth size="small" 
-                            value={createForm.bathrooms} 
-                            onChange={e => setCreateForm(p => ({...p, bathrooms: e.target.value}))} 
-                        />
+
+                    <Typography variant="caption" className="font-bold text-slate-500 uppercase tracking-wider block mt-2">Financials & Legal</Typography>
+                    <div className="grid grid-cols-2 gap-4">
+                        <TextField label="Amount Due ($)" fullWidth size="small" type="number" value={createForm.amount_due} onChange={e => setCreateForm(p => ({...p, amount_due: e.target.value}))} />
+                        <TextField label="Assessed Value ($)" fullWidth size="small" type="number" value={createForm.assessed_value} onChange={e => setCreateForm(p => ({...p, assessed_value: e.target.value}))} />
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <TextField label="Tax Amount ($)" fullWidth size="small" type="number" value={createForm.tax_amount} onChange={e => setCreateForm(p => ({...p, tax_amount: e.target.value}))} />
+                        <TextField label="Tax Year" fullWidth size="small" type="number" value={createForm.tax_year} onChange={e => setCreateForm(p => ({...p, tax_year: e.target.value}))} />
+                    </div>
+                    <TextField 
+                        label="Legal Description" 
+                        fullWidth size="small" 
+                        multiline rows={2}
+                        value={createForm.legal_description} 
+                        onChange={e => setCreateForm(p => ({...p, legal_description: e.target.value}))} 
+                    />
                     <div>
                         <Typography variant="caption" className="font-bold text-slate-500 mb-1 block">Visibility</Typography>
                         <select
@@ -241,17 +243,44 @@ const ClientProperties: React.FC = () => {
                             try {
                                 const payload = {
                                     ...createForm,
-                                    amount_due: createForm.amount_due ? parseFloat(createForm.amount_due) : undefined,
-                                    assessed_value: createForm.assessed_value ? parseFloat(createForm.assessed_value) : undefined,
-                                    year_built: createForm.year_built ? parseInt(createForm.year_built) : undefined,
-                                    sqft: createForm.sqft ? parseInt(createForm.sqft) : undefined,
-                                    bedrooms: createForm.bedrooms ? parseInt(createForm.bedrooms) : undefined,
-                                    bathrooms: createForm.bathrooms ? parseFloat(createForm.bathrooms) : undefined,
-                                    lot_size: createForm.lot_size ? parseFloat(createForm.lot_size) : undefined,
+                                    year_built: createForm.year_built ? parseInt(createForm.year_built) : null,
+                                    sqft: createForm.sqft ? parseInt(createForm.sqft) : null,
+                                    bedrooms: createForm.bedrooms ? parseInt(createForm.bedrooms) : null,
+                                    bathrooms: createForm.bathrooms ? parseFloat(createForm.bathrooms) : null,
+                                    lot_size: createForm.lot_size ? parseFloat(createForm.lot_size) : null,
+                                    amount_due: createForm.amount_due ? parseFloat(createForm.amount_due) : null,
+                                    assessed_value: createForm.assessed_value ? parseFloat(createForm.assessed_value) : null,
+                                    tax_amount: createForm.tax_amount ? parseFloat(createForm.tax_amount) : null,
+                                    tax_year: createForm.tax_year ? parseInt(createForm.tax_year) : null,
+                                    num_units: createForm.num_units ? parseInt(createForm.num_units) : null
                                 };
                                 await ClientDataService.createCustomProperty(payload);
                                 setCreateModalOpen(false);
-                                setCreateForm({ parcel_id: '', owner_name: '', address: '', city: '', state: '', county: '', property_type: 'Residential', availability_status: 'Available', amount_due: '', assessed_value: '', year_built: '', sqft: '', bedrooms: '', bathrooms: '', lot_size: '', visibility: 'private' });
+                                setCreateForm({ 
+                                    parcel_id: '', 
+                                    owner_name: '', 
+                                    address: '', 
+                                    city: '', 
+                                    state: '', 
+                                    county: '', 
+                                    zip_code: '',
+                                    property_type: 'Residential', 
+                                    availability_status: 'Available', 
+                                    amount_due: '', 
+                                    assessed_value: '', 
+                                    tax_amount: '',
+                                    tax_year: new Date().getFullYear().toString(),
+                                    year_built: '', 
+                                    sqft: '', 
+                                    bedrooms: '', 
+                                    bathrooms: '', 
+                                    lot_size: '', 
+                                    num_units: '',
+                                    occupancy: 'Unknown',
+                                    zoning: '',
+                                    legal_description: '',
+                                    visibility: 'private' 
+                                });
                                 alert(`✅ Custom property created and saved as ${createForm.visibility}.`);
                             } catch (e: any) {
                                 alert(e.message);
