@@ -1,6 +1,7 @@
 from typing import Any, List
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 
@@ -141,6 +142,26 @@ def update_user(
     db.refresh(user)
     return user
 
+class PasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str
+
+@router.put("/me/password")
+def update_my_password(
+    *,
+    db: Session = Depends(deps.get_db),
+    password_in: PasswordUpdate,
+    current_user: User = Depends(deps.get_current_active_user)
+) -> Any:
+    """Update current user password."""
+    if not security.verify_password(password_in.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+    
+    current_user.hashed_password = security.get_password_hash(password_in.new_password)
+    db.add(current_user)
+    db.commit()
+    return {"ok": True, "message": "Password updated successfully"}
+
 @router.delete("/{user_id}", response_model=UserSchema)
 def delete_user(
     *,
@@ -175,23 +196,25 @@ def read_team_logs(
     """Fetch activity logs for a Client's or Manager's team"""
     from sqlalchemy import text
     if current_user.role == "client":
-        # Clients can see logs of all their managers and agents (created_by_id)
+        # Clients can see logs of all their company's managers and agents, plus their own
         query = text("""
             SELECT al.*, u.email, u.full_name, u.role
             FROM activity_logs al
             JOIN users u ON u.id = al.user_id
-            WHERE u.created_by_id = :uid OR u.id = :uid
+            WHERE al.company_id = :cid OR u.id = :uid
             ORDER BY al.created_at DESC OFFSET :skip LIMIT :limit
         """)
+        params = {"cid": current_user.active_company_id, "uid": current_user.id, "skip": skip, "limit": limit}
     elif current_user.role == "manager":
-        # Managers can see logs of agents in their company
+        # Managers can see logs of agents in their company, plus their own
         query = text("""
             SELECT al.*, u.email, u.full_name, u.role
             FROM activity_logs al
             JOIN users u ON u.id = al.user_id
-            WHERE (u.company_id = :cid AND u.role = 'agent') OR u.id = :uid
+            WHERE (al.company_id = :cid AND u.role = 'agent') OR u.id = :uid
             ORDER BY al.created_at DESC OFFSET :skip LIMIT :limit
         """)
+        params = {"cid": current_user.company_id, "uid": current_user.id, "skip": skip, "limit": limit}
     elif current_user.role == "agent":
         # Agents only see themselves
         query = text("""
@@ -201,10 +224,10 @@ def read_team_logs(
             WHERE u.id = :uid
             ORDER BY al.created_at DESC OFFSET :skip LIMIT :limit
         """)
+        params = {"uid": current_user.id, "skip": skip, "limit": limit}
     else:
-        raise HTTPException(status_code=403, detail="Not applicable to this role")
+        raise HTTPException(status_code=403, detail="Not applicable")
 
-    params = {"uid": current_user.id, "cid": current_user.company_id, "skip": skip, "limit": limit}
     rows = db.execute(query, params).fetchall()
     
     result = []

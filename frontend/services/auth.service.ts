@@ -27,6 +27,22 @@ export const AuthService = {
         return response.json();
     },
 
+    changePassword: async (current_password: string, new_password: string) => {
+        const res = await fetch(`${API_URL}/users/me/password`, {
+            method: 'PUT',
+            headers: {
+                ...getHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ current_password, new_password })
+        });
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.detail || "Failed to change password");
+        }
+        return res.json();
+    },
+
     getCurrentUser: () => {
         const u = localStorage.getItem('user');
         return u ? JSON.parse(u) : null;

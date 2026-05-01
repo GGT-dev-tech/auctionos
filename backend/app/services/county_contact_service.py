@@ -64,8 +64,14 @@ class CountyContactService:
             for c in all_contacts
             if c["state"] == state_code and c["county"] == county_name
         ]
-        
         return matches
+
+    @staticmethod
+    def get_counties_for_state(state_code: str) -> List[str]:
+        all_contacts = _load_csv_data()
+        state_code = state_code.strip().upper()
+        counties = {c["county"].title() for c in all_contacts if c["state"] == state_code and c["county"]}
+        return sorted(list(counties))
 
 # Singleton instance
 county_contact_service = CountyContactService()

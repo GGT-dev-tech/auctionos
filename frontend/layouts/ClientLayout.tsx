@@ -4,6 +4,7 @@ import { Footer } from '../components/Footer';
 import { AuthService } from '../services/auth.service';
 import { ClientDataService } from '../services/property.service';
 import { CompanySelector } from '../components/CompanySelector';
+import { Dialog, Typography, TextField, Button } from '@mui/material';
 
 const ClientLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,11 @@ const ClientLayout: React.FC = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [upcomingAuctions, setUpcomingAuctions] = useState<number>(0);
+  
+  // Change Password State
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   React.useEffect(() => {
     // Basic ping to count if any user list has upcoming auctions
@@ -27,6 +33,20 @@ const ClientLayout: React.FC = () => {
   const handleLogout = () => {
     AuthService.logout();
     navigate('/login');
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordForm.new !== passwordForm.confirm) return alert("Passwords do not match");
+    setChangingPassword(true);
+    try {
+        await AuthService.changePassword(passwordForm.current, passwordForm.new);
+        setChangePasswordOpen(false);
+        setPasswordForm({ current: '', new: '', confirm: '' });
+    } catch (e) {
+        alert("Failed to update password");
+    } finally {
+        setChangingPassword(false);
+    }
   };
 
   type DropdownItem = { label: string; path: string };
@@ -230,13 +250,22 @@ const ClientLayout: React.FC = () => {
                 )}
               </div>
 
-              <button
-                onClick={handleLogout}
-                className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors hidden md:block"
-                title="Sign Out"
-              >
-                <span className="material-symbols-outlined text-[22px]">logout</span>
-              </button>
+              <div className="flex items-center gap-1 hidden md:flex">
+                  <button
+                    onClick={() => setChangePasswordOpen(true)}
+                    className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    title="Change Password"
+                  >
+                    <span className="material-symbols-outlined text-[22px]">lock</span>
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    title="Sign Out"
+                  >
+                    <span className="material-symbols-outlined text-[22px]">logout</span>
+                  </button>
+              </div>
 
               {/* Mobile toggle */}
               <button
@@ -330,6 +359,22 @@ const ClientLayout: React.FC = () => {
       </main>
 
       <Footer />
+
+      {/* Change Password Dialog */}
+      <Dialog open={changePasswordOpen} onClose={() => setChangePasswordOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+        <Typography variant="h6" className="font-bold text-slate-800 dark:text-white mb-4">Change Password</Typography>
+        <div className="space-y-4">
+            <TextField label="Current Password" type="password" fullWidth value={passwordForm.current} onChange={e => setPasswordForm(p => ({...p, current: e.target.value}))} />
+            <TextField label="New Password" type="password" fullWidth value={passwordForm.new} onChange={e => setPasswordForm(p => ({...p, new: e.target.value}))} />
+            <TextField label="Confirm New Password" type="password" fullWidth value={passwordForm.confirm} onChange={e => setPasswordForm(p => ({...p, confirm: e.target.value}))} />
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+            <Button onClick={() => setChangePasswordOpen(false)} color="inherit">Cancel</Button>
+            <Button onClick={handleChangePassword} variant="contained" color="primary" disabled={changingPassword || !passwordForm.current || !passwordForm.new} className="bg-blue-600 rounded-lg shadow-none">
+                {changingPassword ? 'Updating...' : 'Update Password'}
+            </Button>
+        </div>
+      </Dialog>
     </div>
   );
 };

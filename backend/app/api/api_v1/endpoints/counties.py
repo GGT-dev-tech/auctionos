@@ -18,6 +18,13 @@ STATE_ABBREVIATIONS = {
     'west virginia': 'wv', 'wisconsin': 'wi', 'wyoming': 'wy'
 }
 
+@router.get("/{state}/counties", response_model=List[str])
+def get_counties(state: str) -> Any:
+    """Return all known counties for a state."""
+    state_query = state.lower().strip()
+    state_abbr = STATE_ABBREVIATIONS.get(state_query, state_query)
+    return county_contact_service.get_counties_for_state(state_abbr)
+
 @router.get("/{state}/{county}/contacts", response_model=List[Dict[str, str]])
 def get_county_contacts(
     state: str, 

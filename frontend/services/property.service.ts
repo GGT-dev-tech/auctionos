@@ -206,11 +206,15 @@ export const ClientDataService = {
 
     /** Returns distinct states + counties from user's saved properties (for dynamic Home). */
     getPreferences: async (companyId?: number): Promise<{ states: string[]; counties: string[]; total_properties: number }> => {
-        const qs = companyId ? `?company_id=${companyId}` : '';
-        const response = await fetch(`${API_URL}/client-data/lists/preferences${qs}`, {
-            headers: getHeaders()
-        });
+        const query = companyId ? `?company_id=${companyId}` : '';
+        const response = await fetch(`${API_URL}/client-data/lists/preferences${query}`, { headers: getHeaders() });
         if (!response.ok) return { states: [], counties: [], total_properties: 0 };
+        return response.json();
+    },
+
+    getCountiesForState: async (state: string): Promise<string[]> => {
+        const response = await fetch(`${API_URL}/counties/${encodeURIComponent(state)}/counties`, { headers: getHeaders() });
+        if (!response.ok) return [];
         return response.json();
     },
 

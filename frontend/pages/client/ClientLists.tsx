@@ -566,14 +566,17 @@ const ClientLists: React.FC = () => {
 
     const [creationMode, setCreationMode] = useState<'custom' | 'standard'>('custom');
     const [stateContacts, setStateContacts] = useState<StateContact[]>([]);
+    const [availableCounties, setAvailableCounties] = useState<string[]>([]);
     const [selectedState, setSelectedState] = useState<StateContact | null>(null);
+    const [newCountyName, setNewCountyName] = useState<string | null>(null);
+    const [openListNotes, setOpenListNotes] = useState<boolean>(false);
     const [selectedStateName, setSelectedStateName] = useState<string | null>(null);
     const [selectedCountyName, setSelectedCountyName] = useState<string | null>(null);
     const [previewPropertyId, setPreviewPropertyId] = useState<number | string | null>(null);
     const [geocodedProperties, setGeocodedProperties] = useState<Record<number, { lat: number, lng: number }>>({});
     const [folderNotes, setFolderNotes] = useState<string>('');
     const [savingNotes, setSavingNotes] = useState(false);
-    const [viewMode, setViewMode] = useState<'folders' | 'custom_properties' | 'my_tasks' | 'my_exports'>('folders');
+    const [viewMode, setViewMode] = useState<'folders' | 'my_tasks' | 'my_exports'>('folders');
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [movingPropertyId, setMovingPropertyId] = useState<number | null>(null);
     const [moveTargetListId, setMoveTargetListId] = useState<number | string>('');
@@ -639,9 +642,20 @@ const ClientLists: React.FC = () => {
     };
 
     useEffect(() => {
-        loadLists();
+        if (!lists.length) {
+            loadLists();
+        }
         StatesService.getContacts().then(setStateContacts).catch(() => { });
     }, [activeCompany?.id]);
+
+    useEffect(() => {
+        if (selectedState) {
+            ClientDataService.getCountiesForState(selectedState.state).then(setAvailableCounties);
+        } else {
+            setAvailableCounties([]);
+            setNewCountyName(null);
+        }
+    }, [selectedState]);
 
     useEffect(() => {
         if (selectedListId) {
@@ -850,32 +864,18 @@ const ClientLists: React.FC = () => {
                 if (!selectedState) return;
                 
                 // Prevent duplicate state folder
-                const existingStateFolder = lists.find(l => l.tags === 'STANDARD' && l.name === selectedState.state);
+                const folderName = newCountyName ? `${selectedState.state} - ${newCountyName}` : selectedState.state;
+                const existingFolder = lists.find(l => l.tags === 'STANDARD' && l.name === folderName);
                 
-                if (existingStateFolder) {
-                    if (!newCountyName) {
-                        alert(`A folder for ${selectedState.state} already exists.`);
-                        return;
-                    }
-                    // If state folder exists but they provided a county, append the county to the folder's "notes"
-                    const notesObj = parseNotes(existingStateFolder.notes || '');
-                    if (!(newCountyName in notesObj)) {
-                        notesObj[newCountyName] = '';
-                        await ClientDataService.updateList(existingStateFolder.id, { notes: JSON.stringify(notesObj) });
-                        alert(`Added ${newCountyName} County to your existing ${selectedState.state} folder.`);
-                    } else {
-                        alert(`${newCountyName} County already exists in your ${selectedState.state} folder.`);
-                    }
+                if (existingFolder) {
+                    alert(`A folder named ${folderName} already exists.`);
+                    return;
                 } else {
-                    // Create new State folder
-                    const res = await ClientDataService.createList(selectedState.state, 'STANDARD', activeCompany?.id);
-                    if (newCountyName) {
-                        await ClientDataService.updateList(res.id, { notes: JSON.stringify({ [newCountyName]: '' }) });
-                    }
+                    const res = await ClientDataService.createList(folderName, 'STANDARD', activeCompany?.id);
                 }
             }
             setNewListName('');
-            setNewCountyName('');
+            setNewCountyName(null);
             setSelectedState(null);
             setOpenModal(false);
             loadLists();
@@ -1233,21 +1233,6 @@ const ClientLists: React.FC = () => {
                             </div>
                         )}
 
-                        {/* User Content / Custom Properties */}
-                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                            <Typography variant="overline" className="px-3 text-slate-400 font-bold text-[10px] tracking-widest uppercase">User Content</Typography>
-                            <div className="mt-2 space-y-0.5">
-                                <div
-                                    onClick={() => { setViewMode('custom_properties'); setSelectedListId(null); setSelectedStateName(null); setSelectedCountyName(null); }}
-                                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 
-                                        ${viewMode === 'custom_properties' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
-                                >
-                                    <span className={`material-symbols-outlined text-[18px] ${viewMode === 'custom_properties' ? 'text-white' : 'text-blue-500'}`}>real_estate_agent</span>
-                                    <span className="flex-1 text-sm font-medium truncate">Custom Properties</span>
-                                </div>
-                                <div
-                                    onClick={() => { setViewMode('my_tasks'); setSelectedListId(null); setSelectedStateName(null); setSelectedCountyName(null); }}
-                                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 
                                         ${viewMode === 'my_tasks' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50'}`}
                                 >
                                     <span className={`material-symbols-outlined text-[18px] ${viewMode === 'my_tasks' ? 'text-white' : 'text-blue-500'}`}>task_alt</span>
@@ -1276,21 +1261,7 @@ const ClientLists: React.FC = () => {
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col bg-white dark:bg-slate-950">
-                {viewMode === 'custom_properties' ? (
-                    <div className="flex-1 flex flex-col h-full">
-                        <div className="p-4 border-b border-slate-100 dark:border-slate-900 flex items-center gap-3">
-                            <IconButton 
-                                onClick={() => setSidebarOpen(!sidebarOpen)} 
-                                size="medium" 
-                                className="bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 shadow-sm border border-blue-200 dark:border-blue-800 transition-all"
-                                title={sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
-                            >
-                                <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-[22px]">{sidebarOpen ? 'left_panel_close' : 'left_panel_open'}</span>
-                            </IconButton>
-                            <ClientUserProperties onBack={() => setViewMode('folders')} />
-                        </div>
-                    </div>
-                ) : viewMode === 'my_tasks' ? (
+                {viewMode === 'my_tasks' ? (
                     <InvestorMyTasksView onBack={() => setViewMode('folders')} />
                 ) : viewMode === 'my_exports' ? (
                     <InvestorMyExportsView onBack={() => setViewMode('folders')} />
@@ -1706,15 +1677,17 @@ const ClientLists: React.FC = () => {
                                 fullWidth
                                 disablePortal
                             />
-                            <TextField
-                                fullWidth
-                                placeholder="County (Optional)"
-                                variant="outlined"
+                            <Autocomplete
+                                options={availableCounties}
+                                getOptionLabel={(option) => option}
                                 value={newCountyName}
-                                onChange={(e) => setNewCountyName(e.target.value)}
-                                className="bg-white dark:bg-slate-800 rounded-lg"
-                                helperText="Leave blank to create a general state folder."
-                                onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
+                                onChange={(_, newValue) => setNewCountyName(newValue)}
+                                disabled={!selectedState}
+                                renderInput={(params) => (
+                                    <TextField {...params} variant="outlined" placeholder="Select a County (Optional)" className="bg-white dark:bg-slate-800 rounded-lg" helperText="Leave blank to create a general state folder." />
+                                )}
+                                fullWidth
+                                disablePortal
                             />
                         </div>
                     )}
