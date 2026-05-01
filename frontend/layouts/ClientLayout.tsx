@@ -13,10 +13,8 @@ const ClientLayout: React.FC = () => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [upcomingAuctions, setUpcomingAuctions] = useState<number>(0);
   
-  // Change Password State
-  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
-  const [changingPassword, setChangingPassword] = useState(false);
+
+
 
   React.useEffect(() => {
     // Basic ping to count if any user list has upcoming auctions
@@ -85,8 +83,7 @@ const ClientLayout: React.FC = () => {
   }
 
   let accountDropdown: DropdownItem[] = [
-    { label: 'Change Password', path: '/client/change-password' },
-    { label: 'Contact Support', path: '/client/contact-support' },
+    { label: 'Account Support & Security', path: '/client/support' },
   ];
 
   if (role === 'manager' || role === 'client') {
@@ -362,22 +359,6 @@ const ClientLayout: React.FC = () => {
       </main>
 
       <Footer />
-
-      {/* Change Password Dialog */}
-      <Dialog open={changePasswordOpen} onClose={() => setChangePasswordOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
-        <Typography variant="h6" className="font-bold text-slate-800 dark:text-white mb-4">Change Password</Typography>
-        <div className="space-y-4">
-            <TextField label="Current Password" type="password" fullWidth value={passwordForm.current} onChange={e => setPasswordForm(p => ({...p, current: e.target.value}))} />
-            <TextField label="New Password" type="password" fullWidth value={passwordForm.new} onChange={e => setPasswordForm(p => ({...p, new: e.target.value}))} />
-            <TextField label="Confirm New Password" type="password" fullWidth value={passwordForm.confirm} onChange={e => setPasswordForm(p => ({...p, confirm: e.target.value}))} />
-        </div>
-        <div className="flex justify-end gap-2 mt-6">
-            <Button onClick={() => setChangePasswordOpen(false)} color="inherit">Cancel</Button>
-            <Button onClick={handleChangePassword} variant="contained" color="primary" disabled={changingPassword || !passwordForm.current || !passwordForm.new} className="bg-blue-600 rounded-lg shadow-none">
-                {changingPassword ? 'Updating...' : 'Update Password'}
-            </Button>
-        </div>
-      </Dialog>
     </div>
   );
 };

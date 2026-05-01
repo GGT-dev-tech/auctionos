@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL, getHeaders } from '../../services/httpClient';
+import AuthService from '../../services/auth.service';
 
 const ClientSupportPage: React.FC = () => {
+  const currentUser = AuthService.getCurrentUser();
+  const isClient = currentUser?.role === 'client';
+  
   const [activeTab, setActiveTab] = useState<'support' | 'security' | 'billing'>('support');
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -92,12 +96,14 @@ const ClientSupportPage: React.FC = () => {
         >
           <span className="material-symbols-outlined text-[18px]">lock</span> Security
         </button>
-        <button 
-          onClick={() => setActiveTab('billing')} 
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${activeTab === 'billing' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-        >
-          <span className="material-symbols-outlined text-[18px]">credit_card</span> Billing & Quotas
-        </button>
+        {isClient && (
+            <button 
+              onClick={() => setActiveTab('billing')} 
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${activeTab === 'billing' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+            >
+              <span className="material-symbols-outlined text-[18px]">credit_card</span> Billing & Quotas
+            </button>
+        )}
       </div>
 
       {activeTab === 'support' ? (
@@ -191,7 +197,6 @@ const ClientSupportPage: React.FC = () => {
       </div>
       ) : activeTab === 'security' ? (
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-        <p className="text-sm text-slate-500 mb-6">Update your account password to keep your data secure.</p>
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Current Password</label>
@@ -244,7 +249,7 @@ const ClientSupportPage: React.FC = () => {
           )}
         </form>
       </div>
-      ) : activeTab === 'billing' ? (
+      ) : (activeTab === 'billing' && isClient) ? (
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
         <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Current Plan: <span className="uppercase text-blue-600">{billingInfo?.tier || '...'}</span></h2>
         

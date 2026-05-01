@@ -545,12 +545,20 @@ const ClientLists: React.FC = () => {
     const [lists, setLists] = useState<CustomList[]>([]);
     const [selectedListId, setSelectedListId] = useState<number | null>(null);
     const [selectedListProperties, setSelectedListProperties] = useState<any[]>([]);
+
+    // Edit Folder Modal State
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [listToEdit, setListToEdit] = useState<CustomList | null>(null);
+    const [editFolderType, setEditFolderType] = useState<'custom' | 'standard'>('custom');
+    const [editFolderName, setEditFolderName] = useState('');
+    const [editFolderState, setEditFolderState] = useState<StateContact | null>(null);
+    const [editFolderCounty, setEditFolderCounty] = useState<string | null>(null);
+    const [editFolderAvailableCounties, setEditFolderAvailableCounties] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [propsLoading, setPropsLoading] = useState(false);
     const [openModal, setOpenModal] = useState(false);
     const [newListName, setNewListName] = useState('');
-    const [editingListId, setEditingListId] = useState<number | null>(null);
-    const [editName, setEditName] = useState('');
+
     const [dragOverListId, setDragOverListId] = useState<number | null>(null);
     const [broadcastedLists, setBroadcastedLists] = useState<CustomList[]>([]);
     const [importing, setImporting] = useState<number | null>(null);
@@ -895,20 +903,48 @@ const ClientLists: React.FC = () => {
     };
 
     const handleStartRename = (list: CustomList) => {
-        setEditingListId(list.id);
-        setEditName(list.name);
+        setListToEdit(list);
+        if (list.tags === 'STANDARD') {
+            setEditFolderType('standard');
+            const parts = list.name.split(' - ');
+            const stName = parts[0];
+            const coName = parts[1] || null;
+            const stObj = stateContacts.find(c => c.state === stName) || null;
+            setEditFolderState(stObj);
+            setEditFolderCounty(coName);
+            if (stObj) {
+                countyService.getCounties(stObj.state).then(setEditFolderAvailableCounties).catch(() => setEditFolderAvailableCounties([]));
+            } else {
+                setEditFolderAvailableCounties([]);
+            }
+        } else {
+            setEditFolderType('custom');
+            setEditFolderName(list.name);
+        }
+        setEditModalOpen(true);
     };
 
-    const handleRename = async () => {
-        if (!editingListId || !editName) return;
+    const handleEditFolderSave = async () => {
+        if (!listToEdit) return;
         try {
-            await ClientDataService.updateList(editingListId, { name: editName });
-            setEditingListId(null);
+            let finalName = '';
+            if (editFolderType === 'custom') {
+                if (!editFolderName) return;
+                finalName = editFolderName;
+            } else {
+                if (!editFolderState) return;
+                finalName = editFolderCounty ? `${editFolderState.state} - ${editFolderCounty}` : editFolderState.state;
+            }
+            await ClientDataService.updateList(listToEdit.id, { name: finalName });
+            setEditModalOpen(false);
+            setListToEdit(null);
             loadLists();
         } catch (err: any) {
             alert(err.message);
         }
     };
+
+
 
     const handleDragStart = (e: React.DragEvent, propertyId: number) => {
         e.dataTransfer.setData("propertyId", propertyId.toString());
@@ -1147,24 +1183,13 @@ const ClientLists: React.FC = () => {
                                                 ${dragOverListId === list.id ? 'ring-2 ring-blue-400 ring-inset scale-[1.02]' : ''}`}
                                         >
                                             <span className={`material-symbols-outlined text-[18px] ${selectedListId === list.id ? 'text-white' : 'text-blue-500'}`}>folder</span>
-                                            {list.has_upcoming_auction && !editingListId && (
+                                            {list.has_upcoming_auction && (
                                                 <div className="absolute -top-1 -right-1 bg-orange-500 text-white rounded-full p-0.5 shadow-sm z-10">
                                                     <span className="material-symbols-outlined text-[12px]">gavel</span>
                                                 </div>
                                             )}
-                                            {editingListId === list.id ? (
-                                                <input
-                                                    autoFocus
-                                                    className="flex-1 bg-transparent border-none outline-none text-sm text-inherit p-0"
-                                                    value={editName}
-                                                    onChange={(e) => setEditName(e.target.value)}
-                                                    onBlur={handleRename}
-                                                    onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                            ) : (
-                                                <>
-                                                    <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
+                                            <>
+                                                <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
                                                     {list.has_upcoming_auction && (
                                                         <span className="text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded-md font-black">
                                                             AUCTION
@@ -1697,6 +1722,75 @@ const ClientLists: React.FC = () => {
                             />
                         </div>
                     )}
+                </div>
+            </Dialog>
+
+            {/* Edit Folder Modal */}
+            <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} PaperProps={{ className: "rounded-2xl dark:bg-slate-900", sx: { overflow: 'visible' } }}>
+                <div className="p-6 min-w-[320px] max-w-[400px]">
+                    <Typography variant="h6" className="font-bold mb-4 dark:text-white">Edit Folder</Typography>
+
+                    {editFolderType === 'custom' ? (
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            placeholder="Name of your folder..."
+                            variant="outlined"
+                            value={editFolderName}
+                            onChange={(e) => setEditFolderName(e.target.value)}
+                            className="mb-4"
+                            onKeyDown={(e) => e.key === 'Enter' && handleEditFolderSave()}
+                        />
+                    ) : (
+                        <div className="flex flex-col gap-3 mb-4">
+                            <Autocomplete
+                                options={stateContacts}
+                                getOptionLabel={(option) => option.state}
+                                value={editFolderState}
+                                onChange={(_, newValue) => {
+                                    setEditFolderState(newValue);
+                                    setEditFolderCounty(null);
+                                    if (newValue) {
+                                        countyService.getCounties(newValue.state).then(setEditFolderAvailableCounties).catch(() => setEditFolderAvailableCounties([]));
+                                    } else {
+                                        setEditFolderAvailableCounties([]);
+                                    }
+                                }}
+                                renderInput={(params) => (
+                                    <TextField {...params} variant="outlined" placeholder="Select a US State..." autoFocus className="bg-white dark:bg-slate-800 rounded-lg" />
+                                )}
+                                fullWidth
+                                disablePortal
+                            />
+                            <Autocomplete
+                                options={editFolderAvailableCounties}
+                                getOptionLabel={(option) => option}
+                                value={editFolderCounty}
+                                onChange={(_, newValue) => setEditFolderCounty(newValue)}
+                                disabled={!editFolderState}
+                                renderInput={(params) => (
+                                    <TextField {...params} variant="outlined" placeholder="Select a County (Optional)" className="bg-white dark:bg-slate-800 rounded-lg" helperText="Leave blank to create a general state folder." />
+                                )}
+                                fullWidth
+                                disablePortal
+                            />
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-2 mt-4">
+                        <Button onClick={() => setEditModalOpen(false)} className="text-slate-500 font-bold capitalize">Cancel</Button>
+                        <Button 
+                            variant="contained" 
+                            color="primary" 
+                            className="font-bold capitalize shadow-none rounded-lg"
+                            onClick={handleEditFolderSave}
+                            disabled={editFolderType === 'custom' ? !editFolderName : !editFolderState}
+                        >
+                            Save Changes
+                        </Button>
+                    </div>
+                </div>
+            </Dialog>
 
                     <div className="flex justify-end gap-3 mt-6">
                         <Button color="inherit" onClick={() => setOpenModal(false)}>Cancel</Button>
