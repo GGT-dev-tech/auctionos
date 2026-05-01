@@ -67,7 +67,7 @@ def get_available_tasks(
         SELECT
             t.id, t.title, t.description, t.task_type, t.status,
             t.address, t.latitude, t.longitude, t.geo_radius_meters,
-            t.min_photos, t.max_photos, t.reward_points,
+            t.min_photos, t.max_photos, CAST(t.reward_points * 0.7 AS INT) AS reward_points,
             t.created_at,
             p.parcel_id, p.state, p.county, p.property_type,
             u.full_name AS investor_name
@@ -99,9 +99,9 @@ def get_my_tasks(
     rows = db.execute(text(f"""
         SELECT
             t.id, t.title, t.description, t.task_type, t.status,
-            t.address, t.latitude, t.longitude,
-            t.min_photos, t.max_photos, t.reward_points,
-            t.deadline, t.claimed_at, t.submitted_at, t.approved_at,
+            t.address, t.latitude, t.longitude, t.geo_radius_meters,
+            t.min_photos, t.max_photos, CAST(t.reward_points * 0.7 AS INT) AS reward_points,
+            t.created_at, t.deadline, t.claimed_at, t.submitted_at, t.approved_at,
             p.parcel_id, p.state, p.county,
             u.full_name AS investor_name
         FROM consultant_tasks t
@@ -245,6 +245,8 @@ def _copy_task_photos_to_attachments(task_id: int, property_id: int, investor_id
     
     if submission and submission.file_path:
         paths = submission.file_path.split(',')
+        
+        # 1. Add to client_attachments for the investor (always)
         for p in paths:
             filename = p.split('/')[-1]
             db.execute(text("""
@@ -255,6 +257,17 @@ def _copy_task_photos_to_attachments(task_id: int, property_id: int, investor_id
                 "pid": property_id,
                 "path": p,
                 "fname": filename
+            })
+
+        # 2. Add to public_photos in property_details if visibility is public
+        prop = db.execute(text("SELECT visibility, public_photos FROM property_details WHERE id = :id"), {"id": property_id}).fetchone()
+        if prop and prop.visibility == 'public':
+            existing = prop.public_photos
+            new_photos = submission.file_path
+            combined = f"{existing},{new_photos}" if existing else new_photos
+            db.execute(text("UPDATE property_details SET public_photos = :photos WHERE id = :id"), {
+                "photos": combined,
+                "id": property_id
             })
 
 

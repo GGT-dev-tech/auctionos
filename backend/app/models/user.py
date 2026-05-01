@@ -14,6 +14,10 @@ class User(Base):
     role = Column(String(50), default="client")   # 'admin', 'client', 'consultant', 'superuser'
     full_name = Column(String(255), nullable=True)
 
+    # ── Billing & Usage ──────────────────────────────────────────────────────
+    subscription_tier = Column(String(50), default="trial")  # 'trial', 'pro', 'enterprise'
+    property_searches_used = Column(Integer, default=0)
+
     # ── Empresa ativa (persistente entre sessões) ────────────────────────────
     active_company_id = Column(
         Integer,

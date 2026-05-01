@@ -30,6 +30,14 @@ export const Layout: React.FC = () => {
     },
     { icon: 'list_alt', label: 'My Lists', path: '/admin/lists' },
     { icon: 'map', label: 'Research', path: '/admin/research' },
+    {
+      icon: 'admin_panel_settings',
+      label: 'Admin & CRM',
+      dropdown: [
+        { label: 'User Management', path: '/admin/users' },
+        { label: 'Consultant Withdrawals', path: '/admin/withdrawals' },
+      ],
+    },
     { icon: 'settings', label: 'Settings', path: '/settings' },
   ];
 

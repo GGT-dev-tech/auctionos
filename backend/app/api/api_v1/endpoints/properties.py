@@ -708,15 +708,15 @@ def get_property(
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     # 1. Rate Limiting Check
-    if current_user and not current_user.is_superuser:
-        sub = db.execute(text("SELECT plan_type, property_searches_used FROM user_subscriptions WHERE user_id = :uid"), {"uid": current_user.id}).fetchone()
+    if current_user and current_user.role == "client":
+        sub = db.execute(text("SELECT subscription_tier, property_searches_used FROM users WHERE id = :uid"), {"uid": current_user.id}).fetchone()
         if sub:
-            if sub.plan_type == 'trial' and sub.property_searches_used >= 5:
+            if sub.subscription_tier == 'trial' and sub.property_searches_used >= 5:
                 raise HTTPException(status_code=402, detail="Trial limit reached (5 searches). Please upgrade to Pro to view more properties.")
-            elif sub.plan_type == 'pro' and sub.property_searches_used >= 5000:
+            elif sub.subscription_tier == 'pro' and sub.property_searches_used >= 5000:
                 raise HTTPException(status_code=402, detail="Pro limit reached (5000 searches). Please upgrade to Enterprise.")
             # Increment usage
-            db.execute(text("UPDATE user_subscriptions SET property_searches_used = property_searches_used + 1 WHERE user_id = :uid"), {"uid": current_user.id})
+            db.execute(text("UPDATE users SET property_searches_used = property_searches_used + 1 WHERE id = :uid"), {"uid": current_user.id})
             db.commit()
 
     # Use explicit columns to avoid ambiguity and facilitate dict conversion

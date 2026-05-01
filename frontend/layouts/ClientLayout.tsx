@@ -252,13 +252,6 @@ const ClientLayout: React.FC = () => {
 
               <div className="flex items-center gap-1 hidden md:flex">
                   <button
-                    onClick={() => setChangePasswordOpen(true)}
-                    className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    title="Change Password"
-                  >
-                    <span className="material-symbols-outlined text-[22px]">lock</span>
-                  </button>
-                  <button
                     onClick={handleLogout}
                     className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     title="Sign Out"
@@ -346,6 +339,16 @@ const ClientLayout: React.FC = () => {
                 <span className="material-symbols-outlined text-[18px]">rocket_launch</span>
                 Upgrade Trial Account
               </Link>
+              
+              <div className="mt-2 border-t border-slate-200 dark:border-slate-700 pt-2">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-3 px-3 py-2.5 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">logout</span>
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         )}

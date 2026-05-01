@@ -142,6 +142,7 @@ export const InvestorTaskService = {
     contact_name?: string;
     contact_phone?: string;
     contact_email?: string;
+    requested_sale_price?: number;
     notes?: string;
   }): Promise<any> => {
     const res = await fetch(`${API_URL}/investor/exports`, {

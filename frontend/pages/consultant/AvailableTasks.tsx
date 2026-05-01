@@ -293,20 +293,26 @@ const AvailableTasks: React.FC = () => {
               accept="image/*"
               multiple
               className="hidden"
-              onChange={e => setPhotos(Array.from(e.target.files || []))}
+              onChange={e => setPhotos(prev => [...prev, ...Array.from(e.target.files || [])])}
             />
             <button
               onClick={() => fileInputRef.current?.click()}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold border border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-400 text-slate-600 dark:text-slate-400 transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">add_a_photo</span>
-              {photos.length > 0 ? `${photos.length} photos selected ✓` : 'Select Photos (camera or gallery)'}
+              {photos.length > 0 ? `Add more photos (${photos.length} selected)` : 'Select Photos (camera or gallery)'}
             </button>
             {photos.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {photos.map((f, i) => (
-                  <span key={i} className="text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
+                  <span key={i} className="flex items-center gap-1 text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
                     {f.name}
+                    <button 
+                      className="hover:text-red-500 font-bold ml-1" 
+                      onClick={(e) => { e.stopPropagation(); setPhotos(p => p.filter((_, idx) => idx !== i)); }}
+                    >
+                      ×
+                    </button>
                   </span>
                 ))}
               </div>

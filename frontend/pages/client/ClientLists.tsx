@@ -1801,7 +1801,12 @@ const ClientLists: React.FC = () => {
                         onClick={async () => {
                             setExportSubmitting(true);
                             try {
-                                await InvestorTaskService.exportProperty({ property_id: exportProperty.id, ...exportForm });
+                                const payload = { 
+                                    property_id: exportProperty.id, 
+                                    ...exportForm,
+                                    requested_sale_price: exportForm.requested_sale_price ? parseFloat(exportForm.requested_sale_price) : undefined
+                                };
+                                await InvestorTaskService.exportProperty(payload);
                                 setExportProperty(null);
                                 alert('✅ Property exported! Consultants can now see it in their listings.');
                             } catch(e:any) { alert(e.message); }

@@ -39,6 +39,8 @@ class User(BaseModel):
     is_superuser: Optional[bool] = False
     role: Optional[str] = "client"
     active_company_id: Optional[int] = None
+    subscription_tier: Optional[str] = "trial"
+    property_searches_used: Optional[int] = 0
 
     class Config:
         from_attributes = True

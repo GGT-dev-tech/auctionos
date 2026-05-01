@@ -11,11 +11,11 @@ const ActivityLogsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState<'logs' | 'team'>('team');
     
-    const { activeCompany } = useCompany();
+    const { activeCompany, companies } = useCompany();
     
     // Create User Form
     const [openCreate, setOpenCreate] = useState(false);
-    const [createForm, setCreateForm] = useState({ email: '', password: '', full_name: '', role: 'agent', contact_phone: '' });
+    const [createForm, setCreateForm] = useState({ email: '', password: '', full_name: '', role: 'agent', contact_phone: '', company_id: '' });
     const [creating, setCreating] = useState(false);
 
     // Edit User Form
@@ -52,7 +52,7 @@ const ActivityLogsPage: React.FC = () => {
         try {
             const payload = {
                 ...createForm,
-                company_id: activeCompany?.id || undefined
+                company_id: createForm.company_id || activeCompany?.id || undefined
             };
             const res = await fetch(`${API_URL}/users/`, {
                 method: 'POST',
@@ -65,7 +65,7 @@ const ActivityLogsPage: React.FC = () => {
             }
             alert('User created successfully!');
             setOpenCreate(false);
-            setCreateForm({ email: '', password: '', full_name: '', role: 'agent', contact_phone: '' });
+            setCreateForm({ email: '', password: '', full_name: '', role: 'agent', contact_phone: '', company_id: '' });
             await loadData();
         } catch (err: any) {
             alert(err.message);
@@ -231,6 +231,21 @@ const ActivityLogsPage: React.FC = () => {
                         >
                             {isClient && <MenuItem value="manager">Manager</MenuItem>}
                             <MenuItem value="agent">Agent</MenuItem>
+                        </Select>
+                    </div>
+
+                    <div>
+                        <Typography variant="caption" className="font-bold text-slate-500 mb-1 block">Assign to Company</Typography>
+                        <Select
+                            fullWidth
+                            value={createForm.company_id}
+                            onChange={e => setCreateForm(p => ({...p, company_id: e.target.value}))}
+                            displayEmpty
+                        >
+                            <MenuItem value="" disabled>Select a company</MenuItem>
+                            {companies.map(c => (
+                                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                            ))}
                         </Select>
                     </div>
                 </div>
