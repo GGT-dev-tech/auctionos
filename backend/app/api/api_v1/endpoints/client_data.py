@@ -11,6 +11,8 @@ from app.api import deps
 from app.models.client_data import ClientList, ClientNote, ClientAttachment, client_list_property
 from app.models.property import PropertyDetails
 from pydantic import BaseModel
+from app.models.activity_log import ActivityLog
+from app.models.user import User
 
 router = APIRouter()
 
@@ -87,6 +89,21 @@ class CustomPropertyCreate(BaseModel):
     num_units: Optional[int] = None
     target_list_id: Optional[int] = None
 
+def log_activity(db: Session, user: User, action: str, resource: str, details: str):
+    company_id = getattr(user, 'company_id', None) or getattr(user, 'active_company_id', None)
+    try:
+        log = ActivityLog(
+            user_id=user.id,
+            company_id=company_id,
+            action=action,
+            resource=resource,
+            details=details
+        )
+        db.add(log)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+
 # --- Endpoints ---
 
 @router.post("/lists", response_model=ClientListResponse)
@@ -97,21 +114,23 @@ def create_client_list(
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Create a new List folder for the client. Optionally scoped to a company."""
-    
-    # Check for unique folder name
+    target_company = list_in.company_id or getattr(current_user, 'active_company_id', None) or getattr(current_user, 'company_id', None)
+    if current_user.role in ['manager', 'agent']:
+        target_company = current_user.company_id
+
+    # Check for unique folder name within the company
     existing_list = db.query(ClientList).filter(
-        ClientList.user_id == current_user.id,
-        ClientList.company_id == list_in.company_id,
+        ClientList.company_id == target_company,
         ClientList.name.ilike(list_in.name)
     ).first()
     
     if existing_list:
-        raise HTTPException(status_code=400, detail="A folder with this name already exists.")
+        raise HTTPException(status_code=400, detail="A folder with this name already exists in your company.")
 
     new_list = ClientList(
         name=list_in.name,
         user_id=current_user.id,
-        company_id=list_in.company_id,
+        company_id=target_company,
         is_favorite_list=False,
         is_broadcasted=False,
         tags=list_in.tags,
@@ -120,6 +139,9 @@ def create_client_list(
     db.add(new_list)
     db.commit()
     db.refresh(new_list)
+    
+    log_activity(db, current_user, "create", "folder", f"Created list '{new_list.name}'")
+    
     return {
         "id": new_list.id,
         "name": new_list.name,
@@ -136,15 +158,19 @@ def get_client_lists(
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
-    """Get all lists for the current client, optionally filtered by active company."""
-    query = db.query(ClientList).filter(ClientList.user_id == current_user.id)
-    if company_id:
-        # Strict isolation: return only lists for this company
-        query = query.filter(ClientList.company_id == company_id)
+    """Get all lists for the current client or team member, optionally filtered by active company."""
+    if current_user.role in ['manager', 'agent']:
+        c_id = current_user.company_id
+        if not c_id:
+            return []
+        query = db.query(ClientList).filter(ClientList.company_id == c_id)
     else:
-        # Legacy/Personal: return lists with NO company
-        query = query.filter(ClientList.company_id == None)
-        
+        query = db.query(ClientList)
+        if company_id:
+            query = query.filter(ClientList.company_id == company_id)
+        else:
+            query = query.filter(ClientList.user_id == current_user.id).filter(ClientList.company_id == None)
+            
     lists = query.all()
 
     # Auto-migration for legacy standard folders using acronyms (e.g., "TX" -> "Texas")
@@ -315,6 +341,8 @@ def create_custom_property(
         lst.properties.append(new_prop)
         db.commit()
 
+    log_activity(db, current_user, "create", "custom_property", f"Created custom property '{new_prop.address}' in folder '{lst.name}'")
+
     return {"id": new_prop.id, "property_id": new_prop.property_id, "list_id": lst.id, "list_name": lst.name}
 
 
@@ -473,14 +501,26 @@ def delete_client_list(
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Delete a client list."""
-    lst = db.query(ClientList).filter(ClientList.id == list_id, ClientList.user_id == current_user.id).first()
+    lst = db.query(ClientList).filter(ClientList.id == list_id).first()
     if not lst:
-        raise HTTPException(status_code=404, detail="List not found or not owned by you")
+        raise HTTPException(status_code=404, detail="List not found")
+        
+    if current_user.role in ['manager', 'agent']:
+        if lst.company_id != current_user.company_id:
+            raise HTTPException(status_code=403, detail="Not authorized to modify this list")
+    else:
+        if lst.user_id != current_user.id:
+            co = db.execute(text("SELECT id FROM companies WHERE id = :cid AND user_id = :uid"), {"cid": lst.company_id, "uid": current_user.id}).fetchone()
+            if not co:
+                raise HTTPException(status_code=403, detail="Not authorized to modify this list")
     if lst.is_favorite_list:
         raise HTTPException(status_code=400, detail="Cannot delete the Favorites list")
     
+    name = lst.name
     db.delete(lst)
     db.commit()
+    
+    log_activity(db, current_user, "delete", "folder", f"Deleted list '{name}'")
     return {"ok": True}
 
 @router.post("/lists/{list_id}/properties/{property_id}")
@@ -492,14 +532,24 @@ def add_property_to_list(
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Add a scraped property to a specific client list."""
-    lst = db.query(ClientList).filter(ClientList.id == list_id, ClientList.user_id == current_user.id).first()
+    lst = db.query(ClientList).filter(ClientList.id == list_id).first()
     prop = db.query(PropertyDetails).filter(PropertyDetails.id == property_id).first()
     if not lst or not prop:
-        raise HTTPException(status_code=404, detail="List (owned by you) or Property not found")
+        raise HTTPException(status_code=404, detail="List or Property not found")
+        
+    if current_user.role in ['manager', 'agent']:
+        if lst.company_id != current_user.company_id:
+            raise HTTPException(status_code=403, detail="Not authorized to modify this list")
+    else:
+        if lst.user_id != current_user.id:
+            co = db.execute(text("SELECT id FROM companies WHERE id = :cid AND user_id = :uid"), {"cid": lst.company_id, "uid": current_user.id}).fetchone()
+            if not co:
+                raise HTTPException(status_code=403, detail="Not authorized to modify this list")
     
     if prop not in lst.properties:
         lst.properties.append(prop)
         db.commit()
+        log_activity(db, current_user, "create", "list_property", f"Added property {prop.address or prop.id} to list '{lst.name}'")
     return {"ok": True}
 
 STATE_MAPPING = {
@@ -573,8 +623,15 @@ def get_list_properties(
     lst = db.query(ClientList).filter(ClientList.id == list_id).first()
     if not lst:
         raise HTTPException(status_code=404, detail="List not found")
-    if lst.user_id != current_user.id and not lst.is_broadcasted:
-        raise HTTPException(status_code=403, detail="Not authorized to view this list")
+        
+    if current_user.role in ['manager', 'agent']:
+        if lst.company_id != current_user.company_id:
+            raise HTTPException(status_code=403, detail="Not authorized to view this list")
+    else:
+        if lst.user_id != current_user.id and not lst.is_broadcasted:
+            co = db.execute(text("SELECT id FROM companies WHERE id = :cid AND user_id = :uid"), {"cid": lst.company_id, "uid": current_user.id}).fetchone()
+            if not co:
+                raise HTTPException(status_code=403, detail="Not authorized to view this list")
 
     results = []
     for p in lst.properties:

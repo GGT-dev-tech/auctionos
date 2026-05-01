@@ -3,12 +3,15 @@ import { CircularProgress, Button, Dialog, TextField, Select, MenuItem, Typograp
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { API_URL, getHeaders } from '../../services/httpClient';
+import { useCompany } from '../../context/CompanyContext';
 
 const ActivityLogsPage: React.FC = () => {
     const [logs, setLogs] = useState<any[]>([]);
     const [team, setTeam] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState<'logs' | 'team'>('team');
+    
+    const { activeCompany } = useCompany();
     
     // Create User Form
     const [openCreate, setOpenCreate] = useState(false);
@@ -47,10 +50,14 @@ const ActivityLogsPage: React.FC = () => {
     const handleCreateUser = async () => {
         setCreating(true);
         try {
+            const payload = {
+                ...createForm,
+                company_id: activeCompany?.id || undefined
+            };
             const res = await fetch(`${API_URL}/users/`, {
                 method: 'POST',
                 headers: getHeaders(),
-                body: JSON.stringify(createForm)
+                body: JSON.stringify(payload)
             });
             if (!res.ok) {
                 const data = await res.json();
