@@ -669,7 +669,11 @@ const ClientLists: React.FC = () => {
             loadListProperties(selectedListId);
             const selList = lists.find(l => l.id === selectedListId) || broadcastedLists.find(l => l.id === selectedListId);
             if (selList?.tags === 'STANDARD') { // Now these are just states. We clear county contacts until they pick a county subfolder, but we can load state contacts if needed.
-                setCountyContacts([]);
+                if (selectedCountyName) {
+                    countyService.getContacts(selList.name, selectedCountyName).then(setCountyContacts).catch(() => setCountyContacts([]));
+                } else {
+                    setCountyContacts([]);
+                }
             } else {
                 setCountyContacts([]);
             }

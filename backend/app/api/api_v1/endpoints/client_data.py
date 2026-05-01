@@ -652,6 +652,7 @@ def get_list_properties(
                 SELECT 
                     pah.auction_date,
                     ae.list_link as auction_url,
+                    ae.register_link as register_link,
                     ae.status as auction_status,
                     ae.name as case_number
                 FROM property_auction_history pah
@@ -694,8 +695,8 @@ def get_list_properties(
                 "property_type": p.property_type,
                 "auction_name": auction.case_number if auction else None,
                 "auction_date": str(auction.auction_date) if auction and auction.auction_date else None,
-                "auction_info_link": auction.auction_url if auction else None,
-                "auction_list_link": None,
+                "auction_info_link": getattr(auction, "register_link", None) if auction else None,
+                "auction_list_link": auction.auction_url if auction else None,
                 "is_auction_upcoming": is_auction_upcoming,
                 "days_until_auction": days_until_auction,
                 "note_content": note.notes if getattr(note, 'notes', None) else "",
