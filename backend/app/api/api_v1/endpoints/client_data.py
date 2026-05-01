@@ -787,7 +787,7 @@ def toggle_favorite(
     *,
     db: Session = Depends(deps.get_db),
     property_id: int,
-    company_id: int | None = None,
+    company_id: Optional[int] = None,
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Toggle a property in the user's auto-generated Favorites list (company scoped)."""
@@ -819,7 +819,7 @@ def toggle_favorite(
 
 @router.get("/favorites")
 def get_favorites(
-    company_id: int | None = None,
+    company_id: Optional[int] = None,
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:

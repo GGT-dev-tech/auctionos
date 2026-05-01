@@ -730,7 +730,7 @@ def get_property(
         FROM property_details p
         LEFT JOIN property_auction_history pah ON pah.property_id = p.property_id
         LEFT JOIN auction_events ae ON pah.auction_id = ae.id
-        WHERE p.parcel_id = :parcel_id
+        WHERE p.parcel_id = :parcel_id OR p.id::text = :parcel_id
         ORDER BY pah.auction_date DESC
         LIMIT 1
     """)
