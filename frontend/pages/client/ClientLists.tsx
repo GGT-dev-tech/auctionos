@@ -657,7 +657,7 @@ const ClientLists: React.FC = () => {
 
     useEffect(() => {
         if (selectedState) {
-            ClientDataService.getCountiesForState(selectedState.state).then(setAvailableCounties);
+            countyService.getCounties(selectedState.state).then(setAvailableCounties).catch(() => setAvailableCounties([]));
         } else {
             setAvailableCounties([]);
             setNewCountyName(null);
