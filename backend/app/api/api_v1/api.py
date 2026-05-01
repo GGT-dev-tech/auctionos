@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.api.api_v1.endpoints import (
     auth, users, properties, dashboard, auctions, gis, admin, counties, announcements,
     client_data, states, scores, marketing, companies, consultants, user_properties,
-    consultant_tasks, investor_tasks, consultant_economy
+    consultant_tasks, investor_tasks, consultant_economy, billing
 )
 
 api_router = APIRouter()
@@ -25,3 +25,4 @@ api_router.include_router(consultants.router, prefix="/consultants", tags=["cons
 api_router.include_router(consultant_tasks.router, prefix="/consultant-tasks", tags=["consultant_tasks"])
 api_router.include_router(investor_tasks.router, prefix="/investor", tags=["investor_tasks"])
 api_router.include_router(consultant_economy.router, prefix="/consultant-economy", tags=["consultant_economy"])
+api_router.include_router(billing.router, prefix="/billing", tags=["billing"])

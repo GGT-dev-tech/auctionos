@@ -7,7 +7,7 @@ class PropertyDetails(Base):
     __tablename__ = "property_details"
 
     id = Column(Integer, primary_key=True, index=True)
-    property_id = Column(String(36), nullable=False)
+    property_id = Column(String(36), unique=True, index=True, nullable=False)
     
     # Privacy / Custom Property tracking
     company_id = Column(Integer, ForeignKey("companies.id", ondelete="SET NULL"), nullable=True, index=True)

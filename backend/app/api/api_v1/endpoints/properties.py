@@ -649,6 +649,16 @@ def get_property(
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
+    # 1. Rate Limiting Check
+    if current_user and not current_user.is_superuser:
+        sub = db.execute(text("SELECT plan_type, property_searches_used FROM user_subscriptions WHERE user_id = :uid"), {"uid": current_user.id}).fetchone()
+        if sub and sub.plan_type == 'trial':
+            if sub.property_searches_used >= 50:
+                raise HTTPException(status_code=402, detail="Trial limit reached. Please upgrade to Pro to view more properties.")
+            # Increment usage
+            db.execute(text("UPDATE user_subscriptions SET property_searches_used = property_searches_used + 1 WHERE user_id = :uid"), {"uid": current_user.id})
+            db.commit()
+
     # Use explicit columns to avoid ambiguity and facilitate dict conversion
     query = text("""
         SELECT 
@@ -700,13 +710,43 @@ def get_property(
             if note_row:
                 data["notes"] = note_row[0]
             
-            # Fetch Attachments
-            att_query = text("""
-                SELECT filename, file_path FROM client_attachments 
-                WHERE user_id = :user_id AND property_id = :prop_id
-            """)
-            att_rows = db.execute(att_query, {"user_id": current_user.id, "prop_id": prop_id_int}).fetchall()
-            data["attachments"] = [dict(a._mapping) for a in att_rows]
+            # Check Media Monetization (Paywall)
+            has_access = False
+            if current_user.is_superuser:
+                has_access = True
+            else:
+                # Check if user purchased media
+                purchase = db.execute(text("""
+                    SELECT 1 FROM property_media_purchases 
+                    WHERE property_id = (SELECT property_id FROM property_details WHERE parcel_id = :parcel_id) 
+                    AND user_id = :uid
+                """), {"parcel_id": parcel_id, "uid": current_user.id}).fetchone()
+                
+                if purchase:
+                    has_access = True
+                else:
+                    # Check if user is the one who created the task
+                    task = db.execute(text("""
+                        SELECT 1 FROM consultant_tasks 
+                        WHERE property_id = :prop_id AND investor_user_id = :uid AND status = 'approved'
+                    """), {"prop_id": prop_id_int, "uid": current_user.id}).fetchone()
+                    if task:
+                        has_access = True
+
+            if has_access:
+                # Fetch Attachments (Consultant submissions or client uploads)
+                att_query = text("""
+                    SELECT filename, file_path FROM client_attachments 
+                    WHERE property_id = :prop_id
+                """)
+                att_rows = db.execute(att_query, {"prop_id": prop_id_int}).fetchall()
+                data["attachments"] = [dict(a._mapping) for a in att_rows]
+                data["media_unlocked"] = True
+            else:
+                # Stub out attachments and flag as locked
+                data["attachments"] = []
+                data["media_unlocked"] = False
+                
         except Exception as e:
             # Log error but don't fail the whole request
             print(f"Error fetching notes/attachments: {e}")
