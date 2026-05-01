@@ -28,7 +28,7 @@ class PropertyMediaPurchase(Base):
     __tablename__ = "property_media_purchases"
 
     id = Column(Integer, primary_key=True, index=True)
-    property_id = Column(String(36), ForeignKey("property_details.property_id", ondelete="CASCADE"), nullable=False, index=True)
+    property_id = Column(String(36), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     amount_paid = Column(Float, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

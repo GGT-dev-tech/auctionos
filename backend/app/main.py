@@ -107,7 +107,7 @@ async def lifespan(app: FastAPI):
         print(f"Migration error (non-fatal): {e}")
 
     # 2. Auto-create any new tables on startup
-    Base.metadata.create_all(bind=engine)
+    # Removed Base.metadata.create_all(bind=engine) to prevent Alembic conflicts
 
     redis = aioredis.from_url(settings.REDIS_URL)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
