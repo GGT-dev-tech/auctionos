@@ -17,7 +17,7 @@ export const ClientUserProperties: React.FC<Props> = ({ onBack }) => {
     const [modalOpen, setModalOpen] = useState(false);
 
     const [formData, setFormData] = useState<CustomPropertyPayload>({
-        address: '', city: '', state: '', zip_code: '', property_type: '', assessed_value: 0
+        address: '', city: '', state: '', zip_code: '', property_type: '', assessed_value: 0, visibility: 'private'
     });
 
     const loadProperties = async () => {
@@ -69,7 +69,8 @@ export const ClientUserProperties: React.FC<Props> = ({ onBack }) => {
             property_type: '', assessed_value: 0, parcel_id: '', county: '',
             bedrooms: 0, bathrooms: 0, sqft: 0, year_built: 0, amount_due: 0,
             owner_name: '', lot_size: 0, occupancy: '', description: '',
-            tax_amount: 0, tax_year: 0, legal_description: '', zoning: '', num_units: 0
+            tax_amount: 0, tax_year: 0, legal_description: '', zoning: '', num_units: 0,
+            visibility: 'private'
         });
         setModalOpen(true);
     };
@@ -202,6 +203,21 @@ export const ClientUserProperties: React.FC<Props> = ({ onBack }) => {
                             {lists.map(list => (
                                 <option key={list.id} value={list.id}>{list.name}</option>
                             ))}
+                        </TextField>
+                    </div>
+
+                    <div className="mt-2">
+                        <TextField
+                            select
+                            SelectProps={{ native: true }}
+                            label="Visibility"
+                            size="small"
+                            fullWidth
+                            value={formData.visibility || 'private'}
+                            onChange={e => setFormData({...formData, visibility: e.target.value})}
+                        >
+                            <option value="private">Private (Only my company)</option>
+                            <option value="public">Public (Share with network)</option>
                         </TextField>
                     </div>
                     

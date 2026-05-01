@@ -39,34 +39,50 @@ const ClientLayout: React.FC = () => {
     cta?: boolean;
   };
 
-  const navItems: NavItem[] = [
+  const role = user?.role || 'client';
+
+  let navItems: NavItem[] = [
     { icon: 'home', label: 'Home', path: '/client', end: true },
     { icon: 'campaign', label: 'Live Auctions', path: '/client/auctions' },
     { icon: 'location_on', label: 'Property Search', path: '/client/properties' },
     { icon: 'list_alt', label: 'My Lists', path: '/client/lists' },
-    { icon: 'info', label: 'About', path: '/client/about' },
-    { icon: 'contact_support', label: 'Contact', path: '/client/support' },
-    {
-      icon: 'hub',
-      label: 'Connect',
-      dropdown: [
-        { label: 'Training', path: '/client/training' },
-        { label: 'Community', path: '/client/community' },
-        { label: 'Groups', path: '/client/groups' },
-      ],
-    },
-    {
-      icon: 'manage_accounts',
-      label: 'Account Support',
-      dropdown: [
-        { label: 'Billing & Plans', path: '/client/billing' },
-        { label: 'Team & Logs', path: '/client/team' },
-        { label: 'Change Password', path: '/client/change-password' },
-        { label: 'Contact Support', path: '/client/contact-support' },
-        { label: 'Cancel Subscription', path: '/client/cancel-subscription' },
-      ],
-    },
   ];
+
+  if (role === 'manager' || role === 'client') {
+    navItems.push(
+      { icon: 'info', label: 'About', path: '/client/about' },
+      { icon: 'contact_support', label: 'Contact', path: '/client/support' },
+      {
+        icon: 'hub',
+        label: 'Connect',
+        dropdown: [
+          { label: 'Training', path: '/client/training' },
+          { label: 'Community', path: '/client/community' },
+          { label: 'Groups', path: '/client/groups' },
+        ],
+      }
+    );
+  }
+
+  let accountDropdown: DropdownItem[] = [
+    { label: 'Change Password', path: '/client/change-password' },
+    { label: 'Contact Support', path: '/client/contact-support' },
+  ];
+
+  if (role === 'manager' || role === 'client') {
+    accountDropdown.unshift({ label: 'Team & Logs', path: '/client/team' });
+  }
+
+  if (role === 'client') {
+    accountDropdown.unshift({ label: 'Billing & Plans', path: '/client/billing' });
+    accountDropdown.push({ label: 'Cancel Subscription', path: '/client/cancel-subscription' });
+  }
+
+  navItems.push({
+    icon: 'manage_accounts',
+    label: 'Account Support',
+    dropdown: accountDropdown,
+  });
 
   return (
     <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-900 font-display flex flex-col">
@@ -155,7 +171,7 @@ const ClientLayout: React.FC = () => {
               {/* User Info */}
               <div className="hidden md:flex flex-col items-end">
                 <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{userDisplayName}</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">Client</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 capitalize">{role}</span>
               </div>
               <div className="size-9 rounded-full bg-blue-100 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-primary dark:text-blue-300 font-bold cursor-pointer text-sm">
                 {userInitial}

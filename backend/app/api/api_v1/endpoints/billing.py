@@ -110,10 +110,20 @@ def get_storage_usage(
         {"cid": company_id}
     ).fetchone()
     
-    # Calculate dummy usage based on some proxy if no row exists (e.g., number of properties)
-    prop_count = db.execute(text("SELECT COUNT(*) FROM property_details WHERE company_id = :cid"), {"cid": company_id}).scalar()
+    # Calculate usage based on properties in lists and team members
+    prop_count = db.execute(text("""
+        SELECT COUNT(*) FROM list_properties lp 
+        JOIN user_lists ul ON lp.list_id = ul.id 
+        WHERE ul.company_id = :cid
+    """), {"cid": company_id}).scalar() or 0
     
-    bytes_used = usage.total_bytes if usage else (prop_count * 1500 * 1024) # fake 1.5MB per property
+    team_count = db.execute(text("""
+        SELECT COUNT(*) FROM users 
+        WHERE company_id = :cid AND role IN ('manager', 'agent')
+    """), {"cid": company_id}).scalar() or 0
+    
+    # Proxy: 1.5MB per property in lists, 10MB per team member
+    bytes_used = usage.total_bytes if usage else ((prop_count * 1500 * 1024) + (team_count * 10 * 1024 * 1024))
     
     # Fetch subscription to define limit
     sub = db.execute(

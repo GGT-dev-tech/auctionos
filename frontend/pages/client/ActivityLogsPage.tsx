@@ -15,8 +15,14 @@ const ActivityLogsPage: React.FC = () => {
     const [createForm, setCreateForm] = useState({ email: '', password: '', full_name: '', role: 'agent', contact_phone: '' });
     const [creating, setCreating] = useState(false);
 
+    // Edit User Form
+    const [openEdit, setOpenEdit] = useState(false);
+    const [editForm, setEditForm] = useState({ id: '', email: '', password: '', full_name: '', contact_phone: '' });
+    const [updating, setUpdating] = useState(false);
+
     const currentUser = AuthService.getCurrentUser();
     const isClient = currentUser?.role === 'client';
+    const isAgent = currentUser?.role === 'agent';
 
     const loadData = async () => {
         setLoading(true);
@@ -60,6 +66,44 @@ const ActivityLogsPage: React.FC = () => {
             setCreating(false);
         }
     };
+
+    const handleUpdateUser = async () => {
+        setUpdating(true);
+        try {
+            const body = { 
+                full_name: editForm.full_name, 
+                contact_phone: editForm.contact_phone,
+                // Only send password if it was changed
+                ...(editForm.password ? { password: editForm.password } : {}) 
+            };
+            const res = await fetch(`${API_URL}/users/${editForm.id}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.detail || 'Failed to update user');
+            }
+            alert('User updated successfully!');
+            setOpenEdit(false);
+            await loadData();
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    if (isAgent) {
+        return (
+            <div className="p-8 text-center text-slate-500">
+                <span className="material-symbols-outlined text-[48px] mb-4 opacity-50">block</span>
+                <Typography variant="h6">Access Denied</Typography>
+                <p>You do not have permission to view team logs.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 w-full">
@@ -109,7 +153,7 @@ const ActivityLogsPage: React.FC = () => {
                                             <p className="text-xs text-slate-500">{member.email}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right flex items-center gap-3">
                                         <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
                                             member.role === 'client' ? 'bg-purple-100 text-purple-700' :
                                             member.role === 'manager' ? 'bg-amber-100 text-amber-700' :
@@ -117,6 +161,17 @@ const ActivityLogsPage: React.FC = () => {
                                         }`}>
                                             {member.role}
                                         </span>
+                                        {member.role !== 'client' && (
+                                            <button 
+                                                onClick={() => {
+                                                    setEditForm({ id: member.id, email: member.email, full_name: member.full_name || '', contact_phone: member.contact_phone || '', password: '' });
+                                                    setOpenEdit(true);
+                                                }}
+                                                className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-[18px]">edit</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -176,6 +231,23 @@ const ActivityLogsPage: React.FC = () => {
                     <Button onClick={() => setOpenCreate(false)} color="inherit">Cancel</Button>
                     <Button onClick={handleCreateUser} variant="contained" color="primary" disabled={creating || !createForm.email || !createForm.password} className="bg-blue-600 rounded-lg shadow-none">
                         {creating ? 'Creating...' : 'Create User'}
+                    </Button>
+                </div>
+            </Dialog>
+
+            {/* Edit User Dialog */}
+            <Dialog open={openEdit} onClose={() => setOpenEdit(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+                <Typography variant="h6" className="font-bold text-slate-800 dark:text-white mb-4">Edit Team Member</Typography>
+                <div className="space-y-4">
+                    <TextField label="Email Address" disabled fullWidth value={editForm.email} />
+                    <TextField label="Full Name" fullWidth value={editForm.full_name} onChange={e => setEditForm(p => ({...p, full_name: e.target.value}))} />
+                    <TextField label="New Password (leave blank to keep current)" type="password" fullWidth value={editForm.password} onChange={e => setEditForm(p => ({...p, password: e.target.value}))} />
+                    <TextField label="Contact Phone" fullWidth value={editForm.contact_phone} onChange={e => setEditForm(p => ({...p, contact_phone: e.target.value}))} />
+                </div>
+                <div className="flex justify-end gap-2 mt-6">
+                    <Button onClick={() => setOpenEdit(false)} color="inherit">Cancel</Button>
+                    <Button onClick={handleUpdateUser} variant="contained" color="primary" disabled={updating} className="bg-blue-600 rounded-lg shadow-none">
+                        {updating ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </div>
             </Dialog>

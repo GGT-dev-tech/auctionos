@@ -37,7 +37,7 @@ export const Login: React.FC = () => {
         // routeAfterLogin is defined below — call inline to avoid hoisting issues
         if (user.role === 'consultant') {
           navigate('/consultant');
-        } else if (user.role === 'client') {
+        } else if (['client', 'manager', 'agent'].includes(user.role)) {
           navigate('/client');
         } else {
           navigate('/dashboard');
@@ -55,7 +55,7 @@ export const Login: React.FC = () => {
   const routeAfterLogin = (user: any) => {
     if (user.role === 'consultant') {
       navigate('/consultant');
-    } else if (user.role === 'client') {
+    } else if (['client', 'manager', 'agent'].includes(user.role)) {
       navigate('/client');
     } else {
       navigate('/dashboard');

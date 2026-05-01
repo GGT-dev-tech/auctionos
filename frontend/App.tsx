@@ -59,7 +59,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: strin
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     // Redirect each role to its own home
-    if (user.role === 'client') return <Navigate to="/client" replace />;
+    if (['client', 'manager', 'agent'].includes(user.role)) return <Navigate to="/client" replace />;
     if (user.role === 'consultant') return <Navigate to="/consultant" replace />;
     return <Navigate to="/dashboard" replace />;
   }
@@ -70,7 +70,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, allowedRoles?: strin
 const RootRoute: React.FC = () => {
   const user = AuthService.getCurrentUser();
   if (!user) return <Landing />;
-  if (user.role === 'client') return <Navigate to="/client" replace />;
+  if (['client', 'manager', 'agent'].includes(user.role)) return <Navigate to="/client" replace />;
   if (user.role === 'consultant') return <Navigate to="/consultant" replace />;
   return <Navigate to="/dashboard" replace />;
 };
@@ -96,8 +96,8 @@ const App: React.FC = () => {
           <Route path="/connect/tax-systems" element={<TaxSystemsLandingPage />} />
           <Route path="/connect/training" element={<TrainingLandingPage />} />
 
-          {/* Protected Routes (Admin/Agent) */}
-          <Route element={<ProtectedRoute allowedRoles={['admin', 'superuser', 'agent']}><Layout /></ProtectedRoute>}>
+          {/* Protected Routes (Admin) */}
+          <Route element={<ProtectedRoute allowedRoles={['admin', 'superuser']}><Layout /></ProtectedRoute>}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/auctions" element={<AuctionList filters={{}} />} />
             <Route path="/admin/auctions" element={<AdminAuctions />} />
@@ -119,7 +119,7 @@ const App: React.FC = () => {
 
           {/* Client Portal Routes */}
           <Route path="/client" element={
-            <ProtectedRoute allowedRoles={['client']}>
+            <ProtectedRoute allowedRoles={['client', 'manager', 'agent']}>
               <CompanyProvider>
                 <ClientLayout />
               </CompanyProvider>
