@@ -25,6 +25,7 @@ class PropertyDetails(Base):
     property_type = Column(String(100), nullable=True)
     status = Column(String(100), nullable=True, default="active")
     visibility = Column(String(50), nullable=True, default="public", index=True)
+    public_photos = Column(Text, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     
