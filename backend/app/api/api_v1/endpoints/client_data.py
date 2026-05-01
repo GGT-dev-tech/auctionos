@@ -652,8 +652,8 @@ def get_list_properties(
             auction = db.execute(text("""
                 SELECT 
                     pah.auction_date,
-                    ae.list_link as auction_url,
-                    ae.register_link as register_link,
+                    COALESCE(pah.list_link, ae.list_link) as auction_url,
+                    COALESCE(pah.info_link, ae.register_link) as register_link,
                     ae.status as auction_status,
                     ae.name as case_number
                 FROM property_auction_history pah
