@@ -1572,6 +1572,11 @@ const ClientLists: React.FC = () => {
                                                         <span className="material-symbols-outlined text-[14px] text-red-500">location_on</span>
                                                         <span className="truncate">{prop.address || 'No Address Listed'}</span>
                                                     </div>
+                                                    <span className="opacity-30">|</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-[14px] text-emerald-500">map</span>
+                                                        <span className="truncate text-emerald-600 dark:text-emerald-400">{prop.county || 'Unknown County'}</span>
+                                                    </div>
                                                 </div>
 
                                                 {/* Description Field Requested by User */}

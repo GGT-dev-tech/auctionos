@@ -103,6 +103,8 @@ def log_activity(db: Session, user: User, action: str, resource: str, details: s
         db.commit()
     except Exception as e:
         db.rollback()
+        import logging
+        logging.getLogger(__name__).error(f"Failed to log activity: {e}")
 
 # --- Endpoints ---
 

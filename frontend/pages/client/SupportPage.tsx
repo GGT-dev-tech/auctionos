@@ -197,6 +197,8 @@ const ClientSupportPage: React.FC = () => {
       </div>
       ) : activeTab === 'security' ? (
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+        <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Change Password</h2>
+        <p className="text-sm text-slate-500 mb-6">Update your account password to keep your data secure.</p>
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Current Password</label>
