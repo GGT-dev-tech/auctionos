@@ -307,7 +307,6 @@ def create_custom_property(
         legal_description=property_in.legal_description,
         zoning=property_in.zoning,
         num_units=property_in.num_units,
-        availability_status="available",
         company_id=current_user.active_company_id if property_in.visibility == "private" else None,
         created_by_user_id=current_user.id
     )
