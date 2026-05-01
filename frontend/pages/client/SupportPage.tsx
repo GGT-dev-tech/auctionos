@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL, getHeaders } from '../../services/httpClient';
-import AuthService from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 
 const ClientSupportPage: React.FC = () => {
   const currentUser = AuthService.getCurrentUser();

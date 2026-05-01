@@ -141,7 +141,7 @@ def create_client_list(
     db.refresh(new_list)
     
     user_identifier = current_user.full_name or current_user.email
-    log_activity(db, current_user, "create", "folder", f"Usuário {user_identifier} criou a pasta '{new_list.name}'")
+    log_activity(db, current_user, "create", "folder", f"User {user_identifier} created the folder '{new_list.name}'")
     
     return {
         "id": new_list.id,
@@ -343,7 +343,7 @@ def create_custom_property(
         db.commit()
 
     user_identifier = current_user.full_name or current_user.email
-    log_activity(db, current_user, "create", "custom_property", f"Usuário {user_identifier} criou a propriedade '{new_prop.address or new_prop.parcel_id}' na pasta '{lst.name}'")
+    log_activity(db, current_user, "create", "custom_property", f"User {user_identifier} created the property '{new_prop.address or new_prop.parcel_id}' in folder '{lst.name}'")
 
     return {"id": new_prop.id, "property_id": new_prop.property_id, "list_id": lst.id, "list_name": lst.name}
 
@@ -472,7 +472,7 @@ def update_client_list(
 
     user_identifier = current_user.full_name or current_user.email
     if list_in.name is not None and not lst.is_favorite_list:
-        log_activity(db, current_user, "update", "folder", f"Usuário {user_identifier} renomeou a pasta para '{list_in.name}'")
+        log_activity(db, current_user, "update", "folder", f"User {user_identifier} renamed the folder to '{list_in.name}'")
 
     db.commit()
     count = db.query(client_list_property).filter(client_list_property.c.list_id == lst.id).count()
@@ -527,7 +527,7 @@ def delete_client_list(
     db.commit()
     
     user_identifier = current_user.full_name or current_user.email
-    log_activity(db, current_user, "delete", "folder", f"Usuário {user_identifier} excluiu a pasta '{name}'")
+    log_activity(db, current_user, "delete", "folder", f"User {user_identifier} deleted the folder '{name}'")
     return {"ok": True}
 
 @router.post("/lists/{list_id}/properties/{property_id}")
@@ -557,7 +557,7 @@ def add_property_to_list(
         lst.properties.append(prop)
         db.commit()
         user_identifier = current_user.full_name or current_user.email
-        log_activity(db, current_user, "create", "list_property", f"Usuário {user_identifier} adicionou a propriedade '{prop.address or prop.parcel_id}' à pasta '{lst.name}'")
+        log_activity(db, current_user, "create", "list_property", f"User {user_identifier} added the property '{prop.address or prop.parcel_id}' to folder '{lst.name}'")
     return {"ok": True}
 
 STATE_MAPPING = {
@@ -776,7 +776,7 @@ def remove_property_from_list(
     if prop in lst.properties:
         lst.properties.remove(prop)
         user_identifier = current_user.full_name or current_user.email
-        log_activity(db, current_user, "delete", "list_property", f"Usuário {user_identifier} excluiu a propriedade '{prop.address or prop.parcel_id}' da pasta '{lst.name}'")
+        log_activity(db, current_user, "delete", "list_property", f"User {user_identifier} removed the property '{prop.address or prop.parcel_id}' from folder '{lst.name}'")
         db.commit()
     return {"ok": True}
 

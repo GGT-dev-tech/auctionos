@@ -1188,7 +1188,6 @@ const ClientLists: React.FC = () => {
                                                     <span className="material-symbols-outlined text-[12px]">gavel</span>
                                                 </div>
                                             )}
-                                            <>
                                                 <span className="flex-1 text-sm font-medium truncate">{list.name}</span>
                                                     {list.has_upcoming_auction && (
                                                         <span className="text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded-md font-black">
@@ -1212,8 +1211,6 @@ const ClientLists: React.FC = () => {
                                                         </IconButton>
                                                     </div>
                                                     <span className={`text-xs ${selectedListId === list.id ? 'text-blue-100' : 'text-slate-400'}`}>{list.property_count}</span>
-                                                </>
-                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -1722,6 +1719,17 @@ const ClientLists: React.FC = () => {
                             />
                         </div>
                     )}
+                    <div className="flex justify-end gap-3 mt-6">
+                        <Button color="inherit" onClick={() => setOpenModal(false)}>Cancel</Button>
+                        <Button
+                            variant="contained"
+                            onClick={handleCreateList}
+                            disabled={creationMode === 'custom' ? !newListName : !selectedState}
+                            className="bg-blue-600 rounded-lg shadow-none"
+                        >
+                            Create
+                        </Button>
+                    </div>
                 </div>
             </Dialog>
 
@@ -1787,20 +1795,6 @@ const ClientLists: React.FC = () => {
                             disabled={editFolderType === 'custom' ? !editFolderName : !editFolderState}
                         >
                             Save Changes
-                        </Button>
-                    </div>
-                </div>
-            </Dialog>
-
-                    <div className="flex justify-end gap-3 mt-6">
-                        <Button color="inherit" onClick={() => setOpenModal(false)}>Cancel</Button>
-                        <Button
-                            variant="contained"
-                            onClick={handleCreateList}
-                            disabled={creationMode === 'custom' ? !newListName : !selectedState}
-                            className="bg-blue-600 rounded-lg shadow-none"
-                        >
-                            Create
                         </Button>
                     </div>
                 </div>
