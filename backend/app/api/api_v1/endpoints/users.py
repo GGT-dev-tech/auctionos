@@ -176,16 +176,6 @@ def delete_user(
     db.commit()
     return user
 
-@router.get("/{user_id}/logs")
-def read_user_logs(
-    user_id: int,
-    db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
-    current_user: User = Depends(deps.get_current_active_superuser),
-) -> Any:
-    return db.query(ActivityLog).filter(ActivityLog.user_id == user_id).order_by(ActivityLog.created_at.desc()).offset(skip).limit(limit).all()
-
 @router.get("/team/logs")
 def read_team_logs(
     db: Session = Depends(deps.get_db),
@@ -238,6 +228,16 @@ def read_team_logs(
         result.append(d)
         
     return result
+
+@router.get("/{user_id}/logs")
+def read_user_logs(
+    user_id: int,
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    return db.query(ActivityLog).filter(ActivityLog.user_id == user_id).order_by(ActivityLog.created_at.desc()).offset(skip).limit(limit).all()
 
 @router.get("/logs/all")
 def read_all_logs(

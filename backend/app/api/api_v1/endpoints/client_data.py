@@ -650,18 +650,16 @@ def get_list_properties(
             # Using LEFT JOIN and correct column name 'auction_id' to prevent crashes
             auction = db.execute(text("""
                 SELECT 
-                    pah.amount_due, 
-                    pah.assessed_value,
                     pah.auction_date,
-                    ae.url as auction_url,
+                    ae.list_link as auction_url,
                     ae.status as auction_status,
-                    ae.case_number
+                    ae.name as case_number
                 FROM property_auction_history pah
                 LEFT JOIN auction_events ae ON pah.auction_id = ae.id
-                WHERE pah.property_id = :prop_id
+                WHERE pah.property_id = :parcel_id OR pah.property_id = :prop_id_str
                 ORDER BY pah.auction_date ASC
                 LIMIT 1
-            """), {"prop_id": p.id}).fetchone()
+            """), {"parcel_id": p.parcel_id or "", "prop_id_str": str(p.id)}).fetchone()
             
             # Fetch Property Notes
             note = db.query(ClientNote).filter(
@@ -701,14 +699,15 @@ def get_list_properties(
                 "is_auction_upcoming": is_auction_upcoming,
                 "days_until_auction": days_until_auction,
                 "note_content": note.notes if getattr(note, 'notes', None) else "",
-                "amount_due": auction.amount_due if auction and auction.amount_due else p.amount_due,
-                "assessed_value": auction.assessed_value if auction and auction.assessed_value else p.assessed_value,
+                "amount_due": p.amount_due,
+                "assessed_value": p.assessed_value,
                 "occupancy": p.occupancy,
                 "latitude": p.latitude,
                 "longitude": p.longitude
             }
             results.append(prop_dict)
         except Exception as e:
+            db.rollback()
             print(f"Error processing property {p.id}: {str(e)}")
             # Fallback basics to ensure it shows up even if auction logic fails
             results.append({
