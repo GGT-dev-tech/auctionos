@@ -120,12 +120,26 @@ def update_user(
     db: Session = Depends(deps.get_db),
     user_id: int,
     user_in: UserUpdate,
-    current_user: User = Depends(deps.get_current_active_superuser),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # RBAC logic
+    if not current_user.is_superuser:
+        if current_user.role == "client":
+            # Client can update their own managers/agents
+            if user.company_id != current_user.active_company_id and user.created_by_id != current_user.id:
+                raise HTTPException(status_code=403, detail="Not authorized to update this user.")
+        elif current_user.role == "manager":
+            # Manager can only update agents in their company
+            if user.company_id != current_user.company_id or user.role != "agent":
+                raise HTTPException(status_code=403, detail="Not authorized to update this user.")
+        else:
+            if user.id != current_user.id:
+                raise HTTPException(status_code=403, detail="Not authorized.")
+
     if user_in.email is not None:
         user.email = user_in.email.strip().lower()
     if user_in.password is not None:
@@ -135,11 +149,16 @@ def update_user(
     if user_in.is_active is not None:
         user.is_active = user_in.is_active
     if user_in.role is not None:
+        if not current_user.is_superuser and user_in.role == "superuser":
+             raise HTTPException(status_code=403, detail="Cannot promote to superuser")
         user.role = user_in.role
     
     db.add(user)
     db.commit()
     db.refresh(user)
+    
+    log_activity(db, current_user.id, "update_user", "User", user.id, {"updated_fields": user_in.dict(exclude_unset=True)}, company_id=getattr(current_user, 'active_company_id', current_user.company_id))
+
     return user
 
 class PasswordUpdate(BaseModel):
@@ -167,13 +186,28 @@ def delete_user(
     *,
     db: Session = Depends(deps.get_db),
     user_id: int,
-    current_user: User = Depends(deps.get_current_active_superuser),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # RBAC logic
+    if not current_user.is_superuser:
+        if current_user.role == "client":
+            if user.company_id != current_user.active_company_id and user.created_by_id != current_user.id:
+                raise HTTPException(status_code=403, detail="Not authorized.")
+        elif current_user.role == "manager":
+             if user.company_id != current_user.company_id or user.role != "agent":
+                raise HTTPException(status_code=403, detail="Not authorized.")
+        else:
+            raise HTTPException(status_code=403, detail="Not authorized.")
+
     db.delete(user)
     db.commit()
+    
+    log_activity(db, current_user.id, "delete_user", "User", user_id, {"deleted_email": user.email}, company_id=getattr(current_user, 'active_company_id', current_user.company_id))
+    
     return user
 
 @router.get("/team/logs")

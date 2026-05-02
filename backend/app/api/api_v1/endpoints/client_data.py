@@ -13,6 +13,7 @@ from app.models.property import PropertyDetails
 from pydantic import BaseModel
 from app.models.activity_log import ActivityLog
 from app.models.user import User
+from app.services.activity import log_activity
 
 router = APIRouter()
 
@@ -90,22 +91,6 @@ class CustomPropertyCreate(BaseModel):
     num_units: Optional[int] = None
     target_list_id: Optional[int] = None
 
-def log_activity(db: Session, user: User, action: str, resource: str, details: str):
-    company_id = getattr(user, 'company_id', None) or getattr(user, 'active_company_id', None)
-    try:
-        log = ActivityLog(
-            user_id=user.id,
-            company_id=company_id,
-            action=action,
-            resource=resource,
-            details=details
-        )
-        db.add(log)
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        import logging
-        logging.getLogger(__name__).error(f"Failed to log activity: {e}")
 
 # --- Endpoints ---
 
@@ -144,7 +129,7 @@ def create_client_list(
     db.refresh(new_list)
     
     user_identifier = current_user.full_name or current_user.email
-    log_activity(db, current_user, "create", "folder", f"User {user_identifier} created the folder '{new_list.name}'")
+    log_activity(db, current_user.id, "create_folder", "ClientList", new_list.id, {"name": new_list.name}, company_id=target_company)
     
     return {
         "id": new_list.id,
@@ -347,7 +332,7 @@ def create_custom_property(
         db.commit()
 
     user_identifier = current_user.full_name or current_user.email
-    log_activity(db, current_user, "create", "custom_property", f"User {user_identifier} created the property '{new_prop.address or new_prop.parcel_id}' in folder '{lst.name}'")
+    log_activity(db, current_user.id, "create_property", "PropertyDetails", new_prop.id, {"address": new_prop.address, "list": lst.name}, company_id=current_user.active_company_id)
 
     return {"id": new_prop.id, "property_id": new_prop.property_id, "list_id": lst.id, "list_name": lst.name}
 
@@ -476,7 +461,7 @@ def update_client_list(
 
     user_identifier = current_user.full_name or current_user.email
     if list_in.name is not None and not lst.is_favorite_list:
-        log_activity(db, current_user, "update", "folder", f"User {user_identifier} renamed the folder to '{list_in.name}'")
+        log_activity(db, current_user.id, "update_folder", "ClientList", lst.id, {"new_name": list_in.name}, company_id=getattr(current_user, 'active_company_id', current_user.company_id))
 
     db.commit()
     count = db.query(client_list_property).filter(client_list_property.c.list_id == lst.id).count()
@@ -531,7 +516,7 @@ def delete_client_list(
     db.commit()
     
     user_identifier = current_user.full_name or current_user.email
-    log_activity(db, current_user, "delete", "folder", f"User {user_identifier} deleted the folder '{name}'")
+    log_activity(db, current_user.id, "delete_folder", "ClientList", list_id, {"name": name}, company_id=getattr(current_user, 'active_company_id', current_user.company_id))
     return {"ok": True}
 
 @router.post("/lists/{list_id}/properties/{property_id}")
@@ -561,7 +546,7 @@ def add_property_to_list(
         lst.properties.append(prop)
         db.commit()
         user_identifier = current_user.full_name or current_user.email
-        log_activity(db, current_user, "create", "list_property", f"User {user_identifier} added the property '{prop.address or prop.parcel_id}' to folder '{lst.name}'")
+        log_activity(db, current_user.id, "add_property_to_list", "PropertyDetails", prop.id, {"address": prop.address, "list": lst.name}, company_id=getattr(current_user, 'active_company_id', current_user.company_id))
     return {"ok": True}
 
 STATE_MAPPING = {
@@ -780,7 +765,7 @@ def remove_property_from_list(
     if prop in lst.properties:
         lst.properties.remove(prop)
         user_identifier = current_user.full_name or current_user.email
-        log_activity(db, current_user, "delete", "list_property", f"User {user_identifier} removed the property '{prop.address or prop.parcel_id}' from folder '{lst.name}'")
+        log_activity(db, current_user.id, "remove_property_from_list", "PropertyDetails", prop.id, {"address": prop.address, "list": lst.name}, company_id=getattr(current_user, 'active_company_id', current_user.company_id))
         db.commit()
     return {"ok": True}
 

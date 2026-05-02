@@ -11,7 +11,8 @@ def log_activity(
     entity_type: Optional[str] = None,
     entity_id: Optional[str] = None,
     metadata: Optional[Dict[str, Any]] = None,
-    ip_address: Optional[str] = None
+    ip_address: Optional[str] = None,
+    company_id: Optional[int] = None
 ):
     """
     Centralized function to log user activity to the database.
@@ -19,6 +20,7 @@ def log_activity(
     try:
         log_entry = ActivityLog(
             user_id=user_id,
+            company_id=company_id,
             action=action,
             entity_type=entity_type,
             entity_id=str(entity_id) if entity_id is not None else None,
