@@ -332,7 +332,7 @@ def create_custom_property(
         db.commit()
 
     user_identifier = current_user.full_name or current_user.email
-    log_activity(db, current_user.id, "create_property", "PropertyDetails", new_prop.id, {"address": new_prop.address, "list": lst.name}, company_id=current_user.active_company_id)
+    log_activity(db, current_user.id, "create_property", "PropertyDetails", new_prop.id, {"address": new_prop.address, "list": lst.name}, company_id=getattr(current_user, 'active_company_id', current_user.company_id))
 
     return {"id": new_prop.id, "property_id": new_prop.property_id, "list_id": lst.id, "list_name": lst.name}
 
@@ -444,9 +444,20 @@ def update_client_list(
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Update a list's name."""
-    lst = db.query(ClientList).filter(ClientList.id == list_id, ClientList.user_id == current_user.id).first()
+    lst = db.query(ClientList).filter(ClientList.id == list_id).first()
     if not lst:
-        raise HTTPException(status_code=404, detail="List not found or not owned by you")
+        raise HTTPException(status_code=404, detail="List not found")
+    
+    # RBAC logic
+    if current_user.role in ['manager', 'agent']:
+        if lst.company_id != current_user.company_id:
+            raise HTTPException(status_code=403, detail="Not authorized to edit this folder")
+    else:
+        if lst.user_id != current_user.id and not lst.is_broadcasted:
+            co = db.execute(text("SELECT id FROM companies WHERE id = :cid AND user_id = :uid"), {"cid": lst.company_id, "uid": current_user.id}).fetchone()
+            if not co:
+                raise HTTPException(status_code=403, detail="Not authorized to edit this folder")
+
     if lst.is_favorite_list and list_in.name:
         raise HTTPException(status_code=400, detail="Cannot rename the Favorites list")
     
@@ -581,18 +592,29 @@ def add_property_to_standard_list(
     list_name = STATE_MAPPING.get(normalized_state, raw_state.strip().title())
 
     # Always ensure the property goes into its specific State parent list
+    # If Agent/Manager, prioritize looking for company list. If Client, use their company or private.
+    target_company = company_id or getattr(current_user, 'active_company_id', None) or getattr(current_user, 'company_id', None)
+    
     lst = db.query(ClientList).filter(
-        ClientList.user_id == current_user.id,
         ClientList.name == list_name,
         ClientList.tags == "STANDARD",
-        ClientList.company_id == company_id
+        ClientList.company_id == target_company
     ).first()
+
+    if not lst and not target_company:
+        # Fallback for truly private lists if no company context
+        lst = db.query(ClientList).filter(
+            ClientList.user_id == current_user.id,
+            ClientList.name == list_name,
+            ClientList.tags == "STANDARD",
+            ClientList.company_id == None
+        ).first()
 
     if not lst:
         lst = ClientList(
             name=list_name, 
             user_id=current_user.id, 
-            company_id=company_id,
+            company_id=target_company,
             is_favorite_list=False, 
             is_broadcasted=False, 
             tags="STANDARD"
@@ -604,6 +626,7 @@ def add_property_to_standard_list(
     if prop not in lst.properties:
         lst.properties.append(prop)
         db.commit()
+        log_activity(db, current_user.id, "add_property_to_standard_list", "PropertyDetails", prop.id, {"address": prop.address, "list": lst.name}, company_id=target_company)
     
     # Return the new list info so frontend can react if needed
     count = db.query(client_list_property).filter(client_list_property.c.list_id == lst.id).count()
@@ -782,14 +805,22 @@ def toggle_favorite(
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
 
+    target_company = company_id or getattr(current_user, 'active_company_id', None) or getattr(current_user, 'company_id', None)
+    
     fav_list = db.query(ClientList).filter(
-        ClientList.user_id == current_user.id, 
         ClientList.is_favorite_list == True,
-        ClientList.company_id == company_id
+        ClientList.company_id == target_company
     ).first()
     
+    if not fav_list and not target_company:
+         fav_list = db.query(ClientList).filter(
+            ClientList.user_id == current_user.id,
+            ClientList.is_favorite_list == True,
+            ClientList.company_id == None
+        ).first()
+    
     if not fav_list:
-        fav_list = ClientList(name="Favorites", user_id=current_user.id, is_favorite_list=True, company_id=company_id)
+        fav_list = ClientList(name="Favorites", user_id=current_user.id, is_favorite_list=True, company_id=target_company)
         db.add(fav_list)
         db.commit()
         db.refresh(fav_list)
@@ -802,6 +833,7 @@ def toggle_favorite(
         is_favorite = True
 
     db.commit()
+    log_activity(db, current_user.id, "toggle_favorite", "PropertyDetails", prop.id, {"address": prop.address, "is_favorite": is_favorite}, company_id=target_company)
     return {"is_favorite": is_favorite}
 
 @router.get("/favorites")
@@ -811,11 +843,19 @@ def get_favorites(
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Get all property IDs that are favorited by the user (company scoped)."""
+    target_company = company_id or getattr(current_user, 'active_company_id', None) or getattr(current_user, 'company_id', None)
+    
     fav_list = db.query(ClientList).filter(
-        ClientList.user_id == current_user.id, 
         ClientList.is_favorite_list == True,
-        ClientList.company_id == company_id
+        ClientList.company_id == target_company
     ).first()
+    
+    if not fav_list and not target_company:
+        fav_list = db.query(ClientList).filter(
+            ClientList.user_id == current_user.id, 
+            ClientList.is_favorite_list == True,
+            ClientList.company_id == None
+        ).first()
     
     if not fav_list:
         return []

@@ -131,8 +131,14 @@ def update_user(
     # RBAC logic
     if not current_user.is_superuser:
         if current_user.role == "client":
-            # Client can update their own managers/agents
-            if user.company_id != current_user.active_company_id and user.created_by_id != current_user.id:
+            # Client can update their own managers/agents or users in companies they own
+            can_update = user.created_by_id == current_user.id
+            if not can_update and user.company_id:
+                co = db.execute(text("SELECT id FROM companies WHERE id = :cid AND user_id = :uid"), {"cid": user.company_id, "uid": current_user.id}).fetchone()
+                if co:
+                    can_update = True
+            
+            if not can_update:
                 raise HTTPException(status_code=403, detail="Not authorized to update this user.")
         elif current_user.role == "manager":
             # Manager can only update agents in their company
@@ -197,7 +203,13 @@ def delete_user(
     # RBAC logic
     if not current_user.is_superuser:
         if current_user.role == "client":
-            if user.company_id != current_user.active_company_id and user.created_by_id != current_user.id:
+            can_delete = user.created_by_id == current_user.id
+            if not can_delete and user.company_id:
+                co = db.execute(text("SELECT id FROM companies WHERE id = :cid AND user_id = :uid"), {"cid": user.company_id, "uid": current_user.id}).fetchone()
+                if co:
+                    can_delete = True
+            
+            if not can_delete:
                 raise HTTPException(status_code=403, detail="Not authorized.")
         elif current_user.role == "manager":
              if user.company_id != current_user.company_id or user.role != "agent":
@@ -222,15 +234,16 @@ def read_team_logs(
     """Fetch activity logs for a Client's or Manager's team"""
     from sqlalchemy import text
     if current_user.role == "client":
-        # Clients can see logs of all their company's managers and agents, plus their own
+        # Clients can see logs of all their companies' managers and agents, plus their own
         query = text("""
             SELECT al.*, u.email, u.full_name, u.role
             FROM activity_logs al
             JOIN users u ON u.id = al.user_id
-            WHERE al.company_id = :cid OR u.id = :uid
+            LEFT JOIN companies c ON c.id = al.company_id
+            WHERE c.user_id = :uid OR u.id = :uid OR al.user_id = :uid
             ORDER BY al.created_at DESC OFFSET :skip LIMIT :limit
         """)
-        params = {"cid": current_user.active_company_id, "uid": current_user.id, "skip": skip, "limit": limit}
+        params = {"uid": current_user.id, "skip": skip, "limit": limit}
     elif current_user.role == "manager":
         # Managers can see logs of agents in their company, plus their own
         query = text("""
