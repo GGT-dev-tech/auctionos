@@ -52,13 +52,14 @@ class CountyContactService:
         Retrieves filtered contacts for a specific state (ABBR) and county.
         First tries the database, then falls back to CSV.
         """
-        state_code = state_code.strip().upper()
+        state_code = state_code.strip().lower()
         county_name = county_name.strip().lower()
 
         if db:
+            # Query with ILIKE or force lowercase to match our migrated data
             db_contacts = db.query(CountyContact).filter(
-                CountyContact.state == state_code,
-                CountyContact.county == county_name
+                CountyContact.state.ilike(state_code),
+                CountyContact.county.ilike(county_name)
             ).all()
             if db_contacts:
                 return [{"name": c.name, "phone": c.phone or "", "url": c.url or ""} for c in db_contacts]
@@ -79,10 +80,12 @@ class CountyContactService:
 
     @staticmethod
     def get_counties_for_state(state_code: str, db: Optional[Session] = None) -> List[str]:
-        state_code = state_code.strip().upper()
+        state_code = state_code.strip().lower()
         
         if db:
-            db_counties = db.query(CountyContact.county).filter(CountyContact.state == state_code).distinct().all()
+            db_counties = db.query(CountyContact.county).filter(
+                CountyContact.state.ilike(state_code)
+            ).distinct().all()
             if db_counties:
                 return sorted([c[0].title() for c in db_counties if c[0]])
         
@@ -93,9 +96,11 @@ class CountyContactService:
 
     @staticmethod
     def get_state_contact(state_code: str, db: Optional[Session] = None) -> Optional[Dict[str, str]]:
-        state_code = state_code.strip().upper()
+        state_code = state_code.strip().lower()
         if db:
-            state_contact = db.query(StateContact).filter(StateContact.state == state_code).first()
+            state_contact = db.query(StateContact).filter(
+                StateContact.state.ilike(state_code)
+            ).first()
             if state_contact:
                 return {"state": state_contact.state, "url": state_contact.url or ""}
         return None

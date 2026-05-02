@@ -648,20 +648,20 @@ def get_list_properties(
     for p in lst.properties:
         try:
             # Get NEAREST auction and include links from the auction_events table
-            # Using LEFT JOIN and correct column name 'auction_id' to prevent crashes
+            # Using LEFT JOIN and matching on the UUID property_id
             auction = db.execute(text("""
                 SELECT 
                     pah.auction_date,
-                    COALESCE(pah.list_link, ae.list_link) as auction_url,
-                    COALESCE(pah.info_link, ae.register_link) as register_link,
+                    COALESCE(pah.list_link, ae.list_link) as auction_list_link,
+                    COALESCE(pah.info_link, ae.register_link) as auction_info_link,
                     ae.status as auction_status,
                     ae.name as case_number
                 FROM property_auction_history pah
                 LEFT JOIN auction_events ae ON pah.auction_id = ae.id
-                WHERE pah.property_id = :parcel_id OR pah.property_id = :prop_id_str
+                WHERE pah.property_id = :property_id
                 ORDER BY pah.auction_date ASC
                 LIMIT 1
-            """), {"parcel_id": p.parcel_id or "", "prop_id_str": str(p.id)}).fetchone()
+            """), {"property_id": p.property_id}).fetchone()
             
             # Fetch Property Notes
             note = db.query(ClientNote).filter(
@@ -696,8 +696,8 @@ def get_list_properties(
                 "property_type": p.property_type,
                 "auction_name": auction.case_number if auction else None,
                 "auction_date": str(auction.auction_date) if auction and auction.auction_date else None,
-                "auction_info_link": getattr(auction, "register_link", None) if auction else None,
-                "auction_list_link": auction.auction_url if auction else None,
+                "auction_info_link": auction.auction_info_link if auction else None,
+                "auction_list_link": auction.auction_list_link if auction else None,
                 "is_auction_upcoming": is_auction_upcoming,
                 "days_until_auction": days_until_auction,
                 "note_content": note.notes if getattr(note, 'notes', None) else "",
