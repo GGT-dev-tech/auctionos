@@ -30,16 +30,18 @@ def read_team_users(
     current_user: User = Depends(allow_managers),
 ) -> Any:
     if current_user.role == "client":
+        # Include users created by the client OR users belonging to their active company
         return db.query(User).filter(
             (User.created_by_id == current_user.id) | 
-            (User.id == current_user.id)
+            (User.id == current_user.id) |
+            (User.company_id == current_user.active_company_id if current_user.active_company_id else False)
         ).all()
     elif current_user.role == "manager":
         return db.query(User).filter(
-            (User.company_id == current_user.company_id) & (User.role == "agent")
+            (User.company_id == current_user.company_id) | (User.id == current_user.id)
         ).all()
     else:
-        return []
+        return [current_user]
 
 @router.post("/", response_model=UserSchema)
 def create_user(
