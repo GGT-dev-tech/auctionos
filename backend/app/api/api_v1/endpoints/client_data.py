@@ -203,7 +203,8 @@ def get_client_lists(
             FROM client_list_property clp
             JOIN property_details p ON p.id = clp.property_id
             JOIN property_auction_history pah ON pah.property_id = p.property_id
-            WHERE clp.list_id = :list_id AND pah.auction_date >= CURRENT_DATE
+            LEFT JOIN auction_events ae ON pah.auction_id = ae.id
+            WHERE clp.list_id = :list_id AND COALESCE(pah.auction_date, ae.auction_date) >= CURRENT_DATE
         """)
         upcoming_count = db.execute(auction_q, {"list_id": lst.id}).scalar() or 0
         results.append({
@@ -651,14 +652,14 @@ def get_list_properties(
             # Using LEFT JOIN and matching on the UUID property_id
             auction = db.execute(text("""
                 SELECT 
-                    pah.auction_date,
+                    COALESCE(pah.auction_date, ae.auction_date) as auction_date,
                     COALESCE(pah.list_link, ae.list_link) as auction_list_link,
                     COALESCE(pah.info_link, ae.register_link) as auction_info_link,
                     ae.status as auction_status,
                     ae.name as case_number
                 FROM property_auction_history pah
                 LEFT JOIN auction_events ae ON pah.auction_id = ae.id
-                WHERE pah.property_id = :property_id
+                WHERE pah.property_id = :property_id AND COALESCE(pah.auction_date, ae.auction_date) >= CURRENT_DATE
                 ORDER BY pah.auction_date ASC
                 LIMIT 1
             """), {"property_id": p.property_id}).fetchone()
