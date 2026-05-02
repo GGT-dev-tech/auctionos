@@ -64,6 +64,8 @@ def create_company(
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """Creates a new company for the current user."""
+    if current_user.role not in ["client", "admin", "superuser"]:
+        raise HTTPException(status_code=403, detail="Only clients can create companies.")
     row = db.execute(
         text("""
             INSERT INTO companies (user_id, name, address, contact)

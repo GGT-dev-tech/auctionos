@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCompany } from '../context/CompanyContext';
 import { Company } from '../services/company.service';
+import { AuthService } from '../services/auth.service';
 
 interface CompanySelectorProps {
     compact?: boolean;
@@ -121,6 +122,9 @@ export const CompanySelector: React.FC<CompanySelectorProps> = ({ compact = fals
     const [editingCompany, setEditingCompany] = useState<Company | undefined>(undefined);
     const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
+    const currentUser = AuthService.getCurrentUser();
+    const canManage = currentUser?.role === 'client' || currentUser?.role === 'admin' || currentUser?.role === 'superuser';
+
     // Only show skeleton on true first load with no cached data at all
     if (loading && companies.length === 0) {
         return (
@@ -176,20 +180,24 @@ export const CompanySelector: React.FC<CompanySelectorProps> = ({ compact = fals
                                             {c.is_active && (
                                                 <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" title="Active" />
                                             )}
-                                            <button
-                                                title="Edit"
-                                                onClick={() => { setEditingCompany(c); setShowForm(true); setOpen(false); }}
-                                                className="p-1 text-slate-300 hover:text-blue-500 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-[14px]">edit</span>
-                                            </button>
-                                            <button
-                                                title="Delete"
-                                                onClick={() => setConfirmDelete(c.id)}
-                                                className="p-1 text-slate-300 hover:text-red-500 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-[14px]">delete</span>
-                                            </button>
+                                            {canManage && (
+                                                <>
+                                                    <button
+                                                        title="Edit"
+                                                        onClick={() => { setEditingCompany(c); setShowForm(true); setOpen(false); }}
+                                                        className="p-1 text-slate-300 hover:text-blue-500 transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[14px]">edit</span>
+                                                    </button>
+                                                    <button
+                                                        title="Delete"
+                                                        onClick={() => setConfirmDelete(c.id)}
+                                                        className="p-1 text-slate-300 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[14px]">delete</span>
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 ))
@@ -197,13 +205,15 @@ export const CompanySelector: React.FC<CompanySelectorProps> = ({ compact = fals
                         </div>
 
                         {/* Create New */}
-                        <button
-                            onClick={() => { setEditingCompany(undefined); setShowForm(true); setOpen(false); }}
-                            className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-primary hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                        >
-                            <span className="material-symbols-outlined text-[16px]">add_circle</span>
-                            Create New Company
-                        </button>
+                        {canManage && (
+                            <button
+                                onClick={() => { setEditingCompany(undefined); setShowForm(true); setOpen(false); }}
+                                className="w-full flex items-center gap-2 px-4 py-3 text-sm font-bold text-primary hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                                Create New Company
+                            </button>
+                        )}
                     </div>
                 )}
             </div>

@@ -20,6 +20,7 @@ class UserCreate(BaseModel):
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
     role: Optional[str] = "client"
+    company_id: Optional[int] = None
 
 
 class UserUpdate(BaseModel):

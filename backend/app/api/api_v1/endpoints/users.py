@@ -82,6 +82,7 @@ def create_user(
         is_superuser=user_in.is_superuser if current_user.is_superuser else False,
         role=target_role,
         company_id=target_company,
+        active_company_id=target_company,  # Auto-activate company for new team members
         created_by_id=current_user.id
     )
     db.add(user)
