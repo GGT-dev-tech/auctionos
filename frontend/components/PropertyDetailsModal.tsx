@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from './Modal';
+import { useCompany } from '../context/CompanyContext';
 import { PropertyDetails as Property } from '../types';
 import { PropertyService } from '../services/property.service';
 import { getStreetViewUrl } from '../utils/maps';
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export const PropertyDetailsModal: React.FC<Props> = ({ property: initialProperty, isOpen, onClose, onUpdate }) => {
+    const { activeCompany } = useCompany();
     const [property, setProperty] = useState<Property | null>(initialProperty);
     const [isRefreshing, setIsRefreshing] = useState(false);
     
@@ -46,6 +48,16 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
             alert("Enrichment failed. Please check status.");
         } finally {
             setIsRefreshing(false);
+        }
+    };
+
+    const handleAddToStandardList = async () => {
+        if (!property?.id) return;
+        try {
+            await PropertyService.addPropertyToStandardList(property.id, activeCompany?.id);
+            alert(`Property added to Standard List successfully!`);
+        } catch (err: any) {
+            alert(`Error: ${err.message}`);
         }
     };
 
@@ -141,7 +153,7 @@ export const PropertyDetailsModal: React.FC<Props> = ({ property: initialPropert
                     {/* Sidebar Column */}
                     <div className="space-y-6">
                         <PropertyResearchLinks property={property} />
-                        <PropertyUserActions property={property} />
+                        <PropertyUserActions property={property} onAddToList={handleAddToStandardList} />
                     </div>
 
                 </div>

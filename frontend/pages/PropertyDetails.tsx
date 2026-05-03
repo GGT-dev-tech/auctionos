@@ -15,7 +15,11 @@ import PropertyMap from '../components/PropertyMap';
 import { PropertyExtendedTabs } from '../components/property/PropertyExtendedTabs';
 import { PropertyOwnerCard } from '../components/property/PropertyOwnerCard';
 
+import { PropertyService } from '../services/property.service';
+import { useCompany } from '../context/CompanyContext';
+
 const PropertyDetails: React.FC = () => {
+    const { activeCompany } = useCompany();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [property, setProperty] = useState<any>(null);
@@ -53,6 +57,16 @@ const PropertyDetails: React.FC = () => {
         fetchProperty();
     }, [id]);
 
+
+    const handleAddToStandardList = async () => {
+        if (!property?.id) return;
+        try {
+            await PropertyService.addPropertyToStandardList(property.id, activeCompany?.id);
+            alert(`Property added to Standard List successfully!`);
+        } catch (err: any) {
+            alert(`Error: ${err.message}`);
+        }
+    };
 
     if (loading) return <div className="p-8 text-center text-slate-500">Loading details...</div>;
     if (!property) return <div className="p-8 text-center text-red-500">Property not found.</div>;
@@ -148,7 +162,7 @@ const PropertyDetails: React.FC = () => {
                 <div className="space-y-6">
                     <PropertyOwnerCard property={property} />
                     <PropertyResearchLinks property={property} />
-                    <PropertyUserActions property={property} />
+                    <PropertyUserActions property={property} onAddToList={handleAddToStandardList} />
 
                     {/* Admin Actions - Preserved from original */}
                     <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">

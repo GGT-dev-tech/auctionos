@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PropertyDetails as Property } from '../../types';
 import { API_BASE_URL } from '../../services/httpClient';
+import { CircularProgress } from '@mui/material';
 
 interface Props {
     property: Property;
@@ -20,6 +21,7 @@ export const PropertyUserActions: React.FC<Props> = ({
     onUploadAttachment
 }) => {
     const [isSaving, setIsSaving] = useState(false);
+    const [isAddingToList, setIsAddingToList] = useState(false);
 
     return (
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col h-full">
@@ -47,11 +49,26 @@ export const PropertyUserActions: React.FC<Props> = ({
                     </span>
                 </button>
                 <button 
-                    onClick={onAddToList}
-                    className="p-4 border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-xl transition-all duration-300 group flex flex-col items-center justify-center gap-2 hover:shadow-md active:scale-95"
+                    onClick={async (e) => {
+                        if (!onAddToList || isAddingToList) return;
+                        setIsAddingToList(true);
+                        try {
+                            await onAddToList(e);
+                        } finally {
+                            setIsAddingToList(false);
+                        }
+                    }}
+                    disabled={isAddingToList}
+                    className="p-4 border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-xl transition-all duration-300 group flex flex-col items-center justify-center gap-2 hover:shadow-md active:scale-95 disabled:opacity-50"
                 >
-                    <span className="material-symbols-outlined text-[24px] text-slate-400 group-hover:text-blue-500 transition-colors">folder_zip</span>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-700">Add to List</span>
+                    {isAddingToList ? (
+                        <CircularProgress size={24} className="text-blue-500" />
+                    ) : (
+                        <span className="material-symbols-outlined text-[24px] text-slate-400 group-hover:text-blue-500 transition-colors">folder_zip</span>
+                    )}
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-700">
+                        {isAddingToList ? 'Adding...' : 'Add to List'}
+                    </span>
                 </button>
             </div>
 

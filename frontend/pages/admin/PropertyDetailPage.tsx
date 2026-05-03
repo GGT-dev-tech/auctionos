@@ -190,8 +190,9 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
         }
     };
 
-    const handleOpenListMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorEl(event.currentTarget);
+    const handleOpenListMenu = async (event: React.MouseEvent<HTMLButtonElement>) => {
+        // Now automatically add to standard list instead of opening a menu
+        await handleAddToStandardList();
     };
 
     const handleCloseListMenu = () => {
@@ -439,44 +440,7 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
                 </div>
             </div>
 
-            {/* List Menu Modals/Dropdowns */}
-            <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleCloseListMenu}
-                PaperProps={{ className: "mt-1 shadow-lg rounded-xl border border-slate-100 dark:border-slate-800 dark:bg-slate-900" }}
-            >
-                <MenuItem
-                    onClick={handleAddToStandardList}
-                    className="text-sm py-2 px-4 text-emerald-600 font-medium hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                >
-                    <span className="material-symbols-outlined text-[18px] mr-3">auto_awesome</span> Smart Standard Add
-                </MenuItem>
-                {lists.some(l => l.tags === 'STANDARD') && (
-                    <div>
-                        <Divider className="my-1" />
-                        <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Standard Folders</div>
-                        {lists.filter(l => l.tags === 'STANDARD').map(list => (
-                            <MenuItem key={list.id} onClick={() => handleAddToList(list.id)} className="text-sm py-2 px-4 hover:bg-slate-50 dark:hover:bg-slate-800">
-                                <span className="material-symbols-outlined text-[18px] mr-3 text-emerald-500">map</span>
-                                {list.name}
-                            </MenuItem>
-                        ))}
-                    </div>
-                )}
-                <Divider className="my-1" />
-                <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Custom Folders</div>
-                {lists.filter(l => l.tags !== 'STANDARD').map(list => (
-                    <MenuItem key={list.id} onClick={() => handleAddToList(list.id)} className="text-sm py-2 px-4 hover:bg-slate-50 dark:hover:bg-slate-800">
-                        <span className="material-symbols-outlined text-[18px] mr-3 text-blue-500">folder</span>
-                        {list.name}
-                    </MenuItem>
-                ))}
-                <Divider className="my-1" />
-                <MenuItem onClick={handleCreateAndAdd} className="text-sm py-2 px-4 text-blue-600 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                    <PlusIcon size={16} className="mr-3" /> New List...
-                </MenuItem>
-            </Menu>
+            {/* Add to List Menu - Removed as it is now automatic */}
 
             <PropertyFinancialsModal 
                 isOpen={isFinOpen} 
