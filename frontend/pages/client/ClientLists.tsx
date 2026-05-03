@@ -572,7 +572,7 @@ const ClientLists: React.FC = () => {
         broadcasted: false
     });
 
-    const [creationMode, setCreationMode] = useState<'custom' | 'standard'>('custom');
+    const [creationMode, setCreationMode] = useState<'custom' | 'standard'>('standard');
     const [stateContacts, setStateContacts] = useState<StateContact[]>([]);
     const [availableCounties, setAvailableCounties] = useState<string[]>([]);
     const [selectedState, setSelectedState] = useState<StateContact | null>(null);
@@ -882,15 +882,18 @@ const ClientLists: React.FC = () => {
                 // Construct tags string including the new county if selected
                 let finalTags = 'STANDARD';
                 if (newCountyName) {
+                    const trimmedCounty = newCountyName.trim();
                     if (existingFolder && existingFolder.tags && existingFolder.tags.includes(':')) {
-                        const existingCounties = existingFolder.tags.split(':')[1].split(',');
-                        if (!existingCounties.includes(newCountyName)) {
-                            finalTags = `${existingFolder.tags},${newCountyName}`;
+                        const parts = existingFolder.tags.split(':');
+                        const prefix = parts[0];
+                        const existingCounties = parts[1].split(',').map(c => c.trim());
+                        if (!existingCounties.some(c => c.toLowerCase() === trimmedCounty.toLowerCase())) {
+                            finalTags = `${prefix}:${existingCounties.join(',')},${trimmedCounty}`;
                         } else {
                             finalTags = existingFolder.tags;
                         }
                     } else {
-                        finalTags = `STANDARD:${newCountyName}`;
+                        finalTags = `STANDARD:${trimmedCounty}`;
                     }
                 }
 
@@ -1107,12 +1110,13 @@ const ClientLists: React.FC = () => {
                                             if (list.tags && list.tags.includes(':')) {
                                                 const pinnedCounties = list.tags.split(':')[1].split(',');
                                                 pinnedCounties.forEach(c => {
-                                                    if (c) countyMap.set(c, 0);
+                                                    const trimmed = c.trim();
+                                                    if (trimmed) countyMap.set(trimmed, 0);
                                                 });
                                             }
 
                                             stateProperties.forEach(p => {
-                                                const c = p.county || 'Unknown County';
+                                                const c = (p.county || 'Unknown County').trim();
                                                 countyMap.set(c, (countyMap.get(c) || 0) + 1);
                                             });
                                             const sortedCounties = Array.from(countyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
@@ -1734,15 +1738,9 @@ const ClientLists: React.FC = () => {
                 <div className="p-6 min-w-[320px] max-w-[400px]">
                     <Typography variant="h6" className="font-bold mb-4 dark:text-white">New Folder</Typography>
 
-                    <Tabs
-                        value={creationMode}
-                        onChange={(_, val) => setCreationMode(val)}
-                        textColor="primary"
-                        indicatorColor="primary"
-                        className="mb-6 flex space-x-2"
-                        variant="fullWidth"
-                    >
-                        <Tab value="custom" label="Custom" className="font-bold capitalize rounded-t-lg" />
+                    <Tabs value={creationMode} onChange={(_, v) => setCreationMode(v)} className="mb-6 border-b border-slate-100 dark:border-slate-800">
+                        {/* Custom folder creation is currently isolated/deactivated as per user request */}
+                        {/* <Tab value="custom" label="Custom" className="font-bold capitalize rounded-t-lg" /> */}
                         <Tab value="standard" label="Standard (State)" className="font-bold capitalize rounded-t-lg" />
                     </Tabs>
 
