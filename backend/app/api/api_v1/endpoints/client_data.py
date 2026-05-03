@@ -607,7 +607,7 @@ def add_property_to_standard_list(
     
     lst = db.query(ClientList).filter(
         ClientList.name == list_name,
-        ClientList.tags == "STANDARD",
+        ClientList.tags.like("STANDARD%"),
         ClientList.company_id == target_company
     ).first()
 
@@ -616,7 +616,7 @@ def add_property_to_standard_list(
         lst = db.query(ClientList).filter(
             ClientList.user_id == current_user.id,
             ClientList.name == list_name,
-            ClientList.tags == "STANDARD",
+            ClientList.tags.like("STANDARD%"),
             ClientList.company_id == None
         ).first()
 
