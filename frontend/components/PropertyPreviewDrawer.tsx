@@ -89,12 +89,15 @@ export const PropertyPreviewDrawer: React.FC<PropertyPreviewDrawerProps> = ({ op
                                     const bestAddress = property.address || (property.owner_address ? property.owner_address.split('\n')[0] : null) || property.parcel_id;
                                     const svUrl = getStreetViewUrl(bestAddress, property.city, property.state, property.zip_code);
                                     
-                                    if (!svUrl || !bestAddress) return (
-                                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                                            <span className="material-symbols-outlined text-4xl mb-2">image_not_supported</span>
-                                            <span className="text-xs font-bold uppercase tracking-widest">No Preview Available</span>
-                                        </div>
-                                    );
+                                    if (!svUrl || !bestAddress) {
+                                        console.warn(`PropertyPreviewDrawer: Failed to generate Street View URL for "${bestAddress}"`, { property });
+                                        return (
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                                <span className="material-symbols-outlined text-4xl mb-2">image_not_supported</span>
+                                                <span className="text-xs font-bold uppercase tracking-widest">No Preview Available</span>
+                                            </div>
+                                        );
+                                    }
                                     return (
                                         <>
                                             <img 

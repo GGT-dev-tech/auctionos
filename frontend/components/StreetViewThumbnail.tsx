@@ -20,15 +20,22 @@ export const StreetViewThumbnail: React.FC<StreetViewThumbnailProps> = ({
     const [isHovered, setIsHovered] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     
-    // Smart address fallback
+    // Robust address extraction and sanitization
     const effectiveAddress = address || "";
     const imageUrl = getStreetViewUrl(effectiveAddress, city, state, zip);
+
+    // Diagnostics for debugging in production
+    useEffect(() => {
+        if (!imageUrl && effectiveAddress) {
+            console.warn(`StreetViewThumbnail: Failed to generate URL for "${effectiveAddress}"`);
+        }
+    }, [imageUrl, effectiveAddress]);
 
     const handleMouseMove = (e: React.MouseEvent) => {
         setMousePos({ x: e.clientX, y: e.clientY });
     };
 
-    if (!imageUrl || error || !effectiveAddress) {
+    if (!imageUrl || error || !effectiveAddress || effectiveAddress.length < 3) {
         return (
             <div 
                 className="bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700"

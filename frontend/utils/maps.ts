@@ -1,38 +1,34 @@
 /**
- * Utility to generate Google Street View Static API URLs.
- * Requires VITE_GOOGLE_STREET_VIEW_KEY to be set in .env
+ * Utility to generate Google Maps related URLs
  */
 
-export const getStreetViewUrl = (property: any): string | null => {
-    const key = import.meta.env.VITE_GOOGLE_STREET_VIEW_KEY;
-    if (!key) {
-        console.warn("Google Street View API Key missing (VITE_GOOGLE_STREET_VIEW_KEY)");
+export const getStreetViewUrl = (address?: string, city?: string, state?: string, zip?: string) => {
+    const KEY = import.meta.env.VITE_GOOGLE_STREET_VIEW_KEY;
+    
+    if (!KEY) {
         return null;
     }
 
-    const address = property.address || "";
-    const city = property.city || "";
-    const state = property.state || property.state_code || "";
-    const zip = property.zip_code || "";
-
-    // If no address at all, return null
-    if (!address && !city) return null;
-
-    const fullLocation = [address, city, state, zip]
+    // Comprehensive location builder
+    // Some addresses come with newlines or extra spaces, clean them up
+    const cleanAddress = address?.replace(/\n/g, ', ').trim();
+    const fullLocation = [cleanAddress, city, state, zip]
         .map(s => s?.toString().trim())
         .filter(s => s && s.length > 0)
-        .join(', ')
-        .replace(/, ,/g, ',') // Clean up redundant commas
-        .trim();
-    
-    const baseUrl = "https://maps.googleapis.com/maps/api/streetview";
-    const params = new URLSearchParams({
-        size: "600x400",
-        location: fullLocation,
-        key: key,
-        fov: "90",
-        pitch: "10"
-    });
+        .join(', ');
 
-    return `${baseUrl}?${params.toString()}`;
+    // If the location string is too short, it's likely invalid or incomplete
+    if (!fullLocation || fullLocation.length < 5) {
+        return null;
+    }
+
+    const locationParam = encodeURIComponent(fullLocation);
+    
+    // Zillow style: Focus on the house (pitch, fov)
+    // size: 600x400 is a standard aspect ratio for previews
+    return `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${locationParam}&key=${KEY}&fov=90&pitch=10`;
+};
+
+export const getGoogleMapsLink = (address: string) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 };
