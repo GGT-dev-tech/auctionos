@@ -598,6 +598,7 @@ const ClientLists: React.FC = () => {
     const [taskSubmitting, setTaskSubmitting] = useState(false);
     const [exportSubmitting, setExportSubmitting] = useState(false);
     
+    const [favoritesSet, setFavoritesSet] = useState<Set<number>>(new Set());
     const currentUser = AuthService.getCurrentUser();
     const isAgent = currentUser?.role === 'agent';
 
@@ -746,6 +747,11 @@ const ClientLists: React.FC = () => {
             setLoading(true);
             const data = await ClientDataService.getLists(activeCompany?.id);
             setLists(data);
+
+            // Load favorites to determine priority sorting
+            const favs = await ClientDataService.getFavorites();
+            setFavoritesSet(new Set(favs.map((f: any) => f.id)));
+
             if (data.length > 0 && !selectedListId && !selectedStateName) {
                 // Select favorites by default if available, otherwise stay at 'Select a Folder'
                 const fav = data.find(l => l.is_favorite_list);
@@ -1571,9 +1577,16 @@ const ClientLists: React.FC = () => {
                         </div>
                     ) : (() => {
                         // Filter by county if a subfolder is selected
-                        const displayProperties = selectedStateName && selectedCountyName
+                        const displayProperties = (selectedStateName && selectedCountyName
                             ? selectedListProperties.filter(p => p.county === selectedCountyName)
-                            : selectedListProperties;
+                            : selectedListProperties)
+                            .sort((a, b) => {
+                                const isAFav = favoritesSet.has(a.id);
+                                const isBFav = favoritesSet.has(b.id);
+                                if (isAFav && !isBFav) return -1;
+                                if (!isAFav && isBFav) return 1;
+                                return 0;
+                            });
 
                         if (displayProperties.length === 0) {
                             return (
@@ -1623,16 +1636,41 @@ const ClientLists: React.FC = () => {
                                             </div>
 
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">
-                                                        {prop.owner_address ? prop.owner_address.split('\n')[0] : (prop.title || 'Untitled Property')}
-                                                    </h4>
-                                                    <Chip
-                                                        label={prop.availability_status || 'Unknown'}
+                                                <div className="flex items-center justify-between gap-2 mb-1">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">
+                                                            {prop.owner_address ? prop.owner_address.split('\n')[0] : (prop.title || 'Untitled Property')}
+                                                        </h4>
+                                                        <Chip
+                                                            label={prop.availability_status || 'Unknown'}
+                                                            size="small"
+                                                            className={`h-4 text-[8px] font-bold uppercase transition-colors px-0
+                                                            ${prop.availability_status === 'available' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'}`}
+                                                        />
+                                                    </div>
+
+                                                    <IconButton
                                                         size="small"
-                                                        className={`h-4 text-[8px] font-bold uppercase transition-colors px-0
-                                                        ${prop.availability_status === 'available' ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'}`}
-                                                    />
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            try {
+                                                                await ClientDataService.toggleFavorite(prop.id);
+                                                                setFavoritesSet(prev => {
+                                                                    const next = new Set(prev);
+                                                                    if (next.has(prop.id)) next.delete(prop.id);
+                                                                    else next.add(prop.id);
+                                                                    return next;
+                                                                });
+                                                            } catch (err) {
+                                                                console.error("Failed to toggle priority", err);
+                                                            }
+                                                        }}
+                                                        className={`transition-all duration-200 p-1 -mr-1 ${favoritesSet.has(prop.id) ? 'text-amber-500 scale-110' : 'text-slate-300 hover:text-amber-400'}`}
+                                                    >
+                                                        <span className={`material-symbols-outlined text-[20px] ${favoritesSet.has(prop.id) ? 'fill-current' : ''}`}>
+                                                            {favoritesSet.has(prop.id) ? 'star' : 'star_outline'}
+                                                        </span>
+                                                    </IconButton>
                                                 </div>
                                                 <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
                                                     <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{prop.parcel_id}</span>
