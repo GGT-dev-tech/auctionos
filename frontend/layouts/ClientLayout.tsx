@@ -68,8 +68,6 @@ const ClientLayout: React.FC = () => {
 
   if (role === 'manager' || role === 'client') {
     navItems.push(
-      { icon: 'info', label: 'About', path: '/client/about' },
-      { icon: 'contact_support', label: 'Contact', path: '/client/support' },
       {
         icon: 'hub',
         label: 'Connect',
@@ -83,7 +81,9 @@ const ClientLayout: React.FC = () => {
   }
 
   let accountDropdown: DropdownItem[] = [
-    { label: 'Account Support & Security', path: '/client/support' },
+    { label: 'Security & Password', path: '/client/change-password' },
+    { label: 'Contact Support', path: '/client/contact-support' },
+    { label: 'About GoAuct', path: '/client/about' },
   ];
 
   if (role === 'manager' || role === 'client') {
