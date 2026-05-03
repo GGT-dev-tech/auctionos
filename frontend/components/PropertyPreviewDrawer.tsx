@@ -120,59 +120,59 @@ export const PropertyPreviewDrawer: React.FC<PropertyPreviewDrawerProps> = ({ op
                             </div>
 
                             <div className="space-y-6">
-                            <div>
-                                <h2 className="text-xl font-bold dark:text-white">{property.owner_address ? property.owner_address.split('\n')[0] : 'Untitled Property'}</h2>
-                                <p className="text-slate-500 font-mono text-sm">{property.parcel_id}</p>
-                                <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">{property.address || `${property.county}, ${property.state}`}</p>
-                            </div>
-
-                            <Divider className="dark:border-slate-800" />
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                                    <p className="text-xs text-slate-400 uppercase font-bold">Amount Due</p>
-                                    <p className="text-lg font-bold text-red-600 dark:text-red-400">${property.amount_due?.toLocaleString() || '0'}</p>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                                    <p className="text-xs text-slate-400 uppercase font-bold">Assessed Value</p>
-                                    <p className="text-lg font-bold text-slate-700 dark:text-slate-300">${property.assessed_value?.toLocaleString() || '0'}</p>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                                    <p className="text-xs text-slate-400 uppercase font-bold">Lot Acres</p>
-                                    <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{property.lot_acres || 'N/A'}</p>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                                    <p className="text-xs text-slate-400 uppercase font-bold">Status</p>
-                                    <p className="text-lg font-bold text-slate-700 dark:text-slate-300 capitalize">{property.availability_status || 'Unknown'}</p>
-                                </div>
-                            </div>
-
-                            <Divider className="dark:border-slate-800" />
-
-                            <div>
-                                <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-2">Legal Description</h3>
-                                <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap italic">
-                                    {property.legal_description || property.description || 'No description available.'}
-                                </p>
-                            </div>
-
-                            {property.shape_data && property.shape_data.length > 0 && (
                                 <div>
-                                    <h3 className="font-bold text-slate-800 dark:text-slate-200 mt-4 mb-2">Extracted Parcel Data</h3>
-                                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg space-y-1">
-                                        {property.shape_data.slice(0, 10).map((sd: any, idx: number) => (
-                                            <div key={idx} className="flex justify-between text-xs border-b border-slate-200 dark:border-slate-700 last:border-0 pb-1">
-                                                <span className="text-slate-500 font-medium">{sd.subcategory}:</span>
-                                                <span className="text-slate-800 dark:text-slate-200 truncate max-w-[60%]">{sd.value || '-'}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {property.shape_data.length > 10 && (
-                                        <p className="text-xs text-center text-slate-400 mt-2">+ {property.shape_data.length - 10} more properties...</p>
-                                    )}
+                                    <h2 className="text-xl font-bold dark:text-white">{property.owner_address ? property.owner_address.split('\n')[0] : 'Untitled Property'}</h2>
+                                    <p className="text-slate-500 font-mono text-sm">{property.parcel_id}</p>
+                                    <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">{property.address || `${property.county}, ${property.state}`}</p>
                                 </div>
-                            )}
 
+                                <Divider className="dark:border-slate-800" />
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                                        <p className="text-xs text-slate-400 uppercase font-bold">Amount Due</p>
+                                        <p className="text-lg font-bold text-red-600 dark:text-red-400">${property.amount_due?.toLocaleString() || '0'}</p>
+                                    </div>
+                                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                                        <p className="text-xs text-slate-400 uppercase font-bold">Assessed Value</p>
+                                        <p className="text-lg font-bold text-slate-700 dark:text-slate-300">${property.assessed_value?.toLocaleString() || '0'}</p>
+                                    </div>
+                                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                                        <p className="text-xs text-slate-400 uppercase font-bold">Lot Acres</p>
+                                        <p className="text-lg font-bold text-slate-700 dark:text-slate-300">{property.lot_acres || 'N/A'}</p>
+                                    </div>
+                                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
+                                        <p className="text-xs text-slate-400 uppercase font-bold">Status</p>
+                                        <p className="text-lg font-bold text-slate-700 dark:text-slate-300 capitalize">{property.availability_status || 'Unknown'}</p>
+                                    </div>
+                                </div>
+
+                                <Divider className="dark:border-slate-800" />
+
+                                <div>
+                                    <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-2">Legal Description</h3>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap italic">
+                                        {property.legal_description || property.description || 'No description available.'}
+                                    </p>
+                                </div>
+
+                                {property.shape_data && property.shape_data.length > 0 && (
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 dark:text-slate-200 mt-4 mb-2">Extracted Parcel Data</h3>
+                                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg space-y-1">
+                                            {property.shape_data.slice(0, 10).map((sd: any, idx: number) => (
+                                                <div key={idx} className="flex justify-between text-xs border-b border-slate-200 dark:border-slate-700 last:border-0 pb-1">
+                                                    <span className="text-slate-500 font-medium">{sd.subcategory}:</span>
+                                                    <span className="text-slate-800 dark:text-slate-200 truncate max-w-[60%]">{sd.value || '-'}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {property.shape_data.length > 10 && (
+                                            <p className="text-xs text-center text-slate-400 mt-2">+ {property.shape_data.length - 10} more properties...</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <div className="h-full flex items-center justify-center text-slate-400">
