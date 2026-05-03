@@ -83,11 +83,13 @@ export const PropertyPreviewDrawer: React.FC<PropertyPreviewDrawerProps> = ({ op
                         </div>
                     ) : property ? (
                         <div className="space-y-6">
-                            {/* Street View Hero Section */}
                             <div className="relative w-full h-48 -mt-6 -mx-6 mb-6 overflow-hidden bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
                                 {(() => {
-                                    const svUrl = getStreetViewUrl(property.address, property.city, property.state, property.zip_code);
-                                    if (!svUrl) return (
+                                    // Robust address extraction
+                                    const bestAddress = property.address || (property.owner_address ? property.owner_address.split('\n')[0] : null) || property.parcel_id;
+                                    const svUrl = getStreetViewUrl(bestAddress, property.city, property.state, property.zip_code);
+                                    
+                                    if (!svUrl || !bestAddress) return (
                                         <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
                                             <span className="material-symbols-outlined text-4xl mb-2">image_not_supported</span>
                                             <span className="text-xs font-bold uppercase tracking-widest">No Preview Available</span>
