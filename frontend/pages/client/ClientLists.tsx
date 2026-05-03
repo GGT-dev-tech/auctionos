@@ -1628,7 +1628,10 @@ const ClientLists: React.FC = () => {
                                     >
                                         <div
                                             onClick={() => setPreviewPropertyId(prop.parcel_id || prop.id)}
-                                            className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-pointer flex items-center gap-3 sm:gap-4"
+                                            className={`group relative border rounded-xl p-3 sm:p-4 shadow-sm transition-all duration-200 cursor-pointer flex items-center gap-3 sm:gap-4
+                                            ${favoritesSet.has(prop.id) 
+                                                ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50 shadow-md ring-1 ring-amber-100 dark:ring-amber-900/20' 
+                                                : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900'}`}
                                         >
                                             <div className="relative group/thumb">
                                                 <StreetViewThumbnail 
@@ -1671,10 +1674,15 @@ const ClientLists: React.FC = () => {
                                                                 console.error("Failed to toggle priority", err);
                                                             }
                                                         }}
-                                                        className={`relative z-10 transition-all duration-200 p-1 -mr-1 ${favoritesSet.has(prop.id) ? 'text-amber-500 scale-110' : 'text-slate-300 hover:text-amber-400'}`}
+                                                        className={`relative z-10 transition-all duration-300 p-1.5 -mr-1.5 ${favoritesSet.has(prop.id) ? 'text-amber-400 scale-125' : 'text-slate-200 hover:text-amber-200'}`}
                                                     >
-                                                        <span className={`material-symbols-outlined text-[20px] ${favoritesSet.has(prop.id) ? 'fill-current' : ''}`}>
-                                                            {favoritesSet.has(prop.id) ? 'star' : 'star_outline'}
+                                                        <span 
+                                                            className="material-symbols-outlined text-[22px]"
+                                                            style={{ 
+                                                                fontVariationSettings: favoritesSet.has(prop.id) ? "'FILL' 1, 'wght' 700" : "'FILL' 0, 'wght' 400"
+                                                            }}
+                                                        >
+                                                            star
                                                         </span>
                                                     </IconButton>
                                                 </div>
