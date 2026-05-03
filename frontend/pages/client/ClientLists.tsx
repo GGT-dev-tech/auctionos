@@ -1560,11 +1560,13 @@ const ClientLists: React.FC = () => {
                                         >
                                             <div className="relative group/thumb">
                                                 {(() => {
-                                                    // Robust address extraction
-                                                    const bestAddress = prop.address || (prop.owner_address ? prop.owner_address.split('\n')[0] : null) || prop.parcel_id;
+                                                    // Robust address extraction with safety checks
+                                                    const rawOwnerAddr = prop.owner_address ? String(prop.owner_address).split('\n')[0] : null;
+                                                    const bestAddress = prop.address || rawOwnerAddr || prop.parcel_id || '';
+                                                    
                                                     return (
                                                         <StreetViewThumbnail 
-                                                            address={bestAddress || ''}
+                                                            address={bestAddress}
                                                             city={prop.city}
                                                             state={prop.state}
                                                             zip={prop.zip_code}

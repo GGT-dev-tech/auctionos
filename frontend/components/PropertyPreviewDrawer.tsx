@@ -85,8 +85,9 @@ export const PropertyPreviewDrawer: React.FC<PropertyPreviewDrawerProps> = ({ op
                         <div className="space-y-6">
                             <div className="relative w-full h-48 -mt-6 -mx-6 mb-6 overflow-hidden bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
                                 {(() => {
-                                    // Robust address extraction
-                                    const bestAddress = property.address || (property.owner_address ? property.owner_address.split('\n')[0] : null) || property.parcel_id;
+                                    // Robust address extraction with safety checks
+                                    const rawOwnerAddr = property.owner_address ? String(property.owner_address).split('\n')[0] : null;
+                                    const bestAddress = property.address || rawOwnerAddr || property.parcel_id || '';
                                     const svUrl = getStreetViewUrl(bestAddress, property.city, property.state, property.zip_code);
                                     
                                     if (!svUrl || !bestAddress) {
