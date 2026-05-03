@@ -1,89 +1,85 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { getStreetViewUrl } from '../utils/maps';
 
 interface StreetViewThumbnailProps {
-    address: string;
+    property?: any; // Full property object
+    address?: string;
     city?: string;
     state?: string;
     zip?: string;
     size?: number;
+    className?: string;
 }
 
 export const StreetViewThumbnail: React.FC<StreetViewThumbnailProps> = ({ 
+    property,
     address, 
     city, 
     state, 
     zip, 
-    size = 48 
+    size = 64,
+    className = ""
 }) => {
-    const [error, setError] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-    
-    // Robust address extraction and sanitization
-    const effectiveAddress = address || "";
-    const imageUrl = getStreetViewUrl(effectiveAddress, city, state, zip);
+    const [error, setError] = React.useState(false);
+    const [hover, setHover] = React.useState(false);
+    const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
 
-    // Diagnostics for debugging in production
-    useEffect(() => {
-        if (!imageUrl && effectiveAddress) {
-            console.warn(`StreetViewThumbnail: Failed to generate URL for "${effectiveAddress}"`);
-        }
-    }, [imageUrl, effectiveAddress]);
+    // Use the flexible utility: pass property object if available, else strings
+    const effectiveLocation = property || address;
+    const imageUrl = getStreetViewUrl(effectiveLocation, city, state, zip, `${size}x${size}`);
+    const largeImageUrl = getStreetViewUrl(effectiveLocation, city, state, zip, '320x200');
+
+    if (!imageUrl || error) {
+        return (
+            <div 
+                className={`flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-400 ${className}`}
+                style={{ width: size, height: size }}
+            >
+                <span className="material-symbols-outlined" style={{ fontSize: size * 0.4 }}>image_not_supported</span>
+            </div>
+        );
+    }
 
     const handleMouseMove = (e: React.MouseEvent) => {
         setMousePos({ x: e.clientX, y: e.clientY });
     };
 
-    if (!imageUrl || error || !effectiveAddress || effectiveAddress.length < 3) {
-        return (
-            <div 
-                className="bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700"
-                style={{ width: size, height: size }}
-            >
-                <span className="material-symbols-outlined text-slate-400 text-lg">image_not_supported</span>
-            </div>
-        );
-    }
-
     return (
-        <div className="relative shrink-0" style={{ width: size, height: size }}>
-            {/* Main Thumbnail */}
-            <div 
-                className="w-full h-full rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm transition-transform hover:scale-110 cursor-zoom-in active:scale-95"
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                onMouseMove={handleMouseMove}
-            >
-                <img 
-                    src={imageUrl} 
-                    alt="Property Preview" 
-                    className="w-full h-full object-cover"
-                    onError={() => setError(true)}
-                    loading="lazy"
-                />
-            </div>
+        <div 
+            className={`relative inline-block ${className}`}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            onMouseMove={handleMouseMove}
+        >
+            <img 
+                src={imageUrl} 
+                alt="Property"
+                className="rounded-lg object-cover shadow-sm border border-slate-200 dark:border-slate-700 hover:border-blue-400 transition-colors cursor-zoom-in"
+                style={{ width: size, height: size }}
+                onError={() => {
+                    console.warn('Thumbnail load failed for:', effectiveLocation);
+                    setError(true);
+                }}
+            />
 
-            {/* Hover Zoom Preview - Portaled to avoid clipping */}
-            {isHovered && (
+            {/* Hover Zoom Overlay */}
+            {hover && (
                 <div 
-                    className="fixed z-[99999] pointer-events-none rounded-xl overflow-hidden shadow-2xl border-2 border-white dark:border-slate-700 animate-in zoom-in-75 fade-in duration-150"
-                    style={{
-                        width: 320,
-                        height: 200,
-                        top: mousePos.y - 220,
-                        left: mousePos.x - 160,
+                    className="fixed z-[99999] pointer-events-none"
+                    style={{ 
+                        left: mousePos.x + 20, 
+                        top: mousePos.y - 100,
                     }}
                 >
-                    <img 
-                        src={imageUrl} 
-                        alt="Zoomed Preview" 
-                        className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-md p-2">
-                        <p className="text-[10px] text-white font-black truncate text-center uppercase tracking-tighter">
-                            {effectiveAddress}
-                        </p>
+                    <div className="bg-white dark:bg-slate-900 p-1.5 rounded-xl shadow-2xl border-2 border-blue-500 animate-in fade-in zoom-in duration-200">
+                        <img 
+                            src={largeImageUrl} 
+                            alt="Property Zoom"
+                            className="rounded-lg w-80 h-50 object-cover"
+                        />
+                        <div className="absolute top-3 left-3 bg-blue-600 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-lg uppercase">
+                            Street View Preview
+                        </div>
                     </div>
                 </div>
             )}

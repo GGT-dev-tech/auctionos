@@ -1559,21 +1559,10 @@ const ClientLists: React.FC = () => {
                                             className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-pointer flex items-center gap-4"
                                         >
                                             <div className="relative group/thumb">
-                                                {(() => {
-                                                    // Robust address extraction with safety checks
-                                                    const rawOwnerAddr = prop.owner_address ? String(prop.owner_address).split('\n')[0] : null;
-                                                    const bestAddress = prop.address || rawOwnerAddr || prop.parcel_id || '';
-                                                    
-                                                    return (
-                                                        <StreetViewThumbnail 
-                                                            address={bestAddress}
-                                                            city={prop.city}
-                                                            state={prop.state}
-                                                            zip={prop.zip_code}
-                                                            size={64}
-                                                        />
-                                                    );
-                                                })()}
+                                                <StreetViewThumbnail 
+                                                    property={prop}
+                                                    size={64}
+                                                />
                                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-lg flex items-center justify-center pointer-events-none">
                                                     <span className="material-symbols-outlined text-white text-sm">zoom_in</span>
                                                 </div>
