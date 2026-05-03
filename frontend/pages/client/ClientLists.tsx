@@ -875,15 +875,20 @@ const ClientLists: React.FC = () => {
             } else {
                 if (!selectedState) return;
                 
-                // Prevent duplicate state folder
-                const folderName = newCountyName ? `${selectedState.state} - ${newCountyName}` : selectedState.state;
+                // Always use State as the primary folder name
+                const folderName = selectedState.state;
                 const existingFolder = lists.find(l => l.tags === 'STANDARD' && l.name === folderName);
                 
                 if (existingFolder) {
-                    alert(`A folder named ${folderName} already exists.`);
-                    return;
+                    // Folder already exists, just select it and close modal
+                    setSelectedListId(existingFolder.id);
+                    setSelectedStateName(existingFolder.name);
                 } else {
                     const res = await ClientDataService.createList(folderName, 'STANDARD', activeCompany?.id);
+                    if (res && res.id) {
+                        setSelectedListId(res.id);
+                        setSelectedStateName(folderName);
+                    }
                 }
             }
             setNewListName('');
@@ -938,7 +943,7 @@ const ClientLists: React.FC = () => {
                 finalName = editFolderName;
             } else {
                 if (!editFolderState) return;
-                finalName = editFolderCounty ? `${editFolderState.state} - ${editFolderCounty}` : editFolderState.state;
+                finalName = editFolderState.state;
             }
             await ClientDataService.updateList(listToEdit.id, { name: finalName });
             setEditModalOpen(false);
@@ -1732,7 +1737,7 @@ const ClientLists: React.FC = () => {
                                 onChange={(_, newValue) => setNewCountyName(newValue)}
                                 disabled={!selectedState}
                                 renderInput={(params) => (
-                                    <TextField {...params} variant="outlined" placeholder="Select a County (Optional)" className="bg-white dark:bg-slate-800 rounded-lg" helperText="Leave blank to create a general state folder." />
+                                    <TextField {...params} variant="outlined" placeholder="Select a County (Optional)" className="bg-white dark:bg-slate-800 rounded-lg" />
                                 )}
                                 fullWidth
                                 disablePortal
@@ -1797,7 +1802,7 @@ const ClientLists: React.FC = () => {
                                 onChange={(_, newValue) => setEditFolderCounty(newValue)}
                                 disabled={!editFolderState}
                                 renderInput={(params) => (
-                                    <TextField {...params} variant="outlined" placeholder="Select a County (Optional)" className="bg-white dark:bg-slate-800 rounded-lg" helperText="Leave blank to create a general state folder." />
+                                    <TextField {...params} variant="outlined" placeholder="Select a County (Optional)" className="bg-white dark:bg-slate-800 rounded-lg" />
                                 )}
                                 fullWidth
                                 disablePortal
