@@ -1577,9 +1577,9 @@ const ClientLists: React.FC = () => {
                         </div>
                     ) : (() => {
                         // Filter by county if a subfolder is selected
-                        const displayProperties = (selectedStateName && selectedCountyName
+                        const displayProperties = [...(selectedStateName && selectedCountyName
                             ? selectedListProperties.filter(p => p.county === selectedCountyName)
-                            : selectedListProperties)
+                            : selectedListProperties)]
                             .sort((a, b) => {
                                 const isAFav = favoritesSet.has(a.id);
                                 const isBFav = favoritesSet.has(b.id);
@@ -1665,7 +1665,7 @@ const ClientLists: React.FC = () => {
                                                                 console.error("Failed to toggle priority", err);
                                                             }
                                                         }}
-                                                        className={`transition-all duration-200 p-1 -mr-1 ${favoritesSet.has(prop.id) ? 'text-amber-500 scale-110' : 'text-slate-300 hover:text-amber-400'}`}
+                                                        className={`relative z-10 transition-all duration-200 p-1 -mr-1 ${favoritesSet.has(prop.id) ? 'text-amber-500 scale-110' : 'text-slate-300 hover:text-amber-400'}`}
                                                     >
                                                         <span className={`material-symbols-outlined text-[20px] ${favoritesSet.has(prop.id) ? 'fill-current' : ''}`}>
                                                             {favoritesSet.has(prop.id) ? 'star' : 'star_outline'}
