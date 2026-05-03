@@ -585,7 +585,7 @@ const ClientLists: React.FC = () => {
     const [folderNotes, setFolderNotes] = useState<string>('');
     const [savingNotes, setSavingNotes] = useState(false);
     const [viewMode, setViewMode] = useState<'folders' | 'my_tasks' | 'my_exports'>('folders');
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
     const [movingPropertyId, setMovingPropertyId] = useState<number | null>(null);
     const [moveTargetListId, setMoveTargetListId] = useState<number | string>('');
 
@@ -1300,7 +1300,7 @@ const ClientLists: React.FC = () => {
                     <InvestorMyExportsView onBack={() => setViewMode('folders')} />
                 ) : (
                     <div className="flex-1 flex flex-col h-full">
-                        <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex flex-col gap-4">
+                        <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-900 flex flex-col gap-4">
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-4">
                                     <IconButton 
@@ -1367,11 +1367,11 @@ const ClientLists: React.FC = () => {
                         }, []);
 
                         return (
-                            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden mt-2">
+                            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg md:rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden mt-1 md:mt-2">
                                 {/* Header and Silhouette Wrapper */}
                                 <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x border-slate-200 dark:border-slate-800">
                                     {/* Left Side: Contact and Links */}
-                                    <div className="flex-1 p-4 flex flex-col gap-4">
+                                    <div className="flex-1 p-3 md:p-4 flex flex-col gap-3 md:gap-4">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">public</span>
@@ -1504,7 +1504,7 @@ const ClientLists: React.FC = () => {
                         );
                     })()}
 
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-3 md:p-6">
                     {propsLoading ? (
                         <div className="h-full flex items-center justify-center">
                             <CircularProgress size={24} />
@@ -1556,7 +1556,7 @@ const ClientLists: React.FC = () => {
                                     >
                                         <div
                                             onClick={() => setPreviewPropertyId(prop.parcel_id || prop.id)}
-                                            className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-pointer flex items-center gap-4"
+                                            className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-pointer flex items-center gap-3 sm:gap-4"
                                         >
                                             <div className="relative group/thumb">
                                                 <StreetViewThumbnail 
@@ -1601,7 +1601,7 @@ const ClientLists: React.FC = () => {
                                                     </p>
                                                 )}
 
-                                                <div className="mt-3 flex items-center gap-4">
+                                                <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-4">
                                                     <div className="flex flex-col">
                                                         <span className="text-[9px] text-slate-400 uppercase font-bold tracking-tighter">Amount Due</span>
                                                         <span className="text-xs font-bold text-slate-700 dark:text-white">${prop.amount_due?.toLocaleString() || '0'}</span>
