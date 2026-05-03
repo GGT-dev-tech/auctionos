@@ -27,11 +27,10 @@ export const getStreetViewUrl = (property: any): string | null => {
     
     const baseUrl = "https://maps.googleapis.com/maps/api/streetview";
     const params = new URLSearchParams({
-        size: "600x300",
+        size: "600x400",
         location: fullLocation,
         key: key,
         fov: "90",
-        heading: "235",
         pitch: "10"
     });
 
