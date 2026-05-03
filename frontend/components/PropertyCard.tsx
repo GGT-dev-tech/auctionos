@@ -1,6 +1,7 @@
 import React from 'react';
 import { Property, PropertyStatus } from '../types';
 import { ExternalLink, MapPin, BadgeDollarSign, Scan, Info, Edit, Eye, Share2 } from 'lucide-react';
+import { getStreetViewUrl } from '../utils/maps';
 
 interface PropertyCardProps {
     property: Property;
@@ -21,6 +22,9 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
     isSelected,
     onSelect
 }) => {
+    const [streetViewError, setStreetViewError] = React.useState(false);
+    const streetViewUrl = getStreetViewUrl(property);
+
     const getStatusColor = (status: PropertyStatus) => {
         switch (status) {
             case PropertyStatus.Active: return 'bg-green-500';
@@ -45,11 +49,20 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
             )}
 
             {/* Media / Image */}
-            <div className="relative h-48 overflow-hidden cursor-pointer" onClick={() => onView(property)}>
-                <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                    style={{ backgroundImage: `url('${property.imageUrl || '/placeholder.png'}')` }}
-                />
+            <div className="relative h-48 overflow-hidden cursor-pointer bg-slate-100 dark:bg-slate-900" onClick={() => onView(property)}>
+                {streetViewUrl && !streetViewError ? (
+                    <img 
+                        src={streetViewUrl} 
+                        alt={property.address}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={() => setStreetViewError(true)}
+                    />
+                ) : (
+                    <div
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                        style={{ backgroundImage: `url('${property.imageUrl || '/placeholder.png'}')` }}
+                    />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
                 {/* Status Badge */}

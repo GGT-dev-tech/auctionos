@@ -305,15 +305,25 @@ def create_custom_property(
     target_list_id = property_in.target_list_id
     lst = None
     if target_list_id:
-        lst = db.query(ClientList).filter(ClientList.id == target_list_id, ClientList.user_id == current_user.id).first()
+        # Check if list belongs to user OR their company
+        lst = db.query(ClientList).filter(
+            ClientList.id == target_list_id, 
+            (ClientList.user_id == current_user.id) | (ClientList.company_id == current_user.active_company_id)
+        ).first()
     
     if not lst:
-        # Create or find default "Custom Properties" folder
+        # Create or find default "Custom Folder" for the company
         lst = db.query(ClientList).filter(
-            ClientList.user_id == current_user.id,
             ClientList.name == "Custom Folder",
             ClientList.company_id == current_user.active_company_id
         ).first()
+
+        if not lst:
+            # Fallback to user_id if company_id is not set (legacy or personal)
+            lst = db.query(ClientList).filter(
+                ClientList.name == "Custom Folder",
+                ClientList.user_id == current_user.id
+            ).first()
 
         if not lst:
             lst = ClientList(
