@@ -588,6 +588,7 @@ const ClientLists: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
     const [movingPropertyId, setMovingPropertyId] = useState<number | null>(null);
     const [moveTargetListId, setMoveTargetListId] = useState<number | string>('');
+    const [creating, setCreating] = useState(false);
 
     // Task & Export state
     const [taskProperty, setTaskProperty] = useState<any | null>(null);
@@ -868,6 +869,8 @@ const ClientLists: React.FC = () => {
     };
 
     const handleCreateList = async () => {
+        if (creating) return;
+        setCreating(true);
         try {
             if (creationMode === 'custom') {
                 if (!newListName) return;
@@ -929,6 +932,8 @@ const ClientLists: React.FC = () => {
             loadLists();
         } catch (err: any) {
             alert(err.message);
+        } finally {
+            setCreating(false);
         }
     };
 
@@ -1225,7 +1230,7 @@ const ClientLists: React.FC = () => {
                             </div>
                             {!collapsedSections.custom && (
                                 <div className="mt-1 space-y-0.5">
-                                    {lists.filter(l => !l.is_favorite_list && l.tags !== 'STANDARD').sort((a, b) => a.name.localeCompare(b.name)).map(list => (
+                                    {lists.filter(l => !l.is_favorite_list && (!l.tags || !l.tags.startsWith('STANDARD'))).sort((a, b) => a.name.localeCompare(b.name)).map(list => (
                                         <div
                                             key={list.id}
                                             onClick={() => { setSelectedListId(list.id); setSelectedStateName(null); setSelectedCountyName(null); }}
@@ -1739,8 +1744,7 @@ const ClientLists: React.FC = () => {
                     <Typography variant="h6" className="font-bold mb-4 dark:text-white">New Folder</Typography>
 
                     <Tabs value={creationMode} onChange={(_, v) => setCreationMode(v)} className="mb-6 border-b border-slate-100 dark:border-slate-800">
-                        {/* Custom folder creation is currently isolated/deactivated as per user request */}
-                        {/* <Tab value="custom" label="Custom" className="font-bold capitalize rounded-t-lg" /> */}
+                        <Tab value="custom" label="Custom" className="font-bold capitalize rounded-t-lg" />
                         <Tab value="standard" label="Standard (State)" className="font-bold capitalize rounded-t-lg" />
                     </Tabs>
 
@@ -1787,10 +1791,10 @@ const ClientLists: React.FC = () => {
                         <Button
                             variant="contained"
                             onClick={handleCreateList}
-                            disabled={creationMode === 'custom' ? !newListName : !selectedState}
+                            disabled={creating || (creationMode === 'custom' ? !newListName : !selectedState)}
                             className="bg-blue-600 rounded-lg shadow-none"
                         >
-                            Create
+                            {creating ? <CircularProgress size={20} color="inherit" /> : 'Create'}
                         </Button>
                     </div>
                 </div>
