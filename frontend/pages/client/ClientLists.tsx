@@ -1329,9 +1329,11 @@ const ClientLists: React.FC = () => {
                             </div>
                         </div>
 
+
+                <div className="flex-1 overflow-y-auto p-3 md:p-6">
                     {/* Upcoming Auction Alert Banner */}
                     {(selectedList?.has_upcoming_auction || selectedListProperties.some(p => p.auction_status === "started" || (p.auction_date && new Date(p.auction_date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000))) && (
-                        <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/50 rounded-xl p-4 flex gap-4 items-start">
+                        <div className="mb-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/50 rounded-xl p-4 flex gap-4 items-start">
                             <div className="size-10 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0">
                                 <span className="material-symbols-outlined text-xl">warning</span>
                             </div>
@@ -1367,7 +1369,7 @@ const ClientLists: React.FC = () => {
                         }, []);
 
                         return (
-                            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg md:rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden mt-1 md:mt-2">
+                            <div className="mb-6 bg-slate-50 dark:bg-slate-900/50 rounded-lg md:rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                                 {/* Header and Silhouette Wrapper */}
                                 <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x border-slate-200 dark:border-slate-800">
                                     {/* Left Side: Contact and Links */}
@@ -1503,8 +1505,6 @@ const ClientLists: React.FC = () => {
                             </div>
                         );
                     })()}
-
-                <div className="flex-1 overflow-y-auto p-3 md:p-6">
                     {propsLoading ? (
                         <div className="h-full flex items-center justify-center">
                             <CircularProgress size={24} />
