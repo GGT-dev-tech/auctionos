@@ -9,7 +9,8 @@ export const API_BASE_URL = API_URL.replace('/api/v1', '');
 console.log('API Config:', {
     VITE_API_URL: import.meta.env.VITE_API_URL,
     API_URL,
-    isProd
+    isProd,
+    STREET_VIEW_KEY_EXISTS: !!import.meta.env.VITE_GOOGLE_STREET_VIEW_KEY
 });
 
 export const getHeaders = () => {
