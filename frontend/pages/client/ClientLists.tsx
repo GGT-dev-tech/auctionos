@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, IconButton, TextField, Dialog, Button, CircularProgress, Chip, Tabs, Tab, Autocomplete } from '@mui/material';
 import { FolderPlusIcon, Trash2Icon, Edit2Icon, ExternalLinkIcon } from 'lucide-react';
-import { ClientDataService } from '../../services/property.service';
+import { ClientDataService, PropertyService } from '../../services/property.service';
 import { countyService, CountyContact } from '../../services/county.service';
 import { StatesService, StateContact } from '../../services/states.service';
 import { geocodeAddress } from '../../services/geocoding.service';
@@ -749,8 +749,13 @@ const ClientLists: React.FC = () => {
             setLists(data);
 
             // Load favorites to determine priority sorting
-            const favs = await ClientDataService.getFavorites();
-            setFavoritesSet(new Set(favs.map((f: any) => f.id)));
+            try {
+                const favs = await PropertyService.getFavorites(activeCompany?.id);
+                console.log("Loaded Favorites for Priority Sorting:", favs);
+                setFavoritesSet(new Set(favs));
+            } catch (favErr) {
+                console.error("Failed to load favorites for priority:", favErr);
+            }
 
             if (data.length > 0 && !selectedListId && !selectedStateName) {
                 // Select favorites by default if available, otherwise stay at 'Select a Folder'
@@ -1654,7 +1659,8 @@ const ClientLists: React.FC = () => {
                                                         onClick={async (e) => {
                                                             e.stopPropagation();
                                                             try {
-                                                                await ClientDataService.toggleFavorite(prop.id);
+                                                                const res = await PropertyService.toggleFavorite(prop.id, activeCompany?.id);
+                                                                console.log("Toggle Favorite Result for Prop", prop.id, ":", res);
                                                                 setFavoritesSet(prev => {
                                                                     const next = new Set(prev);
                                                                     if (next.has(prop.id)) next.delete(prop.id);
