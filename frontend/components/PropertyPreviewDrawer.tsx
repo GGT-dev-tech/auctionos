@@ -3,6 +3,7 @@ import { Drawer, IconButton, CircularProgress, Typography, Divider } from '@mui/
 import { Close as CloseIcon, OpenInNew as OpenInNewIcon } from '@mui/icons-material';
 import { PropertyService } from '../services/property.service';
 import { useNavigate } from 'react-router-dom';
+import { getStreetViewUrl } from '../utils/maps';
 
 interface PropertyPreviewDrawerProps {
     open: boolean;
@@ -82,6 +83,43 @@ export const PropertyPreviewDrawer: React.FC<PropertyPreviewDrawerProps> = ({ op
                         </div>
                     ) : property ? (
                         <div className="space-y-6">
+                            {/* Street View Hero Section */}
+                            <div className="relative w-full h-48 -mt-6 -mx-6 mb-6 overflow-hidden bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800">
+                                {(() => {
+                                    const svUrl = getStreetViewUrl(property.address, property.city, property.state, property.zip_code);
+                                    if (!svUrl) return (
+                                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                                            <span className="material-symbols-outlined text-4xl mb-2">image_not_supported</span>
+                                            <span className="text-xs font-bold uppercase tracking-widest">No Preview Available</span>
+                                        </div>
+                                    );
+                                    return (
+                                        <>
+                                            <img 
+                                                src={svUrl} 
+                                                alt="Street View Preview"
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="bg-blue-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-lg">Street View</span>
+                                                    <a 
+                                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.address || '')}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="bg-white/90 hover:bg-white text-slate-900 text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-lg flex items-center gap-1 transition-all"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[12px]">map</span> View Map
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+
+                            <div className="space-y-6">
                             <div>
                                 <h2 className="text-xl font-bold dark:text-white">{property.owner_address ? property.owner_address.split('\n')[0] : 'Untitled Property'}</h2>
                                 <p className="text-slate-500 font-mono text-sm">{property.parcel_id}</p>

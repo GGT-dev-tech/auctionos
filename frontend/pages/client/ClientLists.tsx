@@ -12,6 +12,7 @@ import { useCompany } from '../../context/CompanyContext';
 import { InvestorTaskService } from '../../services/consultant_task.service';
 import { AuthService } from '../../services/auth.service';
 import { API_URL, getHeaders } from '../../services/httpClient';
+import { StreetViewThumbnail } from '../../components/StreetViewThumbnail';
 
 // Helper to map state names to codes for the SVG silhouette
 const STATE_CODE_MAP: Record<string, string> = {
@@ -1557,6 +1558,19 @@ const ClientLists: React.FC = () => {
                                             onClick={() => setPreviewPropertyId(prop.parcel_id || prop.id)}
                                             className="group relative bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-900 transition-all duration-200 cursor-pointer flex items-center gap-4"
                                         >
+                                            <div className="relative group/thumb">
+                                                <StreetViewThumbnail 
+                                                    address={prop.address || ''}
+                                                    city={prop.city}
+                                                    state={prop.state}
+                                                    zip={prop.zip_code}
+                                                    size={64}
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity rounded-lg flex items-center justify-center pointer-events-none">
+                                                    <span className="material-symbols-outlined text-white text-sm">zoom_in</span>
+                                                </div>
+                                            </div>
+
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <h4 className="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">
