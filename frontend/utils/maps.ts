@@ -18,7 +18,12 @@ export const getStreetViewUrl = (property: any): string | null => {
     // If no address at all, return null
     if (!address && !city) return null;
 
-    const fullLocation = `${address}, ${city}, ${state} ${zip}`.trim();
+    const fullLocation = [address, city, state, zip]
+        .map(s => s?.toString().trim())
+        .filter(s => s && s.length > 0)
+        .join(', ')
+        .replace(/, ,/g, ',') // Clean up redundant commas
+        .trim();
     
     const baseUrl = "https://maps.googleapis.com/maps/api/streetview";
     const params = new URLSearchParams({
