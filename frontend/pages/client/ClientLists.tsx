@@ -877,17 +877,45 @@ const ClientLists: React.FC = () => {
                 
                 // Always use State as the primary folder name
                 const folderName = selectedState.state;
-                const existingFolder = lists.find(l => l.tags === 'STANDARD' && l.name === folderName);
+                const existingFolder = lists.find(l => l.tags && l.tags.startsWith('STANDARD') && l.name === folderName);
                 
+                // Construct tags string including the new county if selected
+                let finalTags = 'STANDARD';
+                if (newCountyName) {
+                    if (existingFolder && existingFolder.tags && existingFolder.tags.includes(':')) {
+                        const existingCounties = existingFolder.tags.split(':')[1].split(',');
+                        if (!existingCounties.includes(newCountyName)) {
+                            finalTags = `${existingFolder.tags},${newCountyName}`;
+                        } else {
+                            finalTags = existingFolder.tags;
+                        }
+                    } else {
+                        finalTags = `STANDARD:${newCountyName}`;
+                    }
+                }
+
                 if (existingFolder) {
-                    // Folder already exists, just select it and close modal
+                    // Update tags if we have a new county to pin
+                    if (newCountyName && existingFolder.tags !== finalTags) {
+                        await ClientDataService.updateList(existingFolder.id, { tags: finalTags });
+                    }
                     setSelectedListId(existingFolder.id);
                     setSelectedStateName(existingFolder.name);
+                    if (newCountyName) {
+                        setSelectedCountyName(newCountyName);
+                        countyService.getContacts(folderName, newCountyName).then(setCountyContacts);
+                        setExpandedStates(prev => ({ ...prev, [folderName]: true }));
+                    }
                 } else {
-                    const res = await ClientDataService.createList(folderName, 'STANDARD', activeCompany?.id);
+                    const res = await ClientDataService.createList(folderName, finalTags, activeCompany?.id);
                     if (res && res.id) {
                         setSelectedListId(res.id);
                         setSelectedStateName(folderName);
+                        if (newCountyName) {
+                            setSelectedCountyName(newCountyName);
+                            countyService.getContacts(folderName, newCountyName).then(setCountyContacts);
+                            setExpandedStates(prev => ({ ...prev, [folderName]: true }));
+                        }
                     }
                 }
             }
@@ -937,15 +965,18 @@ const ClientLists: React.FC = () => {
     const handleEditFolderSave = async () => {
         if (!listToEdit) return;
         try {
-            let finalName = '';
             if (editFolderType === 'custom') {
                 if (!editFolderName) return;
-                finalName = editFolderName;
+                await ClientDataService.updateList(listToEdit.id, { name: editFolderName });
             } else {
                 if (!editFolderState) return;
-                finalName = editFolderState.state;
+                const finalName = editFolderState.state;
+                let finalTags = 'STANDARD';
+                if (editFolderCounty) {
+                    finalTags = `STANDARD:${editFolderCounty}`;
+                }
+                await ClientDataService.updateList(listToEdit.id, { name: finalName, tags: finalTags });
             }
-            await ClientDataService.updateList(listToEdit.id, { name: finalName });
             setEditModalOpen(false);
             setListToEdit(null);
             loadLists();
@@ -1066,11 +1097,20 @@ const ClientLists: React.FC = () => {
                                 </div>
                                 {!collapsedSections.standard && (
                                     <div className="mt-1 space-y-1">
-                                        {lists.filter(l => l.tags === 'STANDARD').sort((a, b) => a.name.localeCompare(b.name)).map(list => {
+                                        {lists.filter(l => l.tags && l.tags.startsWith('STANDARD')).sort((a, b) => a.name.localeCompare(b.name)).map(list => {
                                             // Compute dynamic county groupings if this state is selected
                                             const isSelectedState = selectedStateName === list.name;
                                             const stateProperties = isSelectedState ? selectedListProperties : [];
                                             const countyMap = new Map<string, number>();
+                                            
+                                            // Add pinned counties from tags
+                                            if (list.tags && list.tags.includes(':')) {
+                                                const pinnedCounties = list.tags.split(':')[1].split(',');
+                                                pinnedCounties.forEach(c => {
+                                                    if (c) countyMap.set(c, 0);
+                                                });
+                                            }
+
                                             stateProperties.forEach(p => {
                                                 const c = p.county || 'Unknown County';
                                                 countyMap.set(c, (countyMap.get(c) || 0) + 1);
