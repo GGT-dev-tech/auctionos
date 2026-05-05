@@ -707,17 +707,41 @@ def get_property(
     db: Session = Depends(deps.get_db),
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
-    # 1. Rate Limiting Check
-    if current_user and current_user.role == "client" and current_user.email != "gustavot.gomes7@gmail.com":
-        sub = db.execute(text("SELECT subscription_tier, property_searches_used FROM users WHERE id = :uid"), {"uid": current_user.id}).fetchone()
+    # 1. Rate Limiting Check — applies to all authenticated non-superuser roles.
+    if current_user and not current_user.is_superuser:
+        sub = db.execute(
+            text("SELECT subscription_tier, property_searches_used, created_by_id FROM users WHERE id = :uid"),
+            {"uid": current_user.id}
+        ).fetchone()
         if sub:
-            if sub.subscription_tier == 'trial' and sub.property_searches_used >= 5:
+            effective_tier = sub.subscription_tier
+
+            # If this user is a manager or agent marked as 'trial', check their creator's (client) plan.
+            # This resolves the inheritance gap for users created before the auto-inherit feature.
+            if effective_tier == "trial" and sub.created_by_id and current_user.role in ["manager", "agent"]:
+                creator = db.execute(
+                    text("SELECT subscription_tier FROM users WHERE id = :uid"),
+                    {"uid": sub.created_by_id}
+                ).fetchone()
+                if creator and creator.subscription_tier in ["pro", "enterprise"]:
+                    effective_tier = creator.subscription_tier
+                    # Sync: update this user's tier to match the creator's
+                    db.execute(
+                        text("UPDATE users SET subscription_tier = :tier WHERE id = :uid"),
+                        {"tier": effective_tier, "uid": current_user.id}
+                    )
+                    db.commit()
+
+            if effective_tier == "trial" and sub.property_searches_used >= 5:
                 raise HTTPException(status_code=402, detail="Trial limit reached (5 searches). Please upgrade to Pro to view more properties.")
-            elif sub.subscription_tier == 'pro' and sub.property_searches_used >= 5000:
+            elif effective_tier == "pro" and sub.property_searches_used >= 5000:
                 raise HTTPException(status_code=402, detail="Pro limit reached (5000 searches). Please upgrade to Enterprise.")
-            # Increment usage
-            db.execute(text("UPDATE users SET property_searches_used = property_searches_used + 1 WHERE id = :uid"), {"uid": current_user.id})
-            db.commit()
+
+            # Only count searches for non-enterprise tiers
+            if effective_tier != "enterprise":
+                db.execute(text("UPDATE users SET property_searches_used = property_searches_used + 1 WHERE id = :uid"), {"uid": current_user.id})
+                db.commit()
+
 
     # Use explicit columns to avoid ambiguity and facilitate dict conversion
     query = text("""

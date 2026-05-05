@@ -75,6 +75,10 @@ def create_user(
         target_role = getattr(user_in, 'role', "client")
         target_company = getattr(user_in, 'company_id', None)
 
+    # Inherit subscription_tier from the creator if the creator is a client or manager.
+    # This ensures team members (managers/agents) benefit from the plan bought by the client.
+    inherited_tier = current_user.subscription_tier if current_user.role in ["client", "manager"] else None
+
     user = User(
         email=email,
         hashed_password=security.get_password_hash(user_in.password),
@@ -83,7 +87,8 @@ def create_user(
         role=target_role,
         company_id=target_company,
         active_company_id=target_company,  # Auto-activate company for new team members
-        created_by_id=current_user.id
+        created_by_id=current_user.id,
+        subscription_tier=inherited_tier or "trial",
     )
     db.add(user)
     db.commit()
