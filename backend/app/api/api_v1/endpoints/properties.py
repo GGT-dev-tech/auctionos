@@ -426,7 +426,7 @@ def create_property(
             db.execute(
                 text("""
                     INSERT INTO property_user_overrides (user_id, property_id, overrides, created_at, updated_at)
-                    VALUES (:uid, :pid, :overrides::jsonb, NOW(), NOW())
+                    VALUES (:uid, :pid, CAST(:overrides AS JSONB), NOW(), NOW())
                 """),
                 {
                     "uid": current_user.id,
@@ -583,9 +583,9 @@ def upsert_property_override(
     db.execute(
         text("""
             INSERT INTO property_user_overrides (user_id, property_id, overrides, created_at, updated_at)
-            VALUES (:uid, :pid, :overrides::jsonb, NOW(), NOW())
+            VALUES (:uid, :pid, CAST(:overrides AS JSONB), NOW(), NOW())
             ON CONFLICT (user_id, property_id) DO UPDATE
-                SET overrides = property_user_overrides.overrides || :overrides::jsonb,
+                SET overrides = property_user_overrides.overrides || CAST(:overrides AS JSONB),
                     updated_at = NOW()
         """),
         {
