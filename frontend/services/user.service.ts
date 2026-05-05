@@ -54,5 +54,40 @@ export const UserService = {
             headers: getHeaders()
         });
         if (!response.ok) throw new Error('Failed to delete user');
-    }
+    },
+
+    /** Get all companies linked to a specific user (many-to-many) */
+    getUserCompanies: async (userId: number): Promise<{ id: number; name: string; role: string }[]> => {
+        const response = await fetch(`${API_URL}/users/${userId}/companies`, {
+            headers: getHeaders()
+        });
+        if (!response.ok) throw new Error('Failed to fetch user companies');
+        return response.json();
+    },
+
+    /** Replace the full set of companies linked to a user */
+    setUserCompanies: async (userId: number, companyIds: number[]): Promise<void> => {
+        const response = await fetch(`${API_URL}/users/${userId}/companies`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ company_ids: companyIds })
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Failed to update user companies');
+        }
+    },
+
+    /** Switch the current user's active company context */
+    switchActiveCompany: async (companyId: number): Promise<void> => {
+        const response = await fetch(`${API_URL}/users/me/active-company`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ company_id: companyId })
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Failed to switch company');
+        }
+    },
 };

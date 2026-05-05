@@ -76,7 +76,6 @@ def create_user(
         target_company = getattr(user_in, 'company_id', None)
 
     # Inherit subscription_tier from the creator if the creator is a client or manager.
-    # This ensures team members (managers/agents) benefit from the plan bought by the client.
     inherited_tier = current_user.subscription_tier if current_user.role in ["client", "manager"] else None
 
     user = User(
@@ -86,16 +85,33 @@ def create_user(
         is_superuser=user_in.is_superuser if current_user.is_superuser else False,
         role=target_role,
         company_id=target_company,
-        active_company_id=target_company,  # Auto-activate company for new team members
+        active_company_id=target_company,
         created_by_id=current_user.id,
         subscription_tier=inherited_tier or "trial",
     )
     db.add(user)
+    db.flush()  # Flush to get user.id before linking companies
+
+    # ── Multi-company: Insert links into user_company_links ──
+    from sqlalchemy import text
+    all_company_ids = set()
+    if target_company:
+        all_company_ids.add(target_company)
+    if user_in.company_ids:
+        all_company_ids.update(user_in.company_ids)
+    for cid in all_company_ids:
+        db.execute(
+            text("INSERT INTO user_company_links (user_id, company_id, role) VALUES (:uid, :cid, :role) ON CONFLICT DO NOTHING"),
+            {"uid": user.id, "cid": cid, "role": target_role}
+        )
+
     db.commit()
     db.refresh(user)
 
     log_activity(db, current_user.id, "create_user", "User", user.id, {"created_role": target_role})
 
+    # Attach linked_company_ids to response
+    user.linked_company_ids = list(all_company_ids)
     return user
 
 @router.put("/me", response_model=UserSchema)
@@ -229,6 +245,119 @@ def delete_user(
     log_activity(db, current_user.id, "delete_user", "User", user_id, {"deleted_email": user.email}, company_id=getattr(current_user, 'active_company_id', current_user.company_id))
     
     return user
+
+
+# ───────────────────────────────────────────────────────────
+# Multi-Company Endpoints
+# ───────────────────────────────────────────────────────────
+
+@router.put("/me/active-company")
+def switch_active_company(
+    *,
+    db: Session = Depends(deps.get_db),
+    company_id: int = Body(..., embed=True),
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Switch the authenticated user's active company context.
+    Only allowed if the user is actually linked to the target company.
+    """
+    from sqlalchemy import text
+    link = db.execute(
+        text("SELECT 1 FROM user_company_links WHERE user_id = :uid AND company_id = :cid"),
+        {"uid": current_user.id, "cid": company_id}
+    ).fetchone()
+    # Also allow if user is the owner of the company
+    if not link:
+        owner = db.execute(
+            text("SELECT 1 FROM companies WHERE id = :cid AND user_id = :uid"),
+            {"cid": company_id, "uid": current_user.id}
+        ).fetchone()
+        if not owner:
+            raise HTTPException(status_code=403, detail="You are not linked to this company.")
+
+    current_user.active_company_id = company_id
+    db.commit()
+    return {"ok": True, "active_company_id": company_id}
+
+
+@router.get("/{user_id}/companies")
+def get_user_companies(
+    user_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Return the list of companies linked to a specific user.
+    Accessible by: the user themselves, their Client (creator), or Superuser.
+    """
+    from sqlalchemy import text
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    rows = db.execute(
+        text("""
+            SELECT c.id, c.name, ucl.role
+            FROM user_company_links ucl
+            JOIN companies c ON c.id = ucl.company_id
+            WHERE ucl.user_id = :uid
+            ORDER BY c.name
+        """),
+        {"uid": user_id}
+    ).fetchall()
+    return [{"id": r.id, "name": r.name, "role": r.role} for r in rows]
+
+
+class CompanyAssignPayload(BaseModel):
+    company_ids: List[int]
+
+@router.put("/{user_id}/companies")
+def set_user_companies(
+    user_id: int,
+    payload: CompanyAssignPayload,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Replace the full set of companies linked to a user.
+    Only Clients (owners) and Superusers can call this.
+    """
+    from sqlalchemy import text
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # RBAC: only the client who created this user (or superuser) can change company links
+    if not current_user.is_superuser and current_user.id != target.created_by_id:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this user's companies.")
+
+    # Validate: each company_id must belong to the calling client
+    if not current_user.is_superuser:
+        for cid in payload.company_ids:
+            co = db.execute(
+                text("SELECT id FROM companies WHERE id = :cid AND user_id = :uid"),
+                {"cid": cid, "uid": current_user.id}
+            ).fetchone()
+            if not co:
+                raise HTTPException(status_code=403, detail=f"Company {cid} not found or access denied.")
+
+    # Delete existing links and replace with new set
+    db.execute(text("DELETE FROM user_company_links WHERE user_id = :uid"), {"uid": user_id})
+    for cid in payload.company_ids:
+        db.execute(
+            text("INSERT INTO user_company_links (user_id, company_id, role) VALUES (:uid, :cid, :role) ON CONFLICT DO NOTHING"),
+            {"uid": user_id, "cid": cid, "role": target.role}
+        )
+
+    # Update primary company_id to the first one
+    if payload.company_ids:
+        target.company_id = payload.company_ids[0]
+        target.active_company_id = payload.company_ids[0]
+
+    db.commit()
+    log_activity(db, current_user.id, "update_user_companies", "User", user_id, {"company_ids": payload.company_ids})
+    return {"ok": True, "linked_company_ids": payload.company_ids}
 
 @router.get("/team/logs")
 def read_team_logs(

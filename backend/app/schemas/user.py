@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr
 
 
@@ -21,6 +21,7 @@ class UserCreate(BaseModel):
     is_superuser: Optional[bool] = False
     role: Optional[str] = "client"
     company_id: Optional[int] = None
+    company_ids: Optional[List[int]] = None   # Multi-company: primary + additional companies
 
 
 class UserUpdate(BaseModel):
@@ -40,8 +41,10 @@ class User(BaseModel):
     is_superuser: Optional[bool] = False
     role: Optional[str] = "client"
     active_company_id: Optional[int] = None
+    company_id: Optional[int] = None
     subscription_tier: Optional[str] = "trial"
     property_searches_used: Optional[int] = 0
+    linked_company_ids: Optional[List[int]] = []  # All company IDs this user belongs to
 
     class Config:
         from_attributes = True

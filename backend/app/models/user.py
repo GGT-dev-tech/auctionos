@@ -56,6 +56,14 @@ class User(Base):
         foreign_keys=[active_company_id],
     )
 
+    # Many-to-many: all companies this user is linked to (as manager/agent)
+    linked_companies = relationship(
+        "Company",
+        secondary="user_company_links",
+        back_populates="members",
+        lazy="select",
+    )
+
     consultant_profile = relationship(
         "Consultant",
         back_populates="user",
