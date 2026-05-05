@@ -16,12 +16,17 @@ const ActivityLogsPage: React.FC = () => {
     // Create User Form
     const [openCreate, setOpenCreate] = useState(false);
     const [createForm, setCreateForm] = useState({ email: '', password: '', full_name: '', role: 'agent', contact_phone: '', company_id: '' });
+    const [createCompanyIds, setCreateCompanyIds] = useState<number[]>([]);
     const [creating, setCreating] = useState(false);
 
     // Edit User Form
     const [openEdit, setOpenEdit] = useState(false);
     const [editForm, setEditForm] = useState({ id: '', email: '', password: '', full_name: '', contact_phone: '' });
+    const [editCompanyIds, setEditCompanyIds] = useState<number[]>([]);
     const [updating, setUpdating] = useState(false);
+
+    // Delete
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
     const currentUser = AuthService.getCurrentUser();
     const isClient = currentUser?.role === 'client';
@@ -50,9 +55,15 @@ const ActivityLogsPage: React.FC = () => {
     const handleCreateUser = async () => {
         setCreating(true);
         try {
+            // Use multi-selected companies; fallback to activeCompany
+            const allIds = createCompanyIds.length > 0
+                ? createCompanyIds
+                : activeCompany?.id ? [activeCompany.id] : [];
+
             const payload = {
                 ...createForm,
-                company_id: createForm.company_id || activeCompany?.id || undefined
+                company_id: allIds[0] || undefined,
+                company_ids: allIds,
             };
             const res = await fetch(`${API_URL}/users/`, {
                 method: 'POST',
@@ -66,6 +77,7 @@ const ActivityLogsPage: React.FC = () => {
             alert('User created successfully!');
             setOpenCreate(false);
             setCreateForm({ email: '', password: '', full_name: '', role: 'agent', contact_phone: '', company_id: '' });
+            setCreateCompanyIds([]);
             await loadData();
         } catch (err: any) {
             alert(err.message);
@@ -80,7 +92,6 @@ const ActivityLogsPage: React.FC = () => {
             const body = { 
                 full_name: editForm.full_name, 
                 contact_phone: editForm.contact_phone,
-                // Only send password if it was changed
                 ...(editForm.password ? { password: editForm.password } : {}) 
             };
             const res = await fetch(`${API_URL}/users/${editForm.id}`, {
@@ -92,6 +103,14 @@ const ActivityLogsPage: React.FC = () => {
                 const data = await res.json();
                 throw new Error(data.detail || 'Failed to update user');
             }
+            // Save company assignments if any selected
+            if (editCompanyIds.length > 0) {
+                await fetch(`${API_URL}/users/${editForm.id}/companies`, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ company_ids: editCompanyIds })
+                });
+            }
             alert('User updated successfully!');
             setOpenEdit(false);
             await loadData();
@@ -100,6 +119,40 @@ const ActivityLogsPage: React.FC = () => {
         } finally {
             setUpdating(false);
         }
+    };
+
+    const handleDeleteUser = async (id: number, name: string) => {
+        if (!window.confirm(`Remove "${name}" from your team? This cannot be undone.`)) return;
+        setDeletingId(id);
+        try {
+            const res = await fetch(`${API_URL}/users/${id}`, {
+                method: 'DELETE',
+                headers: getHeaders()
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.detail || 'Failed to delete user');
+            }
+            await loadData();
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const handleOpenEdit = async (member: any) => {
+        setEditForm({ id: member.id, email: member.email, full_name: member.full_name || '', contact_phone: member.contact_phone || '', password: '' });
+        setEditCompanyIds([]);
+        // Pre-load linked companies
+        try {
+            const res = await fetch(`${API_URL}/users/${member.id}/companies`, { headers: getHeaders() });
+            if (res.ok) {
+                const links = await res.json();
+                setEditCompanyIds(links.map((l: any) => l.id));
+            }
+        } catch {}
+        setOpenEdit(true);
     };
 
     if (isAgent) {
@@ -160,7 +213,7 @@ const ActivityLogsPage: React.FC = () => {
                                             <p className="text-xs text-slate-500">{member.email}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right flex items-center gap-3">
+                                    <div className="text-right flex items-center gap-2">
                                         <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
                                             member.role === 'client' ? 'bg-purple-100 text-purple-700' :
                                             member.role === 'manager' ? 'bg-amber-100 text-amber-700' :
@@ -169,15 +222,28 @@ const ActivityLogsPage: React.FC = () => {
                                             {member.role}
                                         </span>
                                         {member.role !== 'client' && (
-                                            <button 
-                                                onClick={() => {
-                                                    setEditForm({ id: member.id, email: member.email, full_name: member.full_name || '', contact_phone: member.contact_phone || '', password: '' });
-                                                    setOpenEdit(true);
-                                                }}
-                                                className="p-1 text-slate-400 hover:text-blue-600 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-[18px]">edit</span>
-                                            </button>
+                                            <>
+                                                <button
+                                                    id={`btn-edit-member-${member.id}`}
+                                                    onClick={() => handleOpenEdit(member)}
+                                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-[15px]">edit</span>
+                                                    Editar
+                                                </button>
+                                                <button
+                                                    id={`btn-delete-member-${member.id}`}
+                                                    onClick={() => handleDeleteUser(member.id, member.full_name || member.email)}
+                                                    disabled={deletingId === member.id}
+                                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800 rounded-lg transition-colors disabled:opacity-50"
+                                                >
+                                                    {deletingId === member.id
+                                                        ? <span className="material-symbols-outlined text-[15px] animate-spin">progress_activity</span>
+                                                        : <span className="material-symbols-outlined text-[15px]">delete</span>
+                                                    }
+                                                    Excluir
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -234,19 +300,38 @@ const ActivityLogsPage: React.FC = () => {
                         </Select>
                     </div>
 
+                    {/* Multi-Company Picker */}
                     <div>
-                        <Typography variant="caption" className="font-bold text-slate-500 mb-1 block">Assign to Company</Typography>
-                        <Select
-                            fullWidth
-                            value={createForm.company_id}
-                            onChange={e => setCreateForm(p => ({...p, company_id: e.target.value}))}
-                            displayEmpty
-                        >
-                            <MenuItem value="" disabled>Select a company</MenuItem>
-                            {companies.map(c => (
-                                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-                            ))}
-                        </Select>
+                        <Typography variant="caption" className="font-bold text-slate-500 mb-2 block">
+                            Assign to Companies <span style={{fontWeight: 400, textTransform: 'none'}}>(select one or more)</span>
+                        </Typography>
+                        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                            {companies.length === 0 && (
+                                <span className="text-xs text-slate-400 italic">No companies yet. Create one first.</span>
+                            )}
+                            {companies.map(c => {
+                                const sel = createCompanyIds.includes(c.id);
+                                return (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        onClick={() => setCreateCompanyIds(prev =>
+                                            sel ? prev.filter(id => id !== c.id) : [...prev, c.id]
+                                        )}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${
+                                            sel
+                                                ? 'border-blue-500 bg-blue-500 text-white'
+                                                : 'border-slate-200 text-slate-600 hover:border-blue-300'
+                                        }`}
+                                    >
+                                        {sel && '✓ '}{c.name}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {createCompanyIds.length > 0 && (
+                            <p className="text-xs text-blue-600 font-bold mt-1">{createCompanyIds.length} empresa(s) selecionada(s)</p>
+                        )}
                     </div>
                 </div>
                 <div className="flex justify-end gap-2 mt-6">
@@ -265,6 +350,40 @@ const ActivityLogsPage: React.FC = () => {
                     <TextField label="Full Name" fullWidth value={editForm.full_name} onChange={e => setEditForm(p => ({...p, full_name: e.target.value}))} />
                     <TextField label="New Password (leave blank to keep current)" type="password" fullWidth value={editForm.password} onChange={e => setEditForm(p => ({...p, password: e.target.value}))} />
                     <TextField label="Contact Phone" fullWidth value={editForm.contact_phone} onChange={e => setEditForm(p => ({...p, contact_phone: e.target.value}))} />
+
+                    {/* Multi-Company Picker */}
+                    <div>
+                        <Typography variant="caption" className="font-bold text-slate-500 mb-2 block">
+                            Companies <span style={{fontWeight: 400, textTransform: 'none'}}>(select one or more)</span>
+                        </Typography>
+                        <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                            {companies.length === 0 && (
+                                <span className="text-xs text-slate-400 italic">No companies yet.</span>
+                            )}
+                            {companies.map(c => {
+                                const sel = editCompanyIds.includes(c.id);
+                                return (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        onClick={() => setEditCompanyIds(prev =>
+                                            sel ? prev.filter(id => id !== c.id) : [...prev, c.id]
+                                        )}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${
+                                            sel
+                                                ? 'border-blue-500 bg-blue-500 text-white'
+                                                : 'border-slate-200 text-slate-600 hover:border-blue-300'
+                                        }`}
+                                    >
+                                        {sel && '✓ '}{c.name}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {editCompanyIds.length > 0 && (
+                            <p className="text-xs text-blue-600 font-bold mt-1">{editCompanyIds.length} empresa(s) selecionada(s)</p>
+                        )}
+                    </div>
                 </div>
                 <div className="flex justify-end gap-2 mt-6">
                     <Button onClick={() => setOpenEdit(false)} color="inherit">Cancel</Button>
