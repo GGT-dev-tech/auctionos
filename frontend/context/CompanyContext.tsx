@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { CompanyService, Company } from '../services/company.service';
 import { AuthService } from '../services/auth.service';
+import { API_URL, getHeaders } from '../services/httpClient';
 
 interface CompanyContextType {
     companies: Company[];
@@ -31,29 +32,67 @@ export const CompanyProvider: React.FC<{ children: ReactNode }> = ({ children })
     const refresh = useCallback(async () => {
         if (!user) return;
         try {
-            const data = await CompanyService.list();
-            setCompanies(data);
-            // Persist to localStorage to avoid next-session flicker
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            if (user.role === 'client' || user.role === 'admin' || user.role === 'superuser') {
+                // Owners: fetch companies they created
+                const data = await CompanyService.list();
+                setCompanies(data);
+                localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            } else if (user.role === 'manager' || user.role === 'agent') {
+                // Members: fetch companies they are linked to via many-to-many
+                const res = await fetch(`${API_URL}/users/${user.id}/companies`, { headers: getHeaders() });
+                if (res.ok) {
+                    const links: { id: number; name: string; role: string }[] = await res.json();
+                    // Map to Company shape; mark active by comparing to active_company_id from token
+                    const mapped: Company[] = links.map(l => ({
+                        id: l.id,
+                        user_id: 0,
+                        name: l.name,
+                        is_active: l.id === user.active_company_id,
+                    }));
+                    setCompanies(mapped);
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(mapped));
+                }
+            }
         } catch {
             // Keep previous data on error
         } finally {
             setLoading(false);
         }
-    }, [user?.id]);
+    }, [user?.id, user?.role]);
 
     useEffect(() => {
-        if (user?.role === 'client') {
+        if (user) {
             refresh();
         } else {
             setLoading(false);
         }
     }, [user?.id, refresh]);
 
-    const activeCompany = companies.find(c => c.is_active) || companies[0] || null;
+    // Derive active company: for managers use active_company_id from token
+    const activeCompany = companies.find(c =>
+        user?.role === 'manager' || user?.role === 'agent'
+            ? c.id === user?.active_company_id
+            : c.is_active
+    ) || companies[0] || null;
 
     const selectCompany = async (id: number) => {
-        await CompanyService.selectActive(id);
+        if (user?.role === 'manager' || user?.role === 'agent') {
+            // Use the multi-company switch endpoint
+            await fetch(`${API_URL}/users/me/active-company`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify({ company_id: id }),
+            });
+            // Update token in localStorage so active_company_id is reflected immediately
+            const stored = localStorage.getItem('user');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                parsed.active_company_id = id;
+                localStorage.setItem('user', JSON.stringify(parsed));
+            }
+        } else {
+            await CompanyService.selectActive(id);
+        }
         await refresh();
     };
 
