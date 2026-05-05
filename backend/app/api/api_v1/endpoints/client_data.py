@@ -269,6 +269,87 @@ def create_custom_property(
         else:
             full_address = f"{property_in.city}, {property_in.state} {property_in.zip_code or ''}"
 
+    # ── Duplicate Detection: Auto-link instead of rejecting ──────────────────
+    # If the parcel_id already exists globally, we create a private override instead
+    # of a new property record to avoid IntegrityError (UniqueViolation).
+    if property_in.parcel_id:
+        existing = db.execute(
+            text("SELECT id, property_id FROM property_details WHERE parcel_id = :parcel_id"),
+            {"parcel_id": property_in.parcel_id}
+        ).fetchone()
+
+        if existing:
+            master_id, master_property_id = existing
+            
+            # 1. Ensure an override record exists
+            import json as _json
+            initial_payload = property_in.dict(exclude_unset=True)
+            initial_payload.pop("parcel_id", None)
+            initial_payload.pop("visibility", None)
+            initial_payload.pop("target_list_id", None)
+
+            db.execute(
+                text("""
+                    INSERT INTO property_user_overrides (user_id, property_id, overrides, created_at, updated_at)
+                    VALUES (:uid, :pid, CAST(:overrides AS JSONB), NOW(), NOW())
+                    ON CONFLICT (user_id, property_id) DO UPDATE
+                        SET overrides = property_user_overrides.overrides || CAST(:overrides AS JSONB),
+                            updated_at = NOW()
+                """),
+                {
+                    "uid": current_user.id,
+                    "pid": master_property_id,
+                    "overrides": _json.dumps(initial_payload) if initial_payload else "{}",
+                }
+            )
+            db.commit()
+
+            # 2. Resolve Target List and link the property
+            target_list_id = property_in.target_list_id
+            lst = None
+            if target_list_id:
+                lst = db.query(ClientList).filter(
+                    ClientList.id == target_list_id, 
+                    (ClientList.user_id == current_user.id) | (ClientList.company_id == current_user.active_company_id)
+                ).first()
+            
+            if not lst:
+                lst = db.query(ClientList).filter(
+                    ClientList.name == "Custom Folder",
+                    ClientList.company_id == current_user.active_company_id
+                ).first() or db.query(ClientList).filter(
+                    ClientList.name == "Custom Folder",
+                    ClientList.user_id == current_user.id
+                ).first()
+
+            if not lst:
+                lst = ClientList(
+                    name="Custom Folder",
+                    user_id=current_user.id,
+                    company_id=current_user.active_company_id,
+                    notes="Default folder for manually created properties"
+                )
+                db.add(lst)
+                db.commit()
+                db.refresh(lst)
+
+            # Link master property to list (not the override, as lists track real properties)
+            master_prop_obj = db.query(PropertyDetails).get(master_id)
+            if master_prop_obj and master_prop_obj not in lst.properties:
+                lst.properties.append(master_prop_obj)
+                db.commit()
+
+            log_activity(db, current_user.id, "link_existing_property", "PropertyDetails", master_id, {"address": master_prop_obj.address, "list": lst.name}, company_id=getattr(current_user, 'active_company_id', current_user.company_id))
+
+            return {
+                "id": master_id,
+                "property_id": master_property_id,
+                "list_id": lst.id,
+                "list_name": lst.name,
+                "status": "already_exists"
+            }
+
+    # ── New Property — standard creation path ─────────────────────────────────
     prop_id = str(uuid.uuid4())
     new_prop = PropertyDetails(
         property_id=prop_id,
