@@ -402,7 +402,7 @@ def create_property(
     # Check if parcel_id already exists
     exists = db.execute(text("SELECT 1 FROM property_details WHERE parcel_id = :parcel_id"), {"parcel_id": property_in.parcel_id}).fetchone()
     if exists:
-        raise HTTPException(status_code=400, detail="A property with this Parcel ID already exists.")
+        raise HTTPException(status_code=400, detail="Property already exists in the system.")
         
     create_data = property_in.dict(exclude_unset=True)
     prop_id = str(uuid.uuid4())
