@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { AdminService } from '../../services/admin.service';
+import { AuthService } from '../../services/auth.service';
 
 const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({ onSuccess, initialData }) => {
     const [formData, setFormData] = useState({
@@ -114,8 +115,13 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                     setStatus('✓ Property found in the global database. Redirecting to customize your private view...');
                     setTimeout(() => {
                         if (onSuccess) onSuccess();
-                        // Navigate to property detail with edit mode activated
-                        window.location.hash = `#/properties/${targetParcelId}?edit=true`;
+                        // Route to correct portal based on user role
+                        const currentUser = AuthService.getCurrentUser();
+                        const isClientRole = ['client', 'manager', 'agent'].includes(currentUser?.role || '');
+                        const targetHash = isClientRole
+                            ? `#/client/properties/${targetParcelId}?edit=true`
+                            : `#/properties/${targetParcelId}?edit=true`;
+                        window.location.hash = targetHash;
                     }, 1800);
                     return;
                 }

@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { PropertyService, ClientDataService } from '../../services/property.service';
 import { AuthService } from '../../services/auth.service';
 import { API_BASE_URL } from '../../services/httpClient';
 import { countyService, CountyContact } from '../../services/county.service';
 import { Button, CircularProgress, Divider, Menu, MenuItem } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, PencilLine } from 'lucide-react';
 import { Property, PropertyDetails, ClientList } from '../../types';
 import { calculateDealScore, DealScoreResult } from '../../intelligence/scoringEngine';
 import { submitScore } from '../../services/scores.service';
 import { getStreetViewUrl } from '../../utils/maps';
+import { PropertyOverridePanel } from '../../components/property/PropertyOverridePanel';
 
 import { PropertyBasicInfo } from '../../components/property/PropertyBasicInfo';
 import { PropertyStructureCard } from '../../components/property/PropertyStructureCard';
@@ -35,6 +36,7 @@ interface PropertyDetailPageProps {
 const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = false }) => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const { activeCompany } = useCompany();
     const [property, setProperty] = useState<Property | null>(null);
     const [countyContacts, setCountyContacts] = useState<CountyContact[]>([]);
@@ -49,6 +51,11 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
     const [isFinOpen, setIsFinOpen] = useState(false);
     const [isMetaOpen, setIsMetaOpen] = useState(false);
     const [streetViewError, setStreetViewError] = useState(false);
+
+    // ── Override / Edit Mode ──────────────────────────────────────────────────
+    // Auto-activated via ?edit=true (set when user tries to create a duplicate property)
+    const searchParams = new URLSearchParams(location.search);
+    const [isEditing, setIsEditing] = useState(searchParams.get('edit') === 'true');
 
     useEffect(() => {
         if (!id) return;
@@ -247,14 +254,60 @@ const PropertyDetailPage: React.FC<PropertyDetailPageProps> = ({ readOnly = fals
 
     const ownerNameFallback = property.owner_address ? property.owner_address.split('\n')[0] : 'UNKNOWN OWNER';
 
+    /** Merges saved overrides into local state without a full page reload. */
+    const handleOverrideSaved = (savedFields: Record<string, any>) => {
+        setProperty((prev: any) => prev ? {
+            ...prev,
+            ...savedFields,
+            has_overrides: Object.keys(savedFields).length > 0 || prev.has_overrides,
+        } : prev);
+        navigate(location.pathname, { replace: true });
+    };
+
+    const handleCloseEditMode = () => {
+        setIsEditing(false);
+        navigate(location.pathname, { replace: true });
+    };
+
     return (
         <div className="w-full px-4 sm:px-8 lg:px-12 py-6 space-y-6 mb-20 animate-in fade-in duration-700">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-2">
+            <div className="flex items-center justify-between gap-4 mb-2">
                 <Button variant="text" startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} className="text-slate-500 hover:text-slate-700 normal-case">
                     Back to Inventory
                 </Button>
+
+                {/* ── Customize My View Button (Client/Manager/Agent) ── */}
+                <div className="flex items-center gap-2">
+                    {(property as any).has_overrides && !isEditing && (
+                        <span className="flex items-center gap-1 text-[10px] font-black px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full uppercase tracking-wider">
+                            <PencilLine size={10} />
+                            Customized View
+                        </span>
+                    )}
+                    <button
+                        id="btn-customize-property-view"
+                        onClick={() => setIsEditing(prev => !prev)}
+                        className={`flex items-center gap-1.5 px-4 py-2 text-xs font-black rounded-lg transition-all shadow-sm ${
+                            isEditing
+                                ? 'bg-amber-500 text-white hover:bg-amber-400'
+                                : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 hover:border-amber-300 hover:text-amber-600 dark:hover:border-amber-500 dark:hover:text-amber-400'
+                        }`}
+                    >
+                        <PencilLine size={13} />
+                        {isEditing ? 'Editing...' : 'Customize My View'}
+                    </button>
+                </div>
             </div>
+
+            {/* ── Override Panel (conditionally rendered) ── */}
+            {isEditing && property && (
+                <PropertyOverridePanel
+                    property={property}
+                    onClose={handleCloseEditMode}
+                    onSaved={handleOverrideSaved}
+                />
+            )}
 
             {/* Zillow-style Street View Hero */}
             <div className="relative w-full h-[300px] sm:h-[450px] bg-slate-100 dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-lg group">
