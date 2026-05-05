@@ -148,15 +148,17 @@ def get_client_lists(
     current_user = Depends(deps.get_current_active_user)
 ) -> Any:
     """Get all lists for the current client or team member, optionally filtered by active company."""
+    # Priority: parameter > active_company (switched) > legacy company_id
+    effective_company_id = company_id or current_user.active_company_id or current_user.company_id
+
     if current_user.role in ['manager', 'agent']:
-        c_id = current_user.company_id
-        if not c_id:
+        if not effective_company_id:
             return []
-        query = db.query(ClientList).filter(ClientList.company_id == c_id)
+        query = db.query(ClientList).filter(ClientList.company_id == effective_company_id)
     else:
         query = db.query(ClientList)
-        if company_id:
-            query = query.filter(ClientList.company_id == company_id)
+        if effective_company_id:
+            query = query.filter(ClientList.company_id == effective_company_id)
         else:
             query = query.filter(ClientList.user_id == current_user.id).filter(ClientList.company_id == None)
             
