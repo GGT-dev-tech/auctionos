@@ -652,9 +652,12 @@ const ClientLists: React.FC = () => {
     };
 
     useEffect(() => {
-        if (!lists.length) {
-            loadLists();
-        }
+        // Always reload when company changes and reset folder selection
+        setSelectedListId(null);
+        setSelectedStateName(null);
+        setSelectedCountyName(null);
+        setSelectedListProperties([]);
+        loadLists();
         StatesService.getContacts().then(setStateContacts).catch(() => { });
     }, [activeCompany?.id]);
 
