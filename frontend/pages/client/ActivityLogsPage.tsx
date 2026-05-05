@@ -10,9 +10,9 @@ const ActivityLogsPage: React.FC = () => {
     const [team, setTeam] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState<'logs' | 'team'>('team');
-    
+
     const { activeCompany, companies } = useCompany();
-    
+
     // Create User Form
     const [openCreate, setOpenCreate] = useState(false);
     const [createForm, setCreateForm] = useState({ email: '', password: '', full_name: '', role: 'agent', contact_phone: '', company_id: '' });
@@ -89,10 +89,10 @@ const ActivityLogsPage: React.FC = () => {
     const handleUpdateUser = async () => {
         setUpdating(true);
         try {
-            const body = { 
-                full_name: editForm.full_name, 
+            const body = {
+                full_name: editForm.full_name,
                 contact_phone: editForm.contact_phone,
-                ...(editForm.password ? { password: editForm.password } : {}) 
+                ...(editForm.password ? { password: editForm.password } : {})
             };
             const res = await fetch(`${API_URL}/users/${editForm.id}`, {
                 method: 'PUT',
@@ -151,7 +151,7 @@ const ActivityLogsPage: React.FC = () => {
                 const links = await res.json();
                 setEditCompanyIds(links.map((l: any) => l.id));
             }
-        } catch {}
+        } catch { }
         setOpenEdit(true);
     };
 
@@ -173,9 +173,9 @@ const ActivityLogsPage: React.FC = () => {
                     <p className="text-sm text-slate-500 mt-1">Manage your agents, managers, and monitor their actions.</p>
                 </div>
                 {tab === 'team' && (
-                    <Button 
-                        variant="contained" 
-                        color="primary" 
+                    <Button
+                        variant="contained"
+                        color="primary"
                         className="bg-blue-600 rounded-xl shadow-none font-bold"
                         onClick={() => setOpenCreate(true)}
                         startIcon={<span className="material-symbols-outlined text-[18px]">person_add</span>}
@@ -214,11 +214,10 @@ const ActivityLogsPage: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="text-right flex items-center gap-2">
-                                        <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
-                                            member.role === 'client' ? 'bg-purple-100 text-purple-700' :
+                                        <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${member.role === 'client' ? 'bg-purple-100 text-purple-700' :
                                             member.role === 'manager' ? 'bg-amber-100 text-amber-700' :
-                                            'bg-emerald-100 text-emerald-700'
-                                        }`}>
+                                                'bg-emerald-100 text-emerald-700'
+                                            }`}>
                                             {member.role}
                                         </span>
                                         {member.role !== 'client' && (
@@ -229,7 +228,7 @@ const ActivityLogsPage: React.FC = () => {
                                                     className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
                                                 >
                                                     <span className="material-symbols-outlined text-[15px]">edit</span>
-                                                    Editar
+                                                    Edit
                                                 </button>
                                                 <button
                                                     id={`btn-delete-member-${member.id}`}
@@ -241,7 +240,7 @@ const ActivityLogsPage: React.FC = () => {
                                                         ? <span className="material-symbols-outlined text-[15px] animate-spin">progress_activity</span>
                                                         : <span className="material-symbols-outlined text-[15px]">delete</span>
                                                     }
-                                                    Excluir
+                                                    Delete
                                                 </button>
                                             </>
                                         )}
@@ -283,17 +282,17 @@ const ActivityLogsPage: React.FC = () => {
             <Dialog open={openCreate} onClose={() => setOpenCreate(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
                 <Typography variant="h6" className="font-bold text-slate-800 dark:text-white mb-4">Add Team Member</Typography>
                 <div className="space-y-4">
-                    <TextField label="Full Name" fullWidth value={createForm.full_name} onChange={e => setCreateForm(p => ({...p, full_name: e.target.value}))} />
-                    <TextField label="Email Address" type="email" fullWidth value={createForm.email} onChange={e => setCreateForm(p => ({...p, email: e.target.value}))} />
-                    <TextField label="Temporary Password" type="password" fullWidth value={createForm.password} onChange={e => setCreateForm(p => ({...p, password: e.target.value}))} />
-                    <TextField label="Contact Phone" fullWidth value={createForm.contact_phone} onChange={e => setCreateForm(p => ({...p, contact_phone: e.target.value}))} />
-                    
+                    <TextField label="Full Name" fullWidth value={createForm.full_name} onChange={e => setCreateForm(p => ({ ...p, full_name: e.target.value }))} />
+                    <TextField label="Email Address" type="email" fullWidth value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))} />
+                    <TextField label="Temporary Password" type="password" fullWidth value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} />
+                    <TextField label="Contact Phone" fullWidth value={createForm.contact_phone} onChange={e => setCreateForm(p => ({ ...p, contact_phone: e.target.value }))} />
+
                     <div>
                         <Typography variant="caption" className="font-bold text-slate-500 mb-1 block">Role</Typography>
                         <Select
                             fullWidth
                             value={createForm.role}
-                            onChange={e => setCreateForm(p => ({...p, role: e.target.value}))}
+                            onChange={e => setCreateForm(p => ({ ...p, role: e.target.value }))}
                         >
                             {isClient && <MenuItem value="manager">Manager</MenuItem>}
                             <MenuItem value="agent">Agent</MenuItem>
@@ -303,7 +302,7 @@ const ActivityLogsPage: React.FC = () => {
                     {/* Multi-Company Picker */}
                     <div>
                         <Typography variant="caption" className="font-bold text-slate-500 mb-2 block">
-                            Assign to Companies <span style={{fontWeight: 400, textTransform: 'none'}}>(select one or more)</span>
+                            Assign to Companies <span style={{ fontWeight: 400, textTransform: 'none' }}>(select one or more)</span>
                         </Typography>
                         <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
                             {companies.length === 0 && (
@@ -318,11 +317,10 @@ const ActivityLogsPage: React.FC = () => {
                                         onClick={() => setCreateCompanyIds(prev =>
                                             sel ? prev.filter(id => id !== c.id) : [...prev, c.id]
                                         )}
-                                        className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${
-                                            sel
-                                                ? 'border-blue-500 bg-blue-500 text-white'
-                                                : 'border-slate-200 text-slate-600 hover:border-blue-300'
-                                        }`}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${sel
+                                            ? 'border-blue-500 bg-blue-500 text-white'
+                                            : 'border-slate-200 text-slate-600 hover:border-blue-300'
+                                            }`}
                                     >
                                         {sel && '✓ '}{c.name}
                                     </button>
@@ -347,14 +345,14 @@ const ActivityLogsPage: React.FC = () => {
                 <Typography variant="h6" className="font-bold text-slate-800 dark:text-white mb-4">Edit Team Member</Typography>
                 <div className="space-y-4">
                     <TextField label="Email Address" disabled fullWidth value={editForm.email} />
-                    <TextField label="Full Name" fullWidth value={editForm.full_name} onChange={e => setEditForm(p => ({...p, full_name: e.target.value}))} />
-                    <TextField label="New Password (leave blank to keep current)" type="password" fullWidth value={editForm.password} onChange={e => setEditForm(p => ({...p, password: e.target.value}))} />
-                    <TextField label="Contact Phone" fullWidth value={editForm.contact_phone} onChange={e => setEditForm(p => ({...p, contact_phone: e.target.value}))} />
+                    <TextField label="Full Name" fullWidth value={editForm.full_name} onChange={e => setEditForm(p => ({ ...p, full_name: e.target.value }))} />
+                    <TextField label="New Password (leave blank to keep current)" type="password" fullWidth value={editForm.password} onChange={e => setEditForm(p => ({ ...p, password: e.target.value }))} />
+                    <TextField label="Contact Phone" fullWidth value={editForm.contact_phone} onChange={e => setEditForm(p => ({ ...p, contact_phone: e.target.value }))} />
 
                     {/* Multi-Company Picker */}
                     <div>
                         <Typography variant="caption" className="font-bold text-slate-500 mb-2 block">
-                            Companies <span style={{fontWeight: 400, textTransform: 'none'}}>(select one or more)</span>
+                            Companies <span style={{ fontWeight: 400, textTransform: 'none' }}>(select one or more)</span>
                         </Typography>
                         <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
                             {companies.length === 0 && (
@@ -369,11 +367,10 @@ const ActivityLogsPage: React.FC = () => {
                                         onClick={() => setEditCompanyIds(prev =>
                                             sel ? prev.filter(id => id !== c.id) : [...prev, c.id]
                                         )}
-                                        className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${
-                                            sel
-                                                ? 'border-blue-500 bg-blue-500 text-white'
-                                                : 'border-slate-200 text-slate-600 hover:border-blue-300'
-                                        }`}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${sel
+                                            ? 'border-blue-500 bg-blue-500 text-white'
+                                            : 'border-slate-200 text-slate-600 hover:border-blue-300'
+                                            }`}
                                     >
                                         {sel && '✓ '}{c.name}
                                     </button>
