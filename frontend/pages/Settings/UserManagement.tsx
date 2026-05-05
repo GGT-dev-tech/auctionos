@@ -307,39 +307,34 @@ export const UserManagement: React.FC = () => {
                                     </div>
                                 </td>
                                 <td className="px-4 py-3">
-                                    {/* Shows linked_company_ids count from the response */}
                                     <button
                                         onClick={() => handleOpenAssign(user)}
-                                        className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
+                                        className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-bold border border-blue-200 dark:border-blue-800 rounded-lg px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                                     >
-                                        <span className="material-symbols-outlined text-[15px]">corporate_fare</span>
+                                        <span className="material-symbols-outlined text-[14px]">corporate_fare</span>
                                         {(user as any).linked_company_ids?.length
-                                            ? `${(user as any).linked_company_ids.length} linked`
-                                            : user.active_company_id ? '1 linked' : 'None'}
-                                        <span className="material-symbols-outlined text-[13px] opacity-0 group-hover:opacity-100">edit</span>
+                                            ? `${(user as any).linked_company_ids.length} empresa(s)`
+                                            : user.active_company_id ? '1 empresa' : 'Nenhuma'}
+                                        <span className="material-symbols-outlined text-[13px]">edit</span>
                                     </button>
                                 </td>
                                 <td className="px-4 py-3 text-right">
-                                    <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-1.5 justify-end">
                                         <button
-                                            onClick={() => handleOpenAssign(user)}
-                                            className="p-1 px-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors text-xs inline-flex items-center gap-1 font-bold"
-                                        >
-                                            <span className="material-symbols-outlined text-[15px]">corporate_fare</span>
-                                            Companies
-                                        </button>
-                                        <button
+                                            id={`btn-edit-user-${user.id}`}
                                             onClick={() => handleEditUser(user)}
-                                            className="p-1 px-2 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-xs inline-flex items-center gap-1 font-bold"
+                                            className="px-3 py-1.5 text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-xs inline-flex items-center gap-1 font-bold"
                                         >
                                             <span className="material-symbols-outlined text-[15px]">edit</span>
-                                            Edit
+                                            Editar
                                         </button>
                                         <button
+                                            id={`btn-delete-user-${user.id}`}
                                             onClick={() => handleDeleteUser(user.id)}
-                                            className="p-1 px-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-xs inline-flex items-center gap-1 font-bold"
+                                            className="px-3 py-1.5 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-colors text-xs inline-flex items-center gap-1 font-bold border border-red-200 dark:border-red-800"
                                         >
                                             <span className="material-symbols-outlined text-[15px]">delete</span>
+                                            Excluir
                                         </button>
                                     </div>
                                 </td>
