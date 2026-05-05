@@ -59,19 +59,74 @@ export const PropertyService = {
         }
     },
 
-    createProperty: async (data: Partial<Property>): Promise<Property> => {
-        try {
-            const response = await fetch(`${API_URL}/properties/`, {
-                method: 'POST',
-                headers: getHeaders(),
-                body: JSON.stringify(data)
-            });
-            if (!response.ok) throw new Error('Failed to create property');
-            return await response.json();
-        } catch (error) {
-            console.error('Error creating property:', error);
-            throw error;
+    /**
+     * Create a new property or claim an existing one.
+     *
+     * Returns:
+     *   { status: "created", parcel_id }       — new property was created.
+     *   { status: "already_exists", parcel_id, property_id, override_created }
+     *     — property already exists. A private override record was created so
+     *       the user can customize it. Redirect to the property detail page.
+     */
+    createProperty: async (data: Partial<Property>): Promise<{
+        status: 'created' | 'already_exists';
+        parcel_id: string;
+        property_id?: string;
+        override_created?: boolean;
+        message: string;
+    }> => {
+        const response = await fetch(`${API_URL}/properties/`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || 'Failed to create property');
         }
+        return await response.json();
+    },
+
+    /**
+     * Save private customizations for a property (JSONB Override pattern).
+     * Only the provided fields are stored — existing overrides are preserved.
+     * The master property_details record is never modified.
+     */
+    savePropertyOverride: async (parcelId: string, overrideData: Record<string, any>): Promise<{
+        status: string;
+        message: string;
+        overridden_fields: string[];
+    }> => {
+        const response = await fetch(`${API_URL}/properties/${parcelId}/override`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(overrideData)
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || 'Failed to save customization');
+        }
+        return await response.json();
+    },
+
+    /**
+     * Reset a user's private customization.
+     * - field param: resets only that field to original value.
+     * - no field param: resets all customizations.
+     */
+    resetPropertyOverride: async (parcelId: string, field?: string): Promise<{ status: string; message: string }> => {
+        const url = field
+            ? `${API_URL}/properties/${parcelId}/override?field=${encodeURIComponent(field)}`
+            : `${API_URL}/properties/${parcelId}/override`;
+        const response = await fetch(url, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || 'Failed to reset customization');
+        }
+        return await response.json();
     },
 
     updateProperty: async (id: string, data: Partial<Property>): Promise<Property> => {

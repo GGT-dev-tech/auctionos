@@ -399,11 +399,52 @@ def create_property(
 ) -> Any:
     import uuid
     
-    # Check if parcel_id already exists
-    exists = db.execute(text("SELECT 1 FROM property_details WHERE parcel_id = :parcel_id"), {"parcel_id": property_in.parcel_id}).fetchone()
-    if exists:
-        raise HTTPException(status_code=400, detail="Property already exists in the system.")
-        
+    # ── Duplicate Detection: Auto-link instead of rejecting ──────────────────
+    # When the parcel_id already exists, we don't block the user. Instead, we
+    # create a private override record so the user can customize the property.
+    existing = db.execute(
+        text("SELECT property_id FROM property_details WHERE parcel_id = :parcel_id"),
+        {"parcel_id": property_in.parcel_id}
+    ).fetchone()
+
+    if existing:
+        master_property_id = existing[0]
+
+        # Upsert an override record (blank if first time, otherwise keep existing)
+        override_check = db.execute(
+            text("SELECT id FROM property_user_overrides WHERE user_id = :uid AND property_id = :pid"),
+            {"uid": current_user.id, "pid": master_property_id}
+        ).fetchone()
+
+        if not override_check:
+            # Collect any extra fields the user submitted as the initial override payload
+            initial_payload = property_in.dict(exclude_unset=True)
+            initial_payload.pop("parcel_id", None)  # parcel_id is the master key, not overrideable
+            initial_payload.pop("visibility", None)
+
+            import json as _json
+            db.execute(
+                text("""
+                    INSERT INTO property_user_overrides (user_id, property_id, overrides, created_at, updated_at)
+                    VALUES (:uid, :pid, :overrides::jsonb, NOW(), NOW())
+                """),
+                {
+                    "uid": current_user.id,
+                    "pid": master_property_id,
+                    "overrides": _json.dumps(initial_payload) if initial_payload else "{}",
+                }
+            )
+            db.commit()
+
+        return {
+            "status": "already_exists",
+            "message": "Property found in the global database. Added to your private list for customization.",
+            "parcel_id": property_in.parcel_id,
+            "property_id": master_property_id,
+            "override_created": not bool(override_check),
+        }
+
+    # ── New Property — standard creation path ─────────────────────────────────
     create_data = property_in.dict(exclude_unset=True)
     prop_id = str(uuid.uuid4())
     create_data["property_id"] = prop_id
@@ -438,7 +479,7 @@ def create_property(
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
         
-    return {"message": "Property created successfully", "parcel_id": property_in.parcel_id}
+    return {"status": "created", "message": "Property created successfully", "parcel_id": property_in.parcel_id}
 
 @router.put("/{parcel_id}", response_model=dict)
 def update_property(
@@ -499,6 +540,128 @@ def delete_property(
     db.commit()
     
     return {"message": "Property deleted successfully", "parcel_id": parcel_id}
+
+
+# ── Override Endpoints ────────────────────────────────────────────────────────
+
+@router.put("/{parcel_id}/override", response_model=dict)
+def upsert_property_override(
+    parcel_id: str,
+    override_data: dict,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Save the current user's private customizations for a property.
+
+    Only the fields included in the request body are stored (sparse JSONB).
+    Existing override keys not included in this request are preserved.
+    The master property_details record is never modified.
+
+    To overwrite all overrides, pass the full set of changed fields.
+    To remove a single field, use DELETE /{parcel_id}/override?field=<field_name>.
+    """
+    import json as _json
+
+    # 1. Resolve master property_id from parcel_id
+    prop_row = db.execute(
+        text("SELECT property_id FROM property_details WHERE parcel_id = :parcel_id"),
+        {"parcel_id": parcel_id}
+    ).fetchone()
+    if not prop_row:
+        raise HTTPException(status_code=404, detail="Property not found")
+    property_id = prop_row[0]
+
+    # 2. Sanitize: remove immutable keys that should never be overridden
+    IMMUTABLE_KEYS = {"parcel_id", "property_id", "id", "created_by_user_id", "company_id"}
+    clean_data = {k: v for k, v in override_data.items() if k not in IMMUTABLE_KEYS}
+
+    if not clean_data:
+        raise HTTPException(status_code=400, detail="No valid override fields provided.")
+
+    # 3. Upsert: merge new values on top of existing override JSONB
+    db.execute(
+        text("""
+            INSERT INTO property_user_overrides (user_id, property_id, overrides, created_at, updated_at)
+            VALUES (:uid, :pid, :overrides::jsonb, NOW(), NOW())
+            ON CONFLICT (user_id, property_id) DO UPDATE
+                SET overrides = property_user_overrides.overrides || :overrides::jsonb,
+                    updated_at = NOW()
+        """),
+        {
+            "uid": current_user.id,
+            "pid": property_id,
+            "overrides": _json.dumps(clean_data),
+        }
+    )
+    db.commit()
+
+    return {
+        "status": "saved",
+        "message": f"{len(clean_data)} field(s) saved to your private view.",
+        "parcel_id": parcel_id,
+        "overridden_fields": list(clean_data.keys()),
+    }
+
+
+@router.delete("/{parcel_id}/override", response_model=dict)
+def delete_property_override(
+    parcel_id: str,
+    field: Optional[str] = None,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Reset a user's private customization for a property.
+
+    - If ?field=<field_name> is provided: removes only that key from the JSONB,
+      restoring it to the master value. All other customizations are preserved.
+    - If no field is provided: removes the entire override record, restoring all
+      fields to master values.
+    """
+    import json as _json
+
+    # Resolve master property_id
+    prop_row = db.execute(
+        text("SELECT property_id FROM property_details WHERE parcel_id = :parcel_id"),
+        {"parcel_id": parcel_id}
+    ).fetchone()
+    if not prop_row:
+        raise HTTPException(status_code=404, detail="Property not found")
+    property_id = prop_row[0]
+
+    if field:
+        # Remove a single key from JSONB using the #- operator (safe, atomic)
+        db.execute(
+            text("""
+                UPDATE property_user_overrides
+                SET overrides = overrides - :field,
+                    updated_at = NOW()
+                WHERE user_id = :uid AND property_id = :pid
+            """),
+            {"uid": current_user.id, "pid": property_id, "field": field}
+        )
+        db.commit()
+        return {
+            "status": "reset",
+            "message": f"Field '{field}' restored to original value.",
+            "parcel_id": parcel_id,
+        }
+    else:
+        # Remove the entire override record
+        db.execute(
+            text("""
+                DELETE FROM property_user_overrides
+                WHERE user_id = :uid AND property_id = :pid
+            """),
+            {"uid": current_user.id, "pid": property_id}
+        )
+        db.commit()
+        return {
+            "status": "reset",
+            "message": "All customizations removed. Property restored to original data.",
+            "parcel_id": parcel_id,
+        }
 
 @router.post("/{parcel_id}/purchase", response_model=dict)
 def purchase_property_action(
@@ -864,6 +1027,45 @@ def get_property(
         data["score_factors"] = []
         data["score_model_version"] = None
         data["score_updated_at"] = None
+
+    # ── JSONB Override Merge ────────────────────────────────────────────────
+    # Load the user's private overrides (if any) and merge on top of master data.
+    # This is a read-only merge: master data is never modified.
+    data["has_overrides"] = False
+    data["original_values"] = {}
+    data["user_override_id"] = None
+
+    if current_user:
+        try:
+            import json as _json
+            override_row = db.execute(
+                text("""
+                    SELECT id, overrides
+                    FROM property_user_overrides
+                    WHERE user_id = :uid AND property_id = :pid
+                """),
+                {"uid": current_user.id, "pid": data.get("property_id")}
+            ).fetchone()
+
+            if override_row:
+                override_id, raw_overrides = override_row
+                user_overrides = raw_overrides if isinstance(raw_overrides, dict) else (_json.loads(raw_overrides) if raw_overrides else {})
+
+                if user_overrides:
+                    # Save original values BEFORE overwriting, for the UI diff indicators
+                    original_vals = {}
+                    for key, new_val in user_overrides.items():
+                        if key in data:
+                            original_vals[key] = data[key]
+                    data["original_values"] = original_vals
+
+                    # Apply the merge: user values override master values
+                    data.update(user_overrides)
+                    data["has_overrides"] = True
+
+                data["user_override_id"] = override_id
+        except Exception as e:
+            print(f"Override merge error (non-fatal): {e}")
 
     return data
 

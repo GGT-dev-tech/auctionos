@@ -104,8 +104,22 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
             if (initialData?.parcel_id) {
                 await AdminService.updateProperty(initialData.parcel_id, payload);
                 setStatus('Property updated successfully!');
+                if (onSuccess) onSuccess();
             } else {
-                await AdminService.createProperty(payload);
+                const result = await AdminService.createProperty(payload);
+
+                // ── Handle already_exists: redirect to property detail in edit mode ──
+                if (result && (result as any).status === 'already_exists') {
+                    const targetParcelId = (result as any).parcel_id;
+                    setStatus('✓ Property found in the global database. Redirecting to customize your private view...');
+                    setTimeout(() => {
+                        if (onSuccess) onSuccess();
+                        // Navigate to property detail with edit mode activated
+                        window.location.hash = `#/properties/${targetParcelId}?edit=true`;
+                    }, 1800);
+                    return;
+                }
+
                 setStatus('Property created successfully!');
                 setFormData({
                     parcel_id: '', account: '', acres: '', amount_due: '', auction_date: '', auction_name: '',
@@ -117,8 +131,8 @@ const PropertyForm: React.FC<{ onSuccess?: () => void, initialData?: any }> = ({
                     pin_ppin: '', raw_parcel_number: '', county_fips: '', additional_parcel_numbers: '', occupancy_checked_date: '',
                     redfin_url: '', redfin_estimate: '', lot_sqft: '', sewer_type: '', water_type: '', property_type_detail: '', import_error_msg: '', is_processed: false
                 });
+                if (onSuccess) onSuccess();
             }
-            if (onSuccess) onSuccess();
         } catch (err: any) {
             setStatus('Error: ' + err.message);
         }
