@@ -25,10 +25,14 @@ const StatsGrid: React.FC = () => (
 
 // ─── Team Leadership Grid ─────────────────────────────────────────────────────
 const TeamGrid: React.FC = () => (
-    <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+    <div className="grid md:grid-cols-1 gap-6 max-w-2xl mx-auto">
         {[
-            { name: "Gustavo Gomes", role: "Co-Founder & Developer", desc: "Distressed-asset investment authority with 15+ years managing nationwide institutional property portfolios. Leads technical direction and execution.", icon: "terminal" },
-            { name: "Ricardo Cabral", role: "Co-Founder & Investor", desc: "Strategic operations and investment specialist. Leads institutional relations, deal flow acquisition, and macro-level asset scaling strategies.", icon: "leaderboard" }
+            { 
+                name: "Ricardo Cabral", 
+                role: "Founder & CEO", 
+                desc: "Civil engineer and real estate developer with deep expertise in urban planning, zoning, and land valuation. Ricardo led the master plan of Balneário Camboriú — one of the highest-value real estate markets in Brazil per square meter — giving him a ground-level understanding of how zoning, infrastructure, and land economics drive property outcomes. GoAuct is the product of that expertise: applying institutional-grade real estate judgment to the fragmented world of US tax auctions. Under his leadership, the platform turns chaotic county records into clean, actionable intelligence — so investors anywhere in the world can identify, underwrite, and acquire distressed property with confidence.", 
+                icon: "leaderboard" 
+            }
         ].map(member => (
             <div key={member.name} className="p-6 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 rounded-3xl shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
